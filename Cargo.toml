@@ -1,5 +1,5 @@
 [package]
-name = "bevy-workspace"
+name = "bevy-async-system"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,3 +16,4 @@ async-trait = "0.1.73"
 
 [dev-dependencies]
 trybuild2 = "1.1.0"
+bevy-async-system = {path = "./", version = "0.1"}
