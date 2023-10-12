@@ -1,0 +1,18 @@
+[package]
+name = "bevy-workspace"
+version = "0.1.0"
+edition = "2021"
+
+[[test]]
+name = "all"
+path = "tests/entry_point.rs"
+
+[dependencies]
+bevy = {version = "0.11.3"}
+bevy_mod_picking = "0.15.0"
+bevy-async-task = "1.1.0"
+futures = "0.3.28"
+async-trait = "0.1.73"
+
+[dev-dependencies]
+trybuild2 = "1.1.0"
