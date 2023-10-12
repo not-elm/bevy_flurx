@@ -11,24 +11,24 @@ mod commands;
 
 
 #[derive(Default)]
-pub struct AsyncSystemManager {
+pub struct BevTask {
     tasks: Vec<AsyncSystemTask>,
 }
 
 
-impl AsyncSystemManager {
-    pub fn spawn_async<F>(&mut self, f: impl Fn(AsyncCommands) -> F)
+impl BevTask {
+    pub fn spawn_async<F>(&mut self, f: impl Fn(AsyncCommands) -> F )
         where F: Future<Output=()> + Send + 'static
     {
-        let scheduler = AsyncCommands::default();
-        let task: AsyncTask<()> = f(scheduler.clone()).into();
+        let async_commands = AsyncCommands::default();
+        let task: AsyncTask<()> = f(async_commands.clone()).into();
         let (fut, task_finish_rx) = task.into_parts();
         let task_pool = AsyncComputeTaskPool::get();
         let handle = task_pool.spawn(fut);
         handle.detach();
 
         self.tasks.push(AsyncSystemTask {
-            commands: scheduler,
+            commands: async_commands,
             task_finish_rx,
         });
     }

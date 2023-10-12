@@ -1,11 +1,15 @@
 [package]
-name = "bevy-async-system"
+name = "bevtask"
 version = "0.1.0"
 edition = "2021"
 
 [[test]]
 name = "all"
 path = "tests/entry_point.rs"
+
+[[example]]
+name = "until_move"
+path = "examples/until_move.rs"
 
 [dependencies]
 bevy = {version = "0.11.3"}
@@ -14,6 +18,8 @@ bevy-async-task = "1.1.0"
 futures = "0.3.28"
 async-trait = "0.1.73"
 
+
 [dev-dependencies]
 trybuild2 = "1.1.0"
-bevy-async-system = {path = "./", version = "0.1"}
+bevtask = {path = "./", version = "0.1"}
+reqwest = "0.11.22"

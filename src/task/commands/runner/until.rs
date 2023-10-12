@@ -3,11 +3,11 @@ use bevy::prelude::{IntoSystem, World};
 use futures::channel::mpsc::Sender;
 use crate::task::commands::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, SystemRunningStatus};
 
-pub struct AsyncSystemUntilRunner {
+pub struct UntilRunner {
     base: BaseRunner<bool>,
 }
 
-impl AsyncSystemUntilRunner {
+impl UntilRunner {
     pub fn boxed<Marker>(
         tx: Sender<bool>,
         schedule_label: impl ScheduleLabel,
@@ -20,7 +20,7 @@ impl AsyncSystemUntilRunner {
 }
 
 
-impl AsyncSystemRunnable for AsyncSystemUntilRunner
+impl AsyncSystemRunnable for UntilRunner
 {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         let no_finished = self.base.run_with_output(world);

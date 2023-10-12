@@ -1,14 +1,15 @@
+use std::future::Future;
 use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{IntoSystem, World};
-use futures::channel::mpsc::{channel, Receiver, Sender};
+use futures::channel::mpsc::channel;
 use futures::StreamExt;
 
 use crate::task::commands::runner::BoxedAsyncSystemRunner;
 use crate::task::commands::runner::delay::DelayRunner;
 use crate::task::commands::runner::once::OnceRunner;
-use crate::task::commands::runner::until::AsyncSystemUntilRunner;
+use crate::task::commands::runner::until::UntilRunner;
 
 mod runner;
 
@@ -18,61 +19,68 @@ pub struct AsyncCommands(Arc<Mutex<Vec<BoxedAsyncSystemRunner>>>);
 
 
 impl AsyncCommands {
-    pub async fn once<Output, Marker>(
-        &mut self,
+    pub fn once<Output, Marker>(
+        &self,
         label: impl ScheduleLabel,
         system: impl IntoSystem<(), Output, Marker> + 'static + Send,
-    ) -> Output
+    ) -> impl Future<Output=Output>
         where Output: 'static
     {
-        let (tx, mut rx): (Sender<Output>, Receiver<Output>) = channel::<Output>(1);
+        let (tx, mut rx) = channel::<Output>(1);
         self.0.lock().unwrap().push(OnceRunner::boxed(tx, label, system));
 
-        loop {
-            if let Some(output) = rx.next().await {
-                return output;
+        async move {
+            loop {
+                if let Some(output) = rx.next().await {
+                    return output;
+                }
             }
         }
     }
 
 
-    pub async fn until<Marker>(
-        &mut self,
+    pub fn until<Marker>(
+        &self,
         schedule_label: impl ScheduleLabel,
         system: impl IntoSystem<(), bool, Marker> + 'static + Send,
-    ) {
+    ) -> impl Future<Output=()> {
         let (tx, mut rx) = channel::<bool>(1);
-        self.0.lock().unwrap().push(AsyncSystemUntilRunner::boxed(tx, schedule_label, system));
+        self.0.lock().unwrap().push(UntilRunner::boxed(tx, schedule_label, system));
 
-        loop {
-            if rx.next().await.is_some_and(|finished| finished) {
-                return;
+        async move {
+            loop {
+                if rx.next().await.is_some_and(|finished| finished) {
+                    return;
+                }
             }
         }
     }
 
 
-    pub async fn delay_frame(&mut self, schedule_label: impl ScheduleLabel, delay_frames: usize) {
+    pub fn delay_frame(&self, schedule_label: impl ScheduleLabel, delay_frames: usize) -> impl Future<Output=()>
+    {
         let (tx, mut rx) = channel::<()>(1);
         self.0.lock().unwrap().push(DelayRunner::boxed(tx, schedule_label, delay_frames));
 
-        loop {
-            if rx.next().await.is_some() {
-                return;
+        async move {
+            loop {
+                if rx.next().await.is_some() {
+                    return;
+                }
             }
         }
     }
 
 
     pub(crate) fn run_systems(
-        &mut self, 
+        &self,
         schedule_label: &dyn ScheduleLabel,
-        world: &mut World
+        world: &mut World,
     ) {
         let mut systems = self.0.lock().unwrap();
         let mut next_systems = Vec::with_capacity(systems.len());
         while let Some(mut system) = systems.pop() {
-            if !system.should_run(schedule_label){
+            if !system.should_run(schedule_label) {
                 next_systems.push(system);
                 continue;
             }
@@ -95,4 +103,6 @@ impl Clone for AsyncCommands {
 
 
 unsafe impl Send for AsyncCommands {}
+
+unsafe impl Sync for AsyncCommands {}
 

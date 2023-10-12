@@ -1,7 +1,7 @@
 use bevy::app::{App, First, Last, Plugin, PostUpdate, PreUpdate, RunFixedUpdateLoop, StateTransition, Update};
 use bevy::prelude::{NonSendMut, IntoSystemConfigs};
 
-use crate::task::AsyncSystemManager;
+use crate::task::BevTask;
 
 pub mod task;
 
@@ -11,7 +11,7 @@ pub mod task;
 macro_rules! run_tasks {
     ($schedule_label: expr) => {
         |world: &mut bevy::prelude::World| {
-            let Some(mut task_manager) = world.remove_non_send_resource::<AsyncSystemManager>() else { return; };
+            let Some(mut task_manager) = world.remove_non_send_resource::<BevTask>() else { return; };
             task_manager.update($schedule_label, world);
             world.insert_non_send_resource(task_manager);
         }
@@ -24,7 +24,7 @@ pub struct AsyncSystemPlugin;
 impl Plugin for AsyncSystemPlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_non_send_resource::<AsyncSystemManager>()
+            .init_non_send_resource::<BevTask>()
             .add_systems(First, (
                 remove_finished_tasks,
                 run_tasks!(First)
@@ -40,7 +40,7 @@ impl Plugin for AsyncSystemPlugin {
 
 
 fn remove_finished_tasks(
-    mut manager: NonSendMut<AsyncSystemManager>
+    mut manager: NonSendMut<BevTask>
 ) {
     manager.remove_finished_tasks();
 }

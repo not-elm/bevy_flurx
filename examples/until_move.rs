@@ -5,8 +5,8 @@ use bevy::prelude::{Camera2dBundle, Color, Commands, Component, NonSendMut, Quer
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
-use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::task::AsyncSystemManager;
+use bevtask::AsyncSystemPlugin;
+use bevtask::task::BevTask;
 
 #[derive(Component)]
 struct Movable;
@@ -43,9 +43,9 @@ fn setup_entities(mut commands: Commands) {
 
 
 fn setup_async_systems(
-    mut manager: NonSendMut<AsyncSystemManager>
+    mut task: NonSendMut<BevTask>
 ) {
-    manager.spawn_async(|mut commands| async move {
+    task.spawn_async(|commands| async move {
         commands.until(Update, move_up).await;
         commands.delay_frame(Update, 300).await;
         commands.until(Update, move_right).await;

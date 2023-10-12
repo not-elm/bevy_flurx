@@ -2,8 +2,8 @@ use bevy::app::{App, Startup, Update};
 use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, Component, NonSendMut, Query, Transform, TransformBundle, With};
 
-use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::task::AsyncSystemManager;
+use bevtask::AsyncSystemPlugin;
+use bevtask::task::BevTask;
 
 #[test]
 fn once() {
@@ -25,15 +25,15 @@ struct Movable;
 
 fn setup(
     mut commands: Commands,
-    mut task_manager: NonSendMut<AsyncSystemManager>,
+    mut task: NonSendMut<BevTask>,
 ) {
     commands.spawn((
         Movable,
         TransformBundle::default()
     ));
 
-    task_manager.spawn_async(|mut scheduler| async move {
-        scheduler.once(Update, move_transform).await;
+    task.spawn_async(|cmd| async move {
+        cmd.once(Update, move_transform).await;
     });
 }
 
