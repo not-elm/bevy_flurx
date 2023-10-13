@@ -14,6 +14,8 @@ pub mod once;
 pub mod until;
 pub mod wait;
 pub mod config;
+pub mod send;
+pub mod repeat;
 
 
 pub trait AsyncSystem<Out>: Sized {
@@ -74,7 +76,7 @@ impl SystemRunningStatus {
 }
 
 
-struct BaseRunner<In, Out> {
+struct BaseRunner<In = (), Out = ()> {
     tx: Sender<Out>,
     config: AsyncSystemConfig<In, Out>,
     status: SystemRunningStatus,

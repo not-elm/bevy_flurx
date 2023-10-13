@@ -51,7 +51,7 @@ impl AsyncSystemRunnable for UntilRunner {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         let finished = self.0.run_with_output(world);
         if finished {
-            self.0.tx.try_send(true).unwrap();
+            let _ = self.0.tx.try_send(true);
             SystemRunningStatus::Finished
         } else {
             SystemRunningStatus::Running

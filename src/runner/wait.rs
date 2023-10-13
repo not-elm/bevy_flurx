@@ -55,7 +55,7 @@ impl<In, Out> AsyncSystemRunnable for WaitRunner<In, Out>
 {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         if let Some(output) = self.0.run_with_output(world) {
-            self.0.tx.try_send(Some(output)).unwrap();
+            let _ = self.0.tx.try_send(Some(output));
             SystemRunningStatus::Finished
         } else {
             SystemRunningStatus::Running

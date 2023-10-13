@@ -4,7 +4,7 @@ use bevy::prelude::IntoSystem;
 
 
 
-pub(crate) struct AsyncSystemConfig<In, Out> {
+pub(crate) struct AsyncSystemConfig<In = (), Out = ()> {
     pub input: In,
     pub system: BoxedSystem<In, Out>,
 }

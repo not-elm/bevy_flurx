@@ -1,4 +1,4 @@
-use bevy::prelude::{Deref, DerefMut, World};
+use bevy::prelude::{Deref, DerefMut, NextState, ResMut, States, World};
 use futures::StreamExt;
 use crate::impl_async_runner_constructor;
 
@@ -8,6 +8,16 @@ use crate::runner::config::AsyncSystemConfig;
 pub struct Once<In, Out>(AsyncSystemConfig<In, Out>);
 
 impl_async_runner_constructor!(Once);
+
+
+impl Once<(), ()> {
+    #[inline]
+    pub fn set_state<S: States + Copy>(to:  S) -> Once<(), ()>{
+        Self::run(move |mut state: ResMut<NextState<S>>|{
+            state.set(to);
+        })
+    }
+}
 
 
 impl<In, Out> AsyncSystem<Out> for Once<In, Out>
@@ -39,7 +49,7 @@ impl<In, Output> AsyncSystemRunnable for OnceRunner<In, Output>
 {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         let output = self.run_with_output(world);
-        self.tx.try_send(output).unwrap();
+        let _ = self.tx.try_send(output);
         SystemRunningStatus::Finished
     }
 }

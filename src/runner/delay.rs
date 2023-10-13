@@ -48,10 +48,10 @@ impl AsyncSystemRunnable for DelayTimerRunner {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         let delta = world.resource::<Time>().delta();
         if self.timer.tick(delta).just_finished() {
-            SystemRunningStatus::Running
-        } else {
-            self.tx.try_send(()).unwrap();
+            let _ = self.tx.try_send(());
             SystemRunningStatus::Finished
+        } else {
+            SystemRunningStatus::Running
         }
     }
 }
