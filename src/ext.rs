@@ -7,6 +7,7 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Commands, Component, Deref, DerefMut};
 use bevy::tasks::AsyncComputeTaskPool;
 use bevy_async_task::{AsyncReceiver, AsyncTask};
+use futures::future::poll_immediate;
 
 use crate::task_pool::TaskPool;
 

@@ -5,7 +5,7 @@ use bevy::prelude::{Commands, Event, Events};
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
-use bevtask::runner::send::SendEvent;
+use bevtask::runner::once::Once;
 
 #[derive(Event, Default, Clone)]
 struct FinishEvent;
@@ -33,7 +33,7 @@ fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.spawn(Update, SendEvent::<FinishEvent>::default()).await;
+        task.spawn(Update, Once::send(FinishEvent)).await;
     });
 }
 

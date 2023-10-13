@@ -14,7 +14,6 @@ pub mod once;
 pub mod until;
 pub mod wait;
 pub mod config;
-pub mod send;
 pub mod repeat;
 
 

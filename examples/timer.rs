@@ -1,6 +1,6 @@
 use bevy::app::{App, Startup, Update};
 use bevy::MinimalPlugins;
-use bevy::prelude::{Commands, World};
+use bevy::prelude::Commands;
 use bevy::time::{Timer, TimerMode};
 
 use bevtask::BevTaskPlugin;
@@ -28,6 +28,6 @@ fn setup(mut commands: Commands) {
     });
 }
 
-fn timer(){
+fn timer() {
     println!("thread: {:?}", std::thread::current());
 }

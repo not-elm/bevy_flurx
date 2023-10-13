@@ -19,8 +19,18 @@ futures = "0.3.28"
 async-trait = "0.1.73"
 auto-delegate = "0.0.9"
 
+[features]
+default = ["update"]
+first = []
+pre_update = []
+state_transition = []
+update = []
+fixed_update = []
+post_update = []
+last = []
+
 
 [dev-dependencies]
 trybuild2 = "1.1.0"
-bevtask = {path = "./", version = "0.1"}
+bevtask = {path = ".", version = "0.1", features = ["pre_update"]}
 reqwest = "0.11.22"

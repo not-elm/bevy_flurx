@@ -1,7 +1,7 @@
-use bevy::prelude::{Deref, DerefMut, NextState, ResMut, States, World};
+use bevy::prelude::{Deref, DerefMut, Event, EventWriter, NextState, ResMut, States, World};
 use futures::StreamExt;
-use crate::impl_async_runner_constructor;
 
+use crate::impl_async_runner_constructor;
 use crate::runner::{AsyncSystem, AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, BoxedTaskFuture, new_channel, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
 
@@ -12,9 +12,17 @@ impl_async_runner_constructor!(Once);
 
 impl Once<(), ()> {
     #[inline]
-    pub fn set_state<S: States + Copy>(to:  S) -> Once<(), ()>{
-        Self::run(move |mut state: ResMut<NextState<S>>|{
+    pub fn set_state<S: States + Copy>(to: S) -> Once<(), ()> {
+        Self::run(move |mut state: ResMut<NextState<S>>| {
             state.set(to);
+        })
+    }
+
+
+    #[inline]
+    pub fn send<E: Event + Clone>(event: E) -> Once<(), ()> {
+        Self::run(move |mut ew: EventWriter<E>| {
+            ew.send(event.clone());
         })
     }
 }

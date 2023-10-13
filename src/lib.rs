@@ -1,5 +1,5 @@
-use bevy::app::{App, First, Last, Plugin, PostUpdate, PreUpdate, RunFixedUpdateLoop, StateTransition, Update};
-use bevy::prelude::{Commands, Entity, IntoSystemConfigs, Query};
+use bevy::app::{App, First, Plugin};
+use bevy::prelude::{Commands, Entity, Query};
 
 use crate::ext::ProcessReceiver;
 
@@ -15,17 +15,39 @@ impl Plugin for BevTaskPlugin {
     fn build(&self, app: &mut App) {
         use crate::inner_macros::run_tasks;
 
-        app
-            .add_systems(First, (
+        #[cfg(feature = "first")]
+        {
+            use bevy::prelude::IntoSystemConfigs;
+            app.add_systems(First, (
                 remove_finished_processes,
-                run_tasks!(First)
-            ).chain())
-            .add_systems(PreUpdate, run_tasks!(PreUpdate))
-            .add_systems(StateTransition, run_tasks!(StateTransition))
-            .add_systems(RunFixedUpdateLoop, run_tasks!(RunFixedUpdateLoop))
-            .add_systems(Update, run_tasks!(Update))
-            .add_systems(PostUpdate, run_tasks!(PostUpdate))
-            .add_systems(Last, run_tasks!(Last));
+                run_tasks!(bevy::app::First)
+            ).chain());
+        }
+
+        #[cfg(not(feature = "first"))]
+        { app.add_systems(First, remove_finished_processes); }
+
+        #[cfg(feature = "pre_update")]
+        { app.add_systems(bevy::app::PreUpdate, run_tasks!(bevy::app::PreUpdate)); }
+
+        #[cfg(feature = "state_transition")]
+        { app.add_systems(bevy::app::StateTransition, run_tasks!(bevy::app::StateTransition)); }
+
+        #[cfg(feature = "fixed_update")]
+        {
+            app
+                .add_systems(bevy::app::RunFixedUpdateLoop, run_tasks!(bevy::app::RunFixedUpdateLoop))
+                .add_systems(bevy::app::FixedUpdate, run_tasks!(bevy::app::FixedUpdate));
+        }
+
+        #[cfg(feature = "update")]
+        { app.add_systems(bevy::app::Update, run_tasks!(bevy::app::Update)); }
+
+        #[cfg(feature = "post_update")]
+        { app.add_systems(bevy::app::PostUpdate, run_tasks!(bevy::app::PostUpdate)); }
+
+        #[cfg(feature = "last")]
+        { app.add_systems(bevy::app::Last, run_tasks!(bevy::app::Last)); }
     }
 }
 
