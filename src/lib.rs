@@ -6,7 +6,7 @@ use crate::ext::ProcessReceiver;
 
 pub mod task_pool;
 pub mod ext;
-mod runner;
+pub mod runner;
 
 
 
@@ -16,7 +16,7 @@ pub struct BevTaskPlugin;
 impl Plugin for BevTaskPlugin {
     fn build(&self, app: &mut App) {
         use crate::inner_macros::run_tasks;
-        
+
         app
             .add_systems(First, (
                 remove_finished_processes,
@@ -55,7 +55,7 @@ pub(crate) mod inner_macros {
                     .collect();
 
                 for task in tasks.iter(){
-                    task.run_systems($schedule_label, world);
+                    task.run_systems(Box::new($schedule_label), world);
                 }
             }
         };

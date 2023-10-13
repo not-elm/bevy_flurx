@@ -1,37 +1,47 @@
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
-use bevy::ecs::system::BoxedSystem;
 use bevy::prelude::{Deref, IntoSystem, World};
-use futures::channel::mpsc::Sender;
+use bevy::utils::HashMap;
+use futures::channel::mpsc::{Receiver, Sender};
+
+use crate::runner::config::AsyncSystemConfig;
 
 pub mod delay;
 pub mod once;
 pub mod until;
 pub mod maybe;
+pub mod config;
 
 
+pub trait AsyncSystem<Out>: Sized {
+    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<Out>);
+}
 
 pub trait AsyncSystemRunnable {
-    fn new<In>(&mut self, input: In,  system: ) -> Self;
-
     fn run(&mut self, world: &mut World) -> SystemRunningStatus;
-
-    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool;
 }
 
 
 pub type BoxedAsyncSystemRunner = Box<dyn AsyncSystemRunnable>;
-
+pub type BoxedTaskFuture<Out> = Pin<Box<dyn Future<Output=Out> + Send>>;
 
 #[derive(Default, Deref)]
-pub struct Runners(Arc<Mutex<Vec<BoxedAsyncSystemRunner>>>);
+pub struct Runners(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRunner>>>>);
 
 
 impl Runners {
     #[inline]
-    pub(crate) fn push(&self, runner: BoxedAsyncSystemRunner){
-        self.0.lock().unwrap().push(runner);
+    pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel,  runner: BoxedAsyncSystemRunner) {
+        let mut map = self.0.lock().unwrap();
+
+        if let Some(runners) = map.get_mut(&schedule_label){
+            runners.push(runner);
+        }else{
+            map.insert(schedule_label, vec![runner]);
+        }
     }
 }
 
@@ -64,51 +74,43 @@ impl SystemRunningStatus {
 }
 
 
-
-struct BaseRunner<Output> {
-    tx: Sender<Output>,
-    schedule_label: BoxedScheduleLabel,
-    system: BoxedSystem<(), Output>,
+struct BaseRunner<In, Out> {
+    tx: Sender<Out>,
+    config: AsyncSystemConfig<In, Out>,
     status: SystemRunningStatus,
 }
 
 
-impl<Output> BaseRunner<Output>
-    where Output: 'static
+impl<In, Out> BaseRunner<In, Out>
+    where Out: 'static,
+          In: Clone + 'static
 {
-    fn new<Marker>(
-        tx: Sender<Output>,
-        schedule_label: impl ScheduleLabel,
-        system: impl IntoSystem<(), Output, Marker> + Send + 'static,
-    ) -> BaseRunner<Output> {
+    fn new(
+        tx: Sender<Out>,
+        config: AsyncSystemConfig<In, Out>,
+    ) -> BaseRunner<In, Out> {
         Self {
             tx,
-            schedule_label: Box::new(schedule_label),
-            system: Box::new(IntoSystem::into_system(system)),
+            config,
             status: SystemRunningStatus::NoInitialized,
         }
     }
 
-    fn run_with_output(&mut self, world: &mut World) -> Output {
+
+    fn run_with_output(&mut self, world: &mut World) -> Out {
         if self.status.no_initialized() {
-            self.system.initialize(world);
+            self.config.system.initialize(world);
             self.status = SystemRunningStatus::Running;
         }
 
-        let output = self.system.run((), world);
-        self.system.apply_deferred(world);
+        let output = self.config.system.run(self.config.input.clone(), world);
+        self.config.system.apply_deferred(world);
         output
-    }
-
-
-    #[inline]
-    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool {
-        schedule_label.eq(&self.schedule_label)
     }
 }
 
 
-
-
-
-
+#[inline]
+fn new_channel<Out>(size: usize) -> (Sender<Out>, Receiver<Out>) {
+    futures::channel::mpsc::channel(size)
+}

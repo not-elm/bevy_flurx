@@ -1,47 +1,77 @@
-use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::prelude::World;
+use bevy::time::{Time, Timer};
 use futures::channel::mpsc::Sender;
+use futures::StreamExt;
 
-use crate::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::{AsyncSystem, AsyncSystemRunnable, BoxedAsyncSystemRunner, BoxedTaskFuture, new_channel, SystemRunningStatus};
 
-pub struct DelayRunner {
-    tx: Sender<()>,
-    schedule_label: BoxedScheduleLabel,
-    frame_count: usize,
-    delay_frames: usize,
+#[derive(Clone, Debug)]
+pub enum Delay {
+    Frame(usize),
+    Timer(Timer),
 }
 
 
-impl DelayRunner {
-    pub fn boxed(
-        tx: Sender<()>,
-        schedule_label: impl ScheduleLabel,
-        delay_frames: usize,
-    ) -> BoxedAsyncSystemRunner {
-        Box::new(Self {
-            tx,
-            schedule_label: Box::new(schedule_label),
-            frame_count: 0,
-            delay_frames,
-        })
+impl AsyncSystem<()> for Delay {
+    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<()>) {
+        let (tx, mut rx) = new_channel(1);
+        let runner: BoxedAsyncSystemRunner = match self {
+            Self::Frame(delay_frames) => Box::new(DelayFrameRunner {
+                current_ticks: 0,
+                delay_frames,
+                tx,
+            }),
+            Self::Timer(timer) => Box::new(DelayTimerRunner {
+                tx,
+                timer,
+            })
+        };
+
+        (runner, Box::pin(async move {
+            loop {
+                if rx.next().await.is_some() {
+                    return;
+                }
+            }
+        }))
     }
 }
 
 
-impl AsyncSystemRunnable for DelayRunner {
-    fn run(&mut self, _: &mut World) -> SystemRunningStatus {
-        self.frame_count += 1;
-        if self.frame_count < self.delay_frames {
+struct DelayTimerRunner {
+    timer: Timer,
+    tx: Sender<()>,
+}
+
+
+impl AsyncSystemRunnable for DelayTimerRunner {
+    fn run(&mut self, world: &mut World) -> SystemRunningStatus {
+        let delta = world.resource::<Time>().delta();
+        if self.timer.tick(delta).just_finished() {
             SystemRunningStatus::Running
         } else {
             self.tx.try_send(()).unwrap();
             SystemRunningStatus::Finished
         }
     }
+}
 
 
-    #[inline]
-    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool {
-        schedule_label.eq(&self.schedule_label)
+struct DelayFrameRunner {
+    current_ticks: usize,
+    delay_frames: usize,
+    tx: Sender<()>,
+}
+
+
+impl AsyncSystemRunnable for DelayFrameRunner {
+    fn run(&mut self, _: &mut World) -> SystemRunningStatus {
+        self.current_ticks += 1;
+        if self.current_ticks < self.delay_frames {
+            SystemRunningStatus::Running
+        } else {
+            self.tx.try_send(()).unwrap();
+            SystemRunningStatus::Finished
+        }
     }
 }

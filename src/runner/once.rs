@@ -1,40 +1,45 @@
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{IntoSystem, World};
-use futures::channel::mpsc::Sender;
+use bevy::prelude::{Deref, DerefMut, World};
+use futures::StreamExt;
+use crate::impl_async_runner_constructor;
 
-use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::{AsyncSystem, AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, BoxedTaskFuture, new_channel, SystemRunningStatus};
+use crate::runner::config::AsyncSystemConfig;
 
-pub struct OnceRunner<Output> {
-    base: BaseRunner<Output>,
-}
+pub struct Once<In, Out>(AsyncSystemConfig<In, Out>);
 
-impl<Output> OnceRunner<Output>
-    where Output: 'static
+impl_async_runner_constructor!(Once);
+
+
+impl<In, Out> AsyncSystem<Out> for Once<In, Out>
+    where
+        In: Clone + 'static,
+        Out: 'static + Send
 {
-    pub fn boxed<Marker>(
-        tx: Sender<Output>,
-        schedule_label: impl ScheduleLabel,
-        system: impl IntoSystem<(), Output, Marker> + Send + 'static,
-    ) -> BoxedAsyncSystemRunner {
-        Box::new(Self {
-            base: BaseRunner::new(tx, schedule_label, system)
-        })
+    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<Out>) {
+        let (tx, mut rx) = new_channel(1);
+        let runner = Box::new(OnceRunner(BaseRunner::new(tx, self.0)));
+        (runner, Box::pin(async move {
+            loop {
+                if let Some(output) = rx.next().await {
+                    return output;
+                }
+            }
+        }))
     }
 }
 
 
-impl<Output> AsyncSystemRunnable for OnceRunner<Output>
-    where Output: 'static
+#[derive(Deref, DerefMut)]
+struct OnceRunner<In, Out>(BaseRunner<In, Out>) where In: Clone;
+
+impl<In, Output> AsyncSystemRunnable for OnceRunner<In, Output>
+    where
+        In: Clone + 'static,
+        Output: 'static
 {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
-        let output = self.base.run_with_output(world);
-        self.base.tx.try_send(output).unwrap();
+        let output = self.run_with_output(world);
+        self.tx.try_send(output).unwrap();
         SystemRunningStatus::Finished
-    }
-
-
-    #[inline]
-    fn should_run(&self, label: &dyn ScheduleLabel) -> bool {
-        self.base.should_run(label)
     }
 }

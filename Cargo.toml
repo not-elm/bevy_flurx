@@ -17,6 +17,7 @@ bevy_mod_picking = "0.15.0"
 bevy-async-task = "1.1.0"
 futures = "0.3.28"
 async-trait = "0.1.73"
+auto-delegate = "0.0.9"
 
 
 [dev-dependencies]

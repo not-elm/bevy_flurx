@@ -4,6 +4,7 @@ use bevy::prelude::{Commands, Component, Query, Transform, TransformBundle, With
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
+use bevtask::runner::once::Once;
 
 #[test]
 fn once() {
@@ -32,7 +33,7 @@ fn setup(
     ));
 
     commands.spawn_async(|task| async move {
-        task.run_once(Update, move_transform).await;
+        task.spawn(Update, Once::run(move_transform)).await;
     });
 }
 
