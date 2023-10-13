@@ -2,12 +2,13 @@ use std::future::Future;
 use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{IntoSystem, World};
+use bevy::prelude::{Event, EventReader, IntoSystem, World};
 use futures::channel::mpsc::channel;
 use futures::StreamExt;
 
 use crate::task::commands::runner::BoxedAsyncSystemRunner;
 use crate::task::commands::runner::delay::DelayRunner;
+use crate::task::commands::runner::maybe::MaybeOutputRunner;
 use crate::task::commands::runner::once::OnceRunner;
 use crate::task::commands::runner::until::UntilRunner;
 
@@ -72,6 +73,28 @@ impl AsyncCommands {
     }
 
 
+    pub fn wait_event<E: Event>(&self, schedule_label: impl ScheduleLabel + Clone) -> impl Future<Output=()> {
+        self.until(schedule_label, |er: EventReader<E>| {
+            !er.is_empty()
+        })
+    }
+
+
+    pub fn until_come_event<E: Event + Clone>(&self, schedule_label: impl ScheduleLabel + Clone) -> impl Future<Output=E> {
+        let (tx, mut rx) = channel::<Option<E>>(10);
+        self.0.lock().unwrap().push(MaybeOutputRunner::boxed(tx, schedule_label, |mut er: EventReader<E>| {
+            er.iter().next().cloned()
+        }));
+
+        async move {
+            loop {
+                if let Some(event) = rx.next().await.and_then(|output| output) {
+                    return event;
+                }
+            }
+        }
+    }
+
     pub(crate) fn run_systems(
         &self,
         schedule_label: &dyn ScheduleLabel,
@@ -94,13 +117,11 @@ impl AsyncCommands {
     }
 }
 
-
 impl Clone for AsyncCommands {
     fn clone(&self) -> Self {
         Self(Arc::clone(&self.0))
     }
 }
-
 
 unsafe impl Send for AsyncCommands {}
 

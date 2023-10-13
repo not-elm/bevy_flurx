@@ -56,14 +56,14 @@ fn setup(
 fn move_right(mut moves: Query<&mut Transform, With<Movable>>) -> bool {
     let mut transform = moves.single_mut();
     transform.translation.x += 1.;
-    transform.translation.x < 3.
+    3. <= transform.translation.x
 }
 
 
 fn move_up(mut moves: Query<&mut Transform, With<Movable>>) -> bool {
     let mut transform = moves.single_mut();
     transform.translation.y += 1.;
-    transform.translation.y < 2.
+     2. <=  transform.translation.y
 }
 
 

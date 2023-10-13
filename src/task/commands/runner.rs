@@ -1,6 +1,7 @@
 pub mod delay;
 pub mod once;
 pub mod until;
+pub mod maybe;
 
 use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::ecs::system::BoxedSystem;
