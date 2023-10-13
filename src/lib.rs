@@ -1,7 +1,8 @@
 use bevy::app::{App, First, Plugin};
 use bevy::prelude::{Commands, Entity, Query};
+use futures_lite::future::block_on;
 
-use crate::ext::ProcessReceiver;
+use crate::ext::BevTask;
 
 pub mod task_pool;
 pub mod ext;
@@ -54,10 +55,10 @@ impl Plugin for BevTaskPlugin {
 
 fn remove_finished_processes(
     mut commands: Commands,
-    mut processes: Query<(Entity, &mut ProcessReceiver)>,
+    mut processes: Query<(Entity, &mut BevTask)>,
 ) {
     for (entity, mut process) in processes.iter_mut() {
-        if process.finished() {
+        if block_on(futures_lite::future::poll_once(&mut process.0)).is_some() {
             commands.entity(entity).despawn();
         }
     }

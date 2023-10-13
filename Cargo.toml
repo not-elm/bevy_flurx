@@ -12,12 +12,10 @@ name = "until_move"
 path = "examples/until_move.rs"
 
 [dependencies]
-bevy = {version = "0.11.3"}
-bevy_mod_picking = "0.15.0"
-bevy-async-task = "1.1.0"
-futures = "0.3.28"
+bevy = {version = "0.11.3", default-features = false }
 async-trait = "0.1.73"
-auto-delegate = "0.0.9"
+futures-lite = "1.13.0"
+futures = "0.3.28"
 
 [features]
 default = ["update"]
@@ -31,6 +29,7 @@ last = []
 
 
 [dev-dependencies]
+bevy = "0.11.3"
 trybuild2 = "1.1.0"
 bevtask = {path = ".", version = "0.1", features = ["pre_update"]}
 reqwest = "0.11.22"
