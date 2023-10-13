@@ -8,7 +8,7 @@ use bevy::prelude::{Commands, Component, Deref, DerefMut};
 use bevy::tasks::AsyncComputeTaskPool;
 use bevy_async_task::{AsyncReceiver, AsyncTask};
 
-use crate::task::TaskPool;
+use crate::task_pool::TaskPool;
 
 #[async_trait]
 pub trait AsyncPool<'w, 's> {

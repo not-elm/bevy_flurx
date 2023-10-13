@@ -6,10 +6,11 @@ use futures::channel::mpsc::channel;
 use futures::StreamExt;
 
 use crate::runner::delay::DelayRunner;
-use crate::runner::maybe::MaybeOutputRunner;
 use crate::runner::once::OnceRunner;
 use crate::runner::Runners;
 use crate::runner::until::UntilRunner;
+
+mod wait;
 
 #[derive(Default, Component, Clone)]
 pub struct TaskPool(Runners);
@@ -69,27 +70,12 @@ impl TaskPool {
     }
 
 
-    pub fn wait_event<E: Event>(&self, schedule_label: impl ScheduleLabel + Clone) -> impl Future<Output=()> {
+    pub fn until_event<E: Event>(&self, schedule_label: impl ScheduleLabel + Clone) -> impl Future<Output=()> {
         self.until(schedule_label, |er: EventReader<E>| {
             !er.is_empty()
         })
     }
 
-
-    pub fn until_come_event<E: Event + Clone>(&self, schedule_label: impl ScheduleLabel + Clone) -> impl Future<Output=E> {
-        let (tx, mut rx) = channel::<Option<E>>(10);
-        self.0.push(MaybeOutputRunner::boxed(tx, schedule_label, |mut er: EventReader<E>| {
-            er.iter().next().cloned()
-        }));
-
-        async move {
-            loop {
-                if let Some(event) = rx.next().await.and_then(|output| output) {
-                    return event;
-                }
-            }
-        }
-    }
 
     pub(crate) fn run_systems(
         &self,

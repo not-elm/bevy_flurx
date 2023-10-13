@@ -4,37 +4,19 @@ use bevy::prelude::{Commands, Entity, IntoSystemConfigs, Query};
 use crate::ext::ProcessReceiver;
 
 
-pub mod task;
+pub mod task_pool;
 pub mod ext;
 mod runner;
 
 
-#[macro_use]
-pub(crate) mod inner_macros {
-    macro_rules! run_tasks {
-        ($schedule_label: expr) => {
-            move |world: &mut bevy::prelude::World| {
-                let tasks: Vec<crate::task::TaskPool> = world
-                    .query::<&crate::task::TaskPool>()
-                    .iter(world)
-                    .cloned()
-                    .collect();
-
-                for task in tasks.iter(){
-                    task.run_systems($schedule_label, world);
-                }
-            }
-        };
-    }
-
-    pub(crate) use run_tasks;
-}
 
 pub struct BevTaskPlugin;
 
 
 impl Plugin for BevTaskPlugin {
     fn build(&self, app: &mut App) {
+        use crate::inner_macros::run_tasks;
+        
         app
             .add_systems(First, (
                 remove_finished_processes,
@@ -61,3 +43,23 @@ fn remove_finished_processes(
     }
 }
 
+#[macro_use]
+pub(crate) mod inner_macros {
+    macro_rules! run_tasks {
+        ($schedule_label: expr) => {
+            move |world: &mut bevy::prelude::World| {
+                let tasks: Vec<crate::task_pool::TaskPool> = world
+                    .query::<&crate::task_pool::TaskPool>()
+                    .iter(world)
+                    .cloned()
+                    .collect();
+
+                for task in tasks.iter(){
+                    task.run_systems($schedule_label, world);
+                }
+            }
+        };
+    }
+
+    pub(crate) use run_tasks;
+}

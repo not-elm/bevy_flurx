@@ -1,46 +1,33 @@
-use bevy::app::{App, Startup};
-use bevy::core::TaskPoolPlugin;
+use bevy::app::{App, PreUpdate, Startup, Update};
+use bevy::core::{FrameCount, FrameCountPlugin, TaskPoolPlugin};
 use bevy::ecs::event::ManualEventReader;
-use bevy::prelude::{Commands, Event, Events, EventWriter, NextState, OnTransition, States};
+use bevy::prelude::{Commands, Event, Events, EventWriter, Res};
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
-use bevtask::ext::state_schedule_label::AddBevTaskStateScheduleLabel;
 
 #[derive(Event)]
 struct FinishEvent;
 
-#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash, States)]
-enum TestState {
-    #[default]
-    Fist,
-    Second,
-}
 
 #[test]
-fn state_on_translation() {
+fn wait_output() {
     let mut app = App::new();
-    app.add_state::<TestState>();
     app.add_event::<FinishEvent>();
 
     app.add_plugins((
         TaskPoolPlugin::default(),
+        FrameCountPlugin,
         BevTaskPlugin
     ));
     let er = ManualEventReader::<FinishEvent>::default();
     app.add_systems(Startup, setup);
-    app.register_task_schedule_on_translation(TestState::Fist, TestState::Second);
 
     app.update();
     let events = app.world.resource::<Events<FinishEvent>>();
     assert!(er.is_empty(events));
 
-    {
-        let mut state = app.world.resource_mut::<NextState<TestState>>();
-        state.0.replace(TestState::Second);
-    }
     app.update();
-
     let events = app.world.resource::<Events<FinishEvent>>();
     assert!(!er.is_empty(events));
 }
@@ -50,10 +37,19 @@ fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.once(OnTransition { from: TestState::Fist, to: TestState::Second }, send_finish_event).await;
+        task.wait_output(PreUpdate, count).await;
+        task.once(Update, send_finish_event).await;
     });
 }
 
+
+fn count(count: Res<FrameCount>) -> Option<()> {
+    if 1 <= count.0  {
+        Some(())
+    } else {
+        None
+    }
+}
 
 fn send_finish_event(mut ew: EventWriter<FinishEvent>) {
     ew.send(FinishEvent);
