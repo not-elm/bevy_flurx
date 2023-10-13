@@ -1,14 +1,36 @@
 use bevy::app::{App, First, Plugin};
 use bevy::prelude::{Commands, Entity, Query};
 use futures_lite::future::block_on;
+use crate::task::BevTaskHandle;
 
-use crate::ext::BevTask;
 
-pub mod task_pool;
+pub mod task;
 pub mod ext;
 pub mod runner;
 
 
+pub mod prelude{
+    pub use crate::{
+        BevTaskPlugin,
+        task::{BevTaskHandle, BevTaskCommands},
+        runner::{
+            AsyncSystemRunnable,
+            BoxedAsyncSystemRunner,
+            delay::Delay,
+            once::Once,
+            repeat::Repeat,
+            wait::Wait
+        }
+    };
+}
+
+/// Adds
+///
+/// ```no_run
+///
+///
+///
+/// ```
 pub struct BevTaskPlugin;
 
 
@@ -55,10 +77,10 @@ impl Plugin for BevTaskPlugin {
 
 fn remove_finished_processes(
     mut commands: Commands,
-    mut processes: Query<(Entity, &mut BevTask)>,
+    mut task_handles: Query<(Entity, &mut BevTaskHandle)>,
 ) {
-    for (entity, mut process) in processes.iter_mut() {
-        if block_on(futures_lite::future::poll_once(&mut process.0)).is_some() {
+    for (entity, mut task) in task_handles.iter_mut() {
+        if block_on(futures_lite::future::poll_once(&mut task.0)).is_some() {
             commands.entity(entity).despawn();
         }
     }
@@ -68,15 +90,15 @@ fn remove_finished_processes(
 pub(crate) mod inner_macros {
     macro_rules! run_tasks {
         ($schedule_label: expr) => {
-            move |world: &mut bevy::prelude::World| {
-                let tasks: Vec<crate::task_pool::TaskPool> = world
-                    .query::<&crate::task_pool::TaskPool>()
+             move |world: &mut bevy::prelude::World| {
+                let runners: Vec<crate::runner::Runners> = world
+                    .query::<&crate::runner::Runners>()
                     .iter(world)
                     .cloned()
                     .collect();
-
-                for task in tasks.iter(){
-                    task.run_systems(Box::new($schedule_label), world);
+                let schedule_label: Box<dyn bevy::ecs::schedule::ScheduleLabel> = Box::new($schedule_label);
+                for runner in runners.iter(){
+                    runner.run_systems(&schedule_label, world);
                 }
             }
         };

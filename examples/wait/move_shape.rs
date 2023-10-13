@@ -5,9 +5,9 @@ use bevy::prelude::{Camera2dBundle, Color, Commands, Component, Query, Sprite, T
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::runner::until::Until;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::prelude::Wait;
 
 #[derive(Component)]
 struct Movable;
@@ -46,9 +46,9 @@ fn setup_entities(mut commands: Commands) {
 fn setup_async_systems(
     mut commands: Commands
 ) {
-    commands.spawn_async(|task| async move {
-        task.spawn(Update, Until::run(move_up)).await;
-        task.spawn(Update, Until::run(move_right)).await;
+    commands.spawn_async(|cmd| async move {
+        cmd.spawn(Update, Wait::until(move_up)).await;
+        cmd.spawn(Update, Wait::until(move_right)).await;
     });
 }
 
@@ -58,7 +58,7 @@ fn move_up(
 ) -> bool {
     let mut transform = shape.single_mut();
     transform.translation.y += 1.;
-    50. <= transform.translation.y
+    300. <= transform.translation.y
 }
 
 
@@ -67,5 +67,5 @@ fn move_right(
 ) -> bool {
     let mut transform = shape.single_mut();
     transform.translation.x += 1.;
-    50. <= transform.translation.x
+    500. <= transform.translation.x
 }

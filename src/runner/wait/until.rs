@@ -1,43 +1,41 @@
 use bevy::prelude::{Event, EventReader, IntoSystem, World};
+use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::StreamExt;
 
-use crate::runner::{AsyncSystem, AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, BoxedTaskFuture, new_channel, SystemRunningStatus};
+use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystem, new_channel, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
 
-
-
-pub struct Until {
-
+pub(crate) struct Until {
     config: AsyncSystemConfig<(), bool>,
 }
 
 
 impl Until {
     #[inline]
-    pub fn run<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> Until {
-        Self{
+    pub fn create<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoAsyncSystem<()> {
+        Self {
             config: AsyncSystemConfig::new(system)
         }
     }
 
 
     #[inline]
-    pub fn come_event<E: Event>() -> Self{
-        Self::run(|er: EventReader<E>|{
+    pub fn event<E: Event>() -> impl IntoAsyncSystem<()> {
+        Self::create(|er: EventReader<E>| {
             !er.is_empty()
         })
     }
 }
 
 
-impl AsyncSystem<()> for Until {
-    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<()>) {
+impl IntoAsyncSystem<()> for Until {
+    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<()>) {
         let (tx, mut rx) = new_channel(1);
         let runner = Box::new(UntilRunner(BaseRunner::new(tx, self.config)));
-        (runner, Box::pin(async move{
+        (runner, AsyncComputeTaskPool::get().spawn(async move {
             loop {
-                if rx.next().await.is_some_and(|finished|finished){
-                   return;
+                if rx.next().await.is_some_and(|finished| finished) {
+                    return;
                 }
             }
         }))

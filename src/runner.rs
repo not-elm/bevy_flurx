@@ -1,9 +1,8 @@
-use std::future::Future;
-use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::schedule::BoxedScheduleLabel;
-use bevy::prelude::{Deref, World};
+use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
+use bevy::prelude::{Component, Deref, World};
+use bevy::tasks::Task;
 use bevy::utils::HashMap;
 use futures::channel::mpsc::{Receiver, Sender};
 
@@ -11,14 +10,13 @@ use crate::runner::config::AsyncSystemConfig;
 
 pub mod delay;
 pub mod once;
-pub mod until;
 pub mod wait;
 pub mod config;
 pub mod repeat;
 
 
-pub trait AsyncSystem<Out>: Sized {
-    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<Out>);
+pub trait IntoAsyncSystem<Out = ()>: Sized {
+    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<Out>);
 }
 
 pub trait AsyncSystemRunnable {
@@ -27,10 +25,10 @@ pub trait AsyncSystemRunnable {
 
 
 pub type BoxedAsyncSystemRunner = Box<dyn AsyncSystemRunnable>;
-pub type BoxedTaskFuture<Out> = Pin<Box<dyn Future<Output=Out> + Send>>;
 
-#[derive(Default, Deref)]
-pub struct Runners(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRunner>>>>);
+
+#[derive(Default, Component, Deref)]
+pub(crate) struct Runners(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRunner>>>>);
 
 
 impl Runners {
@@ -44,7 +42,29 @@ impl Runners {
             map.insert(schedule_label, vec![runner]);
         }
     }
+
+
+    pub(crate) fn run_systems(
+        &self,
+        schedule_label: &dyn ScheduleLabel,
+        world: &mut World,
+    ) {
+        let mut map = self.0.lock().unwrap();
+        let Some(systems) = map.get_mut(schedule_label) else { return; };
+        let mut next_systems = Vec::with_capacity(systems.len());
+        while let Some(mut system) = systems.pop() {
+            if !system.run(world).finished() {
+                next_systems.push(system);
+            }
+        }
+        *systems = next_systems;
+    }
 }
+
+
+unsafe impl Send for Runners {}
+
+unsafe impl Sync for Runners {}
 
 impl Clone for Runners {
     fn clone(&self) -> Self {

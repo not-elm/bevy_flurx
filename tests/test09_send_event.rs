@@ -3,9 +3,9 @@ use bevy::core::TaskPoolPlugin;
 use bevy::ecs::event::ManualEventReader;
 use bevy::prelude::{Commands, Event, Events};
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::runner::once::Once;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::runner::once::Once;
 
 #[derive(Event, Default, Clone)]
 struct FinishEvent;

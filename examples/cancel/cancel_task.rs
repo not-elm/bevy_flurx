@@ -1,17 +1,20 @@
-use bevy::app::{App, Startup, Update};
-use bevy::input::{Input, InputPlugin};
-use bevy::MinimalPlugins;
-use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, Timer, TimerMode, With};
+use std::time::Duration;
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::{AsyncPool, BevTask};
-use bevtask::runner::delay::Delay;
+use bevy::app::{App, Startup, Update};
+use bevy::DefaultPlugins;
+use bevy::input::Input;
+use bevy::log::info;
+use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
+
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::runner::delay::Delay;
+use bevy_async_system::task::BevTaskHandle;
 
 fn main() {
     App::new()
         .add_plugins((
-            MinimalPlugins,
-            InputPlugin,
+            DefaultPlugins,
             BevTaskPlugin
         ))
         .add_systems(Startup, setup)
@@ -23,7 +26,7 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn_async(|task| async move {
         loop {
-            task.spawn(Update, Delay::Timer(Timer::from_seconds(1., TimerMode::Once))).await;
+            task.spawn(Update, Delay::Time(Duration::from_secs(1))).await;
             println!("******** tick **********");
         }
     });
@@ -33,10 +36,11 @@ fn setup(mut commands: Commands) {
 fn cancel(
     mut commands: Commands,
     input: Res<Input<KeyCode>>,
-    task: Query<Entity, With<BevTask>>,
+    task: Query<Entity, With<BevTaskHandle>>,
 ) {
     if input.just_pressed(KeyCode::Return) {
         for entity in task.iter() {
+            info!("cancel");
             commands.entity(entity).despawn();
         }
     }

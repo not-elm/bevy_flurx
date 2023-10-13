@@ -3,10 +3,10 @@ use bevy::core::{FrameCount, FrameCountPlugin, TaskPoolPlugin};
 use bevy::ecs::event::ManualEventReader;
 use bevy::prelude::{Commands, Event, Events, EventWriter, Res};
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::runner::once::Once;
-use bevtask::runner::wait::Wait;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::runner::once::Once;
+use bevy_async_system::runner::wait::Wait;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -39,15 +39,16 @@ fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.spawn(PreUpdate, Wait::run(count)).await;
+        let count = task.spawn(PreUpdate, Wait::output(count)).await;
+        assert_eq!(count, 1);
         task.spawn(Update, Once::run(send_finish_event)).await;
     });
 }
 
 
-fn count(count: Res<FrameCount>) -> Option<()> {
+fn count(count: Res<FrameCount>) -> Option<u32> {
     if 1 <= count.0 {
-        Some(())
+        Some(count.0)
     } else {
         None
     }

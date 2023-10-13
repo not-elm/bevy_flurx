@@ -3,9 +3,9 @@ use bevy::core::TaskPoolPlugin;
 use bevy::ecs::event::ManualEventReader;
 use bevy::prelude::{Commands, Event, Events, EventWriter};
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::runner::repeat::Repeat;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::runner::repeat::Repeat;
 
 #[derive(Event, Default, Clone)]
 struct RepeatEvent;
@@ -51,7 +51,7 @@ fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.spawn(Update, Repeat::run_for(3, |mut ew: EventWriter<RepeatEvent>| {
+        task.spawn(Update, Repeat::times(3, |mut ew: EventWriter<RepeatEvent>| {
             ew.send(RepeatEvent);
         })).await;
     });

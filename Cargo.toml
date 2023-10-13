@@ -1,5 +1,5 @@
 [package]
-name = "bevtask"
+name = "bevy_async_system"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,15 +7,36 @@ edition = "2021"
 name = "all"
 path = "tests/entry_point.rs"
 
+
 [[example]]
-name = "until_move"
-path = "examples/until_move.rs"
+name = "cancel_task"
+path = "examples/cancel/cancel_task.rs"
+
+[[example]]
+name = "cancel_system"
+path = "examples/cancel/cancel_system.rs"
+
+[[example]]
+name = "delay_time_and_frames"
+path = "examples/delay/delay_time_and_frames.rs"
+
+[[example]]
+name = "move_shape"
+path = "examples/wait/move_shape.rs"
+
+[[example]]
+name = "wait_for_audio_playback_to_finish"
+path = "examples/wait/wait_for_audio_playback_to_finish.rs"
+
+
 
 [dependencies]
 bevy = {version = "0.11.3", default-features = false }
 async-trait = "0.1.73"
 futures-lite = "1.13.0"
 futures = "0.3.28"
+async-compat = "0.2.2"
+
 
 [features]
 default = ["update"]
@@ -31,5 +52,6 @@ last = []
 [dev-dependencies]
 bevy = "0.11.3"
 trybuild2 = "1.1.0"
-bevtask = {path = ".", version = "0.1", features = ["pre_update"]}
+bevy_async_system = {path = ".", version = "0.1", features = ["pre_update"]}
 reqwest = "0.11.22"
+bevy_framepace = "0.13.3"

@@ -4,9 +4,9 @@ use bevy::DefaultPlugins;
 use bevy::prelude::{Camera2dBundle, Color, Commands, Query, Res, TextBundle};
 use bevy::text::{Text, TextStyle};
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::runner::once::Once;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::runner::once::Once;
 
 fn main() {
     App::new()

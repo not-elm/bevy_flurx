@@ -1,8 +1,9 @@
 use bevy::prelude::{Deref, DerefMut, Event, EventWriter, NextState, ResMut, States, World};
+use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::StreamExt;
 
 use crate::impl_async_runner_constructor;
-use crate::runner::{AsyncSystem, AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, BoxedTaskFuture, new_channel, SystemRunningStatus};
+use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystem, new_channel, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
 
 pub struct Once<In, Out>(AsyncSystemConfig<In, Out>);
@@ -28,15 +29,15 @@ impl Once<(), ()> {
 }
 
 
-impl<In, Out> AsyncSystem<Out> for Once<In, Out>
+impl<In, Out> IntoAsyncSystem<Out> for Once<In, Out>
     where
         In: Clone + 'static,
         Out: 'static + Send
 {
-    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<Out>) {
+    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<Out>) {
         let (tx, mut rx) = new_channel(1);
         let runner = Box::new(OnceRunner(BaseRunner::new(tx, self.0)));
-        (runner, Box::pin(async move {
+        (runner, AsyncComputeTaskPool::get().spawn(async move {
             loop {
                 if let Some(output) = rx.next().await {
                     return output;

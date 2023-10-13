@@ -1,28 +1,16 @@
 use bevy::app::App;
-use bevy::prelude::{OnEnter, OnExit, OnTransition, States};
+use bevy::ecs::schedule::ScheduleLabel;
 
 use crate::inner_macros::run_tasks;
 
-pub trait AddBevTaskStateScheduleLabel {
-    fn register_task_schedule_on_enter<S: States + Copy>(&mut self, state: S) -> &mut Self;
-    fn register_task_schedule_on_exit<S: States + Copy>(&mut self, state: S) -> &mut Self;
-    fn register_task_schedule_on_transition<S: States + Copy>(&mut self, from: S, to: S) -> &mut Self;
+pub trait AddBevTaskSchedule {
+    fn register_task_schedule(&mut self, schedule_label: impl ScheduleLabel + Clone) -> &mut Self;
 }
 
 
-impl AddBevTaskStateScheduleLabel for App {
-    #[inline]
-    fn register_task_schedule_on_enter<S: States + Copy>(&mut self, state: S) -> &mut Self {
-        self.add_systems(OnEnter(state), run_tasks!(OnEnter(state)))
-    }
-
-    #[inline]
-    fn register_task_schedule_on_exit<S: States + Copy>(&mut self, state: S) -> &mut Self {
-        self.add_systems(OnExit(state), run_tasks!(OnExit(state)))
-    }
-
-    #[inline]
-    fn register_task_schedule_on_transition<S: States + Copy>(&mut self, from: S, to: S) -> &mut Self {
-        self.add_systems(OnTransition { from, to }, run_tasks!(OnTransition{from, to}))
+impl AddBevTaskSchedule for App {
+    #[inline(always)]
+    fn register_task_schedule(&mut self, schedule_label: impl ScheduleLabel + Clone) -> &mut Self {
+        self.add_systems(schedule_label.clone(), run_tasks!(schedule_label.clone()))
     }
 }

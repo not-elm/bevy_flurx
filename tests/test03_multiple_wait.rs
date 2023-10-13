@@ -4,10 +4,10 @@ use bevy::ecs::event::ManualEventReader;
 use bevy::prelude::{Commands, Component, Event, Events, EventWriter, Query, Transform, TransformBundle, With};
 use futures::future::join;
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::runner::once::Once;
-use bevtask::runner::until::Until;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::prelude::Wait;
+use bevy_async_system::runner::once::Once;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -46,8 +46,8 @@ fn setup(
     ));
 
     commands.spawn_async(|task| async move {
-        let t1 = task.spawn(Update, Until::run(move_right));
-        let t2 = task.spawn(Update, Until::run(move_up));
+        let t1 = task.spawn(Update, Wait::until(move_right));
+        let t2 = task.spawn(Update, Wait::until(move_up));
 
         join(t1, t2).await;
         task.spawn(Update, Once::run(send_finish_event)).await;

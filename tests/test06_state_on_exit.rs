@@ -3,10 +3,10 @@ use bevy::core::TaskPoolPlugin;
 use bevy::ecs::event::ManualEventReader;
 use bevy::prelude::{Commands, Event, Events, EventWriter, NextState, OnExit, States};
 
-use bevtask::BevTaskPlugin;
-use bevtask::ext::AsyncPool;
-use bevtask::ext::state_schedule_label::AddBevTaskStateScheduleLabel;
-use bevtask::runner::once::Once;
+use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::ext::state_schedule_label::AddBevTaskSchedule;
+use bevy_async_system::runner::once::Once;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -30,7 +30,7 @@ fn state_on_exit() {
     ));
     let er = ManualEventReader::<FinishEvent>::default();
     app.add_systems(Startup, setup);
-    app.register_task_schedule_on_exit(TestState::Fist);
+    app.register_task_schedule(OnExit(TestState::Fist));
 
     app.update();
     let events = app.world.resource::<Events<FinishEvent>>();

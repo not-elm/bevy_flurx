@@ -1,48 +1,39 @@
-use bevy::prelude::{Event, EventReader, World};
-use futures::StreamExt;
+use std::marker::PhantomData;
 
-use crate::runner::{AsyncSystem, AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, BoxedTaskFuture, new_channel, SystemRunningStatus};
-use crate::runner::config::AsyncSystemConfig;
+use bevy::prelude::{Event, IntoSystem, World};
 
-pub struct Wait<In, Out> {
-    config: AsyncSystemConfig<In, Option<Out>>,
-}
+use crate::runner::{AsyncSystemRunnable, BaseRunner, IntoAsyncSystem, SystemRunningStatus};
+use crate::runner::wait::output::WaitOutput;
+use crate::runner::wait::until::Until;
+
+pub mod until;
+pub mod output;
+
+pub struct Wait(PhantomData<()>);
 
 
-impl<Out> Wait<(), Out> {
-    #[inline]
-    pub fn run<Marker>(system: impl bevy::prelude::IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> Wait<(), Out> {
-        Self {
-            config: AsyncSystemConfig::with_input((), system)
-        }
+impl Wait {
+    #[inline(always)]
+    pub fn output<Out: Send + 'static, Marker>(system: impl IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoAsyncSystem<Out> {
+        WaitOutput::create(system)
     }
-}
 
 
-impl<E: Event + Clone> Wait<(), E> {
-    #[inline]
-    pub fn event() -> Wait<(), E> {
-        Self::run(|mut er: EventReader<E>| {
-            er.iter().next().cloned()
-        })
+    #[inline(always)]
+    pub fn output_event<E: Event + Clone, Marker>() -> impl IntoAsyncSystem<E> {
+        WaitOutput::<(), E>::event()
     }
-}
 
 
-impl<In, Out> AsyncSystem<Out> for Wait<In, Out>
-    where In: 'static + Clone,
-          Out: 'static + Send
-{
-    fn split(self) -> (BoxedAsyncSystemRunner, BoxedTaskFuture<Out>) {
-        let (tx, mut rx) = new_channel(1);
-        let runner = Box::new(WaitRunner(BaseRunner::new(tx, self.config)));
-        (runner, Box::pin(async move {
-            loop {
-                if let Some(output) = rx.next().await.and_then(|output| output) {
-                    return output;
-                }
-            }
-        }))
+    #[inline(always)]
+    pub fn until<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoAsyncSystem {
+        Until::create(system)
+    }
+
+
+    #[inline(always)]
+    pub fn until_event<E: Event>() -> impl IntoAsyncSystem {
+        Until::event::<E>()
     }
 }
 
