@@ -5,6 +5,8 @@ use bevy::prelude::{Commands, Component, Event, Events, EventWriter};
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
+use bevtask::runner::once::Once;
+use bevtask::runner::until::Until;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -44,8 +46,8 @@ fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.wait_event::<WaitEvent>(Update).await;
-        task.run_once(Update, send_finish_event).await;
+        task.spawn(Update, Until::come_event::<WaitEvent>()).await;
+        task.spawn(Update, Once::run(send_finish_event)).await;
     });
 }
 

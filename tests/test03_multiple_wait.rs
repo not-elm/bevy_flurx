@@ -6,6 +6,8 @@ use futures::future::join;
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
+use bevtask::runner::once::Once;
+use bevtask::runner::until::Until;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -44,11 +46,11 @@ fn setup(
     ));
 
     commands.spawn_async(|task| async move {
-        let t1 = task.until(Update, move_right);
-        let t2 = task.until(Update, move_up);
+        let t1 = task.spawn(Update, Until::run(move_right));
+        let t2 = task.spawn(Update, Until::run(move_up));
 
         join(t1, t2).await;
-        task.run_once(Update, send_finish_event).await;
+        task.spawn(Update, Once::run(send_finish_event)).await;
     });
 }
 

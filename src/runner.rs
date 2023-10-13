@@ -2,8 +2,8 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
-use bevy::prelude::{Deref, IntoSystem, World};
+use bevy::ecs::schedule::BoxedScheduleLabel;
+use bevy::prelude::{Deref, World};
 use bevy::utils::HashMap;
 use futures::channel::mpsc::{Receiver, Sender};
 
@@ -12,7 +12,7 @@ use crate::runner::config::AsyncSystemConfig;
 pub mod delay;
 pub mod once;
 pub mod until;
-pub mod maybe;
+pub mod wait;
 pub mod config;
 
 
@@ -34,12 +34,12 @@ pub struct Runners(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRun
 
 impl Runners {
     #[inline]
-    pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel,  runner: BoxedAsyncSystemRunner) {
+    pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel, runner: BoxedAsyncSystemRunner) {
         let mut map = self.0.lock().unwrap();
 
-        if let Some(runners) = map.get_mut(&schedule_label){
+        if let Some(runners) = map.get_mut(&schedule_label) {
             runners.push(runner);
-        }else{
+        } else {
             map.insert(schedule_label, vec![runner]);
         }
     }

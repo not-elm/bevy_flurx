@@ -6,6 +6,7 @@ use bevy::text::{Text, TextStyle};
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
+use bevtask::runner::once::Once;
 
 fn main() {
     App::new()
@@ -34,12 +35,12 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn setup_tasks(mut commands: Commands) {
     commands.spawn_async(|task| async move {
         let client = reqwest::get("https://github.com/elm-register").await;
-        task.run_once(Update, move |mut text: Query<&mut Text>| {
+        task.spawn(Update, Once::run(move |mut text: Query<&mut Text>| {
             text.single_mut().sections[0].value = if let Ok(response) = client.as_ref() {
                 format!("status code: {:?}", response.status())
             } else {
                 "Failed".to_string()
             };
-        }).await;
+        })).await;
     });
 }

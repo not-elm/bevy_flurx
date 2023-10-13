@@ -7,6 +7,7 @@ use bevy::utils::default;
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
+use bevtask::runner::until::Until;
 
 #[derive(Component)]
 struct Movable;
@@ -46,8 +47,8 @@ fn setup_async_systems(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.until(Update, move_up).await;
-        task.until(Update, move_right).await;
+        task.spawn(Update, Until::run(move_up)).await;
+        task.spawn(Update, Until::run(move_right)).await;
     });
 }
 
@@ -57,7 +58,7 @@ fn move_up(
 ) -> bool {
     let mut transform = shape.single_mut();
     transform.translation.y += 1.;
-    transform.translation.y < 50.
+    50. <= transform.translation.y
 }
 
 
@@ -66,5 +67,5 @@ fn move_right(
 ) -> bool {
     let mut transform = shape.single_mut();
     transform.translation.x += 1.;
-    transform.translation.x < 50.
+    50. <= transform.translation.x
 }
