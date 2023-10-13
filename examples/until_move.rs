@@ -47,7 +47,6 @@ fn setup_async_systems(
 ) {
     commands.spawn_async(|task| async move {
         task.until(Update, move_up).await;
-        task.delay_frame(Update, 300).await;
         task.until(Update, move_right).await;
     });
 }

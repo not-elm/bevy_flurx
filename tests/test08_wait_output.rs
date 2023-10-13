@@ -38,7 +38,7 @@ fn setup(
 ) {
     commands.spawn_async(|task| async move {
         task.wait_output(PreUpdate, count).await;
-        task.once(Update, send_finish_event).await;
+        task.run_once(Update, send_finish_event).await;
     });
 }
 

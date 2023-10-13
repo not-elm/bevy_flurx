@@ -32,7 +32,7 @@ fn setup(
     ));
 
     commands.spawn_async(|task| async move {
-        task.once(Update, move_transform).await;
+        task.run_once(Update, move_transform).await;
     });
 }
 

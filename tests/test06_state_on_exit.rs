@@ -50,7 +50,7 @@ fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.once(OnExit(TestState::Fist), send_finish_event).await;
+        task.run_once(OnExit(TestState::Fist), send_finish_event).await;
     });
 }
 

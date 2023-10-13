@@ -34,7 +34,7 @@ fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 fn setup_tasks(mut commands: Commands) {
     commands.spawn_async(|task| async move {
         let client = reqwest::get("https://github.com/elm-register").await;
-        task.once(Update, move |mut text: Query<&mut Text>| {
+        task.run_once(Update, move |mut text: Query<&mut Text>| {
             text.single_mut().sections[0].value = if let Ok(response) = client.as_ref() {
                 format!("status code: {:?}", response.status())
             } else {

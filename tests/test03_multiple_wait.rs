@@ -48,7 +48,7 @@ fn setup(
         let t2 = task.until(Update, move_up);
 
         join(t1, t2).await;
-        task.once(Update, send_finish_event).await;
+        task.run_once(Update, send_finish_event).await;
     });
 }
 

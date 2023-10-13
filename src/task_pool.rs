@@ -1,23 +1,23 @@
 use std::future::Future;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Component, Event, EventReader, IntoSystem, World};
+use bevy::prelude::{Component, IntoSystem, World};
 use futures::channel::mpsc::channel;
 use futures::StreamExt;
 
 use crate::runner::delay::DelayRunner;
 use crate::runner::once::OnceRunner;
 use crate::runner::Runners;
-use crate::runner::until::UntilRunner;
 
 mod wait;
+mod until;
 
 #[derive(Default, Component, Clone)]
 pub struct TaskPool(Runners);
 
 
 impl TaskPool {
-    pub fn once<Output, Marker>(
+    pub fn run_once<Output, Marker>(
         &self,
         label: impl ScheduleLabel,
         system: impl IntoSystem<(), Output, Marker> + 'static + Send,
@@ -31,24 +31,6 @@ impl TaskPool {
             loop {
                 if let Some(output) = rx.next().await {
                     return output;
-                }
-            }
-        }
-    }
-
-
-    pub fn until<Marker>(
-        &self,
-        schedule_label: impl ScheduleLabel,
-        system: impl IntoSystem<(), bool, Marker> + 'static + Send,
-    ) -> impl Future<Output=()> {
-        let (tx, mut rx) = channel::<bool>(1);
-        self.0.push(UntilRunner::boxed(tx, schedule_label, system));
-
-        async move {
-            loop {
-                if rx.next().await.is_some_and(|finished| finished) {
-                    return;
                 }
             }
         }
@@ -70,13 +52,6 @@ impl TaskPool {
     }
 
 
-    pub fn until_event<E: Event>(&self, schedule_label: impl ScheduleLabel + Clone) -> impl Future<Output=()> {
-        self.until(schedule_label, |er: EventReader<E>| {
-            !er.is_empty()
-        })
-    }
-
-
     pub(crate) fn run_systems(
         &self,
         schedule_label: impl ScheduleLabel,
@@ -89,12 +64,10 @@ impl TaskPool {
                 next_systems.push(system);
                 continue;
             }
-            if system.run(world).finished() {
-                continue;
+            if !system.run(world).finished() {
+                next_systems.push(system);
             }
-            next_systems.push(system);
         }
-
         *systems = next_systems;
     }
 }

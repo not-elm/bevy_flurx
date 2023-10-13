@@ -13,6 +13,8 @@ pub mod maybe;
 
 
 pub trait AsyncSystemRunnable {
+    fn new<In>(&mut self, input: In,  system: ) -> Self;
+
     fn run(&mut self, world: &mut World) -> SystemRunningStatus;
 
     fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool;

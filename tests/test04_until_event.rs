@@ -45,7 +45,7 @@ fn setup(
 ) {
     commands.spawn_async(|task| async move {
         task.wait_event::<WaitEvent>(Update).await;
-        task.once(Update, send_finish_event).await;
+        task.run_once(Update, send_finish_event).await;
     });
 }
 
