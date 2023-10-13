@@ -1,16 +1,16 @@
 use bevy::app::{App, Startup, Update};
 use bevy::core::TaskPoolPlugin;
-use bevy::prelude::{Commands, Component, NonSendMut, Query, Transform, TransformBundle, With};
+use bevy::prelude::{Commands, Component, Query, Transform, TransformBundle, With};
 
-use bevtask::AsyncSystemPlugin;
-use bevtask::task::BevTask;
+use bevtask::BevTaskPlugin;
+use bevtask::ext::AsyncPool;
 
 #[test]
 fn once() {
     let mut app = App::new();
     app.add_plugins((
         TaskPoolPlugin::default(),
-        AsyncSystemPlugin
+        BevTaskPlugin
     ));
 
     app.add_systems(Startup, setup);
@@ -25,15 +25,14 @@ struct Movable;
 
 fn setup(
     mut commands: Commands,
-    mut task: NonSendMut<BevTask>,
 ) {
     commands.spawn((
         Movable,
         TransformBundle::default()
     ));
 
-    task.spawn_async(|cmd| async move {
-        cmd.once(Update, move_transform).await;
+    commands.spawn_async(|task| async move {
+        task.once(Update, move_transform).await;
     });
 }
 

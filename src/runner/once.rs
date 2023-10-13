@@ -2,7 +2,7 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{IntoSystem, World};
 use futures::channel::mpsc::Sender;
 
-use crate::task::commands::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, SystemRunningStatus};
 
 pub struct OnceRunner<Output> {
     base: BaseRunner<Output>,

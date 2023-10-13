@@ -1,12 +1,43 @@
+use std::sync::{Arc, Mutex};
+
+use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
+use bevy::ecs::system::BoxedSystem;
+use bevy::prelude::{Deref, IntoSystem, World};
+use futures::channel::mpsc::Sender;
+
 pub mod delay;
 pub mod once;
 pub mod until;
 pub mod maybe;
 
-use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
-use bevy::ecs::system::BoxedSystem;
-use bevy::prelude::{IntoSystem, World};
-use futures::channel::mpsc::Sender;
+
+
+pub trait AsyncSystemRunnable {
+    fn run(&mut self, world: &mut World) -> SystemRunningStatus;
+
+    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool;
+}
+
+
+pub type BoxedAsyncSystemRunner = Box<dyn AsyncSystemRunnable>;
+
+
+#[derive(Default, Deref)]
+pub struct Runners(Arc<Mutex<Vec<BoxedAsyncSystemRunner>>>);
+
+
+impl Runners {
+    #[inline]
+    pub(crate) fn push(&self, runner: BoxedAsyncSystemRunner){
+        self.0.lock().unwrap().push(runner);
+    }
+}
+
+impl Clone for Runners {
+    fn clone(&self) -> Self {
+        Self(Arc::clone(&self.0))
+    }
+}
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum SystemRunningStatus {
@@ -30,15 +61,6 @@ impl SystemRunningStatus {
     }
 }
 
-
-pub type BoxedAsyncSystemRunner = Box<dyn AsyncSystemRunnable>;
-
-
-pub trait AsyncSystemRunnable {
-    fn run(&mut self, world: &mut World) -> SystemRunningStatus;
-
-    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool;
-}
 
 
 struct BaseRunner<Output> {
@@ -78,7 +100,7 @@ impl<Output> BaseRunner<Output>
 
 
     #[inline]
-    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool{
+    fn should_run(&self, schedule_label: &dyn ScheduleLabel) -> bool {
         schedule_label.eq(&self.schedule_label)
     }
 }

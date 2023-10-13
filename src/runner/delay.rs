@@ -2,7 +2,7 @@ use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::prelude::World;
 use futures::channel::mpsc::Sender;
 
-use crate::task::commands::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, SystemRunningStatus};
 
 pub struct DelayRunner {
     tx: Sender<()>,

@@ -1,35 +1,44 @@
-use bevy::app::{App, Startup, Update};
+use bevy::app::{App, Startup};
 use bevy::core::TaskPoolPlugin;
 use bevy::ecs::event::ManualEventReader;
-use bevy::prelude::{Commands, Component, Event, Events, EventWriter};
+use bevy::prelude::{Commands, Event, Events, EventWriter, NextState, OnExit, States};
 
 use bevtask::BevTaskPlugin;
 use bevtask::ext::AsyncPool;
+use bevtask::ext::state_schedule_label::AddBevTaskStateScheduleLabel;
 
 #[derive(Event)]
 struct FinishEvent;
 
-#[derive(Event, Clone)]
-struct WaitEvent;
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq, Hash, States)]
+enum TestState {
+    #[default]
+    Fist,
+    Second,
+}
 
 #[test]
-fn until_come_event() {
+fn state_on_exit() {
     let mut app = App::new();
+    app.add_state::<TestState>();
     app.add_event::<FinishEvent>();
-    app.add_event::<WaitEvent>();
+
     app.add_plugins((
         TaskPoolPlugin::default(),
         BevTaskPlugin
     ));
     let er = ManualEventReader::<FinishEvent>::default();
     app.add_systems(Startup, setup);
+    app.register_task_schedule_on_exit(TestState::Fist);
 
     app.update();
     let events = app.world.resource::<Events<FinishEvent>>();
     assert!(er.is_empty(events));
 
-    app.world.send_event(WaitEvent);
-    app.update();
+    {
+        let mut state = app.world.resource_mut::<NextState<TestState>>();
+        state.0.replace(TestState::Second);
+    }
     app.update();
 
     let events = app.world.resource::<Events<FinishEvent>>();
@@ -37,15 +46,11 @@ fn until_come_event() {
 }
 
 
-#[derive(Component)]
-struct Movable;
-
 fn setup(
     mut commands: Commands
 ) {
     commands.spawn_async(|task| async move {
-        task.until_come_event::<WaitEvent>(Update).await;
-        task.once(Update, send_finish_event).await;
+        task.once(OnExit(TestState::Fist), send_finish_event).await;
     });
 }
 

@@ -1,12 +1,12 @@
 use bevy::app::{App, Startup, Update};
 use bevy::DefaultPlugins;
 use bevy::math::Vec2;
-use bevy::prelude::{Camera2dBundle, Color, Commands, Component, NonSendMut, Query, Sprite, Transform, With};
+use bevy::prelude::{Camera2dBundle, Color, Commands, Component, Query, Sprite, Transform, With};
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
-use bevtask::AsyncSystemPlugin;
-use bevtask::task::BevTask;
+use bevtask::BevTaskPlugin;
+use bevtask::ext::AsyncPool;
 
 #[derive(Component)]
 struct Movable;
@@ -15,7 +15,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            AsyncSystemPlugin
+            BevTaskPlugin
         ))
         .add_systems(Startup, (
             setup_entities,
@@ -43,12 +43,12 @@ fn setup_entities(mut commands: Commands) {
 
 
 fn setup_async_systems(
-    mut task: NonSendMut<BevTask>
+    mut commands: Commands
 ) {
-    task.spawn_async(|commands| async move {
-        commands.until(Update, move_up).await;
-        commands.delay_frame(Update, 300).await;
-        commands.until(Update, move_right).await;
+    commands.spawn_async(|task| async move {
+        task.until(Update, move_up).await;
+        task.delay_frame(Update, 300).await;
+        task.until(Update, move_right).await;
     });
 }
 

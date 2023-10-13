@@ -1,14 +1,15 @@
 use bevy::app::{App, Startup, Update};
 use bevy::core::TaskPoolPlugin;
 use bevy::ecs::event::ManualEventReader;
-use bevy::prelude::{Commands, Component, Event, Events, EventWriter, NonSendMut, Query, Transform, TransformBundle, With};
+use bevy::prelude::{Commands, Component, Event, Events, EventWriter, Query, Transform, TransformBundle, With};
 use futures::future::join;
 
-use bevtask::AsyncSystemPlugin;
-use bevtask::task::BevTask;
+use bevtask::BevTaskPlugin;
+use bevtask::ext::AsyncPool;
 
 #[derive(Event)]
 struct FinishEvent;
+
 /// Wait move up and right.
 #[test]
 fn multiple_wait() {
@@ -16,7 +17,7 @@ fn multiple_wait() {
     app.add_event::<FinishEvent>();
     app.add_plugins((
         TaskPoolPlugin::default(),
-        AsyncSystemPlugin
+        BevTaskPlugin
     ));
 
     app.add_systems(Startup, setup);
@@ -36,19 +37,18 @@ struct Movable;
 
 fn setup(
     mut commands: Commands,
-    mut task: NonSendMut<BevTask>,
 ) {
     commands.spawn((
         Movable,
         TransformBundle::default()
     ));
 
-    task.spawn_async(|cmd| async move {
-        let t1 = cmd.until(Update, move_right);
-        let t2 = cmd.until(Update, move_up);
+    commands.spawn_async(|task| async move {
+        let t1 = task.until(Update, move_right);
+        let t2 = task.until(Update, move_up);
 
         join(t1, t2).await;
-        cmd.once(Update, send_finish_event).await;
+        task.once(Update, send_finish_event).await;
     });
 }
 
@@ -63,7 +63,7 @@ fn move_right(mut moves: Query<&mut Transform, With<Movable>>) -> bool {
 fn move_up(mut moves: Query<&mut Transform, With<Movable>>) -> bool {
     let mut transform = moves.single_mut();
     transform.translation.y += 1.;
-     2. <=  transform.translation.y
+    2. <= transform.translation.y
 }
 
 

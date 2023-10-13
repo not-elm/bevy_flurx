@@ -1,10 +1,10 @@
 use bevy::app::{App, Startup, Update};
 use bevy::core::TaskPoolPlugin;
 use bevy::ecs::event::ManualEventReader;
-use bevy::prelude::{Event, Events, EventWriter, NonSendMut};
+use bevy::prelude::{Commands, Event, Events, EventWriter};
 
-use bevtask::AsyncSystemPlugin;
-use bevtask::task::BevTask;
+use bevtask::BevTaskPlugin;
+use bevtask::ext::AsyncPool;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -15,7 +15,7 @@ fn delay_frames() {
     app.add_event::<FinishEvent>();
     app.add_plugins((
         TaskPoolPlugin::default(),
-        AsyncSystemPlugin
+        BevTaskPlugin
     ));
 
     app.add_systems(Startup, setup);
@@ -31,11 +31,11 @@ fn delay_frames() {
 
 
 fn setup(
-    mut task: NonSendMut<BevTask>,
+    mut commands: Commands
 ) {
-    task.spawn_async(|commands| async move {
-        commands.delay_frame(Update, 3).await;
-        commands.once(Update, send_finish_event).await;
+    commands.spawn_async(|task| async move {
+        task.delay_frame(Update, 3).await;
+        task.once(Update, send_finish_event).await;
     });
 }
 
