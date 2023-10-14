@@ -7,7 +7,7 @@ use bevy::utils::default;
 
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
-use bevy_async_system::prelude::Wait;
+use bevy_async_system::runner::wait;
 
 #[derive(Component)]
 struct Movable;
@@ -47,8 +47,8 @@ fn setup_async_systems(
     mut commands: Commands
 ) {
     commands.spawn_async(|cmd| async move {
-        cmd.spawn(Update, Wait::until(move_up)).await;
-        cmd.spawn(Update, Wait::until(move_right)).await;
+        cmd.spawn(Update, wait::until(move_up)).await;
+        cmd.spawn(Update, wait::until(move_right)).await;
     });
 }
 

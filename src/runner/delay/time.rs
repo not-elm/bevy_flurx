@@ -1,55 +1,56 @@
-use std::marker::PhantomData;
 use std::time::Duration;
 
-use bevy::ecs::system::{StaticSystemParam, SystemParam};
-use bevy::prelude::{Res, TimerMode};
+use bevy::ecs::schedule::ScheduleLabel;
+use bevy::ecs::system::EntityCommands;
+use bevy::prelude::{Component, IntoSystemConfigs, Query, Res, Schedules, TimerMode};
 use bevy::time::{Time, Timer};
-use futures::channel::mpsc::Sender;
 
-use crate::runner::AsyncSystemStatus;
-use crate::runner::thread_pool::{IntoThreadPoolExecutor, ThreadPoolExecutable, ThreadPoolExecutor};
+use crate::async_commands::TaskSender;
+use crate::prelude::BoxedMainThreadExecutor;
+use crate::runner::{IntoMainThreadExecutor, MainThreadExecutable, schedule_initialize, task_running};
 
 pub(crate) struct DelayTime(pub Duration);
 
 
-impl<'w> IntoThreadPoolExecutor<DelayTimeParam<'w>, ()> for DelayTime {
-    #[inline]
-    fn into_executor(self, sender: Sender<()>) -> ThreadPoolExecutor<DelayTimeParam<'w>> {
-        ThreadPoolExecutor::new(Executor {
-            timer: Timer::new(self.0, TimerMode::Once),
+impl IntoMainThreadExecutor for DelayTime {
+    fn into_executor(self, sender: TaskSender<()>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor {
+        BoxedMainThreadExecutor::new(Executor {
+            schedule_label,
             sender,
+            timer: Timer::new(self.0, TimerMode::Once),
         })
     }
 }
 
 
-struct Executor {
-    sender: Sender<()>,
+#[derive(Component)]
+struct LocalTimer(Timer);
+
+
+struct Executor<Label> {
+    sender: TaskSender<()>,
     timer: Timer,
+    schedule_label: Label,
 }
 
 
-impl<'w> ThreadPoolExecutable<DelayTimeParam<'w>> for Executor {
-    #[inline]
-    fn execute(&mut self, param: &mut StaticSystemParam<DelayTimeParam<'w>>) -> AsyncSystemStatus {
-        if self.sender.is_closed() {
-            return AsyncSystemStatus::Finished;
-        }
+impl<Label: ScheduleLabel + Clone> MainThreadExecutable for Executor<Label> {
+    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
+        let schedule = schedule_initialize(schedules, &self.schedule_label);
+        entity_commands.insert((
+            self.sender,
+            LocalTimer(self.timer)
+        ));
+        let entity = entity_commands.id();
 
-        if self.timer.tick(param.time.delta()).just_finished() {
-            let _ = self.sender.try_send(());
-            AsyncSystemStatus::Finished
-        } else {
-            AsyncSystemStatus::Running
-        }
+        schedule.add_systems((move |time: Res<Time>, mut query: Query<(&mut TaskSender<()>, &mut LocalTimer)>| {
+            let Ok((mut sender, mut timer)) = query.get_mut(entity) else { return; };
+            if timer.0.tick(time.delta()).just_finished() {
+                let _ = sender.try_send(());
+                sender.close_channel();
+            }
+        }).run_if(task_running::<()>(entity)));
     }
-}
-
-
-#[derive(SystemParam)]
-pub struct DelayTimeParam<'w, Marker: 'static = ()> {
-    time: Res<'w, Time>,
-    marker: PhantomData<Marker>,
 }
 
 
@@ -57,58 +58,31 @@ pub struct DelayTimeParam<'w, Marker: 'static = ()> {
 mod tests {
     use std::time::Duration;
 
-    use bevy::app::{App, Update};
-    use bevy::core::TaskPoolPlugin;
-    use bevy::ecs::system::CommandQueue;
-    use bevy::prelude::{Commands, State, States};
-    use bevy::time::TimePlugin;
+    use bevy::app::{Startup, Update};
+    use bevy::ecs::event::ManualEventReader;
+    use bevy::prelude::Commands;
 
-    use crate::AsyncSystemPlugin;
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
-    use crate::runner::once;
-    use crate::runner::thread_pool::delay::time::DelayTime;
-
-    #[derive(Default, Copy, Clone, Eq, PartialEq, Hash, States, Debug)]
-    enum TestState {
-        #[default]
-        Empty,
-        Finished,
-    }
-
-    impl TestState {
-        fn finished(&self) -> bool {
-            matches!(self, TestState::Finished)
-        }
-    }
+    use crate::runner::{delay, once};
+    use crate::test_util::{FirstEvent, is_first_event_already_coming, new_app};
 
     #[test]
     fn delay_time() {
-        let mut app = App::new();
-        app.add_plugins((
-            TaskPoolPlugin::default(),
-            TimePlugin,
-            AsyncSystemPlugin
-        ));
-        app.add_state::<TestState>();
+        let mut app = new_app();
 
-        let mut command_queue = CommandQueue::default();
-
-        Commands::new(&mut command_queue, &app.world)
-            .spawn_async(|cmd| async move {
-                cmd.spawn(Update, DelayTime(Duration::ZERO)).await;
-                cmd.spawn_on_main(Update, once::on_main::set_state(TestState::Finished)).await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn_async(|cmd| async move {
+                cmd.spawn(Update, delay::timer(Duration::ZERO)).await;
+                cmd.spawn(Update, once::send(FirstEvent)).await;
             });
+        });
 
-        command_queue.apply(&mut app.world);
 
         // tick
         app.update();
         // send event
         app.update();
-        app.update();
 
-        assert!(app.world
-            .resource::<State<TestState>>()
-            .finished());
+        assert!(is_first_event_already_coming(&mut app, &mut ManualEventReader::default()));
     }
 }

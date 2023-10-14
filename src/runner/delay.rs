@@ -1,11 +1,14 @@
 use std::marker::PhantomData;
+use std::time::Duration;
 
 use crate::runner::delay::frame::DelayFrame;
+use crate::runner::delay::time::DelayTime;
 use crate::runner::IntoMainThreadExecutor;
 
 
 // mod time;
 mod frame;
+mod time;
 
 
 /// Delay the task using either [`Delay::Frames`] or [`Delay::Time`].
@@ -44,4 +47,10 @@ pub struct Delay(PhantomData<()>);
 #[inline(always)]
 pub const fn frames(delay_frames: usize) -> impl IntoMainThreadExecutor {
     DelayFrame(delay_frames)
+}
+
+
+#[inline(always)]
+pub const fn timer(duration: Duration) -> impl IntoMainThreadExecutor {
+    DelayTime(duration)
 }
