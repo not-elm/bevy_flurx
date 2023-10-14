@@ -47,8 +47,8 @@ fn setup_async_systems(
     mut commands: Commands
 ) {
     commands.spawn_async(|cmd| async move {
-        cmd.spawn_on_main(Update, Wait::until(move_up)).await;
-        cmd.spawn_on_main(Update, Wait::until(move_right)).await;
+        cmd.spawn(Update, Wait::until(move_up)).await;
+        cmd.spawn(Update, Wait::until(move_right)).await;
     });
 }
 

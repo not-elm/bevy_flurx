@@ -1,66 +1,129 @@
-use bevy::prelude::{Event, EventReader, World};
-use futures::channel::mpsc::Sender;
+use bevy::ecs::schedule::ScheduleLabel;
+use bevy::ecs::system::EntityCommands;
+use bevy::prelude::{Event, EventReader, In, IntoSystem, IntoSystemConfigs, Query, Schedules};
 
+use crate::async_commands::TaskSender;
 use crate::prelude::{BoxedMainThreadExecutor, MainThreadExecutable};
-use crate::runner::AsyncSystemStatus;
-use crate::runner::main_thread::{BaseRunner, IntoMainThreadExecutor};
+use crate::runner::main_thread::{IntoMainThreadExecutor, schedule_initialize, task_running};
 use crate::runner::main_thread::config::AsyncSystemConfig;
 
-pub(crate) struct WaitOutput<Out> {
-    config: AsyncSystemConfig<Option<Out>>,
-}
 
-
-impl<Out: Send + 'static> WaitOutput<Out> {
-    #[inline]
-    pub fn create<Marker>(system: impl bevy::prelude::IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoMainThreadExecutor<Out> {
-        Self {
-            config: AsyncSystemConfig::new(system)
-        }
-    }
-}
-
-
-impl<E: Event + Clone> WaitOutput<E> {
-    #[inline]
-    pub fn event() -> impl IntoMainThreadExecutor<E> {
-        Self::create(|mut er: EventReader<E>| {
-            er.iter().next().cloned()
-        })
-    }
-}
-
-
-impl<Out> IntoMainThreadExecutor<Out> for WaitOutput<Out>
+#[inline(always)]
+pub const fn output<Out, Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<Out>
     where
-        Out: 'static + Send
+        Out: Send + Sync + 'static,
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), Option<Out>, Marker> + Send + Sync + 'static
+{
+    WaitOutput(AsyncSystemConfig::new(system))
+}
+
+
+#[inline]
+pub fn output_event<E: Event + Clone>() -> impl IntoMainThreadExecutor<E> {
+    output(|mut er: EventReader<E>| {
+        er.iter().next().cloned()
+    })
+}
+
+
+struct WaitOutput<Out, Marker, Sys>(AsyncSystemConfig<Option<Out>, Marker, Sys>);
+
+
+impl<Out, Marker, Sys> IntoMainThreadExecutor<Out> for WaitOutput<Out, Marker, Sys>
+    where
+        Out: Send + Sync + 'static,
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), Option<Out>, Marker> + Send + Sync + 'static
 {
     #[inline]
-    fn into_executor(self, sender: Sender<Out>) -> BoxedMainThreadExecutor {
-        Box::new(WaitOutputRunner {
+    fn into_executor(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor {
+        BoxedMainThreadExecutor::new(Executor {
             sender,
-            base: BaseRunner::new(self.config),
+            config: self.0,
+            schedule_label,
         })
     }
 }
 
 
-struct WaitOutputRunner<Out> {
-    sender: Sender<Out>,
-    base: BaseRunner<Option<Out>>,
+struct Executor<Out, Marker, Sys, Label> {
+    sender: TaskSender<Out>,
+    config: AsyncSystemConfig<Option<Out>, Marker, Sys>,
+    schedule_label: Label,
 }
 
 
-impl<Out> MainThreadExecutable for WaitOutputRunner<Out>
+impl<Out, Marker, Sys, Label> MainThreadExecutable for Executor<Out, Marker, Sys, Label>
     where
-        Out: 'static + Send
+        Out: Send + Sync + 'static,
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), Option<Out>, Marker> + Send + Sync + 'static,
+        Label: ScheduleLabel + Clone
 {
-    fn run(&mut self, world: &mut World) -> AsyncSystemStatus {
-        if let Some(output) = self.base.run_with_output(world) {
-            let _ = self.sender.try_send(output);
-            AsyncSystemStatus::Finished
-        } else {
-            AsyncSystemStatus::Running
-        }
+    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
+        let schedule = schedule_initialize(schedules, &self.schedule_label);
+        entity_commands.insert(self.sender);
+        let entity = entity_commands.id();
+
+        schedule.add_systems(self
+            .config
+            .system
+            .pipe(move |In(input): In<Option<Out>>, mut senders: Query<&mut TaskSender<Out>>| {
+                let Some(input) = input else { return; };
+                let Ok(mut sender) = senders.get_mut(entity) else { return; };
+                let _ = sender.try_send(input);
+                sender.close_channel();
+            })
+            .run_if(task_running::<Out>(entity))
+        );
     }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use bevy::app::{Startup, Update};
+    use bevy::core::FrameCount;
+    use bevy::ecs::event::ManualEventReader;
+    use bevy::prelude::{Commands, Event, Events, Res};
+
+    use crate::ext::spawn_async_system::SpawnAsyncSystem;
+    use crate::runner::main_thread::{once, wait};
+    use crate::test_util::new_app;
+
+    #[test]
+    fn output() {
+        let mut app = new_app();
+        app.add_event::<OutputEvent>();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn_async(|cmd| async move {
+                let frame_count = cmd.spawn(Update, wait::output(|frame: Res<FrameCount>| {
+                    if frame.0 < 2 {
+                        None
+                    } else {
+                        Some(frame.0)
+                    }
+                })).await;
+
+                cmd.spawn(Update, once::send(OutputEvent(frame_count))).await;
+            });
+        });
+
+        app.update();
+        app.update();
+        app.update();
+
+        // send event
+        app.update();
+
+        let mut er = ManualEventReader::<OutputEvent>::default();
+        let events = app.world.resource::<Events<OutputEvent>>();
+        let frame_count = er.iter(events).next().unwrap();
+        assert_eq!(frame_count.0, 2);
+    }
+
+
+    #[derive(Event, Clone)]
+    struct OutputEvent(u32);
 }

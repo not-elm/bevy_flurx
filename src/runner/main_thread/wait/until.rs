@@ -1,58 +1,132 @@
-use bevy::prelude::{Event, EventReader, IntoSystem, World};
-use futures::channel::mpsc::Sender;
+use bevy::ecs::schedule::ScheduleLabel;
+use bevy::ecs::system::EntityCommands;
+use bevy::prelude::{Commands, Entity, Event, EventReader, In, IntoSystem, IntoSystemConfigs, Query, Schedules};
 
-use crate::runner::AsyncSystemStatus;
-use crate::runner::main_thread::{BaseRunner, BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable};
+use crate::async_commands::TaskSender;
+use crate::runner::main_thread::{BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable, schedule_initialize, task_running};
 use crate::runner::main_thread::config::AsyncSystemConfig;
 
-pub(crate) struct Until {
-    config: AsyncSystemConfig<bool>,
+#[inline(always)]
+pub const fn until<Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<()>
+    where
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static
+{
+    Until(AsyncSystemConfig::new(system))
 }
 
 
-impl Until {
-    #[inline]
-    pub fn create<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoMainThreadExecutor<()> {
-        Self {
-            config: AsyncSystemConfig::new(system)
-        }
-    }
-
-
-    #[inline]
-    pub fn event<E: Event>() -> impl IntoMainThreadExecutor<()> {
-        Self::create(|er: EventReader<E>| {
-            !er.is_empty()
-        })
-    }
+#[inline(always)]
+pub fn until_event<E: Event>() -> impl IntoMainThreadExecutor<()> {
+    until(|er: EventReader<E>| { !er.is_empty() })
 }
 
 
-impl IntoMainThreadExecutor<()> for Until {
+struct Until<Marker, Sys>(AsyncSystemConfig<bool, Marker, Sys>);
+
+
+impl<Marker, Sys> IntoMainThreadExecutor<()> for Until<Marker, Sys>
+    where
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static
+{
     #[inline]
-    fn into_executor(self, sender: Sender<()>) -> BoxedMainThreadExecutor {
-        Box::new(UntilRunner {
-            base: BaseRunner::new(self.config),
+    fn into_executor(self, sender: TaskSender<()>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor {
+        BoxedMainThreadExecutor::new(Executor {
             sender,
+            config: self.0,
+            schedule_label,
         })
     }
 }
 
 
-struct UntilRunner {
-    sender: Sender<()>,
-    base: BaseRunner<bool>,
+struct Executor<Marker, Sys, Label> {
+    sender: TaskSender<()>,
+    config: AsyncSystemConfig<bool, Marker, Sys>,
+    schedule_label: Label,
 }
 
 
-impl MainThreadExecutable for UntilRunner {
-    fn run(&mut self, world: &mut World) -> AsyncSystemStatus {
-        let finished = self.base.run_with_output(world);
-        if finished {
-            let _ = self.sender.try_send(());
-            AsyncSystemStatus::Finished
-        } else {
-            AsyncSystemStatus::Running
+impl<Marker, Sys, Label> MainThreadExecutable for Executor<Marker, Sys, Label>
+    where
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static,
+        Label: ScheduleLabel + Clone
+{
+    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
+        let schedule = schedule_initialize(schedules, &self.schedule_label);
+        entity_commands.insert(self.sender);
+        let entity = entity_commands.id();
+
+        schedule.add_systems(self
+            .config
+            .system
+            .pipe(move |In(finished): In<bool>, mut commands: Commands, mut senders: Query<(Entity, &mut TaskSender<()>)>| {
+                if !finished {
+                    return;
+                }
+                let Ok((entity, mut sender)) = senders.get_mut(entity) else { return; };
+                let _ = sender.try_send(());
+                sender.close_channel();
+                commands.entity(entity).remove::<TaskSender<()>>();
+            })
+            .run_if(task_running::<()>(entity))
+        );
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use bevy::app::{Startup, Update};
+    use bevy::core::FrameCount;
+    use bevy::ecs::event::ManualEventReader;
+    use bevy::prelude::{Commands, Res};
+
+    use crate::ext::spawn_async_system::SpawnAsyncSystem;
+    use crate::runner::main_thread::{once, wait};
+    use crate::test_util::{FirstEvent, is_first_event_already_coming, new_app};
+
+    #[test]
+    fn until() {
+        let mut app = new_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn_async(|cmd| async move {
+                cmd.spawn(Update, wait::until(|frame: Res<FrameCount>| {
+                    frame.0 == 2
+                })).await;
+                cmd.spawn(Update, once::send(FirstEvent)).await;
+            });
+        });
+
+        app.update();
+        app.update();
+        app.update();
+
+        // send event
+        app.update();
+
+        assert!(is_first_event_already_coming(&mut app, &mut ManualEventReader::default()));
+    }
+
+    #[test]
+    fn never_again() {
+        let mut app = new_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn_async(|cmd| async move {
+                cmd.spawn(Update, wait::until(|frame: Res<FrameCount>| {
+                    if 2 <= frame.0 {
+                        panic!("must not be called");
+                    }
+                    frame.0 == 1
+                })).await;
+                cmd.spawn(Update, wait::until(|| false)).await;
+            });
+        });
+
+        for _ in 0..100 {
+            app.update();
         }
     }
 }

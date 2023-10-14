@@ -1,63 +1,62 @@
 use std::sync::{Arc, Mutex};
 
-use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
-use bevy::prelude::{Component, Deref, World};
-use bevy::utils::HashMap;
-use futures::channel::mpsc::Sender;
+use bevy::ecs::schedule::ScheduleLabel;
+use bevy::ecs::system::EntityCommands;
+use bevy::hierarchy::BuildChildren;
+use bevy::prelude::{Component, Condition, Deref, DerefMut, Entity, IntoSystem,  Query, Schedule, Schedules};
 
-use crate::runner::AsyncSystemStatus;
-use crate::runner::main_thread::config::AsyncSystemConfig;
+use crate::async_commands::TaskSender;
 
 pub(crate) mod once;
 pub mod wait;
 pub mod config;
-pub mod repeat;
+
+// pub mod repeat;
 
 
 pub trait IntoMainThreadExecutor<Out = ()>: Sized {
-    fn into_executor(self, sender: Sender<Out>) -> BoxedMainThreadExecutor;
+    fn into_executor(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor;
 }
 
 
-pub trait MainThreadExecutable {
-    fn run(&mut self, world: &mut World) -> AsyncSystemStatus;
+pub trait MainThreadExecutable: Send + Sync {
+    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules);
 }
 
 
-pub type BoxedMainThreadExecutor = Box<dyn MainThreadExecutable>;
+#[derive(Component, Deref, DerefMut)]
+pub struct BoxedMainThreadExecutor(pub Box<dyn MainThreadExecutable>);
+
+impl BoxedMainThreadExecutor {
+    #[inline]
+    pub fn new(s: impl MainThreadExecutable + 'static) -> Self{
+        Self(Box::new(s))
+    }
+}
 
 
 #[derive(Default, Component, Deref)]
-pub(crate) struct MainThreadExecutors(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedMainThreadExecutor>>>>);
+pub(crate) struct MainThreadExecutors(Arc<Mutex<Vec<BoxedMainThreadExecutor>>>);
 
 
 impl MainThreadExecutors {
     #[inline]
-    pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel, runner: BoxedMainThreadExecutor) {
-        let mut map = self.0.lock().unwrap();
-
-        if let Some(runners) = map.get_mut(&schedule_label) {
-            runners.push(runner);
-        } else {
-            map.insert(schedule_label, vec![runner]);
-        }
+    pub(crate) fn push(&self, runner: BoxedMainThreadExecutor) {
+        self.0.lock().unwrap().push(runner);
     }
 
 
     pub(crate) fn run_systems(
         &self,
-        schedule_label: &dyn ScheduleLabel,
-        world: &mut World,
+        entity_commands: &mut EntityCommands,
+        schedule: &mut Schedules,
     ) {
-        let mut map = self.0.lock().unwrap();
-        let Some(systems) = map.get_mut(schedule_label) else { return; };
-        let mut next_systems = Vec::with_capacity(systems.len());
-        while let Some(mut system) = systems.pop() {
-            if !system.run(world).finished() {
-                next_systems.push(system);
-            }
+        let mut executables = self.0.lock().unwrap();
+        while let Some(system) = executables.pop() {
+            let entity = entity_commands.commands().spawn_empty().id();
+            entity_commands.add_child(entity);
+            system.0.schedule_initialize(&mut entity_commands.commands().entity(entity), schedule);
         }
-        *systems = next_systems;
     }
 }
 
@@ -97,34 +96,22 @@ impl SystemRunningStatus {
 }
 
 
-struct BaseRunner<Out = ()> {
-    config: AsyncSystemConfig<Out>,
-    status: SystemRunningStatus,
-}
-
-
-impl<Out> BaseRunner<Out>
-    where Out: 'static,
-
+fn task_running<Out>(entity: Entity) -> impl Condition<()>
+    where
+        Out: Send + 'static,
 {
-    fn new(config: AsyncSystemConfig<Out>) -> BaseRunner<Out> {
-        Self {
-            config,
-            status: SystemRunningStatus::NoInitialized,
-        }
-    }
-
-
-    fn run_with_output(&mut self, world: &mut World) -> Out {
-        if self.status.no_initialized() {
-            self.config.system.initialize(world);
-            self.status = SystemRunningStatus::Running;
-        }
-
-        let output = self.config.system.run((), world);
-        self.config.system.apply_deferred(world);
-        output
-    }
+    IntoSystem::into_system(move |senders: Query<&TaskSender<Out>>| {
+        senders
+            .get(entity)
+            .is_ok_and(|sender| !sender.is_closed())
+    })
 }
 
 
+fn schedule_initialize<'a, Label: ScheduleLabel + Clone>(schedules: &'a mut Schedules, schedule_label: &Label) -> &'a mut Schedule {
+    if !schedules.contains(schedule_label) {
+        schedules.insert(schedule_label.clone(), Schedule::default());
+    }
+
+    schedules.get_mut(schedule_label).unwrap()
+}

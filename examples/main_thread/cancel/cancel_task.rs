@@ -26,7 +26,7 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn_async(|task| async move {
         loop {
-            task.spawn_on_main(Update, Delay::Time(Duration::from_secs(1))).await;
+            task.spawn(Update, Delay::Time(Duration::from_secs(1))).await;
             println!("******** tick **********");
         }
     });

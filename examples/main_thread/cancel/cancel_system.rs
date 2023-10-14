@@ -23,15 +23,15 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn_async(|task| async move {
-        let handle = task.spawn_on_main(Update, Repeat::forever(|frame_count: Res<FrameCount>| {
+        let handle = task.spawn(Update, Repeat::forever(|frame_count: Res<FrameCount>| {
             println!("frame count = {}", frame_count.0);
         }));
 
-        task.spawn_on_main(Update, Delay::Time(Duration::from_secs(3))).await;
+        task.spawn(Update, Delay::Time(Duration::from_secs(3))).await;
         println!("Cancel");
         // Dropping the handle also stops the system.
         drop(handle);
-        task.spawn_on_main(Update, Delay::Time(Duration::from_secs(3))).await;
+        task.spawn(Update, Delay::Time(Duration::from_secs(3))).await;
         println!("Task End!");
     });
 }
