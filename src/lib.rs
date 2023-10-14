@@ -128,7 +128,7 @@ pub(crate) mod inner_macros {
 #[cfg(test)]
 pub(crate) mod test_util {
     use bevy::app::App;
-    use bevy::core::TaskPoolPlugin;
+    use bevy::core::{FrameCountPlugin, TaskPoolPlugin};
     use bevy::ecs::event::ManualEventReader;
     use bevy::prelude::{Event, Events, State, States};
     use bevy::time::TimePlugin;
@@ -155,6 +155,7 @@ pub(crate) mod test_util {
         app.add_state::<TestState>();
         app.add_plugins((
             TaskPoolPlugin::default(),
+            FrameCountPlugin,
             TimePlugin,
             AsyncSystemPlugin
         ));

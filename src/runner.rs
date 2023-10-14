@@ -3,6 +3,7 @@ use crate::runner::main_thread::SystemRunningStatus;
 pub mod main_thread;
 pub mod thread_pool;
 pub mod once;
+pub mod wait;
 
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

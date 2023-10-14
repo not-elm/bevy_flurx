@@ -1,18 +1,16 @@
-use std::sync::{Arc, Mutex};
-
 use bevy::ecs::system::{StaticSystemParam, SystemParam};
 use bevy::prelude::{Event, EventWriter, NextState, ResMut, States};
 use futures::channel::mpsc::Sender;
 
 use crate::runner::AsyncSystemStatus;
-use crate::runner::thread_pool::{IntoThreadPoolExecutor, ThreadPoolExecutable, ThreadPoolExecutor};
+use crate::runner::thread_pool::{IntoThreadPoolExecutor, SharedCallback, ThreadPoolExecutable, ThreadPoolExecutor};
 
-pub struct OnceOnThread<Param: SystemParam, Out>(pub SharedCallback<Param, Out>);
+pub struct OnceOnThread<Param: SystemParam, Out>(SharedCallback<Param, Out>);
 
 
 #[inline(always)]
 pub fn run<Param: SystemParam + 'static, Out: 'static>(f: impl Fn(&mut StaticSystemParam<Param>) -> Out + Send + 'static) -> impl IntoThreadPoolExecutor<Param, Out> {
-    OnceOnThread(Arc::new(Mutex::new(f)))
+    OnceOnThread(SharedCallback::new(f))
 }
 
 
@@ -30,15 +28,6 @@ pub fn set_state<S: States + Copy>(state: S) -> impl IntoThreadPoolExecutor<ResM
         next_state.set(state);
     })
 }
-
-
-pub type SharedCallback<Param, Out> = Arc<Mutex<dyn Fn(&mut StaticSystemParam<Param>) -> Out>>;
-
-
-unsafe impl<Param: SystemParam, Out> Send for OnceOnThread<Param, Out> {}
-
-
-unsafe impl<Param: SystemParam, Out> Sync for OnceOnThread<Param, Out> {}
 
 
 impl<Param: SystemParam + 'static, Out: 'static> IntoThreadPoolExecutor<Param, Out> for OnceOnThread<Param, Out> {

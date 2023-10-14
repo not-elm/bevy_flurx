@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
+use bevy::app::MainSchedulePlugin;
 
 use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::ecs::system::{StaticSystemParam, SystemParam};
@@ -12,6 +13,7 @@ use crate::runner::AsyncSystemStatus;
 
 pub mod delay;
 pub(crate) mod once;
+pub(crate) mod wait;
 
 
 pub trait IntoThreadPoolExecutor<Param: SystemParam, Out = ()> {
@@ -160,3 +162,21 @@ impl<S: SystemParam + 'static, Label: ScheduleLabel + Clone> SetupTaskPoolSystem
         }
     }
 }
+
+
+#[derive(Deref)]
+#[repr(transparent)]
+struct SharedCallback<Param: SystemParam, Out>(Arc<Mutex<dyn Fn(&mut StaticSystemParam<Param>) -> Out>>);
+
+
+impl<Param: SystemParam, Out> SharedCallback<Param, Out> {
+    #[inline(always)]
+    pub fn new(f: impl Fn(&mut StaticSystemParam<Param>) -> Out + Send + 'static) -> SharedCallback<Param, Out> {
+        Self(Arc::new(Mutex::new(f)))
+    }
+}
+
+unsafe impl<Param: SystemParam, Out> Send for SharedCallback<Param, Out> {}
+
+
+unsafe impl<Param: SystemParam, Out> Sync for SharedCallback<Param, Out> {}
