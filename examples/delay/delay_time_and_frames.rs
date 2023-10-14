@@ -5,16 +5,16 @@ use bevy::DefaultPlugins;
 use bevy::prelude::{Commands, ResMut};
 use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 
-use bevy_async_system::BevTaskPlugin;
-use bevy_async_system::ext::SpawnAsyncCommands;
-use bevy_async_system::runner::non_send::delay::Delay;
+use bevy_async_system::AsyncSystemPlugin;
+use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
+use bevy_async_system::runner::multi_thread::delay::Delay;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
             FramepacePlugin,
-            BevTaskPlugin
+            AsyncSystemPlugin
         ))
         .add_systems(Startup, setup)
         .run();
@@ -26,13 +26,13 @@ fn setup(
     mut settings: ResMut<FramepaceSettings>,
 ) {
     settings.limiter = Limiter::from_framerate(30.);
-    commands.spawn_async(|task| async move {
+    commands.spawn_async(|cmd| async move {
         println!("Wait 3 seconds...");
-        task.spawn(Update, Delay::Time(Duration::from_secs(3))).await;
+        cmd.spawn(Update, Delay::time(Duration::from_secs(3))).await;
         println!("3 seconds have passed.");
 
         println!("Wait 90 frames...");
-        task.spawn(Update, Delay::Frames(90)).await;
+        cmd.spawn(Update, Delay::frames(90)).await;
         println!("End");
     });
 }

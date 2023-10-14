@@ -5,7 +5,7 @@ use bevy::prelude::{Camera2dBundle, Color, Commands, Component, Query, Sprite, T
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
-use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::prelude::Wait;
 
@@ -16,7 +16,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            BevTaskPlugin
+            AsyncSystemPlugin
         ))
         .add_systems(Startup, (
             setup_entities,
@@ -47,8 +47,8 @@ fn setup_async_systems(
     mut commands: Commands
 ) {
     commands.spawn_async(|cmd| async move {
-        cmd.spawn(Update, Wait::until(move_up)).await;
-        cmd.spawn(Update, Wait::until(move_right)).await;
+        cmd.spawn_on_main(Update, Wait::until(move_up)).await;
+        cmd.spawn_on_main(Update, Wait::until(move_right)).await;
     });
 }
 

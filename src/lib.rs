@@ -1,27 +1,30 @@
+#![allow(clippy::type_complexity)]
+
 use bevy::app::{App, First, Plugin};
 use bevy::prelude::{Commands, Entity, Query};
 use futures_lite::future::block_on;
 
-use crate::task::TaskHandle;
+use crate::async_commands::TaskHandle;
+use crate::runner::multi_thread::MultiThreadSystemExecutorPlugin;
 
-pub mod task;
+pub mod async_commands;
 pub mod ext;
 pub mod runner;
 
 
 pub mod prelude {
     pub use crate::{
-        BevTaskPlugin,
+        AsyncSystemPlugin,
         runner::non_send::{
             AsyncSystemRunnable,
             BoxedAsyncSystemRunner,
-            delay::Delay,
+            // delay::Delay,
             IntoAsyncSystemRunner,
             once::Once,
             repeat::Repeat,
             wait::Wait,
         },
-        task::{AsyncCommands, TaskHandle},
+        async_commands::{AsyncCommands, TaskHandle},
     };
 }
 
@@ -32,13 +35,13 @@ pub mod prelude {
 ///
 ///
 /// ```
-pub struct BevTaskPlugin;
+pub struct AsyncSystemPlugin;
 
 
-impl Plugin for BevTaskPlugin {
+impl Plugin for AsyncSystemPlugin {
     fn build(&self, app: &mut App) {
         use crate::inner_macros::run_tasks;
-
+        app.add_plugins(MultiThreadSystemExecutorPlugin);
         #[cfg(feature = "first")]
         {
             use bevy::prelude::IntoSystemConfigs;

@@ -22,10 +22,10 @@ mod forever;
 /// fn setup(mut commands: Commands){
 ///     commands.spawn_async(|task| async move{
 ///         // Call `my_system` for 3 frames.
-///         task.spawn(Update, Repeat::times(3, my_system)).await;
+///         task.spawn_on_main(Update, Repeat::times(3, my_system)).await;
 ///
 ///         // It's called every frame while this task is running.
-///         let handle = task.spawn(Update, Repeat::forever(my_system));
+///         let handle = task.spawn_on_main(Update, Repeat::forever(my_system));
 ///
 ///         // When the handle is dropped, calling `my_system` also stops.
 ///         drop(handle)

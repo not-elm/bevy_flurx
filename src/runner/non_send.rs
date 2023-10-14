@@ -7,7 +7,6 @@ use futures::channel::mpsc::Sender;
 
 use crate::runner::non_send::config::AsyncSystemConfig;
 
-pub mod delay;
 pub mod once;
 pub mod wait;
 pub mod config;

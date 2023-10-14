@@ -6,16 +6,16 @@ use bevy::input::Input;
 use bevy::log::info;
 use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
 
-use bevy_async_system::BevTaskPlugin;
+use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::runner::non_send::delay::Delay;
-use bevy_async_system::task::TaskHandle;
+use bevy_async_system::async_commands::TaskHandle;
 
 fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            BevTaskPlugin
+            AsyncSystemPlugin
         ))
         .add_systems(Startup, setup)
         .add_systems(Update, cancel)
@@ -26,7 +26,7 @@ fn main() {
 fn setup(mut commands: Commands) {
     commands.spawn_async(|task| async move {
         loop {
-            task.spawn(Update, Delay::Time(Duration::from_secs(1))).await;
+            task.spawn_on_main(Update, Delay::Time(Duration::from_secs(1))).await;
             println!("******** tick **********");
         }
     });
