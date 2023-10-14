@@ -6,7 +6,7 @@ use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::channel::mpsc::{Receiver, Sender};
 use futures::StreamExt;
 
-use crate::runner::main_thread::{IntoMainThreadExecutor, MainThreadExecutors};
+use crate::runner::{IntoMainThreadExecutor, MainThreadExecutors};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct TaskHandle(pub(crate) Task<()>);

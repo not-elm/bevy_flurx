@@ -6,12 +6,13 @@ use bevy::prelude::{Commands, Entity, Query, ResMut, Schedules};
 use futures_lite::future::block_on;
 
 use crate::async_commands::TaskHandle;
-use crate::runner::main_thread::MainThreadExecutors;
+use crate::runner::MainThreadExecutors;
 
 // use crate::runner::thread_pool::TaskPoolSystemSetups;
 
 pub mod async_commands;
 pub mod ext;
+
 pub mod runner;
 
 
@@ -19,7 +20,7 @@ pub mod prelude {
     pub use crate::{
         async_commands::{AsyncCommands, TaskHandle},
         AsyncSystemPlugin,
-        runner::main_thread::{
+        runner::{
             BoxedMainThreadExecutor,
             IntoMainThreadExecutor,
             // delay::Delay,

@@ -4,8 +4,8 @@ use bevy::prelude::{Event, EventReader, In, IntoSystem, IntoSystemConfigs, Query
 
 use crate::async_commands::TaskSender;
 use crate::prelude::{BoxedMainThreadExecutor, MainThreadExecutable};
-use crate::runner::main_thread::{IntoMainThreadExecutor, schedule_initialize, task_running};
-use crate::runner::main_thread::config::AsyncSystemConfig;
+use crate::runner::{IntoMainThreadExecutor, schedule_initialize, task_running};
+use crate::runner::config::AsyncSystemConfig;
 
 
 #[inline(always)]
@@ -89,7 +89,7 @@ mod tests {
     use bevy::prelude::{Commands, Event, Events, Res};
 
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
-    use crate::runner::main_thread::{once, wait};
+    use crate::runner::{once, wait};
     use crate::test_util::new_app;
 
     #[test]

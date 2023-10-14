@@ -3,8 +3,8 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Commands, Entity, Event, EventReader, In, IntoSystem, IntoSystemConfigs, Query, Schedules};
 
 use crate::async_commands::TaskSender;
-use crate::runner::main_thread::{BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable, schedule_initialize, task_running};
-use crate::runner::main_thread::config::AsyncSystemConfig;
+use crate::runner::{BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable, schedule_initialize, task_running};
+use crate::runner::config::AsyncSystemConfig;
 
 #[inline(always)]
 pub const fn until<Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<()>
@@ -85,7 +85,7 @@ mod tests {
     use bevy::prelude::{Commands, Res};
 
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
-    use crate::runner::main_thread::{once, wait};
+    use crate::runner::{once, wait};
     use crate::test_util::{FirstEvent, is_first_event_already_coming, new_app};
 
     #[test]
