@@ -3,16 +3,15 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Event, EventWriter, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Schedules, States};
 
 use crate::async_commands::TaskSender;
-use crate::prelude::{BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable};
-use crate::runner::config::AsyncSystemConfig;
-
+use crate::prelude::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand};
 use crate::runner::{schedule_initialize, task_running};
+use crate::runner::config::AsyncSystemConfig;
 
 struct OnceOnMain<Out, Marker, Sys>(AsyncSystemConfig<Out, Marker, Sys>);
 
 
 #[inline(always)]
-pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<Out>
+pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
     where
         Out: Send + Sync + 'static,
         Marker: Send + Sync + 'static,
@@ -23,7 +22,7 @@ pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<Out>
 
 
 #[inline]
-pub fn set_state<S: States + Copy>(to: S) -> impl IntoMainThreadExecutor {
+pub fn set_state<S: States + Copy>(to: S) -> impl IntoAsyncScheduleCommand {
     run(move |mut state: ResMut<NextState<S>>| {
         state.set(to);
     })
@@ -31,21 +30,21 @@ pub fn set_state<S: States + Copy>(to: S) -> impl IntoMainThreadExecutor {
 
 
 #[inline]
-pub fn send<E: Event + Clone>(event: E) -> impl IntoMainThreadExecutor {
+pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncScheduleCommand {
     run(move |mut ew: EventWriter<E>| {
         ew.send(event.clone());
     })
 }
 
 
-impl<Out, Marker, Sys> IntoMainThreadExecutor<Out> for OnceOnMain<Out, Marker, Sys>
+impl<Out, Marker, Sys> IntoAsyncScheduleCommand<Out> for OnceOnMain<Out, Marker, Sys>
     where
         Out: Send + Sync + 'static,
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), Out, Marker> + Send + Sync + 'static
 {
-    fn into_executor(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor {
-        BoxedMainThreadExecutor::new(OnceRunner {
+    fn into_schedule_command(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand {
+        AsyncScheduleCommand::new(OnceRunner {
             config: self.0,
             sender,
             schedule_label,
@@ -61,14 +60,14 @@ struct OnceRunner<Out, Marker, Sys, Label> {
 }
 
 
-impl<Out, Marker, Sys, Label> MainThreadExecutable for OnceRunner<Out, Marker, Sys, Label>
+impl<Out, Marker, Sys, Label> AsyncSchedule for OnceRunner<Out, Marker, Sys, Label>
     where
         Out: Send + Sync + 'static,
         Sys: IntoSystem<(), Out, Marker> + Send + Sync,
         Marker: Send + Sync + 'static,
         Label: ScheduleLabel + Clone
 {
-    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
+    fn initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
         let schedule = schedule_initialize(schedules, &self.schedule_label);
         entity_commands.insert(self.sender);
         let entity = entity_commands.id();
@@ -100,8 +99,8 @@ mod tests {
     fn set_state() {
         let mut app = new_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn_async(|cmd| async move {
-                cmd.spawn(Update, once::set_state(TestState::Finished)).await;
+            commands.spawn_async(|schedules| async move {
+                schedules.add_system(Update, once::set_state(TestState::Finished)).await;
             });
         });
 
@@ -116,9 +115,9 @@ mod tests {
     fn send_event() {
         let mut app = new_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn_async(|cmd| async move {
-                cmd.spawn(Update, once::send(FirstEvent)).await;
-                cmd.spawn(Update, once::send(SecondEvent)).await;
+            commands.spawn_async(|schedules| async move {
+                schedules.add_system(Update, once::send(FirstEvent)).await;
+                schedules.add_system(Update, once::send(SecondEvent)).await;
             });
         });
 

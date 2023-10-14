@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::runner::delay::frame::DelayFrame;
 use crate::runner::delay::time::DelayTime;
-use crate::runner::IntoMainThreadExecutor;
+use crate::runner::IntoAsyncScheduleCommand;
 
 
 // mod time;
@@ -45,12 +45,12 @@ pub struct Delay(PhantomData<()>);
 
 
 #[inline(always)]
-pub const fn frames(delay_frames: usize) -> impl IntoMainThreadExecutor {
+pub const fn frames(delay_frames: usize) -> impl IntoAsyncScheduleCommand {
     DelayFrame(delay_frames)
 }
 
 
 #[inline(always)]
-pub const fn timer(duration: Duration) -> impl IntoMainThreadExecutor {
+pub const fn timer(duration: Duration) -> impl IntoAsyncScheduleCommand {
     DelayTime(duration)
 }

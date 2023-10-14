@@ -24,10 +24,10 @@ fn main() {
 
 
 fn setup_async_systems(mut commands: Commands) {
-    commands.spawn_async(|cmd| async move {
-        cmd.spawn(Update, Wait::until(finished_audio)).await;
+    commands.spawn_async(|schedules| async move {
+        schedules.add_system(Update, Wait::until(finished_audio)).await;
         info!("***** Finished audio *****");
-        cmd.spawn(Update, OnceOnMain::send(AppExit)).await;
+        schedules.add_system(Update, OnceOnMain::send(AppExit)).await;
     });
 }
 

@@ -6,7 +6,7 @@ use bevy::prelude::{Commands, Entity, Query, ResMut, Schedules};
 use futures_lite::future::block_on;
 
 use crate::async_commands::TaskHandle;
-use crate::runner::MainThreadExecutors;
+use crate::runner::AsyncScheduleCommands;
 
 // use crate::runner::thread_pool::TaskPoolSystemSetups;
 
@@ -18,13 +18,13 @@ pub mod runner;
 
 pub mod prelude {
     pub use crate::{
-        async_commands::{AsyncCommands, TaskHandle},
+        async_commands::{AsyncSchedules, TaskHandle},
         AsyncSystemPlugin,
         runner::{
-            BoxedMainThreadExecutor,
-            IntoMainThreadExecutor,
+            AsyncScheduleCommand,
+            IntoAsyncScheduleCommand,
             // delay::Delay,
-            MainThreadExecutable,
+            AsyncSchedule,
             // once::OnceOnMain,
             // repeat::Repeat,
             // wait::Wait,
@@ -57,10 +57,10 @@ impl Plugin for AsyncSystemPlugin {
 fn update(
     mut commands: Commands,
     mut schedules: ResMut<Schedules>,
-    executors_query: Query<(Entity, &MainThreadExecutors)>,
+    executors_query: Query<(Entity, &AsyncScheduleCommands)>,
 ) {
     for (entity, executors) in executors_query.iter() {
-        executors.run_systems(&mut commands.entity(entity), &mut schedules);
+        executors.init_schedulers(&mut commands.entity(entity), &mut schedules);
     }
 }
 

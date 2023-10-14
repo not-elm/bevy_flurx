@@ -3,13 +3,12 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Event, EventReader, In, IntoSystem, IntoSystemConfigs, Query, Schedules};
 
 use crate::async_commands::TaskSender;
-use crate::prelude::{BoxedMainThreadExecutor, MainThreadExecutable};
-use crate::runner::{IntoMainThreadExecutor, schedule_initialize, task_running};
+use crate::prelude::{AsyncSchedule, AsyncScheduleCommand};
+use crate::runner::{IntoAsyncScheduleCommand, schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
 
-
 #[inline(always)]
-pub const fn output<Out, Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<Out>
+pub const fn output<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
     where
         Out: Send + Sync + 'static,
         Marker: Send + Sync + 'static,
@@ -20,7 +19,7 @@ pub const fn output<Out, Marker, Sys>(system: Sys) -> impl IntoMainThreadExecuto
 
 
 #[inline]
-pub fn output_event<E: Event + Clone>() -> impl IntoMainThreadExecutor<E> {
+pub fn output_event<E: Event + Clone>() -> impl IntoAsyncScheduleCommand<E> {
     output(|mut er: EventReader<E>| {
         er.iter().next().cloned()
     })
@@ -30,15 +29,15 @@ pub fn output_event<E: Event + Clone>() -> impl IntoMainThreadExecutor<E> {
 struct WaitOutput<Out, Marker, Sys>(AsyncSystemConfig<Option<Out>, Marker, Sys>);
 
 
-impl<Out, Marker, Sys> IntoMainThreadExecutor<Out> for WaitOutput<Out, Marker, Sys>
+impl<Out, Marker, Sys> IntoAsyncScheduleCommand<Out> for WaitOutput<Out, Marker, Sys>
     where
         Out: Send + Sync + 'static,
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), Option<Out>, Marker> + Send + Sync + 'static
 {
     #[inline]
-    fn into_executor(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor {
-        BoxedMainThreadExecutor::new(Executor {
+    fn into_schedule_command(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand {
+        AsyncScheduleCommand::new(Executor {
             sender,
             config: self.0,
             schedule_label,
@@ -54,14 +53,14 @@ struct Executor<Out, Marker, Sys, Label> {
 }
 
 
-impl<Out, Marker, Sys, Label> MainThreadExecutable for Executor<Out, Marker, Sys, Label>
+impl<Out, Marker, Sys, Label> AsyncSchedule for Executor<Out, Marker, Sys, Label>
     where
         Out: Send + Sync + 'static,
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), Option<Out>, Marker> + Send + Sync + 'static,
         Label: ScheduleLabel + Clone
 {
-    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
+    fn initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
         let schedule = schedule_initialize(schedules, &self.schedule_label);
         entity_commands.insert(self.sender);
         let entity = entity_commands.id();
@@ -97,8 +96,8 @@ mod tests {
         let mut app = new_app();
         app.add_event::<OutputEvent>();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn_async(|cmd| async move {
-                let frame_count = cmd.spawn(Update, wait::output(|frame: Res<FrameCount>| {
+            commands.spawn_async(|schedules| async move {
+                let frame_count = schedules.add_system(Update, wait::output(|frame: Res<FrameCount>| {
                     if frame.0 < 2 {
                         None
                     } else {
@@ -106,7 +105,7 @@ mod tests {
                     }
                 })).await;
 
-                cmd.spawn(Update, once::send(OutputEvent(frame_count))).await;
+                schedules.add_system(Update, once::send(OutputEvent(frame_count))).await;
             });
         });
 

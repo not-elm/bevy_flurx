@@ -6,7 +6,7 @@ use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::channel::mpsc::{Receiver, Sender};
 use futures::StreamExt;
 
-use crate::runner::{IntoMainThreadExecutor, MainThreadExecutors};
+use crate::runner::{IntoAsyncScheduleCommand, AsyncScheduleCommands};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct TaskHandle(pub(crate) Task<()>);
@@ -17,21 +17,19 @@ pub struct TaskSender<Out>(pub(crate) Sender<Out>);
 
 
 #[derive(Default, Clone)]
-pub struct AsyncCommands {
-    pub(crate) main_thread_runners: MainThreadExecutors,
-
+pub struct AsyncSchedules {
+    pub(crate) schedulers: AsyncScheduleCommands,
 }
 
 
-impl AsyncCommands {
-    pub fn spawn<Out: Send + 'static>(
+impl AsyncSchedules {
+    pub fn add_system<Out: Send + 'static>(
         &self,
         schedule_label: impl ScheduleLabel + Clone,
-        into_executor: impl IntoMainThreadExecutor<Out>,
+        into_schedule_command: impl IntoAsyncScheduleCommand<Out>,
     ) -> impl Future<Output=Out> {
         let (tx, rx) = futures::channel::mpsc::channel(1);
-        let executor = into_executor.into_executor(TaskSender(tx), schedule_label);
-        self.main_thread_runners.push(executor);
+        self.schedulers.push(into_schedule_command.into_schedule_command(TaskSender(tx), schedule_label));
 
         create_output_future(rx)
     }

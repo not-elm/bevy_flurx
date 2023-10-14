@@ -1,14 +1,11 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::IntoSystem;
-
-use crate::runner::main_thread::config::AsyncSystemConfig;
-use crate::runner::main_thread::IntoMainThreadExecutor;
-use crate::runner::main_thread::repeat::forever::Forever;
-use crate::runner::main_thread::repeat::times::Times;
+use crate::prelude::IntoAsyncScheduleCommand;
+use crate::runner::repeat::times::Times;
 
 mod times;
-mod forever;
+// mod forever;
 
 /// Repeats the system call  a specified number of times or indefinitely.
 ///
@@ -39,18 +36,19 @@ mod forever;
 pub struct Repeat(PhantomData<()>);
 
 
-impl Repeat {
-    #[inline(always)]
-    pub fn times<Marker>(num: usize, system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoMainThreadExecutor {
-        Times::create(num, system)
-    }
-
-
-    #[inline(always)]
-    pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoMainThreadExecutor {
-        Forever(AsyncSystemConfig::new(system))
-    }
+#[inline(always)]
+pub fn times<Marker, Sys>(num: usize, system: Sys) -> impl IntoAsyncScheduleCommand
+ where
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), (), Marker> + Send + Sync + 'static
+{
+    Times::create(num, system)
 }
 
+
+// #[inline(always)]
+// pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoMainThreadExecutor {
+//     Forever(AsyncSystemConfig::new(system))
+// }
 
 

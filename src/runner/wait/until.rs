@@ -3,11 +3,11 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Commands, Entity, Event, EventReader, In, IntoSystem, IntoSystemConfigs, Query, Schedules};
 
 use crate::async_commands::TaskSender;
-use crate::runner::{BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable, schedule_initialize, task_running};
+use crate::runner::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand, schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
 
 #[inline(always)]
-pub const fn until<Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<()>
+pub const fn until<Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<()>
     where
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static
@@ -17,7 +17,7 @@ pub const fn until<Marker, Sys>(system: Sys) -> impl IntoMainThreadExecutor<()>
 
 
 #[inline(always)]
-pub fn until_event<E: Event>() -> impl IntoMainThreadExecutor<()> {
+pub fn until_event<E: Event>() -> impl IntoAsyncScheduleCommand<()> {
     until(|er: EventReader<E>| { !er.is_empty() })
 }
 
@@ -25,14 +25,14 @@ pub fn until_event<E: Event>() -> impl IntoMainThreadExecutor<()> {
 struct Until<Marker, Sys>(AsyncSystemConfig<bool, Marker, Sys>);
 
 
-impl<Marker, Sys> IntoMainThreadExecutor<()> for Until<Marker, Sys>
+impl<Marker, Sys> IntoAsyncScheduleCommand<()> for Until<Marker, Sys>
     where
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static
 {
     #[inline]
-    fn into_executor(self, sender: TaskSender<()>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor {
-        BoxedMainThreadExecutor::new(Executor {
+    fn into_schedule_command(self, sender: TaskSender<()>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand {
+        AsyncScheduleCommand::new(Executor {
             sender,
             config: self.0,
             schedule_label,
@@ -48,13 +48,13 @@ struct Executor<Marker, Sys, Label> {
 }
 
 
-impl<Marker, Sys, Label> MainThreadExecutable for Executor<Marker, Sys, Label>
+impl<Marker, Sys, Label> AsyncSchedule for Executor<Marker, Sys, Label>
     where
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static,
         Label: ScheduleLabel + Clone
 {
-    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
+    fn initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
         let schedule = schedule_initialize(schedules, &self.schedule_label);
         entity_commands.insert(self.sender);
         let entity = entity_commands.id();
@@ -92,11 +92,11 @@ mod tests {
     fn until() {
         let mut app = new_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn_async(|cmd| async move {
-                cmd.spawn(Update, wait::until(|frame: Res<FrameCount>| {
+            commands.spawn_async(|schedules| async move {
+                schedules.add_system(Update, wait::until(|frame: Res<FrameCount>| {
                     frame.0 == 2
                 })).await;
-                cmd.spawn(Update, once::send(FirstEvent)).await;
+                schedules.add_system(Update, once::send(FirstEvent)).await;
             });
         });
 
@@ -114,14 +114,14 @@ mod tests {
     fn never_again() {
         let mut app = new_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn_async(|cmd| async move {
-                cmd.spawn(Update, wait::until(|frame: Res<FrameCount>| {
+            commands.spawn_async(|schedules| async move {
+                schedules.add_system(Update, wait::until(|frame: Res<FrameCount>| {
                     if 2 <= frame.0 {
                         panic!("must not be called");
                     }
                     frame.0 == 1
                 })).await;
-                cmd.spawn(Update, wait::until(|| false)).await;
+                schedules.add_system(Update, wait::until(|| false)).await;
             });
         });
 

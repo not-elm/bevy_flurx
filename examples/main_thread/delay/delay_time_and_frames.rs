@@ -7,6 +7,7 @@ use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
+use bevy_async_system::runner::delay::Delay;
 use bevy_async_system::runner::thread_pool::delay::Delay;
 
 fn main() {
@@ -26,13 +27,13 @@ fn setup(
     mut settings: ResMut<FramepaceSettings>,
 ) {
     settings.limiter = Limiter::from_framerate(30.);
-    commands.spawn_async(|cmd| async move {
+    commands.spawn_async(|schedules| async move {
         println!("Wait 3 seconds...");
-        cmd.spawn(Update, Delay::time(Duration::from_secs(3))).await;
+        schedules.add_system(Update, Delay::time(Duration::from_secs(3))).await;
         println!("3 seconds have passed.");
 
         println!("Wait 90 frames...");
-        cmd.spawn(Update, Delay::frames(90)).await;
+        schedules.add_system(Update, Delay::frames(90)).await;
         println!("End");
     });
 }

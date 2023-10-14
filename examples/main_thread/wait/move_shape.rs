@@ -46,9 +46,9 @@ fn setup_entities(mut commands: Commands) {
 fn setup_async_systems(
     mut commands: Commands
 ) {
-    commands.spawn_async(|cmd| async move {
-        cmd.spawn(Update, wait::until(move_up)).await;
-        cmd.spawn(Update, wait::until(move_right)).await;
+    commands.spawn_async(|schedules| async move {
+        schedules.add_system(Update, wait::until(move_up)).await;
+        schedules.add_system(Update, wait::until(move_right)).await;
     });
 }
 

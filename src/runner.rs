@@ -12,57 +12,56 @@ pub mod wait;
 pub mod config;
 pub mod delay;
 
-// pub mod repeat;
+pub mod repeat;
 
 
-pub trait IntoMainThreadExecutor<Out = ()>: Sized {
-    fn into_executor(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> BoxedMainThreadExecutor;
+pub trait IntoAsyncScheduleCommand<Out = ()>: Sized {
+    fn into_schedule_command(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand;
 }
 
 
-pub trait MainThreadExecutable: Send + Sync {
-    fn schedule_initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules);
+pub trait AsyncSchedule: Send + Sync {
+    fn initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules);
 }
 
 
 #[derive(Component, Deref, DerefMut)]
-pub struct BoxedMainThreadExecutor(pub Box<dyn MainThreadExecutable>);
+pub struct AsyncScheduleCommand(pub Box<dyn AsyncSchedule>);
 
-impl BoxedMainThreadExecutor {
+impl AsyncScheduleCommand {
     #[inline]
-    pub fn new(s: impl MainThreadExecutable + 'static) -> Self {
+    pub fn new(s: impl AsyncSchedule + 'static) -> Self {
         Self(Box::new(s))
     }
 }
 
 
 #[derive(Default, Component, Deref)]
-pub(crate) struct MainThreadExecutors(Arc<Mutex<Vec<BoxedMainThreadExecutor>>>);
+pub(crate) struct AsyncScheduleCommands(Arc<Mutex<Vec<AsyncScheduleCommand>>>);
 
 
-impl MainThreadExecutors {
+impl AsyncScheduleCommands {
     #[inline]
-    pub(crate) fn push(&self, runner: BoxedMainThreadExecutor) {
-        self.0.lock().unwrap().push(runner);
+    pub(crate) fn push(&self, scheduler: AsyncScheduleCommand) {
+        self.0.lock().unwrap().push(scheduler);
     }
 
 
-    pub(crate) fn run_systems(
+    pub(crate) fn init_schedulers(
         &self,
         entity_commands: &mut EntityCommands,
-        schedule: &mut Schedules,
+        schedules: &mut Schedules,
     ) {
-        let mut executables = self.0.lock().unwrap();
-        while let Some(system) = executables.pop() {
+        while let Some(system) = self.0.lock().unwrap().pop() {
             let entity = entity_commands.commands().spawn_empty().id();
             entity_commands.add_child(entity);
-            system.0.schedule_initialize(&mut entity_commands.commands().entity(entity), schedule);
+            system.0.initialize(&mut entity_commands.commands().entity(entity), schedules);
         }
     }
 }
 
 
-impl Clone for MainThreadExecutors {
+impl Clone for AsyncScheduleCommands {
     fn clone(&self) -> Self {
         Self(Arc::clone(&self.0))
     }
