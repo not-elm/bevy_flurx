@@ -6,7 +6,7 @@ use bevy::log::info;
 use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res};
 
 use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::ext::SpawnAsyncCommands;
+use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
 use bevy_async_system::prelude::{Once, Wait};
 
 fn main() {

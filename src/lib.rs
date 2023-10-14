@@ -16,10 +16,10 @@ pub mod prelude {
     pub use crate::{
         AsyncSystemPlugin,
         runner::main_thread::{
-            AsyncSystemRunnable,
-            BoxedAsyncSystemRunner,
+            MainThreadExecutable,
+            BoxedMainThreadExecutor,
             // delay::Delay,
-            IntoAsyncSystemRunner,
+            IntoMainThreadExecutor,
             once::Once,
             repeat::Repeat,
             wait::Wait,

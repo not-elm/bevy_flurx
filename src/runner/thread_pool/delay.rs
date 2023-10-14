@@ -47,14 +47,14 @@ pub struct Delay(PhantomData<()>);
 
 
 impl Delay {
-    #[inline]
+    #[inline(always)]
     pub const fn frames(delay_frames: usize) -> impl IntoThreadPoolExecutor<DelayFrameParam> {
         DelayFrame(delay_frames)
     }
 
 
     #[inline(always)]
-    pub fn time<'w>(duration: Duration) -> impl IntoThreadPoolExecutor<DelayTimeParam<'w>> {
+    pub const fn time<'w>(duration: Duration) -> impl IntoThreadPoolExecutor<DelayTimeParam<'w>> {
         DelayTime(duration)
     }
 }

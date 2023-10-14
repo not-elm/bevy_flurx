@@ -4,6 +4,7 @@ use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::prelude::{Component, Deref, World};
 use bevy::utils::HashMap;
 use futures::channel::mpsc::Sender;
+use crate::runner::AsyncSystemStatus;
 
 use crate::runner::main_thread::config::AsyncSystemConfig;
 
@@ -13,26 +14,26 @@ pub mod config;
 pub mod repeat;
 
 
-pub trait IntoAsyncSystemRunner<Out = ()>: Sized {
-    fn into_runner(self, sender: Sender<Out>) -> BoxedAsyncSystemRunner;
+pub trait IntoMainThreadExecutor<Out = ()>: Sized {
+    fn into_executor(self, sender: Sender<Out>) -> BoxedMainThreadExecutor;
 }
 
 
-pub trait AsyncSystemRunnable {
-    fn run(&mut self, world: &mut World) -> SystemRunningStatus;
+pub trait MainThreadExecutable {
+    fn run(&mut self, world: &mut World) -> AsyncSystemStatus;
 }
 
 
-pub type BoxedAsyncSystemRunner = Box<dyn AsyncSystemRunnable>;
+pub type BoxedMainThreadExecutor = Box<dyn MainThreadExecutable>;
 
 
 #[derive(Default, Component, Deref)]
-pub(crate) struct MainThreadExecutors(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRunner>>>>);
+pub(crate) struct MainThreadExecutors(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedMainThreadExecutor>>>>);
 
 
 impl MainThreadExecutors {
     #[inline]
-    pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel, runner: BoxedAsyncSystemRunner) {
+    pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel, runner: BoxedMainThreadExecutor) {
         let mut map = self.0.lock().unwrap();
 
         if let Some(runners) = map.get_mut(&schedule_label) {
@@ -65,11 +66,13 @@ unsafe impl Send for MainThreadExecutors {}
 
 unsafe impl Sync for MainThreadExecutors {}
 
+
 impl Clone for MainThreadExecutors {
     fn clone(&self) -> Self {
         Self(Arc::clone(&self.0))
     }
 }
+
 
 #[derive(Default, Debug, Copy, Clone, Eq, PartialEq)]
 pub enum SystemRunningStatus {

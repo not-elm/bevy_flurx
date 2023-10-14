@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use bevy::prelude::IntoSystem;
 
 use crate::runner::main_thread::config::AsyncSystemConfig;
-use crate::runner::main_thread::IntoAsyncSystemRunner;
+use crate::runner::main_thread::IntoMainThreadExecutor;
 use crate::runner::main_thread::repeat::forever::Forever;
 use crate::runner::main_thread::repeat::times::Times;
 
@@ -41,13 +41,13 @@ pub struct Repeat(PhantomData<()>);
 
 impl Repeat {
     #[inline(always)]
-    pub fn times<Marker>(num: usize, system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoAsyncSystemRunner {
+    pub fn times<Marker>(num: usize, system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoMainThreadExecutor {
         Times::create(num, system)
     }
 
 
     #[inline(always)]
-    pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoAsyncSystemRunner {
+    pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoMainThreadExecutor {
         Forever(AsyncSystemConfig::new(system))
     }
 }

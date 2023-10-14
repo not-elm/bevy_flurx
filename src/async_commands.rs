@@ -8,7 +8,7 @@ use futures::channel::mpsc::Receiver;
 use futures::StreamExt;
 
 use crate::runner::thread_pool::{IntoThreadPoolExecutor, MultiThreadSystemExecutors};
-use crate::runner::main_thread::{IntoAsyncSystemRunner, MainThreadExecutors};
+use crate::runner::main_thread::{IntoMainThreadExecutor, MainThreadExecutors};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct TaskHandle(pub(crate) Task<()>);
@@ -38,10 +38,10 @@ impl AsyncCommands {
     pub fn spawn_on_main<Out: Send + 'static>(
         &self,
         schedule_label: impl ScheduleLabel,
-        into_executor: impl IntoAsyncSystemRunner<Out>,
+        into_executor: impl IntoMainThreadExecutor<Out>,
     ) -> impl Future<Output=Out> {
         let (tx, rx) = futures::channel::mpsc::channel(1);
-        let runner = into_executor.into_runner(tx);
+        let runner = into_executor.into_executor(tx);
         self.main_thread_runners.insert(Box::new(schedule_label), runner);
 
         create_output_future(rx)
