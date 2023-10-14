@@ -3,7 +3,7 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::ecs::system::{StaticSystemParam, SystemParam};
 use bevy::prelude::Query;
 
-use crate::runner::multi_thread::MultiThreadSystemExecutors;
+use crate::runner::thread_pool::MultiThreadSystemExecutors;
 
 pub trait AddSystem {
     fn add_thread_pool_system<S: SystemParam + 'static>(&mut self, schedule: impl ScheduleLabel + Clone) -> &mut Self;

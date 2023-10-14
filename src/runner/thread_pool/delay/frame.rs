@@ -2,7 +2,7 @@ use bevy::ecs::system::{StaticSystemParam, SystemParam};
 use futures::channel::mpsc::Sender;
 
 use crate::runner::AsyncSystemStatus;
-use crate::runner::multi_thread::{IntoThreadPoolExecutor, ThreadPoolExecutable, ThreadPoolExecutor};
+use crate::runner::thread_pool::{IntoThreadPoolExecutor, ThreadPoolExecutable, ThreadPoolExecutor};
 
 pub(crate) struct DelayFrame(pub usize);
 

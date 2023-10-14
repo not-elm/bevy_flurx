@@ -6,7 +6,7 @@ use bevy::text::{Text, TextStyle};
 
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
-use bevy_async_system::runner::non_send::once::Once;
+use bevy_async_system::runner::main_thread::once::Once;
 
 fn main() {
     App::new()

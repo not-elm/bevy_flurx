@@ -5,7 +5,7 @@ use bevy::prelude::{Commands, Entity, Query};
 use futures_lite::future::block_on;
 
 use crate::async_commands::TaskHandle;
-use crate::runner::multi_thread::MultiThreadSystemExecutorPlugin;
+use crate::runner::thread_pool::ThreadPoolExecutorPlugin;
 
 pub mod async_commands;
 pub mod ext;
@@ -15,7 +15,7 @@ pub mod runner;
 pub mod prelude {
     pub use crate::{
         AsyncSystemPlugin,
-        runner::non_send::{
+        runner::main_thread::{
             AsyncSystemRunnable,
             BoxedAsyncSystemRunner,
             // delay::Delay,
@@ -41,7 +41,7 @@ pub struct AsyncSystemPlugin;
 impl Plugin for AsyncSystemPlugin {
     fn build(&self, app: &mut App) {
         use crate::inner_macros::run_tasks;
-        app.add_plugins(MultiThreadSystemExecutorPlugin);
+        app.add_plugins(ThreadPoolExecutorPlugin);
         #[cfg(feature = "first")]
         {
             use bevy::prelude::IntoSystemConfigs;
@@ -95,8 +95,8 @@ pub(crate) mod inner_macros {
     macro_rules! run_tasks {
         ($schedule_label: expr) => {
              move |world: &mut bevy::prelude::World| {
-                let runners: Vec<crate::runner::non_send::NonSendRunners> = world
-                    .query::<&crate::runner::non_send::NonSendRunners>()
+                let runners: Vec<crate::runner::main_thread::MainThreadExecutors> = world
+                    .query::<&crate::runner::main_thread::MainThreadExecutors>()
                     .iter(world)
                     .cloned()
                     .collect();

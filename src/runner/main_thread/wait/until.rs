@@ -1,8 +1,8 @@
 use bevy::prelude::{Event, EventReader, IntoSystem, World};
 use futures::channel::mpsc::Sender;
 
-use crate::runner::non_send::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
-use crate::runner::non_send::config::AsyncSystemConfig;
+use crate::runner::main_thread::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::main_thread::config::AsyncSystemConfig;
 
 pub(crate) struct Until {
     config: AsyncSystemConfig<bool>,

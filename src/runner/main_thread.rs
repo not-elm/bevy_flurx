@@ -5,7 +5,7 @@ use bevy::prelude::{Component, Deref, World};
 use bevy::utils::HashMap;
 use futures::channel::mpsc::Sender;
 
-use crate::runner::non_send::config::AsyncSystemConfig;
+use crate::runner::main_thread::config::AsyncSystemConfig;
 
 pub mod once;
 pub mod wait;
@@ -27,10 +27,10 @@ pub type BoxedAsyncSystemRunner = Box<dyn AsyncSystemRunnable>;
 
 
 #[derive(Default, Component, Deref)]
-pub(crate) struct NonSendRunners(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRunner>>>>);
+pub(crate) struct MainThreadExecutors(Arc<Mutex<HashMap<BoxedScheduleLabel, Vec<BoxedAsyncSystemRunner>>>>);
 
 
-impl NonSendRunners {
+impl MainThreadExecutors {
     #[inline]
     pub(crate) fn insert(&self, schedule_label: BoxedScheduleLabel, runner: BoxedAsyncSystemRunner) {
         let mut map = self.0.lock().unwrap();
@@ -61,11 +61,11 @@ impl NonSendRunners {
 }
 
 
-unsafe impl Send for NonSendRunners {}
+unsafe impl Send for MainThreadExecutors {}
 
-unsafe impl Sync for NonSendRunners {}
+unsafe impl Sync for MainThreadExecutors {}
 
-impl Clone for NonSendRunners {
+impl Clone for MainThreadExecutors {
     fn clone(&self) -> Self {
         Self(Arc::clone(&self.0))
     }

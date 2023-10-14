@@ -7,8 +7,8 @@ use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::channel::mpsc::Receiver;
 use futures::StreamExt;
 
-use crate::runner::multi_thread::{IntoThreadPoolExecutor, MultiThreadSystemExecutors};
-use crate::runner::non_send::{IntoAsyncSystemRunner, NonSendRunners};
+use crate::runner::thread_pool::{IntoThreadPoolExecutor, MultiThreadSystemExecutors};
+use crate::runner::main_thread::{IntoAsyncSystemRunner, MainThreadExecutors};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct TaskHandle(pub(crate) Task<()>);
@@ -16,7 +16,7 @@ pub struct TaskHandle(pub(crate) Task<()>);
 
 #[derive(Default, Clone)]
 pub struct AsyncCommands {
-    pub(crate) main_thread_runners: NonSendRunners,
+    pub(crate) main_thread_runners: MainThreadExecutors,
     pub(crate) multi_thread_runners: MultiThreadSystemExecutors,
 }
 

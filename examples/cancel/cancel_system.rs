@@ -8,7 +8,7 @@ use bevy::prelude::{Commands, Res};
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::prelude::Repeat;
-use bevy_async_system::runner::non_send::delay::Delay;
+use bevy_async_system::runner::main_thread::delay::Delay;
 
 fn main() {
     App::new()

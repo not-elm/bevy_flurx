@@ -5,9 +5,9 @@ use bevy::app::App;
 use bevy::prelude::Plugin;
 
 use crate::ext::add_system::AddSystem;
-use crate::runner::multi_thread::IntoThreadPoolExecutor;
-use crate::runner::multi_thread::delay::frame::{DelayFrame, DelayFrameParam};
-use crate::runner::multi_thread::delay::time::{DelayTime, DelayTimeParam};
+use crate::runner::thread_pool::IntoThreadPoolExecutor;
+use crate::runner::thread_pool::delay::frame::{DelayFrame, DelayFrameParam};
+use crate::runner::thread_pool::delay::time::{DelayTime, DelayTimeParam};
 
 mod time;
 mod frame;

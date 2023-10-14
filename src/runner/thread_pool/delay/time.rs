@@ -7,12 +7,13 @@ use bevy::time::{Time, Timer};
 use futures::channel::mpsc::Sender;
 
 use crate::runner::AsyncSystemStatus;
-use crate::runner::multi_thread::{IntoThreadPoolExecutor, ThreadPoolExecutable, ThreadPoolExecutor};
+use crate::runner::thread_pool::{IntoThreadPoolExecutor, ThreadPoolExecutable, ThreadPoolExecutor};
 
 pub(crate) struct DelayTime(pub Duration);
 
 
 impl<'w> IntoThreadPoolExecutor<DelayTimeParam<'w>, ()> for DelayTime {
+    #[inline]
     fn into_executor(self, sender: Sender<()>) -> ThreadPoolExecutor<DelayTimeParam<'w>> {
         ThreadPoolExecutor::new(Executor {
             timer: Timer::new(self.0, TimerMode::Once),
@@ -26,6 +27,7 @@ struct Executor {
     sender: Sender<()>,
     timer: Timer,
 }
+
 
 impl<'w> ThreadPoolExecutable<DelayTimeParam<'w>> for Executor {
     #[inline]
@@ -64,7 +66,7 @@ mod tests {
     use crate::AsyncSystemPlugin;
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
     use crate::prelude::Once;
-    use crate::runner::multi_thread::delay::time::DelayTime;
+    use crate::runner::thread_pool::delay::time::DelayTime;
 
     #[derive(Default, Copy, Clone, Eq, PartialEq, Hash, States, Debug)]
     enum TestState {

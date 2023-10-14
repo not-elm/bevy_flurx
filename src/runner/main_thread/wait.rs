@@ -2,9 +2,9 @@ use std::marker::PhantomData;
 
 use bevy::prelude::{Event, IntoSystem};
 
-use crate::runner::non_send::IntoAsyncSystemRunner;
-use crate::runner::non_send::wait::output::WaitOutput;
-use crate::runner::non_send::wait::until::Until;
+use crate::runner::main_thread::IntoAsyncSystemRunner;
+use crate::runner::main_thread::wait::output::WaitOutput;
+use crate::runner::main_thread::wait::until::Until;
 
 pub mod until;
 pub mod output;

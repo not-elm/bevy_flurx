@@ -9,15 +9,25 @@ use bevy::utils::HashMap;
 use futures::channel::mpsc::Sender;
 
 use crate::runner::AsyncSystemStatus;
-use crate::runner::multi_thread::delay::DelayPlugin;
+use crate::runner::thread_pool::delay::DelayPlugin;
 
 pub mod delay;
 
 
-pub struct MultiThreadSystemExecutorPlugin;
+pub trait IntoThreadPoolExecutor<Param: SystemParam, Out = ()> {
+    fn into_executor(self, sender: Sender<Out>) -> ThreadPoolExecutor<Param>;
+}
 
 
-impl Plugin for MultiThreadSystemExecutorPlugin{
+pub trait ThreadPoolExecutable<Param: SystemParam> {
+    fn execute(&mut self, param: &mut StaticSystemParam<Param>) -> AsyncSystemStatus;
+}
+
+
+pub struct ThreadPoolExecutorPlugin;
+
+
+impl Plugin for ThreadPoolExecutorPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_plugins(DelayPlugin);
@@ -54,6 +64,7 @@ impl Clone for MultiThreadSystemExecutors {
     }
 }
 
+
 impl MultiThreadSystemExecutors {
     #[inline]
     pub(crate) fn insert<Param: SystemParam + 'static>(&self, schedule_label: BoxedScheduleLabel, runner: ThreadPoolExecutor<Param>) {
@@ -85,16 +96,6 @@ impl MultiThreadSystemExecutors {
         }
         *systems = next_systems;
     }
-}
-
-
-pub trait IntoThreadPoolExecutor<Param: SystemParam, Out = ()> {
-    fn into_executor(self, sender: Sender<Out>) -> ThreadPoolExecutor<Param>;
-}
-
-
-pub trait ThreadPoolExecutable<Param: SystemParam> {
-    fn execute(&mut self, param: &mut StaticSystemParam<Param>) -> AsyncSystemStatus;
 }
 
 

@@ -1,5 +1,5 @@
-pub mod non_send;
-pub mod multi_thread;
+pub mod main_thread;
+pub mod thread_pool;
 
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
