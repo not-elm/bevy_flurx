@@ -19,7 +19,7 @@ unsafe impl<Param: SystemParam, Out> Sync for OnceOnThread<Param, Out> {}
 
 impl<Param: SystemParam + 'static, Out: 'static> OnceOnThread<Param, Out> {
     #[inline(always)]
-    pub fn run<'w, 's>(f: impl Fn(&mut Param::Item<'w, 's>) -> Out + Send + 'static) -> impl IntoThreadPoolExecutor<Param, Out> {
+    pub fn run(f: impl Fn(&mut StaticSystemParam<Param>) -> Out + Send + 'static) -> impl IntoThreadPoolExecutor<Param, Out> {
         OnceOnThread(Arc::new(Mutex::new(f)))
     }
 }
@@ -86,7 +86,7 @@ mod tests {
     }
 
 
-    fn send_event(param: &mut EventWriter<TestEvent>) {
+    fn send_event(param: &mut StaticSystemParam<EventWriter<TestEvent>>) {
         param.send(TestEvent);
     }
 }

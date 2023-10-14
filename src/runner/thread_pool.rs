@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::ecs::system::{StaticSystemParam, SystemParam};
-use bevy::prelude::{Component, Deref, FromWorld, IntoSystemSetConfigs, Query, Resource, Schedules, World};
+use bevy::prelude::{Component, Deref, Query, Schedules, World};
 use bevy::utils::HashMap;
 use futures::channel::mpsc::Sender;
 
