@@ -10,6 +10,7 @@ use crate::async_commands::TaskSender;
 pub mod once;
 pub mod wait;
 pub mod config;
+pub mod delay;
 
 // pub mod repeat;
 

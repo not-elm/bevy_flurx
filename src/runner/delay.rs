@@ -1,11 +1,10 @@
 use std::marker::PhantomData;
-use std::time::Duration;
 
-use crate::runner::thread_pool::delay::frame::{DelayFrame, DelayFrameParam};
-use crate::runner::thread_pool::delay::time::{DelayTime, DelayTimeParam};
-use crate::runner::thread_pool::IntoThreadPoolExecutor;
+use crate::runner::delay::frame::DelayFrame;
+use crate::runner::IntoMainThreadExecutor;
 
-mod time;
+
+// mod time;
 mod frame;
 
 
@@ -31,16 +30,18 @@ mod frame;
 #[derive(Clone, Debug)]
 pub struct Delay(PhantomData<()>);
 
+//
+// impl Delay {
+//
+//
+//     #[inline(always)]
+//     pub const fn time<'w>(duration: Duration) -> impl IntoThreadPoolExecutor<DelayTimeParam<'w>> {
+//         DelayTime(duration)
+//     }
+// }
 
-impl Delay {
-    #[inline(always)]
-    pub const fn frames(delay_frames: usize) -> impl IntoThreadPoolExecutor<DelayFrameParam> {
-        DelayFrame(delay_frames)
-    }
 
-
-    #[inline(always)]
-    pub const fn time<'w>(duration: Duration) -> impl IntoThreadPoolExecutor<DelayTimeParam<'w>> {
-        DelayTime(duration)
-    }
+#[inline(always)]
+pub const fn frames(delay_frames: usize) -> impl IntoMainThreadExecutor {
+    DelayFrame(delay_frames)
 }
