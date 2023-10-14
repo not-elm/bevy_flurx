@@ -7,21 +7,21 @@ use crate::runner::{BaseRunner, IntoAsyncSystem, new_channel};
 use crate::runner::config::AsyncSystemConfig;
 use crate::runner::wait::WaitRunner;
 
-pub(crate) struct WaitOutput<In, Out> {
-    config: AsyncSystemConfig<In, Option<Out>>,
+pub(crate) struct WaitOutput<Out> {
+    config: AsyncSystemConfig<Option<Out>>,
 }
 
-impl<Out: Send + 'static> WaitOutput<(), Out> {
+impl<Out: Send + 'static> WaitOutput<Out> {
     #[inline]
     pub fn create<Marker>(system: impl bevy::prelude::IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoAsyncSystem<Out> {
         Self {
-            config: AsyncSystemConfig::with_input((), system)
+            config: AsyncSystemConfig::new(system)
         }
     }
 }
 
 
-impl<E: Event + Clone> WaitOutput<(), E> {
+impl<E: Event + Clone> WaitOutput<E> {
     #[inline]
     pub fn event() -> impl IntoAsyncSystem<E> {
         Self::create(|mut er: EventReader<E>| {
@@ -31,9 +31,9 @@ impl<E: Event + Clone> WaitOutput<(), E> {
 }
 
 
-impl<In, Out> IntoAsyncSystem<Out> for WaitOutput<In, Out>
-    where In: 'static + Clone,
-          Out: 'static + Send
+impl<Out> IntoAsyncSystem<Out> for WaitOutput<Out>
+    where
+        Out: 'static + Send
 {
     fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<Out>) {
         let (tx, mut rx) = new_channel(1);

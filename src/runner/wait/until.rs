@@ -6,7 +6,7 @@ use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, Int
 use crate::runner::config::AsyncSystemConfig;
 
 pub(crate) struct Until {
-    config: AsyncSystemConfig<(), bool>,
+    config: AsyncSystemConfig<bool>,
 }
 
 
@@ -43,7 +43,7 @@ impl IntoAsyncSystem<()> for Until {
 }
 
 
-struct UntilRunner(BaseRunner<(), bool>);
+struct UntilRunner(BaseRunner<bool>);
 
 impl AsyncSystemRunnable for UntilRunner {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {

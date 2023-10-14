@@ -95,21 +95,21 @@ impl SystemRunningStatus {
 }
 
 
-struct BaseRunner<In = (), Out = ()> {
+struct BaseRunner<Out = ()> {
     tx: Sender<Out>,
-    config: AsyncSystemConfig<In, Out>,
+    config: AsyncSystemConfig<Out>,
     status: SystemRunningStatus,
 }
 
 
-impl<In, Out> BaseRunner<In, Out>
+impl<Out> BaseRunner<Out>
     where Out: 'static,
-          In: Clone + 'static
+
 {
     fn new(
         tx: Sender<Out>,
-        config: AsyncSystemConfig<In, Out>,
-    ) -> BaseRunner<In, Out> {
+        config: AsyncSystemConfig<Out>,
+    ) -> BaseRunner< Out> {
         Self {
             tx,
             config,
@@ -124,7 +124,7 @@ impl<In, Out> BaseRunner<In, Out>
             self.status = SystemRunningStatus::Running;
         }
 
-        let output = self.config.system.run(self.config.input.clone(), world);
+        let output = self.config.system.run((), world);
         self.config.system.apply_deferred(world);
         output
     }

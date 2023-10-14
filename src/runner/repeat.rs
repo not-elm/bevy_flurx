@@ -10,7 +10,7 @@ use crate::runner::repeat::times::Times;
 mod times;
 mod forever;
 
-/// Delay the task using either [`Delay::Frame`] or [`Delay::Time`].
+/// Repeats the system call  a specified number of times or indefinitely.
 ///
 ///
 /// ```no_run

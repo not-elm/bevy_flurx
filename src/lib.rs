@@ -14,6 +14,7 @@ pub mod prelude{
         BevTaskPlugin,
         task::{BevTaskHandle, BevTaskCommands},
         runner::{
+            IntoAsyncSystem,
             AsyncSystemRunnable,
             BoxedAsyncSystemRunner,
             delay::Delay,

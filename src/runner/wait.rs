@@ -21,7 +21,7 @@ impl Wait {
 
     #[inline(always)]
     pub fn output_event<E: Event + Clone, Marker>() -> impl IntoAsyncSystem<E> {
-        WaitOutput::<(), E>::event()
+        WaitOutput::<E>::event()
     }
 
 
@@ -38,11 +38,11 @@ impl Wait {
 }
 
 
-struct WaitRunner<In, Out>(BaseRunner<In, Option<Out>>);
+struct WaitRunner<Out>(BaseRunner<Option<Out>>);
 
-impl<In, Out> AsyncSystemRunnable for WaitRunner<In, Out>
-    where In: 'static + Clone,
-          Out: 'static + Send
+impl<Out> AsyncSystemRunnable for WaitRunner<Out>
+    where
+        Out: 'static + Send
 {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         if let Some(output) = self.0.run_with_output(world) {
