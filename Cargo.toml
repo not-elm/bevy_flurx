@@ -6,23 +6,23 @@ edition = "2021"
 
 [[example]]
 name = "cancel_task"
-path = "examples/cancel/cancel_task.rs"
+path = "examples/main_thread/cancel/cancel_task.rs"
 
 [[example]]
 name = "cancel_system"
-path = "examples/cancel/cancel_system.rs"
+path = "examples/main_thread/cancel/cancel_system.rs"
 
 [[example]]
 name = "delay_time_and_frames"
-path = "examples/delay/delay_time_and_frames.rs"
+path = "examples/main_thread/delay/delay_time_and_frames.rs"
 
 [[example]]
 name = "move_shape"
-path = "examples/wait/move_shape.rs"
+path = "examples/main_thread/wait/move_shape.rs"
 
 [[example]]
 name = "wait_for_audio_playback_to_finish"
-path = "examples/wait/wait_for_audio_playback_to_finish.rs"
+path = "examples/main_thread/wait/wait_for_audio_playback_to_finish.rs"
 
 
 

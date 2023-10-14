@@ -8,29 +8,25 @@ use crate::runner::main_thread::config::AsyncSystemConfig;
 pub struct OnceOnMain<Out>(AsyncSystemConfig<Out>);
 
 
-impl<Out: Send + 'static> OnceOnMain<Out> {
-    #[inline(always)]
-    pub fn run<Marker>(system: impl IntoSystem<(), Out, Marker> + Send + 'static) -> impl IntoMainThreadExecutor<Out> {
-        Self(AsyncSystemConfig::new(system))
-    }
+#[inline(always)]
+pub fn run<Marker, Out: Send + 'static>(system: impl IntoSystem<(), Out, Marker> + Send + 'static) -> impl IntoMainThreadExecutor<Out> {
+    OnceOnMain(AsyncSystemConfig::new(system))
 }
 
 
-impl OnceOnMain<()> {
-    #[inline]
-    pub fn set_state<S: States + Copy>(to: S) -> impl IntoMainThreadExecutor {
-        Self::run(move |mut state: ResMut<NextState<S>>| {
-            state.set(to);
-        })
-    }
+#[inline]
+pub fn set_state<S: States + Copy>(to: S) -> impl IntoMainThreadExecutor {
+    run(move |mut state: ResMut<NextState<S>>| {
+        state.set(to);
+    })
+}
 
 
-    #[inline]
-    pub fn send<E: Event + Clone>(event: E) -> impl IntoMainThreadExecutor {
-        Self::run(move |mut ew: EventWriter<E>| {
-            ew.send(event.clone());
-        })
-    }
+#[inline]
+pub fn send<E: Event + Clone>(event: E) -> impl IntoMainThreadExecutor {
+    run(move |mut ew: EventWriter<E>| {
+        ew.send(event.clone());
+    })
 }
 
 

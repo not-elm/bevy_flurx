@@ -65,8 +65,7 @@ mod tests {
 
     use crate::AsyncSystemPlugin;
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
-    use crate::runner::main_thread::once::OnceOnMain;
-
+    use crate::runner::once;
     use crate::runner::thread_pool::delay::time::DelayTime;
 
     #[derive(Default, Copy, Clone, Eq, PartialEq, Hash, States, Debug)]
@@ -97,7 +96,7 @@ mod tests {
         Commands::new(&mut command_queue, &app.world)
             .spawn_async(|cmd| async move {
                 cmd.spawn(Update, DelayTime(Duration::ZERO)).await;
-                cmd.spawn_on_main(Update, OnceOnMain::set_state(TestState::Finished)).await;
+                cmd.spawn_on_main(Update, once::on_main::set_state(TestState::Finished)).await;
             });
 
         command_queue.apply(&mut app.world);
