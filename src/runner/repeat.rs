@@ -2,10 +2,14 @@ use std::marker::PhantomData;
 
 use bevy::prelude::IntoSystem;
 use crate::prelude::IntoAsyncScheduleCommand;
+use crate::runner::config::AsyncSystemConfig;
+
 use crate::runner::repeat::times::Times;
 
 mod times;
-// mod forever;
+
+#[path = "repeat/forever.rs"]
+mod inner_forever;
 
 /// Repeats the system call  a specified number of times or indefinitely.
 ///
@@ -38,7 +42,7 @@ pub struct Repeat(PhantomData<()>);
 
 #[inline(always)]
 pub fn times<Marker, Sys>(num: usize, system: Sys) -> impl IntoAsyncScheduleCommand
- where
+    where
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), (), Marker> + Send + Sync + 'static
 {
@@ -46,9 +50,13 @@ pub fn times<Marker, Sys>(num: usize, system: Sys) -> impl IntoAsyncScheduleComm
 }
 
 
-// #[inline(always)]
-// pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoMainThreadExecutor {
-//     Forever(AsyncSystemConfig::new(system))
-// }
+#[inline(always)]
+pub fn forever<Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand
+    where
+        Marker: Send + Sync + 'static,
+        Sys: IntoSystem<(), (), Marker> + Send + Sync + 'static
+{
+    inner_forever::Forever(AsyncSystemConfig::new(system))
+}
 
 
