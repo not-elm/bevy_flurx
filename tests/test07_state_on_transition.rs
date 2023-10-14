@@ -6,7 +6,7 @@ use bevy::prelude::{Commands, Event, Events, EventWriter, NextState, OnTransitio
 use bevy_async_system::BevTaskPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::ext::state_schedule_label::AddBevTaskSchedule;
-use bevy_async_system::runner::once::Once;
+use bevy_async_system::runner::non_send::once::Once;
 
 #[derive(Event)]
 struct FinishEvent;
@@ -30,9 +30,9 @@ fn state_on_transition() {
     ));
     let er = ManualEventReader::<FinishEvent>::default();
     app.add_systems(Startup, setup);
-    app.register_task_schedule(OnTransition{
+    app.register_task_schedule(OnTransition {
         from: TestState::Fist,
-        to: TestState::Second
+        to: TestState::Second,
     });
 
     app.update();

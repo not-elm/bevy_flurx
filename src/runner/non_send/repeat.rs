@@ -2,10 +2,10 @@ use std::marker::PhantomData;
 
 use bevy::prelude::IntoSystem;
 
-use crate::runner::IntoAsyncSystemRunner;
-use crate::runner::config::AsyncSystemConfig;
-use crate::runner::repeat::forever::Forever;
-use crate::runner::repeat::times::Times;
+use crate::runner::non_send::config::AsyncSystemConfig;
+use crate::runner::non_send::IntoAsyncSystemRunner;
+use crate::runner::non_send::repeat::forever::Forever;
+use crate::runner::non_send::repeat::times::Times;
 
 mod times;
 mod forever;

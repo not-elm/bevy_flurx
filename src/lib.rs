@@ -1,27 +1,27 @@
 use bevy::app::{App, First, Plugin};
 use bevy::prelude::{Commands, Entity, Query};
 use futures_lite::future::block_on;
-use crate::task::TaskHandle;
 
+use crate::task::TaskHandle;
 
 pub mod task;
 pub mod ext;
 pub mod runner;
 
 
-pub mod prelude{
+pub mod prelude {
     pub use crate::{
         BevTaskPlugin,
-        task::{TaskHandle, AsyncCommands},
-        runner::{
-            IntoAsyncSystemRunner,
+        runner::non_send::{
             AsyncSystemRunnable,
             BoxedAsyncSystemRunner,
             delay::Delay,
+            IntoAsyncSystemRunner,
             once::Once,
             repeat::Repeat,
-            wait::Wait
-        }
+            wait::Wait,
+        },
+        task::{AsyncCommands, TaskHandle},
     };
 }
 
@@ -92,8 +92,8 @@ pub(crate) mod inner_macros {
     macro_rules! run_tasks {
         ($schedule_label: expr) => {
              move |world: &mut bevy::prelude::World| {
-                let runners: Vec<crate::runner::Runners> = world
-                    .query::<&crate::runner::Runners>()
+                let runners: Vec<crate::runner::non_send::NonSendRunners> = world
+                    .query::<&crate::runner::non_send::NonSendRunners>()
                     .iter(world)
                     .cloned()
                     .collect();

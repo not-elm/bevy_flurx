@@ -3,10 +3,6 @@ name = "bevy_async_system"
 version = "0.1.0"
 edition = "2021"
 
-[[test]]
-name = "all"
-path = "tests/entry_point.rs"
-
 
 [[example]]
 name = "cancel_task"

@@ -1,8 +1,8 @@
 use bevy::prelude::{Event, EventWriter, IntoSystem, NextState, ResMut, States, World};
 use futures::channel::mpsc::Sender;
 
-use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
-use crate::runner::config::AsyncSystemConfig;
+use crate::runner::non_send::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::non_send::config::AsyncSystemConfig;
 
 pub struct Once<Out>(AsyncSystemConfig<Out>);
 

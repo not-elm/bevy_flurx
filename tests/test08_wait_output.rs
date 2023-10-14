@@ -5,8 +5,8 @@ use bevy::prelude::{Commands, Event, Events, EventWriter, Res};
 
 use bevy_async_system::BevTaskPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
-use bevy_async_system::runner::once::Once;
-use bevy_async_system::runner::wait::Wait;
+use bevy_async_system::runner::non_send::once::Once;
+use bevy_async_system::runner::non_send::wait::Wait;
 
 #[derive(Event)]
 struct FinishEvent;

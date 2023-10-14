@@ -1,8 +1,9 @@
 use bevy::prelude::World;
 use futures::channel::mpsc::Sender;
+
 use crate::prelude::{AsyncSystemRunnable, BoxedAsyncSystemRunner};
-use crate::runner::{BaseRunner, IntoAsyncSystemRunner, SystemRunningStatus};
-use crate::runner::config::AsyncSystemConfig;
+use crate::runner::non_send::{BaseRunner, IntoAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::non_send::config::AsyncSystemConfig;
 
 pub(crate) struct Forever(pub AsyncSystemConfig);
 

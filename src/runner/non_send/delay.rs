@@ -4,7 +4,7 @@ use bevy::prelude::{TimerMode, World};
 use bevy::time::{Time, Timer};
 use futures::channel::mpsc::Sender;
 
-use crate::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
+use crate::runner::non_send::{AsyncSystemRunnable, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
 
 /// Delay the task using either [`Delay::Frames`] or [`Delay::Time`].
 ///

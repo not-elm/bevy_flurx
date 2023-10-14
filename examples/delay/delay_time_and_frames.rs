@@ -7,7 +7,7 @@ use bevy_framepace::{FramepacePlugin, FramepaceSettings, Limiter};
 
 use bevy_async_system::BevTaskPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
-use bevy_async_system::runner::delay::Delay;
+use bevy_async_system::runner::non_send::delay::Delay;
 
 fn main() {
     App::new()

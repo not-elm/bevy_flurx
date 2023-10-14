@@ -8,7 +8,7 @@ use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
 
 use bevy_async_system::BevTaskPlugin;
 use bevy_async_system::ext::SpawnAsyncCommands;
-use bevy_async_system::runner::delay::Delay;
+use bevy_async_system::runner::non_send::delay::Delay;
 use bevy_async_system::task::TaskHandle;
 
 fn main() {

@@ -5,13 +5,13 @@ use bevy::prelude::{Component, Deref, DerefMut};
 use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::StreamExt;
 
-use crate::runner::{IntoAsyncSystemRunner, Runners};
+use crate::runner::non_send::{IntoAsyncSystemRunner, NonSendRunners};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct TaskHandle(pub(crate) Task<()>);
 
 #[derive(Default, Clone)]
-pub struct AsyncCommands(pub(crate) Runners);
+pub struct AsyncCommands(pub(crate) NonSendRunners);
 
 
 impl AsyncCommands {
