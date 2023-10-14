@@ -18,17 +18,10 @@ pub mod runner;
 
 pub mod prelude {
     pub use crate::{
-        async_commands::{AsyncSchedules, TaskHandle},
         AsyncSystemPlugin,
-        runner::{
-            AsyncScheduleCommand,
-            IntoAsyncScheduleCommand,
-            // delay::Delay,
-            AsyncSchedule,
-            // once::OnceOnMain,
-            // repeat::Repeat,
-            // wait::Wait,
-        },
+        async_commands::*,
+        ext::spawn_async_system::SpawnAsyncSystem,
+        runner::preludes::*,
     };
 }
 
@@ -48,13 +41,13 @@ impl Plugin for AsyncSystemPlugin {
             use bevy::prelude::IntoSystemConfigs;
             app.add_systems(First, (
                 remove_finished_processes,
-                update
+                init_async_schedulers
             ).chain());
         }
     }
 }
 
-fn update(
+fn init_async_schedulers(
     mut commands: Commands,
     mut schedules: ResMut<Schedules>,
     executors_query: Query<(Entity, &AsyncScheduleCommands)>,

@@ -7,13 +7,26 @@ use bevy::prelude::{Component, Condition, Deref, DerefMut, Entity, IntoSystem, Q
 
 use crate::async_commands::TaskSender;
 
+pub(crate) mod config;
 pub mod once;
 pub mod wait;
-pub mod config;
+
 pub mod delay;
 
 pub mod repeat;
 
+
+pub mod preludes {
+    pub use crate::runner::{
+        AsyncSchedule,
+        AsyncScheduleCommand,
+        IntoAsyncScheduleCommand,
+        once::*,
+        wait::*,
+        delay::*,
+        repeat::*
+    };
+}
 
 pub trait IntoAsyncScheduleCommand<Out = ()>: Sized {
     fn into_schedule_command(self, sender: TaskSender<Out>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand;
