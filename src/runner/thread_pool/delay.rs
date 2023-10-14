@@ -1,26 +1,12 @@
 use std::marker::PhantomData;
 use std::time::Duration;
 
-use bevy::app::App;
-use bevy::prelude::Plugin;
-
-use crate::ext::add_system::AddSystem;
-use crate::runner::thread_pool::IntoThreadPoolExecutor;
 use crate::runner::thread_pool::delay::frame::{DelayFrame, DelayFrameParam};
 use crate::runner::thread_pool::delay::time::{DelayTime, DelayTimeParam};
+use crate::runner::thread_pool::IntoThreadPoolExecutor;
 
 mod time;
 mod frame;
-
-pub struct DelayPlugin;
-
-impl Plugin for DelayPlugin {
-    fn build(&self, app: &mut App) {
-        app
-            .add_thread_pool_system_on_main_scheduler::<DelayTimeParam>()
-            .add_thread_pool_system_on_main_scheduler::<DelayFrameParam>();
-    }
-}
 
 
 /// Delay the task using either [`Delay::Frames`] or [`Delay::Time`].

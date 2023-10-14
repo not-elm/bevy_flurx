@@ -4,11 +4,11 @@ use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::prelude::{Component, Deref, World};
 use bevy::utils::HashMap;
 use futures::channel::mpsc::Sender;
-use crate::runner::AsyncSystemStatus;
 
+use crate::runner::AsyncSystemStatus;
 use crate::runner::main_thread::config::AsyncSystemConfig;
 
-pub mod once;
+pub(crate) mod once;
 pub mod wait;
 pub mod config;
 pub mod repeat;

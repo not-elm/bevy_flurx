@@ -7,8 +7,8 @@ use bevy::tasks::{AsyncComputeTaskPool, Task};
 use futures::channel::mpsc::Receiver;
 use futures::StreamExt;
 
-use crate::runner::thread_pool::{IntoThreadPoolExecutor, MultiThreadSystemExecutors};
 use crate::runner::main_thread::{IntoMainThreadExecutor, MainThreadExecutors};
+use crate::runner::thread_pool::{IntoThreadPoolExecutor, TaskPoolExecutors, TaskPoolSystemSetups};
 
 #[derive(Component, Deref, DerefMut)]
 pub struct TaskHandle(pub(crate) Task<()>);
@@ -17,20 +17,21 @@ pub struct TaskHandle(pub(crate) Task<()>);
 #[derive(Default, Clone)]
 pub struct AsyncCommands {
     pub(crate) main_thread_runners: MainThreadExecutors,
-    pub(crate) multi_thread_runners: MultiThreadSystemExecutors,
+    pub(crate) multi_thread_runners: TaskPoolExecutors,
+    pub(crate) setups: TaskPoolSystemSetups,
 }
 
 
 impl AsyncCommands {
     pub fn spawn<Param: SystemParam + 'static, Out: Send + 'static>(
         &self,
-        schedule_label: impl ScheduleLabel,
+        schedule_label: impl ScheduleLabel + Clone,
         into_executor: impl IntoThreadPoolExecutor<Param, Out>,
     ) -> impl Future<Output=Out> {
         let (tx, rx) = futures::channel::mpsc::channel(1);
         let executor = into_executor.into_executor(tx);
-        self.multi_thread_runners.insert(Box::new(schedule_label), executor);
-
+        self.multi_thread_runners.insert(Box::new(schedule_label.clone()), executor);
+        self.setups.push::<Param>(schedule_label);
         create_output_future(rx)
     }
 

@@ -5,10 +5,10 @@ use crate::runner::AsyncSystemStatus;
 use crate::runner::main_thread::{BaseRunner, BoxedMainThreadExecutor, IntoMainThreadExecutor, MainThreadExecutable};
 use crate::runner::main_thread::config::AsyncSystemConfig;
 
-pub struct Once<Out>(AsyncSystemConfig<Out>);
+pub struct OnceOnMain<Out>(AsyncSystemConfig<Out>);
 
 
-impl<Out: Send + 'static> Once<Out> {
+impl<Out: Send + 'static> OnceOnMain<Out> {
     #[inline(always)]
     pub fn run<Marker>(system: impl IntoSystem<(), Out, Marker> + Send + 'static) -> impl IntoMainThreadExecutor<Out> {
         Self(AsyncSystemConfig::new(system))
@@ -16,7 +16,7 @@ impl<Out: Send + 'static> Once<Out> {
 }
 
 
-impl Once<()> {
+impl OnceOnMain<()> {
     #[inline]
     pub fn set_state<S: States + Copy>(to: S) -> impl IntoMainThreadExecutor {
         Self::run(move |mut state: ResMut<NextState<S>>| {
@@ -34,7 +34,7 @@ impl Once<()> {
 }
 
 
-impl<Out> IntoMainThreadExecutor<Out> for Once<Out>
+impl<Out> IntoMainThreadExecutor<Out> for OnceOnMain<Out>
     where Out: 'static + Send
 {
     fn into_executor(self, sender: Sender<Out>) -> BoxedMainThreadExecutor {

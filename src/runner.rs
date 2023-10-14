@@ -2,6 +2,7 @@ use crate::runner::main_thread::SystemRunningStatus;
 
 pub mod main_thread;
 pub mod thread_pool;
+pub mod once;
 
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -28,10 +29,20 @@ impl AsyncSystemStatus {
 impl From<SystemRunningStatus> for AsyncSystemStatus {
     #[inline(always)]
     fn from(value: SystemRunningStatus) -> Self {
-        if value.finished(){
+        if value.finished() {
             Self::Finished
-        }else{
+        } else {
             Self::Running
         }
     }
 }
+
+
+pub trait OnMainThreadMarker {}
+
+
+pub trait OnThreadPoolMarker {}
+
+pub struct OnMainThread;
+
+pub struct OnThreadPool;

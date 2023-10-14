@@ -25,6 +25,7 @@ impl<'w, 's> SpawnAsyncSystem<'w, 's> for Commands<'w, 's> {
         self.spawn((
             async_commands.main_thread_runners,
             async_commands.multi_thread_runners,
+            async_commands.setups,
             TaskHandle(handle)
         ))
     }
@@ -37,6 +38,7 @@ impl<'w, 's> SpawnAsyncSystem<'w, 's> for Commands<'w, 's> {
         self.spawn((
             async_commands.main_thread_runners,
             async_commands.multi_thread_runners,
+            async_commands.setups,
             TaskHandle(handle)
         ))
     }

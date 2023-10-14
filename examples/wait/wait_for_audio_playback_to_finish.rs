@@ -7,7 +7,7 @@ use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res}
 
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
-use bevy_async_system::prelude::{Once, Wait};
+use bevy_async_system::prelude::{OnceOnMain, Wait};
 
 fn main() {
     App::new()
@@ -27,7 +27,7 @@ fn setup_async_systems(mut commands: Commands) {
     commands.spawn_async(|cmd| async move {
         cmd.spawn_on_main(Update, Wait::until(finished_audio)).await;
         info!("***** Finished audio *****");
-        cmd.spawn_on_main(Update, Once::send(AppExit)).await;
+        cmd.spawn_on_main(Update, OnceOnMain::send(AppExit)).await;
     });
 }
 

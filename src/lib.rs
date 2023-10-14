@@ -1,11 +1,11 @@
 #![allow(clippy::type_complexity)]
 
 use bevy::app::{App, First, Plugin};
-use bevy::prelude::{Commands, Entity, Query};
+use bevy::prelude::{Changed, Commands, Entity, Query, World};
 use futures_lite::future::block_on;
 
 use crate::async_commands::TaskHandle;
-use crate::runner::thread_pool::ThreadPoolExecutorPlugin;
+use crate::runner::thread_pool::TaskPoolSystemSetups;
 
 pub mod async_commands;
 pub mod ext;
@@ -14,17 +14,17 @@ pub mod runner;
 
 pub mod prelude {
     pub use crate::{
+        async_commands::{AsyncCommands, TaskHandle},
         AsyncSystemPlugin,
         runner::main_thread::{
-            MainThreadExecutable,
             BoxedMainThreadExecutor,
-            // delay::Delay,
             IntoMainThreadExecutor,
-            once::Once,
+            // delay::Delay,
+            MainThreadExecutable,
+            // once::OnceOnMain,
             repeat::Repeat,
             wait::Wait,
         },
-        async_commands::{AsyncCommands, TaskHandle},
     };
 }
 
@@ -41,18 +41,16 @@ pub struct AsyncSystemPlugin;
 impl Plugin for AsyncSystemPlugin {
     fn build(&self, app: &mut App) {
         use crate::inner_macros::run_tasks;
-        app.add_plugins(ThreadPoolExecutorPlugin);
-        #[cfg(feature = "first")]
+
         {
             use bevy::prelude::IntoSystemConfigs;
             app.add_systems(First, (
                 remove_finished_processes,
+                schedule_setups,
+                #[cfg(feature = "first")]
                 run_tasks!(bevy::app::First)
             ).chain());
         }
-
-        #[cfg(not(feature = "first"))]
-        { app.add_systems(First, remove_finished_processes); }
 
         #[cfg(feature = "pre_update")]
         { app.add_systems(bevy::app::PreUpdate, run_tasks!(bevy::app::PreUpdate)); }
@@ -79,6 +77,22 @@ impl Plugin for AsyncSystemPlugin {
 }
 
 
+fn schedule_setups(
+    world: &mut World
+) {
+
+    let setups: Vec<TaskPoolSystemSetups> = world
+        .query_filtered::<&TaskPoolSystemSetups, Changed<TaskPoolSystemSetups>>()
+        .iter(world)
+        .cloned()
+        .collect();
+
+    for setup in setups.iter() {
+
+        setup.initialize_systems(world);
+    }
+}
+
 fn remove_finished_processes(
     mut commands: Commands,
     mut task_handles: Query<(Entity, &mut TaskHandle)>,
@@ -100,6 +114,7 @@ pub(crate) mod inner_macros {
                     .iter(world)
                     .cloned()
                     .collect();
+
                 let schedule_label: Box<dyn bevy::ecs::schedule::ScheduleLabel> = Box::new($schedule_label);
                 for runner in runners.iter(){
                     runner.run_systems(&schedule_label, world);
@@ -109,4 +124,30 @@ pub(crate) mod inner_macros {
     }
 
     pub(crate) use run_tasks;
+}
+
+
+#[cfg(test)]
+pub(crate) mod test_util {
+    use bevy::app::App;
+    use bevy::core::TaskPoolPlugin;
+    use bevy::prelude::Event;
+    use bevy::time::TimePlugin;
+
+    use crate::AsyncSystemPlugin;
+
+    #[derive(Event, Copy, Clone, Debug, Eq, PartialEq)]
+    pub struct TestEvent;
+
+
+    pub fn new_app() -> App {
+        let mut app = App::new();
+        app.add_plugins((
+            TaskPoolPlugin::default(),
+            TimePlugin,
+            AsyncSystemPlugin
+        ));
+        app.add_event::<TestEvent>();
+        app
+    }
 }
