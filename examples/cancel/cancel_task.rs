@@ -7,9 +7,9 @@ use bevy::log::info;
 use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
 
 use bevy_async_system::BevTaskPlugin;
-use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::runner::delay::Delay;
-use bevy_async_system::task::BevTaskHandle;
+use bevy_async_system::task::TaskHandle;
 
 fn main() {
     App::new()
@@ -36,7 +36,7 @@ fn setup(mut commands: Commands) {
 fn cancel(
     mut commands: Commands,
     input: Res<Input<KeyCode>>,
-    task: Query<Entity, With<BevTaskHandle>>,
+    task: Query<Entity, With<TaskHandle>>,
 ) {
     if input.just_pressed(KeyCode::Return) {
         for entity in task.iter() {

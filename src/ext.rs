@@ -6,39 +6,39 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::Commands;
 use bevy::tasks::AsyncComputeTaskPool;
 
-use crate::task::{BevTaskCommands, BevTaskHandle};
+use crate::task::{AsyncCommands, TaskHandle};
 
 pub mod state_schedule_label;
 
 #[async_trait]
-pub trait AsyncCommands<'w, 's> {
-    fn spawn_async<'a, F>(&'a mut self, f: impl Fn(BevTaskCommands) -> F) -> EntityCommands<'w, 's, 'a>
+pub trait SpawnAsyncCommands<'w, 's> {
+    fn spawn_async<'a, F>(&'a mut self, f: impl Fn(AsyncCommands) -> F) -> EntityCommands<'w, 's, 'a>
         where F: Future<Output=()> + Send + 'static;
 
-    fn spawn_async_local<'a, F>(&'a mut self, f: impl Fn(BevTaskCommands) -> F) -> EntityCommands<'w, 's, 'a>
+    fn spawn_async_local<'a, F>(&'a mut self, f: impl Fn(AsyncCommands) -> F) -> EntityCommands<'w, 's, 'a>
         where F: Future<Output=()> + 'static;
 }
 
 
-impl<'w, 's> AsyncCommands<'w, 's> for Commands<'w, 's> {
-    fn spawn_async<'a, F>(&'a mut self, f: impl Fn(BevTaskCommands) -> F) -> EntityCommands<'w, 's, 'a> where F: Future<Output=()> + Send + 'static {
-        let task = BevTaskCommands::default();
+impl<'w, 's> SpawnAsyncCommands<'w, 's> for Commands<'w, 's> {
+    fn spawn_async<'a, F>(&'a mut self, f: impl Fn(AsyncCommands) -> F) -> EntityCommands<'w, 's, 'a> where F: Future<Output=()> + Send + 'static {
+        let task = AsyncCommands::default();
         let handle = AsyncComputeTaskPool::get().spawn(f(task.clone()).compat());
 
         self.spawn((
             task.0,
-            BevTaskHandle(handle)
+            TaskHandle(handle)
         ))
     }
 
 
-    fn spawn_async_local<'a, F>(&'a mut self, f: impl Fn(BevTaskCommands) -> F) -> EntityCommands<'w, 's, 'a> where F: Future<Output=()> + 'static {
-        let task = BevTaskCommands::default();
+    fn spawn_async_local<'a, F>(&'a mut self, f: impl Fn(AsyncCommands) -> F) -> EntityCommands<'w, 's, 'a> where F: Future<Output=()> + 'static {
+        let task = AsyncCommands::default();
         let handle = AsyncComputeTaskPool::get().spawn_local(f(task.clone()).compat());
 
         self.spawn((
             task.0,
-            BevTaskHandle(handle)
+            TaskHandle(handle)
         ))
     }
 }

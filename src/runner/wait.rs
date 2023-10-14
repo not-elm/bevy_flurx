@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::{Event, IntoSystem, World};
+use bevy::prelude::{Event, IntoSystem};
 
-use crate::runner::{AsyncSystemRunnable, BaseRunner, IntoAsyncSystem, SystemRunningStatus};
+use crate::runner::IntoAsyncSystemRunner;
 use crate::runner::wait::output::WaitOutput;
 use crate::runner::wait::until::Until;
 
@@ -14,42 +14,28 @@ pub struct Wait(PhantomData<()>);
 
 impl Wait {
     #[inline(always)]
-    pub fn output<Out: Send + 'static, Marker>(system: impl IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoAsyncSystem<Out> {
+    pub fn output<Out: Send + 'static, Marker>(system: impl IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoAsyncSystemRunner<Out> {
         WaitOutput::create(system)
     }
 
 
     #[inline(always)]
-    pub fn output_event<E: Event + Clone, Marker>() -> impl IntoAsyncSystem<E> {
+    pub fn output_event<E: Event + Clone, Marker>() -> impl IntoAsyncSystemRunner<E> {
         WaitOutput::<E>::event()
     }
 
 
     #[inline(always)]
-    pub fn until<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoAsyncSystem {
+    pub fn until<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoAsyncSystemRunner {
         Until::create(system)
     }
 
 
     #[inline(always)]
-    pub fn until_event<E: Event>() -> impl IntoAsyncSystem {
+    pub fn until_event<E: Event>() -> impl IntoAsyncSystemRunner {
         Until::event::<E>()
     }
 }
 
 
-struct WaitRunner<Out>(BaseRunner<Option<Out>>);
 
-impl<Out> AsyncSystemRunnable for WaitRunner<Out>
-    where
-        Out: 'static + Send
-{
-    fn run(&mut self, world: &mut World) -> SystemRunningStatus {
-        if let Some(output) = self.0.run_with_output(world) {
-            let _ = self.0.tx.try_send(Some(output));
-            SystemRunningStatus::Finished
-        } else {
-            SystemRunningStatus::Running
-        }
-    }
-}

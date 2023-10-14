@@ -2,9 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::{BoxedScheduleLabel, ScheduleLabel};
 use bevy::prelude::{Component, Deref, World};
-use bevy::tasks::Task;
 use bevy::utils::HashMap;
-use futures::channel::mpsc::{Receiver, Sender};
+use futures::channel::mpsc::Sender;
 
 use crate::runner::config::AsyncSystemConfig;
 
@@ -15,9 +14,10 @@ pub mod config;
 pub mod repeat;
 
 
-pub trait IntoAsyncSystem<Out = ()>: Sized {
-    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<Out>);
+pub trait IntoAsyncSystemRunner<Out = ()>: Sized {
+    fn into_runner(self, sender: Sender<Out>) -> BoxedAsyncSystemRunner;
 }
+
 
 pub trait AsyncSystemRunnable {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus;
@@ -96,7 +96,6 @@ impl SystemRunningStatus {
 
 
 struct BaseRunner<Out = ()> {
-    tx: Sender<Out>,
     config: AsyncSystemConfig<Out>,
     status: SystemRunningStatus,
 }
@@ -106,12 +105,8 @@ impl<Out> BaseRunner<Out>
     where Out: 'static,
 
 {
-    fn new(
-        tx: Sender<Out>,
-        config: AsyncSystemConfig<Out>,
-    ) -> BaseRunner< Out> {
+    fn new(config: AsyncSystemConfig<Out>) -> BaseRunner<Out> {
         Self {
-            tx,
             config,
             status: SystemRunningStatus::NoInitialized,
         }
@@ -131,7 +126,3 @@ impl<Out> BaseRunner<Out>
 }
 
 
-#[inline]
-fn new_channel<Out>(size: usize) -> (Sender<Out>, Receiver<Out>) {
-    futures::channel::mpsc::channel(size)
-}

@@ -6,7 +6,7 @@ use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
 use bevy_async_system::BevTaskPlugin;
-use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::prelude::Wait;
 
 #[derive(Component)]

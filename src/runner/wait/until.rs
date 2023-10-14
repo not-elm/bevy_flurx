@@ -1,8 +1,6 @@
 use bevy::prelude::{Event, EventReader, IntoSystem, World};
-use bevy::tasks::{AsyncComputeTaskPool, Task};
-use futures::StreamExt;
-
-use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystem, new_channel, SystemRunningStatus};
+use futures::channel::mpsc::Sender;
+use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
 
 pub(crate) struct Until {
@@ -12,7 +10,7 @@ pub(crate) struct Until {
 
 impl Until {
     #[inline]
-    pub fn create<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoAsyncSystem<()> {
+    pub fn create<Marker>(system: impl IntoSystem<(), bool, Marker> + 'static + Send) -> impl IntoAsyncSystemRunner<()> {
         Self {
             config: AsyncSystemConfig::new(system)
         }
@@ -20,7 +18,7 @@ impl Until {
 
 
     #[inline]
-    pub fn event<E: Event>() -> impl IntoAsyncSystem<()> {
+    pub fn event<E: Event>() -> impl IntoAsyncSystemRunner<()> {
         Self::create(|er: EventReader<E>| {
             !er.is_empty()
         })
@@ -28,28 +26,27 @@ impl Until {
 }
 
 
-impl IntoAsyncSystem<()> for Until {
-    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<()>) {
-        let (tx, mut rx) = new_channel(1);
-        let runner = Box::new(UntilRunner(BaseRunner::new(tx, self.config)));
-        (runner, AsyncComputeTaskPool::get().spawn(async move {
-            loop {
-                if rx.next().await.is_some_and(|finished| finished) {
-                    return;
-                }
-            }
-        }))
+impl IntoAsyncSystemRunner<()> for Until {
+    #[inline]
+    fn into_runner(self, sender: Sender<()>) -> BoxedAsyncSystemRunner {
+        Box::new(UntilRunner {
+            base: BaseRunner::new(self.config),
+            sender,
+        })
     }
 }
 
 
-struct UntilRunner(BaseRunner<bool>);
+struct UntilRunner {
+    sender: Sender<()>,
+    base: BaseRunner<bool>,
+}
 
 impl AsyncSystemRunnable for UntilRunner {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
-        let finished = self.0.run_with_output(world);
+        let finished = self.base.run_with_output(world);
         if finished {
-            let _ = self.0.tx.try_send(true);
+            let _ = self.sender.try_send(());
             SystemRunningStatus::Finished
         } else {
             SystemRunningStatus::Running

@@ -1,48 +1,41 @@
 use bevy::prelude::{IntoSystem, World};
-use bevy::tasks::{AsyncComputeTaskPool, Task};
-use futures::StreamExt;
+use futures::channel::mpsc::Sender;
 
 use crate::prelude::{AsyncSystemRunnable, BoxedAsyncSystemRunner};
-use crate::runner::{BaseRunner, IntoAsyncSystem, new_channel, SystemRunningStatus};
+use crate::runner::{BaseRunner, IntoAsyncSystemRunner, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
 
 pub(crate) struct Times {
     repeat_num: usize,
-    config: AsyncSystemConfig
+    config: AsyncSystemConfig,
 }
 
 
 impl Times {
-    pub fn create<Marker>(repeat_num: usize, system: impl IntoSystem<(), (), Marker> + Send + 'static) -> impl IntoAsyncSystem{
-        Self{
+    pub fn create<Marker>(repeat_num: usize, system: impl IntoSystem<(), (), Marker> + Send + 'static) -> impl IntoAsyncSystemRunner {
+        Self {
             repeat_num,
-            config: AsyncSystemConfig::new(system)
+            config: AsyncSystemConfig::new(system),
         }
     }
 }
 
 
-impl IntoAsyncSystem for Times {
-    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<()>) {
-        let (tx, mut rx) = new_channel(1);
-        let runner = Box::new(RepeatRunner {
+impl IntoAsyncSystemRunner for Times {
+    #[inline]
+    fn into_runner(self, sender: Sender<()>) -> BoxedAsyncSystemRunner {
+        Box::new(RepeatRunner {
+            sender,
             repeat_num: self.repeat_num,
             current_num: 0,
-            base: BaseRunner::new(tx, self.config),
-        });
-
-        (runner, AsyncComputeTaskPool::get().spawn(async move {
-            loop {
-                if rx.next().await.is_some() {
-                    return;
-                }
-            }
-        }))
+            base: BaseRunner::new(self.config),
+        })
     }
 }
 
 
 struct RepeatRunner {
+    sender: Sender<()>,
     repeat_num: usize,
     current_num: usize,
     base: BaseRunner,
@@ -58,7 +51,7 @@ impl AsyncSystemRunnable for RepeatRunner {
         self.current_num += 1;
 
         if self.repeat_num <= self.current_num {
-            let _ = self.base.tx.try_send(());
+            let _ = self.sender.try_send(());
             SystemRunningStatus::Finished
         } else {
             SystemRunningStatus::Running

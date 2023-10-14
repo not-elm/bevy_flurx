@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::prelude::IntoSystem;
 
-use crate::runner::IntoAsyncSystem;
+use crate::runner::IntoAsyncSystemRunner;
 use crate::runner::config::AsyncSystemConfig;
 use crate::runner::repeat::forever::Forever;
 use crate::runner::repeat::times::Times;
@@ -16,7 +16,7 @@ mod forever;
 /// ```no_run
 /// use std::time::Duration;
 /// use bevy::prelude::*;
-/// use bevy_async_system::ext::AsyncCommands;
+/// use bevy_async_system::ext::SpawnAsyncCommands;
 /// use bevy_async_system::prelude::*;
 ///
 /// fn setup(mut commands: Commands){
@@ -41,13 +41,13 @@ pub struct Repeat(PhantomData<()>);
 
 impl Repeat {
     #[inline(always)]
-    pub fn times<Marker>(num: usize, system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoAsyncSystem {
+    pub fn times<Marker>(num: usize, system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoAsyncSystemRunner {
         Times::create(num, system)
     }
 
 
     #[inline(always)]
-    pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoAsyncSystem {
+    pub fn forever<Marker>(system: impl IntoSystem<(), (), Marker> + 'static + Send) -> impl IntoAsyncSystemRunner {
         Forever(AsyncSystemConfig::new(system))
     }
 }

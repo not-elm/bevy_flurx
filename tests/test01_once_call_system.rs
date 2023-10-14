@@ -3,7 +3,7 @@ use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, Component, Query, Transform, TransformBundle, With};
 
 use bevy_async_system::BevTaskPlugin;
-use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::runner::once::Once;
 
 #[test]

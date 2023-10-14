@@ -1,7 +1,7 @@
 use bevy::app::{App, First, Plugin};
 use bevy::prelude::{Commands, Entity, Query};
 use futures_lite::future::block_on;
-use crate::task::BevTaskHandle;
+use crate::task::TaskHandle;
 
 
 pub mod task;
@@ -12,9 +12,9 @@ pub mod runner;
 pub mod prelude{
     pub use crate::{
         BevTaskPlugin,
-        task::{BevTaskHandle, BevTaskCommands},
+        task::{TaskHandle, AsyncCommands},
         runner::{
-            IntoAsyncSystem,
+            IntoAsyncSystemRunner,
             AsyncSystemRunnable,
             BoxedAsyncSystemRunner,
             delay::Delay,
@@ -78,7 +78,7 @@ impl Plugin for BevTaskPlugin {
 
 fn remove_finished_processes(
     mut commands: Commands,
-    mut task_handles: Query<(Entity, &mut BevTaskHandle)>,
+    mut task_handles: Query<(Entity, &mut TaskHandle)>,
 ) {
     for (entity, mut task) in task_handles.iter_mut() {
         if block_on(futures_lite::future::poll_once(&mut task.0)).is_some() {

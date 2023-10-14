@@ -5,7 +5,7 @@ use bevy::prelude::{Commands, Component, Event, Events, EventWriter, Query, Tran
 use futures::future::join;
 
 use bevy_async_system::BevTaskPlugin;
-use bevy_async_system::ext::AsyncCommands;
+use bevy_async_system::ext::SpawnAsyncCommands;
 use bevy_async_system::prelude::Wait;
 use bevy_async_system::runner::once::Once;
 

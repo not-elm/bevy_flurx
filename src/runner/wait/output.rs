@@ -1,11 +1,9 @@
-use bevy::prelude::{Event, EventReader};
-use bevy::tasks::{AsyncComputeTaskPool, Task};
-use futures::StreamExt;
+use bevy::prelude::{Event, EventReader, World};
+use futures::channel::mpsc::Sender;
 
-use crate::prelude::BoxedAsyncSystemRunner;
-use crate::runner::{BaseRunner, IntoAsyncSystem, new_channel};
+use crate::prelude::{AsyncSystemRunnable, BoxedAsyncSystemRunner};
+use crate::runner::{BaseRunner, IntoAsyncSystemRunner, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
-use crate::runner::wait::WaitRunner;
 
 pub(crate) struct WaitOutput<Out> {
     config: AsyncSystemConfig<Option<Out>>,
@@ -13,7 +11,7 @@ pub(crate) struct WaitOutput<Out> {
 
 impl<Out: Send + 'static> WaitOutput<Out> {
     #[inline]
-    pub fn create<Marker>(system: impl bevy::prelude::IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoAsyncSystem<Out> {
+    pub fn create<Marker>(system: impl bevy::prelude::IntoSystem<(), Option<Out>, Marker> + 'static + Send) -> impl IntoAsyncSystemRunner<Out> {
         Self {
             config: AsyncSystemConfig::new(system)
         }
@@ -23,7 +21,7 @@ impl<Out: Send + 'static> WaitOutput<Out> {
 
 impl<E: Event + Clone> WaitOutput<E> {
     #[inline]
-    pub fn event() -> impl IntoAsyncSystem<E> {
+    pub fn event() -> impl IntoAsyncSystemRunner<E> {
         Self::create(|mut er: EventReader<E>| {
             er.iter().next().cloned()
         })
@@ -31,19 +29,36 @@ impl<E: Event + Clone> WaitOutput<E> {
 }
 
 
-impl<Out> IntoAsyncSystem<Out> for WaitOutput<Out>
+impl<Out> IntoAsyncSystemRunner<Out> for WaitOutput<Out>
     where
         Out: 'static + Send
 {
-    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<Out>) {
-        let (tx, mut rx) = new_channel(1);
-        let runner = Box::new(WaitRunner(BaseRunner::new(tx, self.config)));
-        (runner, AsyncComputeTaskPool::get().spawn(async move {
-            loop {
-                if let Some(output) = rx.next().await.and_then(|output| output) {
-                    return output;
-                }
-            }
-        }))
+    #[inline]
+    fn into_runner(self, sender: Sender<Out>) -> BoxedAsyncSystemRunner {
+        Box::new(WaitOutputRunner {
+            sender,
+            base: BaseRunner::new(self.config),
+        })
+    }
+}
+
+
+struct WaitOutputRunner<Out> {
+    sender: Sender<Out>,
+    base: BaseRunner<Option<Out>>,
+}
+
+
+impl<Out> AsyncSystemRunnable for WaitOutputRunner<Out>
+    where
+        Out: 'static + Send
+{
+    fn run(&mut self, world: &mut World) -> SystemRunningStatus {
+        if let Some(output) = self.base.run_with_output(world) {
+            let _ = self.sender.try_send(output);
+            SystemRunningStatus::Finished
+        } else {
+            SystemRunningStatus::Running
+        }
     }
 }

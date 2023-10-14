@@ -1,12 +1,10 @@
 use std::time::Duration;
 
 use bevy::prelude::{TimerMode, World};
-use bevy::tasks::{AsyncComputeTaskPool, Task};
 use bevy::time::{Time, Timer};
 use futures::channel::mpsc::Sender;
-use futures::StreamExt;
 
-use crate::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, IntoAsyncSystem, new_channel, SystemRunningStatus};
+use crate::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
 
 /// Delay the task using either [`Delay::Frames`] or [`Delay::Time`].
 ///
@@ -14,7 +12,7 @@ use crate::runner::{AsyncSystemRunnable, BoxedAsyncSystemRunner, IntoAsyncSystem
 /// ```no_run
 /// use std::time::Duration;
 /// use bevy::prelude::*;
-/// use bevy_async_system::ext::AsyncCommands;
+/// use bevy_async_system::ext::SpawnAsyncCommands;
 /// use bevy_async_system::prelude::*;
 ///
 /// fn setup(mut commands: Commands){
@@ -34,35 +32,28 @@ pub enum Delay {
 }
 
 
-impl IntoAsyncSystem<()> for Delay {
-    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<()>) {
-        let (tx, mut rx) = new_channel(1);
+impl IntoAsyncSystemRunner<()> for Delay {
+    fn into_runner(self, sender: Sender<()>) -> BoxedAsyncSystemRunner {
         let runner: BoxedAsyncSystemRunner = match self {
             Self::Frames(delay_frames) => Box::new(DelayFrameRunner {
                 current_ticks: 0,
                 delay_frames,
-                tx,
+                sender,
             }),
             Self::Time(duration) => Box::new(DelayTimerRunner {
-                tx,
+                sender,
                 timer: Timer::new(duration, TimerMode::Once),
             })
         };
 
-        (runner, AsyncComputeTaskPool::get().spawn(async move {
-            loop {
-                if rx.next().await.is_some() {
-                    return;
-                }
-            }
-        }))
+        runner
     }
 }
 
 
 struct DelayTimerRunner {
     timer: Timer,
-    tx: Sender<()>,
+    sender: Sender<()>,
 }
 
 
@@ -70,7 +61,7 @@ impl AsyncSystemRunnable for DelayTimerRunner {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
         let delta = world.resource::<Time>().delta();
         if self.timer.tick(delta).just_finished() {
-            let _ = self.tx.try_send(());
+            let _ = self.sender.try_send(());
             SystemRunningStatus::Finished
         } else {
             SystemRunningStatus::Running
@@ -82,7 +73,7 @@ impl AsyncSystemRunnable for DelayTimerRunner {
 struct DelayFrameRunner {
     current_ticks: usize,
     delay_frames: usize,
-    tx: Sender<()>,
+    sender: Sender<()>,
 }
 
 
@@ -93,7 +84,7 @@ impl AsyncSystemRunnable for DelayFrameRunner {
         if self.current_ticks < self.delay_frames {
             SystemRunningStatus::Running
         } else {
-            let _ = self.tx.try_send(());
+            let _ = self.sender.try_send(());
             SystemRunningStatus::Finished
         }
     }

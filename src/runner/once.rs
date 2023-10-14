@@ -1,8 +1,7 @@
-use bevy::prelude::{Deref, DerefMut, Event, EventWriter, IntoSystem, NextState, ResMut, States, World};
-use bevy::tasks::{AsyncComputeTaskPool, Task};
-use futures::StreamExt;
+use bevy::prelude::{Event, EventWriter, IntoSystem, NextState, ResMut, States, World};
+use futures::channel::mpsc::Sender;
 
-use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystem, new_channel, SystemRunningStatus};
+use crate::runner::{AsyncSystemRunnable, BaseRunner, BoxedAsyncSystemRunner, IntoAsyncSystemRunner, SystemRunningStatus};
 use crate::runner::config::AsyncSystemConfig;
 
 pub struct Once<Out>(AsyncSystemConfig<Out>);
@@ -10,7 +9,7 @@ pub struct Once<Out>(AsyncSystemConfig<Out>);
 
 impl<Out: Send + 'static> Once<Out> {
     #[inline(always)]
-    pub fn run<Marker>(system: impl IntoSystem<(), Out, Marker> + Send + 'static) -> impl IntoAsyncSystem<Out> {
+    pub fn run<Marker>(system: impl IntoSystem<(), Out, Marker> + Send + 'static) -> impl IntoAsyncSystemRunner<Out> {
         Self(AsyncSystemConfig::new(system))
     }
 }
@@ -18,7 +17,7 @@ impl<Out: Send + 'static> Once<Out> {
 
 impl Once<()> {
     #[inline]
-    pub fn set_state<S: States + Copy>(to: S) -> impl IntoAsyncSystem {
+    pub fn set_state<S: States + Copy>(to: S) -> impl IntoAsyncSystemRunner {
         Self::run(move |mut state: ResMut<NextState<S>>| {
             state.set(to);
         })
@@ -26,7 +25,7 @@ impl Once<()> {
 
 
     #[inline]
-    pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncSystem {
+    pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncSystemRunner {
         Self::run(move |mut ew: EventWriter<E>| {
             ew.send(event.clone());
         })
@@ -34,33 +33,30 @@ impl Once<()> {
 }
 
 
-impl<Out> IntoAsyncSystem<Out> for Once<Out>
+impl<Out> IntoAsyncSystemRunner<Out> for Once<Out>
     where Out: 'static + Send
 {
-    fn into_parts(self) -> (BoxedAsyncSystemRunner, Task<Out>) {
-        let (tx, mut rx) = new_channel(1);
-        let runner = Box::new(OnceRunner(BaseRunner::new(tx, self.0)));
-        (runner, AsyncComputeTaskPool::get().spawn(async move {
-            loop {
-                if let Some(output) = rx.next().await {
-                    return output;
-                }
-            }
-        }))
+    fn into_runner(self, sender: Sender<Out>) -> BoxedAsyncSystemRunner {
+        Box::new(OnceRunner {
+            base: BaseRunner::new(self.0),
+            sender,
+        })
     }
 }
 
 
-#[derive(Deref, DerefMut)]
-struct OnceRunner<Out>(BaseRunner<Out>);
+struct OnceRunner<Out> {
+    base: BaseRunner<Out>,
+    sender: Sender<Out>,
+}
 
 impl<Output> AsyncSystemRunnable for OnceRunner<Output>
     where
         Output: 'static
 {
     fn run(&mut self, world: &mut World) -> SystemRunningStatus {
-        let output = self.run_with_output(world);
-        let _ = self.tx.try_send(output);
+        let output = self.base.run_with_output(world);
+        let _ = self.sender.try_send(output);
         SystemRunningStatus::Finished
     }
 }
