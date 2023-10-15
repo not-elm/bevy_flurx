@@ -4,7 +4,8 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/elm-register/bevy_async_system#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_async_system.svg)](https://crates.io/crates/bevy_async_system)
 
-This crate provides [`UniTask`](https://github.com/Cysharp/UniTask)-like functionality to asynchronously await game state.
+This crate provides [`UniTask`](https://github.com/Cysharp/UniTask)-like functionality to asynchronously await game
+state.
 
 ## Usage
 
@@ -53,14 +54,14 @@ fn println_system() {
 }
 
 
-fn return_count() -> Count{
+fn return_count() -> Count {
     Count(30)
 }
 
 fn println_counts(
     count: Res<Count>,
     non_send_count: NonSend<NonSendCount>
-){
+) {
     println!("{count:?}");
     println!("{non_send_count:?}");
 }
@@ -150,3 +151,9 @@ fn count_up(mut count: Local<u32>) {
     println!("count = {}", *count);
 }
 ```
+
+## Compatible Bevy versions
+
+| bevy_async_system | bevy |
+|-------------------|------|
+| 0.1               | 0.11 |
