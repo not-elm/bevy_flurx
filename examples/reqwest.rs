@@ -1,8 +1,8 @@
 use bevy::app::{App, Startup, Update};
-use bevy::asset::AssetServer;
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Color, Commands, Query, Res, TextBundle};
+use bevy::prelude::{Camera2dBundle, Color, Commands, Query, TextBundle};
 use bevy::text::{Text, TextStyle};
+use bevy::utils::default;
 
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::prelude::SpawnAsyncSystem;
@@ -26,12 +26,12 @@ fn main() {
 }
 
 
-fn setup_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+fn setup_ui(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn(TextBundle::from_section("Loading", TextStyle {
         font_size: 80.,
         color: Color::BLACK,
-        font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+        ..default()
     }));
 }
 

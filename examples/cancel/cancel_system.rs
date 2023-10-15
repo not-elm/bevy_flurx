@@ -32,7 +32,7 @@ fn setup(mut commands: Commands) {
         println!("Cancel");
         // Dropping the handle also stops the system.
         drop(handle);
-        schedules.add_system(Update, delay::timer(Duration::from_secs(3))).await;
+        schedules.add_system(Update, delay::timer(Duration::from_millis(500))).await;
         println!("Task End!");
         schedules.add_system(Update, once::send(AppExit)).await;
     });

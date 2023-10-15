@@ -13,7 +13,10 @@ use bevy_async_system::runner::delay;
 
 
 
+/// One way to cancel a task is to delete the entity has [`TaskHandle`](TaskHandle).
 ///
+/// In this example, a task is generated to run `println!` every second,
+/// but it's canceled by pressing the `Enter Key`.
 fn main() {
     App::new()
         .add_plugins((
