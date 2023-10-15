@@ -30,7 +30,6 @@ path = "examples/wait/move_shape.rs"
 name = "wait_for_audio_playback_to_finish"
 path = "examples/wait/wait_for_audio_playback_to_finish.rs"
 
-
 [[example]]
 name = "join_all"
 path = "examples/join_handle/join_all.rs"

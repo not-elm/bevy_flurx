@@ -9,6 +9,95 @@ use crate::async_commands::{AsyncSchedules, TaskHandle};
 
 #[async_trait]
 pub trait SpawnAsyncSystem<'w, 's> {
+    ///
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use bevy::prelude::*;
+    /// use bevy_async_system::prelude::*;
+    ///
+    /// let mut app = App::new();
+    /// app.add_event::<TestEvent>();
+    /// app.add_plugins((
+    ///     TaskPoolPlugin::default(),
+    ///     AsyncSystemPlugin
+    /// ));
+    ///
+    /// app.add_systems(Startup, |mut commands: Commands|{
+    ///     commands.spawn_async(|schedules|async move{
+    ///         // `once` systems...
+    ///         schedules.add_system(Update, once::run(print_system)).await;
+    ///         let output = schedules.add_system(Update, once::run(return_count)).await;
+    ///         schedules.add_system(Update, once::insert_resource(output)).await;
+    ///
+    ///         // `wait` systems...
+    ///         schedules.add_system(Update, wait::until(count_up_to_5)).await;
+    ///         schedules.add_system(Update, wait::until_event::<TestEvent>()).await;
+    ///
+    ///         // repeat systems...
+    ///         schedules.add_system(Update, repeat::times(2, count_up)).await;
+    ///         let handle = schedules.add_system(Update, repeat::forever(count_up));
+    ///
+    ///         // delay systems...
+    ///         schedules.add_system(Update, delay::frames(3)).await;
+    ///         drop(handle);
+    ///         schedules.add_system(Update, once::run(|mut count: ResMut<Count>|{
+    ///             count.0 -= 1;
+    ///         })).await;
+    ///     });
+    /// });
+    ///
+    /// app.update(); // run `println_system`
+    /// app.update(); // run `output_system`
+    /// app.update(); // run `output`
+    /// assert_eq!(app.world.resource::<Count>(), &Count(3));
+    ///
+    /// app.update(); // run `count_up_to_5` count = 4
+    /// assert_eq!(app.world.resource::<Count>(), &Count(4));
+    /// app.update(); // run `count_up_to_5` count = 5
+    /// assert_eq!(app.world.resource::<Count>(), &Count(5));
+    /// app.update(); // run `until_event::<TestEvent>`
+    /// app.world.send_event(TestEvent);
+    /// app.update(); // run `until_event::<TestEvent>`
+    ///
+    /// app.update(); // run `count_up`
+    /// assert_eq!(app.world.resource::<Count>(), &Count(6));
+    /// app.update(); // run `count_up`
+    /// assert_eq!(app.world.resource::<Count>(), &Count(7));
+    ///
+    /// app.update(); // run `count_up` and `delay::frames(3)`
+    /// assert_eq!(app.world.resource::<Count>(), &Count(8));
+    /// app.update(); // run `count_up` and `delay::frames(3)`
+    /// assert_eq!(app.world.resource::<Count>(), &Count(9));
+    /// app.update(); // run `count_up` and `delay::frames(3)`
+    /// assert_eq!(app.world.resource::<Count>(), &Count(10));
+    ///
+    /// app.update();
+    /// assert_eq!(app.world.resource::<Count>(), &Count(9));
+    /// fn print_system(){
+    ///     println!("Hello world!");
+    /// }
+    ///
+    /// #[derive(Clone, Resource, Eq, PartialEq, Debug)]
+    /// struct Count(usize);
+    ///
+    /// #[derive(Event)]
+    /// struct TestEvent;
+    ///
+    /// fn return_count() -> Count{
+    ///     Count(3)
+    /// }
+    ///
+    /// fn count_up_to_5(mut count: ResMut<Count>) -> bool{
+    ///     count.0 +=1;
+    ///     count.0 == 5
+    /// }
+    ///
+    /// fn count_up(mut count: ResMut<Count>){
+    ///     count.0 +=1;
+    /// }
+    /// ```
     fn spawn_async<'a, F>(&'a mut self, f: impl Fn(AsyncSchedules) -> F) -> EntityCommands<'w, 's, 'a>
         where F: Future<Output=()> + Send + 'static;
 
