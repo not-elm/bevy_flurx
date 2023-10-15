@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use bevy::prelude::IntoSystem;
 use crate::prelude::IntoAsyncScheduleCommand;
 use crate::runner::config::AsyncSystemConfig;
@@ -11,35 +9,24 @@ mod times;
 #[path = "repeat/forever.rs"]
 mod inner_forever;
 
-/// Repeats the system call  a specified number of times or indefinitely.
+
+/// Run the system every frame for the specified number of times.
 ///
-///
-/// ```no_run
-/// use std::time::Duration;
+/// ```
 /// use bevy::prelude::*;
-/// use bevy_async_system::ext::SpawnAsyncCommands;
 /// use bevy_async_system::prelude::*;
 ///
 /// fn setup(mut commands: Commands){
-///     commands.spawn_async(|task| async move{
-///         // Call `my_system` for 3 frames.
-///         task.spawn_on_main(Update, Repeat::times(3, my_system)).await;
-///
-///         // It's called every frame while this task is running.
-///         let handle = task.spawn_on_main(Update, Repeat::forever(my_system));
-///
-///         // When the handle is dropped, calling `my_system` also stops.
-///         drop(handle)
+///     commands.spawn_async(|schedules|async move{
+///         // Await for `count_up` to run 5 times.
+///         schedules.add_system(Update, repeat::times(5, count_up)).await;
 ///     });
 /// }
 ///
-/// fn my_system(){
-///     // ... your code
+/// fn count_up(mut count: Local<u32>){
+///     *count += 1;
 /// }
 /// ```
-pub struct Repeat(PhantomData<()>);
-
-
 #[inline(always)]
 pub fn times<Marker, Sys>(num: usize, system: Sys) -> impl IntoAsyncScheduleCommand
     where
@@ -50,6 +37,29 @@ pub fn times<Marker, Sys>(num: usize, system: Sys) -> impl IntoAsyncScheduleComm
 }
 
 
+
+
+
+/// Run the system  every frame until the task handle is dropped.
+///
+/// ```
+/// use std::time::Duration;
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         let handle = schedules.add_system(Update, repeat::forever(count_up));
+///         schedules.add_system(Update, delay::timer(Duration::from_secs(3))).await;
+///         // Since the handle is dropped, `count_up` also stops.
+///         drop(handle);
+///     });
+/// }
+///
+/// fn count_up(mut count: Local<u32>){
+///     *count += 1;
+/// }
+/// ```
 #[inline(always)]
 pub fn forever<Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand
     where

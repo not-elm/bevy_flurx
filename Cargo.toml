@@ -5,24 +5,34 @@ edition = "2021"
 
 
 [[example]]
-name = "cancel_task"
-path = "examples/main_thread/cancel/cancel_task.rs"
+name = "reqwest"
+path = "examples/reqwest.rs"
+
+
+[[example]]
+name = "despawn_task"
+path = "examples/cancel/despawn_task.rs"
 
 [[example]]
 name = "cancel_system"
-path = "examples/main_thread/cancel/cancel_system.rs"
+path = "examples/cancel/cancel_system.rs"
 
 [[example]]
 name = "delay_time_and_frames"
-path = "examples/main_thread/delay/delay_time_and_frames.rs"
+path = "examples/delay/delay_time_and_frames.rs"
 
 [[example]]
 name = "move_shape"
-path = "examples/main_thread/wait/move_shape.rs"
+path = "examples/wait/move_shape.rs"
 
 [[example]]
 name = "wait_for_audio_playback_to_finish"
-path = "examples/main_thread/wait/wait_for_audio_playback_to_finish.rs"
+path = "examples/wait/wait_for_audio_playback_to_finish.rs"
+
+
+[[example]]
+name = "join_all"
+path = "examples/join_handle/join_all.rs"
 
 
 
@@ -40,3 +50,4 @@ trybuild2 = "1.1.0"
 bevy_async_system = { path = ".", version = "0.1" }
 reqwest = "0.11.22"
 bevy_framepace = "0.13.3"
+bevy-inspector-egui = "0.20.0"

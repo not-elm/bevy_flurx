@@ -25,13 +25,7 @@ pub mod prelude {
     };
 }
 
-/// Adds
-///
-/// ```no_run
-///
-///
-///
-/// ```
+/// Provides the async systems.
 pub struct AsyncSystemPlugin;
 
 

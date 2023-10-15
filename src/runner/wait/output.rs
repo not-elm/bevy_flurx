@@ -7,6 +7,29 @@ use crate::prelude::{AsyncSchedule, AsyncScheduleCommand};
 use crate::runner::{IntoAsyncScheduleCommand, schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
 
+
+/// Run the system every frame until it returns [`Option::Some`](Option::Some).
+///
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         let count = schedules.add_system(Update, wait::output(count_up)).await;
+///         assert_eq!(count, 2);
+///     });
+/// }
+///
+/// fn count_up(mut count: Local<u32>) -> Option<u32>{
+///     *count += 1;
+///     if *count <= 1{
+///         None
+///     }else{
+///         Some(*count)
+///     }
+/// }
+/// ```
 #[inline(always)]
 pub const fn output<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
     where
@@ -18,7 +41,10 @@ pub const fn output<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleComm
 }
 
 
-#[inline]
+/// Wait until an event is received.
+///
+/// ```
+#[inline(always)]
 pub fn output_event<E: Event + Clone>() -> impl IntoAsyncScheduleCommand<E> {
     output(|mut er: EventReader<E>| {
         er.iter().next().cloned()
@@ -85,7 +111,7 @@ mod tests {
     use bevy::app::{Startup, Update};
     use bevy::core::FrameCount;
     use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Commands, Event, Events, Res};
+    use bevy::prelude::{Commands, Event, Events, Local, Res};
 
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
     use crate::runner::{once, wait};
@@ -125,4 +151,49 @@ mod tests {
 
     #[derive(Event, Clone)]
     struct OutputEvent(u32);
+
+    #[test]
+    fn local_count_up() {
+        let mut app = new_app();
+        app.add_systems(Startup, setup);
+        app.update();
+        app.update();
+        fn setup(mut commands: Commands) {
+            commands.spawn_async(|schedules| async move {
+                let count = schedules.add_system(Update, wait::output(count_up)).await;
+                assert_eq!(count, 2);
+            });
+        }
+
+        fn count_up(mut count: Local<u32>) -> Option<u32> {
+            *count += 1;
+            if *count <= 1 {
+                None
+            } else {
+                Some(*count)
+            }
+        }
+    }
+
+
+    #[test]
+    fn wait_event() {
+        let mut app = new_app();
+        app.add_systems(Startup, setup);
+        app.add_event::<TestEvent>();
+        app.update();
+        app.world.send_event(TestEvent(3));
+        app.update();
+        app.update();
+
+        fn setup(mut commands: Commands) {
+            commands.spawn_async(|schedules| async move {
+                let event = schedules.add_system(Update, wait::output_event::<TestEvent>()).await;
+                assert_eq!(event, TestEvent(3));
+            });
+        }
+
+        #[derive(Event, Clone, Eq, PartialEq, Debug)]
+        struct TestEvent(u32);
+    }
 }

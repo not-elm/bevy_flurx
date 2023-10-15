@@ -7,10 +7,13 @@ use bevy::log::info;
 use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
 
 use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::ext::SpawnAsyncCommands;
-use bevy_async_system::runner::main_thread::delay::Delay;
 use bevy_async_system::async_commands::TaskHandle;
+use bevy_async_system::prelude::SpawnAsyncSystem;
+use bevy_async_system::runner::delay;
 
+
+
+///
 fn main() {
     App::new()
         .add_plugins((
@@ -24,9 +27,9 @@ fn main() {
 
 
 fn setup(mut commands: Commands) {
-    commands.spawn_async(|task| async move {
+    commands.spawn_async(|schedules| async move {
         loop {
-            task.add_system(Update, Delay::Time(Duration::from_secs(1))).await;
+            schedules.add_system(Update, delay::timer(Duration::from_secs(1))).await;
             println!("******** tick **********");
         }
     });

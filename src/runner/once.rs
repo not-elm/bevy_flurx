@@ -1,6 +1,6 @@
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::ecs::system::EntityCommands;
-use bevy::prelude::{Event, EventWriter, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Schedules, States};
+use bevy::prelude::{Commands, Event, EventWriter, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Resource, Schedules, States};
 
 use crate::async_commands::TaskSender;
 use crate::prelude::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand};
@@ -110,6 +110,57 @@ pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncScheduleCommand {
     })
 }
 
+
+
+/// Insert a [`Resource`](bevy::prelude::Resource).
+///
+/// The resource is cloned inside the function.
+///
+/// If the resource derives [`Default`], we recommend using [`once::init_resource`](once::init_resource) instead.
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// #[derive(Resource, Clone)]
+/// struct ExampleResource;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         schedules.add_system(Update, once::insert_resource(ExampleResource)).await;
+///     });
+/// }
+/// ```
+#[inline]
+pub fn insert_resource<R: Resource + Clone>(resource: R) -> impl IntoAsyncScheduleCommand {
+    run(move |mut commands: Commands| {
+        commands.insert_resource(resource.clone());
+    })
+}
+
+
+
+
+/// Initialize a [`Resource`](bevy::prelude::Resource).
+///
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// #[derive(Resource, Default)]
+/// struct ExampleResource;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         schedules.add_system(Update, once::init_resource::<ExampleResource>()).await;
+///     });
+/// }
+/// ```
+#[inline]
+pub fn init_resource<R: Resource + Default>() -> impl IntoAsyncScheduleCommand {
+    run(|mut commands: Commands| {
+        commands.init_resource::<R>();
+    })
+}
 
 
 struct OnceOnMain<Out, Marker, Sys>(AsyncSystemConfig<Out, Marker, Sys>);

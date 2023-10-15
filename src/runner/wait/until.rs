@@ -6,6 +6,25 @@ use crate::async_commands::TaskSender;
 use crate::runner::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand, schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
 
+
+/// Runs the system every frame until it returns true.
+///
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         schedules.add_system(Update, wait::until(move_up)).await;
+///     });
+/// }
+///
+/// fn move_up(mut transform: Query<&mut Transform>) -> bool{
+///     let mut transform = transform.single_mut();
+///     transform.translation.y += 1.;
+///     50 <= transform.translation.y
+/// }
+/// ```
 #[inline(always)]
 pub const fn until<Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<()>
     where
@@ -16,6 +35,11 @@ pub const fn until<Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<()
 }
 
 
+
+/// Wait until an event is received.
+///
+/// Unlike [`wait::output_event`](wait::output_event), there is no return value,
+/// but `E` does not need to derive [`Clone`].
 #[inline(always)]
 pub fn until_event<E: Event>() -> impl IntoAsyncScheduleCommand<()> {
     until(|er: EventReader<E>| { !er.is_empty() })
@@ -32,7 +56,7 @@ impl<Marker, Sys> IntoAsyncScheduleCommand<()> for Until<Marker, Sys>
 {
     #[inline]
     fn into_schedule_command(self, sender: TaskSender<()>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand {
-        AsyncScheduleCommand::new(Executor {
+        AsyncScheduleCommand::new(Scheduler {
             sender,
             config: self.0,
             schedule_label,
@@ -41,14 +65,14 @@ impl<Marker, Sys> IntoAsyncScheduleCommand<()> for Until<Marker, Sys>
 }
 
 
-struct Executor<Marker, Sys, Label> {
+struct Scheduler<Marker, Sys, Label> {
     sender: TaskSender<()>,
     config: AsyncSystemConfig<bool, Marker, Sys>,
     schedule_label: Label,
 }
 
 
-impl<Marker, Sys, Label> AsyncSchedule for Executor<Marker, Sys, Label>
+impl<Marker, Sys, Label> AsyncSchedule for Scheduler<Marker, Sys, Label>
     where
         Marker: Send + Sync + 'static,
         Sys: IntoSystem<(), bool, Marker> + Send + Sync + 'static,

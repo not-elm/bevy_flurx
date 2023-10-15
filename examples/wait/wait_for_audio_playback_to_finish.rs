@@ -7,7 +7,8 @@ use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res}
 
 use bevy_async_system::AsyncSystemPlugin;
 use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
-use bevy_async_system::prelude::{OnceOnMain, Wait};
+use bevy_async_system::prelude::wait;
+use bevy_async_system::runner::once;
 
 fn main() {
     App::new()
@@ -25,11 +26,13 @@ fn main() {
 
 fn setup_async_systems(mut commands: Commands) {
     commands.spawn_async(|schedules| async move {
-        schedules.add_system(Update, Wait::until(finished_audio)).await;
+        schedules.add_system(Update, wait::until(finished_audio)).await;
         info!("***** Finished audio *****");
-        schedules.add_system(Update, OnceOnMain::send(AppExit)).await;
+        schedules.add_system(Update, once::send(AppExit)).await;
     });
 }
+
+
 
 fn play_audio(
     mut commands: Commands,
@@ -40,6 +43,7 @@ fn play_audio(
         settings: PlaybackSettings::ONCE,
     });
 }
+
 
 fn finished_audio(
     mut commands: Commands,
