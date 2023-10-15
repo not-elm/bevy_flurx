@@ -1,3 +1,4 @@
+use bevy::app::AppExit;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Commands, Event, EventWriter, FromWorld, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Resource, Schedules, States, World};
@@ -101,6 +102,14 @@ pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncScheduleCommand {
     run(move |mut ew: EventWriter<E>| {
         ew.send(event.clone());
     })
+}
+
+
+
+/// Send [`AppExit`].
+#[inline(always)]
+pub fn app_exit() -> impl IntoAsyncScheduleCommand {
+    send(AppExit)
 }
 
 

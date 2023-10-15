@@ -34,6 +34,15 @@ path = "examples/wait/wait_for_audio_playback_to_finish.rs"
 name = "join_all"
 path = "examples/join_handle/join_all.rs"
 
+[[example]]
+name = "once"
+path = "examples/once.rs"
+
+
+[[example]]
+name = "repeat"
+path = "examples/repeat.rs"
+
 
 [dependencies]
 bevy = { version = "0.11.3", default-features = false }

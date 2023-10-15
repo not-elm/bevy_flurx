@@ -16,16 +16,14 @@ fn main() {
             DefaultPlugins,
             AsyncSystemPlugin
         ))
-        .add_systems(Startup, (
-            setup_async_systems,
-            play_audio
-        ))
+        .add_systems(Startup, setup_async_systems)
         .run();
 }
 
 
 fn setup_async_systems(mut commands: Commands) {
     commands.spawn_async(|schedules| async move {
+        schedules.add_system(Update, once::run(play_audio)).await;
         schedules.add_system(Update, wait::until(finished_audio)).await;
         info!("***** Finished audio *****");
         schedules.add_system(Update, once::send(AppExit)).await;
