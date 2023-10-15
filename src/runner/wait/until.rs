@@ -22,7 +22,7 @@ use crate::runner::config::AsyncSystemConfig;
 /// fn move_up(mut transform: Query<&mut Transform>) -> bool{
 ///     let mut transform = transform.single_mut();
 ///     transform.translation.y += 1.;
-///     50 <= transform.translation.y
+///     50. <= transform.translation.y
 /// }
 /// ```
 #[inline(always)]

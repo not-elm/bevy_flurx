@@ -58,11 +58,11 @@ pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
 
 /// Set the next state.
 ///
-/// ```
+/// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_async_system::prelude::*;
 ///
-/// #[derive(Debug, Default, Eq, PartialEq, Hash, Copy, Clone)]
+/// #[derive(Debug, Default, Eq, PartialEq, Hash, Copy, Clone, States)]
 /// enum ExampleState{
 ///     #[default]
 ///     First,
@@ -287,8 +287,7 @@ mod tests {
     }
 
     fn without_output(mut commands: Commands){
-
-        commands.insert_resource(crate::prelude::once::tests::Count(10));
+        commands.insert_resource(Count(10));
     }
 
 
