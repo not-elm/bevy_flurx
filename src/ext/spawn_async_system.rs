@@ -9,6 +9,16 @@ use crate::async_commands::{AsyncSchedules, TaskHandle};
 
 #[async_trait]
 pub trait SpawnAsyncSystem<'w, 's> {
+    /// Build an asynchronous system.
+    ///
+    /// [`AsyncSchedules`] is passed as an argument and is used to declare the system.
+    ///
+    /// ## Notes
+    ///
+    /// The way the scheduler executes is different from normal systems.
+    /// For example, normally if you add a systems with [`Update`], it will be executed every frame,
+    /// but this is not the necessarily case with `async_system`.
+    /// 'async_system' needs to pass the system and the conditions under which its task will finish.
     ///
     ///
     /// ## Examples
@@ -100,6 +110,7 @@ pub trait SpawnAsyncSystem<'w, 's> {
     /// ```
     fn spawn_async<'a, F>(&'a mut self, f: impl Fn(AsyncSchedules) -> F) -> EntityCommands<'w, 's, 'a>
         where F: Future<Output=()> + Send + 'static;
+
 
     fn spawn_async_local<'a, F>(&'a mut self, f: impl Fn(AsyncSchedules) -> F) -> EntityCommands<'w, 's, 'a>
         where F: Future<Output=()> + 'static;
