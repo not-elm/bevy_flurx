@@ -1,14 +1,11 @@
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::ecs::system::EntityCommands;
-use bevy::prelude::{Commands, Event, EventWriter, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Resource, Schedules, States};
+use bevy::prelude::{Commands, Event, EventWriter, FromWorld, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Resource, Schedules, States, World};
 
 use crate::async_commands::TaskSender;
 use crate::prelude::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand};
 use crate::runner::{schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
-
-
-
 
 /// Run the system only once.
 ///
@@ -54,8 +51,6 @@ pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
 }
 
 
-
-
 /// Set the next state.
 ///
 /// ```no_run
@@ -84,8 +79,6 @@ pub fn set_state<S: States + Copy>(to: S) -> impl IntoAsyncScheduleCommand {
 }
 
 
-
-
 /// Send the event.
 ///
 /// The event to be send must derive [`Clone`] in addition to [`Event`](bevy::prelude::Event).
@@ -109,7 +102,6 @@ pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncScheduleCommand {
         ew.send(event.clone());
     })
 }
-
 
 
 /// Insert a [`Resource`](bevy::prelude::Resource).
@@ -138,8 +130,6 @@ pub fn insert_resource<R: Resource + Clone>(resource: R) -> impl IntoAsyncSchedu
 }
 
 
-
-
 /// Initialize a [`Resource`](bevy::prelude::Resource).
 ///
 /// ```
@@ -159,6 +149,30 @@ pub fn insert_resource<R: Resource + Clone>(resource: R) -> impl IntoAsyncSchedu
 pub fn init_resource<R: Resource + Default>() -> impl IntoAsyncScheduleCommand {
     run(|mut commands: Commands| {
         commands.init_resource::<R>();
+    })
+}
+
+
+/// Init a non send resource.
+///
+/// The system runs on the main thread.
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// #[derive(Default)]
+/// struct ExampleResource;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         schedules.add_system(Update, once::init_non_send_resource::<ExampleResource>()).await;
+///     });
+/// }
+/// ```
+#[inline]
+pub fn init_non_send_resource<R: FromWorld + 'static>() -> impl IntoAsyncScheduleCommand {
+    run(move |world: &mut World| {
+        world.init_non_send_resource::<R>();
     })
 }
 
@@ -218,7 +232,7 @@ impl<Out, Marker, Sys, Label> AsyncSchedule for OnceRunner<Out, Marker, Sys, Lab
 mod tests {
     use bevy::app::{Startup, Update};
     use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Commands, Res, Resource};
+    use bevy::prelude::{Commands, NonSendMut, Res, Resource};
 
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
     use crate::runner::once;
@@ -278,22 +292,45 @@ mod tests {
     }
 
 
-    fn setup(mut commands: Commands){
-        commands.spawn_async(|schedules| async move{
+    fn setup(mut commands: Commands) {
+        commands.spawn_async(|schedules| async move {
             schedules.add_system(Update, once::run(without_output)).await;
             let count: u32 = schedules.add_system(Update, once::run(with_output)).await;
             assert_eq!(count, 10);
         });
     }
 
-    fn without_output(mut commands: Commands){
+    fn without_output(mut commands: Commands) {
         commands.insert_resource(Count(10));
     }
 
 
-    fn with_output(count: Res<Count>) -> u32{
+    fn with_output(count: Res<Count>) -> u32 {
         count.0
     }
+
     #[derive(Resource)]
     struct Count(u32);
+
+
+    #[test]
+    fn init_non_send_resource() {
+        let mut app = new_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn_async(|schedules| async move {
+                schedules.add_system(Update, once::init_non_send_resource::<NonSendNum>()).await;
+                schedules.add_system(Update, once::run(|mut r: NonSendMut<NonSendNum>| {
+                    r.0 = 3;
+                })).await;
+            });
+        });
+
+        app.update();
+        assert_eq!(app.world.non_send_resource::<NonSendNum>().0, 0);
+        app.update();
+        assert_eq!(app.world.non_send_resource::<NonSendNum>().0, 3);
+
+        #[derive(Default)]
+        struct NonSendNum(usize);
+    }
 }
