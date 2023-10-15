@@ -27,27 +27,16 @@ path = "examples/main_thread/wait/wait_for_audio_playback_to_finish.rs"
 
 
 [dependencies]
-bevy = {version = "0.11.3", default-features = false }
+bevy = { version = "0.11.3", default-features = false }
 async-trait = "0.1.73"
 futures-lite = "1.13.0"
 futures = "0.3.28"
 async-compat = "0.2.2"
 
 
-[features]
-default = ["update"]
-first = []
-pre_update = []
-state_transition = []
-update = []
-fixed_update = []
-post_update = []
-last = []
-
-
 [dev-dependencies]
 bevy = "0.11.3"
 trybuild2 = "1.1.0"
-bevy_async_system = {path = ".", version = "0.1", features = ["pre_update"]}
+bevy_async_system = { path = ".", version = "0.1" }
 reqwest = "0.11.22"
 bevy_framepace = "0.13.3"

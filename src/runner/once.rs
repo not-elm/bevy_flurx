@@ -7,9 +7,42 @@ use crate::prelude::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleComma
 use crate::runner::{schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
 
-struct OnceOnMain<Out, Marker, Sys>(AsyncSystemConfig<Out, Marker, Sys>);
 
 
+
+/// Run the system only once.
+///
+/// The system can use `Output`.
+/// If any output is returned, it becomes the task's return value.
+///
+/// ## Example
+///
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules| async move{
+///         schedules.add_system(Update, once::run(without_output)).await;
+///         let count: u32 = schedules.add_system(Update, once::run(with_output)).await;
+///         assert_eq!(count, 10);
+///     });
+/// }
+///
+/// #[derive(Resource)]
+/// struct Count(u32);
+///
+/// fn without_output(mut commands: Commands){
+///     commands.insert_resource(Count(10));
+/// }
+///
+///
+/// fn with_output(count: Res<Count>) -> u32{
+///     count.0
+/// }
+///
+/// ```
+///
 #[inline(always)]
 pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
     where
@@ -21,6 +54,28 @@ pub fn run<Out, Marker, Sys>(system: Sys) -> impl IntoAsyncScheduleCommand<Out>
 }
 
 
+
+
+/// Set the next state.
+///
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// #[derive(Debug, Default, Eq, PartialEq, Hash, Copy, Clone)]
+/// enum ExampleState{
+///     #[default]
+///     First,
+///     Second,
+/// }
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|scheduler|async move{
+///         scheduler.add_system(Update, once::set_state(ExampleState::Second)).await;
+///     });
+/// }
+/// ```
+///
 #[inline]
 pub fn set_state<S: States + Copy>(to: S) -> impl IntoAsyncScheduleCommand {
     run(move |mut state: ResMut<NextState<S>>| {
@@ -29,12 +84,35 @@ pub fn set_state<S: States + Copy>(to: S) -> impl IntoAsyncScheduleCommand {
 }
 
 
+
+
+/// Send the event.
+///
+/// The event to be send must derive [`Clone`] in addition to [`Event`](bevy::prelude::Event).
+///
+/// ```
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+///
+/// #[derive(Event, Clone)]
+/// struct ExampleEvent;
+///
+/// fn setup(mut commands: Commands){
+///     commands.spawn_async(|schedules|async move{
+///         schedules.add_system(Update, once::send(ExampleEvent)).await;
+///     });
+/// }
+/// ```
 #[inline]
 pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncScheduleCommand {
     run(move |mut ew: EventWriter<E>| {
         ew.send(event.clone());
     })
 }
+
+
+
+struct OnceOnMain<Out, Marker, Sys>(AsyncSystemConfig<Out, Marker, Sys>);
 
 
 impl<Out, Marker, Sys> IntoAsyncScheduleCommand<Out> for OnceOnMain<Out, Marker, Sys>
@@ -89,7 +167,7 @@ impl<Out, Marker, Sys, Label> AsyncSchedule for OnceRunner<Out, Marker, Sys, Lab
 mod tests {
     use bevy::app::{Startup, Update};
     use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::Commands;
+    use bevy::prelude::{Commands, Res, Resource};
 
     use crate::ext::spawn_async_system::SpawnAsyncSystem;
     use crate::runner::once;
@@ -137,4 +215,35 @@ mod tests {
         assert!(!is_first_event_already_coming(&mut app, &mut er_first));
         assert!(!is_second_event_already_coming(&mut app, &mut er_second));
     }
+
+
+    #[test]
+    fn output() {
+        let mut app = new_app();
+        app.add_systems(Startup, setup);
+
+        app.update();
+        app.update();
+    }
+
+
+    fn setup(mut commands: Commands){
+        commands.spawn_async(|schedules| async move{
+            schedules.add_system(Update, once::run(without_output)).await;
+            let count: u32 = schedules.add_system(Update, once::run(with_output)).await;
+            assert_eq!(count, 10);
+        });
+    }
+
+    fn without_output(mut commands: Commands){
+
+        commands.insert_resource(crate::prelude::once::tests::Count(10));
+    }
+
+
+    fn with_output(count: Res<Count>) -> u32{
+        count.0
+    }
+    #[derive(Resource)]
+    struct Count(u32);
 }

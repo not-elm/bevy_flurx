@@ -21,10 +21,10 @@ pub mod preludes {
         AsyncSchedule,
         AsyncScheduleCommand,
         IntoAsyncScheduleCommand,
-        once::*,
-        wait::*,
-        delay::*,
-        repeat::*
+        once,
+        wait,
+        delay,
+        repeat
     };
 }
 

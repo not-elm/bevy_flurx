@@ -11,7 +11,7 @@ pub(crate) struct DelayFrame(pub usize);
 
 impl IntoAsyncScheduleCommand for DelayFrame {
     fn into_schedule_command(self, sender: TaskSender<()>, schedule_label: impl ScheduleLabel + Clone) -> AsyncScheduleCommand {
-        AsyncScheduleCommand::new(Executor {
+        AsyncScheduleCommand::new(Scheduler {
             sender,
             schedule_label,
             delay_frames: self.0,
@@ -20,14 +20,14 @@ impl IntoAsyncScheduleCommand for DelayFrame {
 }
 
 
-struct Executor<Label> {
+struct Scheduler<Label> {
     delay_frames: usize,
     schedule_label: Label,
     sender: TaskSender<()>,
 }
 
 
-impl<Label: ScheduleLabel + Clone> AsyncSchedule for Executor<Label> {
+impl<Label: ScheduleLabel + Clone> AsyncSchedule for Scheduler<Label> {
     fn initialize(self: Box<Self>, entity_commands: &mut EntityCommands, schedules: &mut Schedules) {
         let schedule = schedule_initialize(schedules, &self.schedule_label);
         entity_commands.insert(self.sender);
