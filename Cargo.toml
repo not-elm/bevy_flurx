@@ -62,7 +62,7 @@ async-compat = "0.2.2"
 [dev-dependencies]
 bevy = "0.11.3"
 trybuild2 = "1.1.0"
-bevy_async_system = { path = ".", version = "0.1" }
+bevy_async_system = { path = "." }
 reqwest = "0.11.22"
 bevy_framepace = "0.13.3"
 bevy-inspector-egui = "0.20.0"
