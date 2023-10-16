@@ -95,6 +95,19 @@ fn play_audio(
         settings: PlaybackSettings::ONCE,
     });
 }
+
+fn finished_audio(
+    mut commands: Commands,
+    audio: Query<(Entity, &AudioSink)>,
+) -> bool {
+    let Ok((entity, audio)) = audio.get_single() else { return false; };
+    if audio.empty() {
+        commands.entity(entity).despawn();
+        true
+    } else {
+        false
+    }
+}
 ```
 
 ### delay
