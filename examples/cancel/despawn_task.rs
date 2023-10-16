@@ -7,7 +7,7 @@ use bevy::log::info;
 use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
 
 use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::async_commands::TaskHandle;
+use bevy_async_system::async_schedules::TaskHandle;
 use bevy_async_system::prelude::SpawnAsyncSystem;
 use bevy_async_system::runner::delay;
 

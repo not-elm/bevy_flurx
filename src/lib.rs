@@ -1,16 +1,14 @@
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, First, Plugin};
+use bevy::app::{App, First, Main, Plugin};
 use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::prelude::{Commands, Entity, Query, ResMut, Schedules};
 use futures_lite::future::block_on;
 
-use crate::async_commands::TaskHandle;
+use crate::async_schedules::TaskHandle;
 use crate::runner::AsyncScheduleCommands;
 
-// use crate::runner::thread_pool::TaskPoolSystemSetups;
-
-pub mod async_commands;
+pub mod async_schedules;
 pub mod ext;
 
 pub mod runner;
@@ -18,8 +16,8 @@ pub mod runner;
 
 pub mod prelude {
     pub use crate::{
+        async_schedules::*,
         AsyncSystemPlugin,
-        async_commands::*,
         ext::spawn_async_system::SpawnAsyncSystem,
         runner::preludes::*,
     };
@@ -33,10 +31,9 @@ impl Plugin for AsyncSystemPlugin {
     fn build(&self, app: &mut App) {
         {
             use bevy::prelude::IntoSystemConfigs;
-            app.add_systems(First, (
-                remove_finished_processes,
-                init_async_schedulers
-            ).chain());
+            app
+                .add_systems(Main, remove_finished_tasks)
+                .add_systems(First, init_async_schedulers.after(remove_finished_tasks));
         }
     }
 }
@@ -52,7 +49,7 @@ fn init_async_schedulers(
 }
 
 
-fn remove_finished_processes(
+fn remove_finished_tasks(
     mut commands: Commands,
     mut task_handles: Query<(Entity, &mut TaskHandle)>,
 ) {

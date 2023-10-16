@@ -3,7 +3,7 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Commands, Event, EventWriter, FromWorld, In, IntoSystem, IntoSystemConfigs, NextState, Query, ResMut, Resource, Schedules, States, World};
 
-use crate::async_commands::TaskSender;
+use crate::async_schedules::TaskSender;
 use crate::prelude::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand};
 use crate::runner::{schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;
@@ -103,7 +103,6 @@ pub fn send<E: Event + Clone>(event: E) -> impl IntoAsyncScheduleCommand {
         ew.send(event.clone());
     })
 }
-
 
 
 /// Send [`AppExit`].
@@ -239,7 +238,7 @@ impl<Out, Marker, Sys, Label> AsyncSchedule for OnceRunner<Out, Marker, Sys, Lab
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
+    use bevy::app::{PreUpdate, Startup, Update};
     use bevy::ecs::event::ManualEventReader;
     use bevy::prelude::{Commands, NonSendMut, Res, Resource};
 
@@ -252,11 +251,10 @@ mod tests {
         let mut app = new_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn_async(|schedules| async move {
-                schedules.add_system(Update, once::set_state(TestState::Finished)).await;
+                schedules.add_system(PreUpdate, once::set_state(TestState::Finished)).await;
             });
         });
 
-        app.update();
         app.update();
 
         assert!(test_state_finished(&mut app));

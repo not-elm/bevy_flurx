@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::Commands;
 use bevy::tasks::AsyncComputeTaskPool;
-use crate::async_commands::{AsyncSchedules, TaskHandle};
+use crate::async_schedules::{AsyncSchedules, TaskHandle};
 
 #[async_trait]
 pub trait SpawnAsyncSystem<'w, 's> {

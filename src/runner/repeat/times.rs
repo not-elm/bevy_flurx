@@ -2,7 +2,7 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{IntoSystem, IntoSystemConfigs, Local, Query, Schedules};
 
-use crate::async_commands::TaskSender;
+use crate::async_schedules::TaskSender;
 use crate::prelude::{AsyncSchedule, AsyncScheduleCommand, IntoAsyncScheduleCommand};
 use crate::runner::{schedule_initialize, task_running};
 use crate::runner::config::AsyncSystemConfig;

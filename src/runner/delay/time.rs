@@ -5,7 +5,7 @@ use bevy::ecs::system::EntityCommands;
 use bevy::prelude::{Component, IntoSystemConfigs, Query, Res, Schedules, TimerMode};
 use bevy::time::{Time, Timer};
 
-use crate::async_commands::TaskSender;
+use crate::async_schedules::TaskSender;
 use crate::prelude::AsyncScheduleCommand;
 use crate::runner::{AsyncSchedule, IntoAsyncScheduleCommand, schedule_initialize, task_running};
 

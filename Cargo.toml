@@ -8,7 +8,7 @@ description = "Provides the ability to wait for game status asynchronously."
 keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/elm-register/bevy_async_system"
+repository = "https://github.com/elmtw/bevy_async_system"
 
 
 [[example]]

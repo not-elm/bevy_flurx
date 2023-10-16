@@ -5,7 +5,7 @@ use bevy::ecs::system::EntityCommands;
 use bevy::hierarchy::BuildChildren;
 use bevy::prelude::{Component, Condition, Deref, DerefMut, Entity, IntoSystem, Query, Schedule, Schedules};
 
-use crate::async_commands::TaskSender;
+use crate::async_schedules::TaskSender;
 
 pub(crate) mod config;
 pub mod once;
