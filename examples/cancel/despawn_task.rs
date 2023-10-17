@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bevy::app::{App, Startup, Update};
 use bevy::DefaultPlugins;
+use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::input::Input;
 use bevy::log::info;
 use bevy::prelude::{Commands, Entity, KeyCode, Query, Res, With};
@@ -47,7 +48,9 @@ fn cancel(
     if input.just_pressed(KeyCode::Return) {
         for entity in task.iter() {
             info!("cancel");
-            commands.entity(entity).despawn();
+            // Make sure to remove all children!
+            // Each child has TaskSender, causing unnecessary resources to accumulate.
+            commands.entity(entity).despawn_recursive();
         }
     }
 }
