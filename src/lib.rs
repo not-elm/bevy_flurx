@@ -1,27 +1,17 @@
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, First, Main, Plugin};
-use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{Commands, Entity, Query, ResMut, Schedules};
+
+use bevy::app::{App, Plugin, Update};
+use bevy::prelude::World;
 use futures_lite::future::block_on;
 
-use crate::async_schedules::TaskHandle;
-use crate::runner::AsyncScheduleCommands;
+use crate::scheduler::BevyScheduler;
+use crate::store::WorldPointer;
 
-pub mod async_schedules;
-pub mod ext;
-
-pub mod runner;
-
-
-pub mod prelude {
-    pub use crate::{
-        async_schedules::*,
-        AsyncSystemPlugin,
-        ext::spawn_async_system::SpawnAsyncSystem,
-        runner::preludes::*,
-    };
-}
+mod store;
+mod commands;
+mod task;
+mod scheduler;
 
 /// Provides the async systems.
 pub struct AsyncSystemPlugin;
@@ -29,97 +19,18 @@ pub struct AsyncSystemPlugin;
 
 impl Plugin for AsyncSystemPlugin {
     fn build(&self, app: &mut App) {
-        {
-            use bevy::prelude::IntoSystemConfigs;
-            app
-                .add_systems(Main, remove_finished_tasks)
-                .add_systems(First, init_async_schedulers.after(remove_finished_tasks));
-        }
-    }
-}
-
-fn init_async_schedulers(
-    mut commands: Commands,
-    mut schedules: ResMut<Schedules>,
-    executors_query: Query<(Entity, &AsyncScheduleCommands)>,
-) {
-    for (entity, executors) in executors_query.iter() {
-        executors.init_schedulers(&mut commands.entity(entity), &mut schedules);
-    }
-}
-
-
-fn remove_finished_tasks(
-    mut commands: Commands,
-    mut task_handles: Query<(Entity, &mut TaskHandle)>,
-) {
-    for (entity, mut task) in task_handles.iter_mut() {
-        if block_on(futures_lite::future::poll_once(&mut task.0)).is_some() {
-            commands.entity(entity).despawn_recursive();
-        }
-    }
-}
-
-
-#[cfg(test)]
-pub(crate) mod test_util {
-    use bevy::app::App;
-    use bevy::core::{FrameCountPlugin, TaskPoolPlugin};
-    use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Event, Events, State, States};
-    use bevy::time::TimePlugin;
-
-    use crate::AsyncSystemPlugin;
-
-    #[derive(Event, Copy, Clone, Debug, Eq, PartialEq)]
-    pub struct FirstEvent;
-
-
-    #[derive(Event, Copy, Clone, Debug, Eq, PartialEq)]
-    pub struct SecondEvent;
-
-
-    #[derive(Default, Debug, Copy, Clone, Eq, PartialEq, States, Hash)]
-    pub enum TestState {
-        #[default]
-        Empty,
-        Finished,
-    }
-
-    pub fn new_app() -> App {
-        let mut app = App::new();
-        app.add_state::<TestState>();
-        app.add_plugins((
-            TaskPoolPlugin::default(),
-            FrameCountPlugin,
-            TimePlugin,
-            AsyncSystemPlugin
-        ));
-        app.add_event::<FirstEvent>();
-        app.add_event::<SecondEvent>();
         app
+            .init_non_send_resource::<BevyScheduler>()
+            .add_systems(Update, run_bevy_task_scheduler);
     }
+}
 
 
-    pub fn is_first_event_already_coming(app: &mut App, er: &mut ManualEventReader<FirstEvent>) -> bool {
-        is_event_already_coming::<FirstEvent>(app, er)
-    }
-
-
-    pub fn is_second_event_already_coming(app: &mut App, er: &mut ManualEventReader<SecondEvent>) -> bool {
-        is_event_already_coming::<SecondEvent>(app, er)
-    }
-
-
-    pub fn is_event_already_coming<E: Event>(app: &mut App, er: &mut ManualEventReader<E>) -> bool {
-        let events = app.world.resource::<Events<E>>();
-        let come = !er.is_empty(events);
-        er.clear(events);
-
-        come
-    }
-
-    pub fn test_state_finished(app: &mut App) -> bool {
-        matches!(app.world.resource::<State<TestState>>().get(), TestState::Finished)
+pub fn run_bevy_task_scheduler(
+    world: &mut World
+) {
+    let world_ptr = WorldPointer::new(world);
+    if let Some(mut scheduler) = world.get_non_send_resource_mut::<BevyScheduler>() {
+        block_on(scheduler.run(world_ptr));
     }
 }
