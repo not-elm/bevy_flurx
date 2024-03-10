@@ -2,9 +2,9 @@ use std::ptr;
 
 use bevy::prelude::World;
 
-pub(crate) struct WorldPointer(*mut World);
+pub struct WorldPtr(*mut World);
 
-impl WorldPointer {
+impl WorldPtr {
     pub(crate) fn new(value: &mut World) -> Self {
         Self(value as *mut World)
     }
@@ -16,7 +16,7 @@ impl WorldPointer {
 }
 
 
-impl Default for WorldPointer {
+impl Default for WorldPtr {
     fn default() -> Self {
         Self(ptr::null_mut())
     }

@@ -1,10 +1,13 @@
 use bevy::app::AppExit;
 use bevy::prelude::*;
-use bevy_async_system::prelude::*;
+use bevy_async_system::AsyncSystemPlugin;
+
+use bevy_async_system::scheduler::TaskScheduler;
+use bevy_async_system::selector::once;
 
 fn main() {
     App::new()
-        .add_state::<ExampleState>()
+        .init_state::<ExampleState>()
         .add_plugins((
             MinimalPlugins,
             AsyncSystemPlugin
@@ -29,18 +32,18 @@ struct Count(usize);
 struct NonSendCount(usize);
 
 
-fn setup(mut commands: Commands) {
-    commands.spawn_async(|schedules| async move {
-        schedules.add_system(Update, once::run(println_system)).await;
-        schedules.add_system(Update, once::set_state(ExampleState::Second)).await;
-        schedules.add_system(Update, once::init_resource::<Count>()).await;
-        schedules.add_system(Update, once::init_non_send_resource::<NonSendCount>()).await;
+fn setup(mut scheduler: NonSendMut<TaskScheduler>) {
+    scheduler.schedule(|tc| async move {
+        tc.task(once::run(println_system)).await;
+        tc.task(once::set_state(ExampleState::Second)).await;
+        tc.task(once::init_resource::<Count>()).await;
+        tc.task(once::init_non_send_resource::<NonSendCount>()).await;
 
-        let count = schedules.add_system(Update, once::run(return_count)).await;
-        schedules.add_system(Update, once::insert_resource(count)).await;
-        schedules.add_system(Update, once::run(println_counts)).await;
+        let count = tc.task(once::run(return_count)).await;
+        tc.task(once::insert_resource(count)).await;
+        tc.task(once::run(println_counts)).await;
 
-        schedules.add_system(Update, once::send(AppExit)).await;
+        tc.task(once::send(AppExit)).await;
     });
 }
 

@@ -1,13 +1,13 @@
-use bevy::app::{App, Startup, Update};
+use bevy::app::{App, Startup};
 use bevy::DefaultPlugins;
 use bevy::math::Vec2;
-use bevy::prelude::{Camera2dBundle, Color, Commands, Component, Query, Sprite, Transform, With};
+use bevy::prelude::{Camera2dBundle, Color, Commands, Component, NonSendMut, Query, Sprite, Transform, With};
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
 use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::ext::spawn_async_system::SpawnAsyncSystem;
-use bevy_async_system::runner::wait;
+use bevy_async_system::scheduler::TaskScheduler;
+use bevy_async_system::selector::{once, wait};
 
 #[derive(Component)]
 struct Movable;
@@ -44,11 +44,13 @@ fn setup_entities(mut commands: Commands) {
 
 
 fn setup_async_systems(
-    mut commands: Commands
+    mut scheduler: NonSendMut<TaskScheduler>
 ) {
-    commands.spawn_async(|schedules| async move {
-        schedules.add_system(Update, wait::until(move_up)).await;
-        schedules.add_system(Update, wait::until(move_right)).await;
+    scheduler.schedule(|tc| async move {
+        tc.task(wait::until(move_up)).await;
+        tc.task(wait::until(move_right)).await;
+        print!("*** Finish ***");
+        tc.task(once::app_exit()).await;
     });
 }
 

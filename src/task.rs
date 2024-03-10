@@ -1,28 +1,23 @@
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules};
-use store::selector::StateSelector;
-use store::task::Task;
+use store::selector::Selector;
 
-use crate::store::WorldPointer;
 
-mod selector;
-pub mod once;
-mod wait;
 
-pub struct BevyTask<'a> {
-    pub(crate) inner: Task<'a, WorldPointer>,
+use crate::world_ptr::WorldPtr;
+
+pub struct TaskCreator<'a> {
+    pub(crate) inner: store::task::TaskCreator<'a, WorldPtr>,
 }
 
 
-impl<'a> BevyTask<'a>
-
-{
-    pub async fn run<Out>(
+impl<'a> TaskCreator<'a> {
+    pub async fn task<Out>(
         &self,
-        select: impl StateSelector<WorldPointer, Output=Out>,
+        select: impl Selector<WorldPtr, Output=Out>,
     ) -> Out
     {
-        self.inner.run(select).await
+        self.inner.task(select).await
     }
 }
 

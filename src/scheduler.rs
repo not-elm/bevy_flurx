@@ -1,27 +1,27 @@
 use std::future::Future;
 
-use crate::store::WorldPointer;
-use crate::task::BevyTask;
+use crate::world_ptr::WorldPtr;
+use crate::task::TaskCreator;
 
 #[derive(Default)]
-pub struct BevyScheduler<'a, 'b> {
-    inner: store::Scheduler<'a, 'b, WorldPointer>,
+pub struct TaskScheduler<'a, 'b> {
+    inner: store::Scheduler<'a, 'b, WorldPtr>,
 }
 
-impl<'a, 'b> BevyScheduler<'a, 'b>
+impl<'a, 'b> TaskScheduler<'a, 'b>
     where 'a: 'b
 {
-    pub fn schedule<F>(&mut self, f: impl FnOnce(BevyTask<'a>) -> F + 'a)
+    pub fn schedule<F>(&mut self, f: impl FnOnce(TaskCreator<'a>) -> F + 'a)
         where F: Future + 'b
     {
         self.inner.schedule(move |task| async move {
-            f(BevyTask {
+            f(TaskCreator {
                 inner: task
             }).await;
         });
     }
 
-    pub(crate) async fn run(&mut self, world: WorldPointer) {
+    pub(crate) async fn run(&mut self, world: WorldPtr) {
         self.inner.run(world).await
     }
 }
@@ -33,18 +33,18 @@ mod tests {
     use bevy::prelude::NonSendMut;
 
     use crate::AsyncSystemPlugin;
-    use crate::scheduler::BevyScheduler;
-    use crate::task::once;
+    use crate::scheduler::TaskScheduler;
+    use crate::selector::once;
 
     #[test]
     fn count_up() {
         let mut app = App::new();
         app
             .add_plugins(AsyncSystemPlugin)
-            .insert_non_send_resource(BevyScheduler::default())
-            .add_systems(Update, |mut scheduler: NonSendMut<BevyScheduler>| {
+            .insert_non_send_resource(TaskScheduler::default())
+            .add_systems(Update, |mut scheduler: NonSendMut<TaskScheduler>| {
                 scheduler.schedule(|task| async move {
-                    task.run(once::insert_non_send_resource(AppExit)).await;
+                    task.task(once::insert_non_send_resource(AppExit)).await;
                 });
             });
 

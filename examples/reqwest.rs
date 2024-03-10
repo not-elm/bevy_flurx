@@ -1,13 +1,12 @@
-use bevy::app::{App, Startup, Update};
+use bevy::app::{App, Startup};
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Color, Commands, Query, TextBundle};
+use bevy::prelude::{Camera2dBundle, Color, Commands, NonSendMut, Query, TextBundle};
 use bevy::text::{Text, TextStyle};
 use bevy::utils::default;
 
 use bevy_async_system::AsyncSystemPlugin;
-use bevy_async_system::prelude::SpawnAsyncSystem;
-use bevy_async_system::runner::once;
-
+use bevy_async_system::scheduler::TaskScheduler;
+use bevy_async_system::selector::once;
 
 /// You can use [`reqwest`](reqwest).
 ///
@@ -36,12 +35,12 @@ fn setup_ui(mut commands: Commands) {
 }
 
 
-fn setup_async_systems(mut commands: Commands) {
-    commands.spawn_async(|schedules| async move {
+fn setup_async_systems(mut scheduler: NonSendMut<TaskScheduler>) {
+    scheduler.schedule(|tc| async move {
         // This is my git repository uri.
-        const URI: &str = "https://github.com/elm-register";
+        const URI: &str = "https://github.com/not-elm";
         let client = reqwest::get(URI).await;
-        schedules.add_system(Update, once::run(move |mut text: Query<&mut Text>| {
+        tc.task(once::run(move |mut text: Query<&mut Text>| {
             text.single_mut().sections[0].value = if let Ok(response) = client.as_ref() {
                 format!("status code: {:?}", response.status())
             } else {
