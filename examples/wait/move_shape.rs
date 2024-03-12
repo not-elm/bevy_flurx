@@ -5,7 +5,7 @@ use bevy::prelude::{Camera2dBundle, Color, Commands, Component, NonSendMut, Quer
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
-use bevy_async_system::AsyncSystemPlugin;
+use bevy_async_system::FlurxPlugin;
 use bevy_async_system::scheduler::TaskScheduler;
 use bevy_async_system::selector::{once, wait};
 
@@ -16,7 +16,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            AsyncSystemPlugin
+            FlurxPlugin
         ))
         .add_systems(Startup, (
             setup_entities,

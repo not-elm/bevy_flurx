@@ -1,41 +1,41 @@
 use std::cell::Cell;
-use std::marker::PhantomData;
-use std::mem::ManuallyDrop;
 
-use bevy::ecs::system::SystemId;
-use bevy::prelude::{IntoSystem, World};
+use bevy::ecs::schedule::ScheduleLabel;
+use bevy::ecs::system::{BoxedSystem, SystemId};
+use bevy::prelude::World;
 use flurx::selector::Selector;
 
+use crate::selector::runner::{initialize_reactor_runner, ReactorSystemOutput};
+use crate::selector::runner::standard::StandardReactorRunner;
 use crate::world_ptr::WorldPtr;
 
+mod runner;
 pub mod once;
 pub mod wait;
 
-type MaybeSystemId<In, Out> = ManuallyDrop<Cell<Option<SystemId<In, Out>>>>;
+type MaybeSystemId<In, Out> = Cell<Option<SystemId<In, Out>>>;
 
 
-pub(crate) struct WorldSelector<System, In, Out, Marker> {
-    system: Cell<Option<System>>,
+pub(crate) struct WorldSelector<Label, In, Out> {
+    system: Cell<Option<BoxedSystem<In, Out>>>,
     id: MaybeSystemId<In, Out>,
     input: In,
-    _m1: PhantomData<Marker>,
-    _m2: PhantomData<Out>,
+    label: Label,
 }
 
 
-impl<System, In, Out, Marker> WorldSelector<System, In, Out, Marker>
+impl<Label, In, Out> WorldSelector<Label, In, Out>
     where
-        System: IntoSystem<In, Out, Marker> + 'static,
         In: 'static,
-        Out: 'static
+        Out: 'static,
+        Label: ScheduleLabel + Clone
 {
-    pub(crate) fn new(input: In, system: System) -> WorldSelector<System, In, Out, Marker> {
+    pub(crate) fn new(label: Label, input: In, system: BoxedSystem<In, Out>) -> WorldSelector<Label, In, Out> {
         Self {
             system: Cell::new(Some(system)),
-            id: ManuallyDrop::new(Cell::new(None)),
+            id: Cell::new(None),
             input,
-            _m1: PhantomData,
-            _m2: PhantomData,
+            label,
         }
     }
 
@@ -56,11 +56,11 @@ impl<System, In, Out, Marker> WorldSelector<System, In, Out, Marker>
 }
 
 
-impl<System, In, Out, Marker> Selector<WorldPtr> for WorldSelector<System, In, Option<Out>, Marker>
+impl<Label, In, Out> Selector<WorldPtr> for WorldSelector<Label, In, Option<Out>>
     where
-        System: IntoSystem<In, Option<Out>, Marker> + Unpin + 'static,
         In: Clone + 'static,
-        Out: 'static
+        Out: 'static,
+        Label: ScheduleLabel + Clone
 {
     type Output = Out;
 
@@ -70,23 +70,27 @@ impl<System, In, Out, Marker> Selector<WorldPtr> for WorldSelector<System, In, O
 }
 
 
-pub(crate) fn run_system<System, In, Out, Marker>(
-    select: &WorldSelector<System, In, Out, Marker>,
+pub(crate) fn run_system<Label, In, Out>(
+    selector: &WorldSelector<Label, In, Option<Out>>,
     world: &WorldPtr,
-) -> Out
+) -> Option<Out>
     where
-        System: IntoSystem<In, Out, Marker> + Unpin + 'static,
+        Label: ScheduleLabel + Clone,
         In: Clone + 'static,
         Out: 'static
 {
     let world: &mut World = world.as_mut();
 
-    if select.id.get().is_none() {
-        if let Some(system) = select.system.take().take() {
-            select.id.set(Some(world.register_system(system)));
-        };
+    if let Some(id) = selector.id.get() {
+        world.get_non_send_resource_mut::<ReactorSystemOutput<In, Out>>()?.extract_output(&id)
+    } else {
+        let system = selector.system.take().take().unwrap();
+        let system_id = world.register_boxed_system(system);
+        selector.id.set(Some(system_id));
+        initialize_reactor_runner(world, selector.label.clone(), StandardReactorRunner::new(system_id, selector.input.clone()));
+        None
     }
-
-    world.run_system_with_input(select.id.get().unwrap(), select.input.clone()).unwrap()
 }
+
+
 

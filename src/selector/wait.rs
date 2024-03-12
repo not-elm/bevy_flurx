@@ -1,170 +1,100 @@
-use bevy::prelude::IntoSystem;
-use flurx::selector::Selector;
+use std::cell::RefMut;
+use bevy::ecs::system::BoxedSystem;
+use bevy::prelude::{Event, EventReader, In, IntoSystem};
 
-use crate::world_ptr::WorldPtr;
-use crate::selector::{run_system, WorldSelector};
-
-struct Wait<System, In, Marker> {
-    inner: WorldSelector<System, In, bool, Marker>,
-    is_while: bool,
+pub fn until<Input, System, Marker>(system: System) -> BoxedSystem<Input, Option<()>>
+    where
+        System: IntoSystem<Input, bool, Marker> + 'static
+{
+    Box::new(IntoSystem::into_system(
+        system
+            .pipe(|In(finish): In<bool>| {
+                if finish {
+                    Some(())
+                } else {
+                    None
+                }
+            })
+    ))
 }
 
-
-pub fn while_<System, Marker>(system: System) -> impl Selector<WorldPtr>
-    where
-        System: IntoSystem<(), bool, Marker> + Unpin + 'static
+pub fn event<E>() -> BoxedSystem<(), Option<E>>
+    where E: Event + Clone
 {
-    while_with((), system)
-}
-
-
-pub fn while_with<System, In, Marker>(input: In, system: System) -> impl Selector<WorldPtr>
-    where
-        System: IntoSystem<In, bool, Marker> + Unpin + 'static,
-        In: Clone + 'static
-{
-    Wait {
-        inner: WorldSelector::new(input, system),
-        is_while: false,
-    }
-}
-
-pub fn until<System, Marker>(system: System) -> impl Selector<WorldPtr>
-    where
-        System: IntoSystem<(), bool, Marker> + Unpin + 'static
-{
-    until_with((), system)
-}
-
-
-pub fn until_with<System, In, Marker>(input: In, system: System) -> impl Selector<WorldPtr>
-    where
-        System: IntoSystem<In, bool, Marker> + Unpin + 'static,
-        In: Clone + 'static
-{
-    Wait {
-        inner: WorldSelector::new(input, system),
-        is_while: false,
-    }
-}
-
-
-impl<System, In, Marker> Selector<WorldPtr> for Wait<System, In, Marker>
-    where
-        System: IntoSystem<In, bool, Marker> + Unpin + 'static,
-        In: Clone + 'static
-{
-    type Output = ();
-
-    fn select(&self, world: WorldPtr) -> Option<Self::Output> {
-        self.inner.output(&world, match (self.is_while, run_system(&self.inner, &world)) {
-            // while
-            (true, false) => Some(()),
-            // until
-            (false, true) => Some(()),
-            _ => None
-        })
-    }
+    Box::new(IntoSystem::into_system(
+        |mut er: EventReader<E>| {
+            er.read().next().cloned()
+        }
+    ))
 }
 
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit};
+    use bevy::app::{App, AppExit, Startup};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{In, Local, NonSendMut};
+    use bevy::prelude::{In, Local, NonSendMut, Update};
 
-    use crate::AsyncSystemPlugin;
+    use crate::FlurxPlugin;
     use crate::scheduler::TaskScheduler;
     use crate::selector::{once, wait};
 
     #[test]
     fn count_up() {
         let mut app = App::new();
-        app.add_plugins(AsyncSystemPlugin);
+        app.add_plugins(FlurxPlugin);
 
         app.world.run_system_once(|mut scheduler: NonSendMut<TaskScheduler>| {
             scheduler.schedule(|task| async move {
-                task.task(wait::until(|mut count: Local<u32>| {
+                task.task(Update, wait::until(|mut count: Local<u32>| {
                     *count += 1;
                     *count == 2
                 })).await;
 
-                task.task(once::insert_non_send_resource(AppExit)).await;
+                task.task_with(Update, AppExit, once::insert_non_send_resource()).await;
             })
         });
 
         app.update();
+        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
         app.update();
-
+        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_some());
     }
 
 
-     #[test]
-    fn count_up_until_with() {
+    #[test]
+    fn count_up_until_with_input() {
         let mut app = App::new();
-        app.add_plugins(AsyncSystemPlugin);
+        app.add_plugins(FlurxPlugin);
 
         app.world.run_system_once(|mut scheduler: NonSendMut<TaskScheduler>| {
             scheduler.schedule(|task| async move {
-                task.task(wait::until_with(1, |input: In<u32>, mut count: Local<u32>| {
+                task.task_with(Update, 1, wait::until(|input: In<u32>, mut count: Local<u32>| {
                     *count += 1 + input.0;
                     *count == 4
                 })).await;
 
-                task.task(once::insert_non_send_resource(AppExit)).await;
+                task.task_with(Update, AppExit, once::insert_non_send_resource()).await;
             })
         });
 
         app.update();
+        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
         app.update();
-
+        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_some());
     }
 
     #[test]
-    fn count_up_while_less_than_2() {
+    fn wait_event() {
         let mut app = App::new();
-        app.add_plugins(AsyncSystemPlugin);
-
-        app.world.run_system_once(|mut scheduler: NonSendMut<TaskScheduler>| {
-            scheduler.schedule(|task| async move {
-                task.task(wait::while_(|mut count: Local<u32>| {
-                    *count += 1;
-                    *count < 2
-                })).await;
-
-                task.task(once::insert_non_send_resource(AppExit)).await;
-            })
-        });
-
-        app.update();
-        app.update();
-
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
-    }
-
-
-    #[test]
-    fn count_up_while_with() {
-        let mut app = App::new();
-        app.add_plugins(AsyncSystemPlugin);
-
-        app.world.run_system_once(|mut scheduler: NonSendMut<TaskScheduler>| {
-            scheduler.schedule(|task| async move {
-                task.task(wait::while_with(1, |input: In<u32>, mut count: Local<u32>| {
-                    *count += 1 + input.0;
-                    *count != 4
-                })).await;
-
-                task.task(once::insert_non_send_resource(AppExit)).await;
-            })
-        });
-
-        app.update();
-        app.update();
-
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        app
+            .add_plugins(FlurxPlugin)
+            .add_systems(Startup, |mut scheduler: NonSendMut<TaskScheduler>|{
+                
+            });
     }
 }

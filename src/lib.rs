@@ -1,9 +1,10 @@
 #![allow(clippy::type_complexity)]
 
 
-use bevy::app::{App, Plugin, Update};
+use async_compat::CompatExt;
+use bevy::app::{App, First, MainScheduleOrder, Plugin};
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
-use futures_lite::future::block_on;
 
 use crate::scheduler::TaskScheduler;
 use crate::world_ptr::WorldPtr;
@@ -12,25 +13,36 @@ pub mod world_ptr;
 pub mod task;
 pub mod scheduler;
 pub mod selector;
+mod extension;
+
 
 /// Provides the async systems.
-pub struct AsyncSystemPlugin;
+pub struct FlurxPlugin;
 
 
-impl Plugin for AsyncSystemPlugin {
+impl Plugin for FlurxPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_non_send_resource::<TaskScheduler>()
-            .add_systems(Update, run_bevy_task_scheduler);
+            .init_schedule(AfterFirst);
+        app
+            .world
+            .resource_mut::<MainScheduleOrder>()
+            .insert_after(First, AfterFirst);
+
+        app.add_systems(AfterFirst, run_scheduler);
     }
 }
 
+#[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
+struct AfterFirst;
 
-pub fn run_bevy_task_scheduler(
+fn run_scheduler(
     world: &mut World
 ) {
-    let world_ptr = WorldPtr::new(world);
-    if let Some(mut scheduler) = world.get_non_send_resource_mut::<TaskScheduler>() {
-        block_on(scheduler.run(world_ptr));
+    if let Some(mut scheduler) = world.remove_non_send_resource::<TaskScheduler>() {
+        pollster::block_on(scheduler.run(WorldPtr::new(world)).compat());
+        world.insert_non_send_resource(scheduler);
     }
 }
+

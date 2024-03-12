@@ -1,11 +1,13 @@
 use std::ptr;
 
 use bevy::prelude::World;
+use pin_project::pin_project;
 
 
+#[pin_project]
 #[repr(transparent)]
 #[derive(Clone, Copy)]
-pub struct WorldPtr(*mut World);
+pub struct WorldPtr(#[pin] *mut World);
 
 impl WorldPtr {
     pub(crate) fn new(value: &mut World) -> Self {

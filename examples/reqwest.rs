@@ -4,7 +4,7 @@ use bevy::prelude::{Camera2dBundle, Color, Commands, NonSendMut, Query, TextBund
 use bevy::text::{Text, TextStyle};
 use bevy::utils::default;
 
-use bevy_async_system::AsyncSystemPlugin;
+use bevy_async_system::FlurxPlugin;
 use bevy_async_system::scheduler::TaskScheduler;
 use bevy_async_system::selector::once;
 
@@ -15,7 +15,7 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            AsyncSystemPlugin
+            FlurxPlugin
         ))
         .add_systems(Startup, (
             setup_ui,

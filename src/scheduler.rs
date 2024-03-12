@@ -3,7 +3,7 @@ use std::future::Future;
 use crate::world_ptr::WorldPtr;
 use crate::task::TaskCreator;
 
-#[derive(Default)]
+
 pub struct TaskScheduler<'a, 'b> {
     inner: flurx::Scheduler<'a, 'b, WorldPtr>,
 }
@@ -26,13 +26,22 @@ impl<'a, 'b> TaskScheduler<'a, 'b>
     }
 }
 
+impl<'a, 'b> Default for TaskScheduler<'a, 'b>
+    where 'a: 'b
+{
+    fn default() -> Self {
+        Self{
+            inner: flurx::Scheduler::new()
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use bevy::app::{App, AppExit, Update};
     use bevy::prelude::NonSendMut;
 
-    use crate::AsyncSystemPlugin;
+    use crate::FlurxPlugin;
     use crate::scheduler::TaskScheduler;
     use crate::selector::once;
 
@@ -40,10 +49,10 @@ mod tests {
     fn count_up() {
         let mut app = App::new();
         app
-            .add_plugins(AsyncSystemPlugin)
+            .add_plugins(FlurxPlugin)
             .add_systems(Update, |mut scheduler: NonSendMut<TaskScheduler>| {
                 scheduler.schedule(|task| async move {
-                    task.task(once::insert_non_send_resource(AppExit)).await;
+                    task.task_with(Update, AppExit, once::insert_non_send_resource()).await;
                 });
             });
 

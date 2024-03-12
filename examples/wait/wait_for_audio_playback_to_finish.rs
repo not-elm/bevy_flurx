@@ -1,11 +1,12 @@
-use bevy::app::{App, AppExit, Startup};
+use bevy::app::{App, AppExit, Startup, Update};
 use bevy::asset::AssetServer;
 use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::DefaultPlugins;
 use bevy::log::info;
 use bevy::prelude::{AudioBundle, Commands, Entity, NonSendMut, PlaybackSettings, Query, Res};
+use flurx::prelude::wait;
 
-use bevy_async_system::AsyncSystemPlugin;
+use bevy_async_system::FlurxPlugin;
 use bevy_async_system::scheduler::TaskScheduler;
 use bevy_async_system::selector::{once, wait};
 
@@ -13,19 +14,19 @@ fn main() {
     App::new()
         .add_plugins((
             DefaultPlugins,
-            AsyncSystemPlugin
+            FlurxPlugin
         ))
-        .add_systems(Startup, setup_async_systems)
+        .add_systems(Startup, setup)
         .run();
 }
 
 
-fn setup_async_systems(mut scheduler: NonSendMut<TaskScheduler>) {
+fn setup(mut scheduler: NonSendMut<TaskScheduler>) {
     scheduler.schedule(|tc| async move {
-        tc.task(once::run(play_audio)).await;
-        tc.task(wait::until(finished_audio)).await;
+        tc.task(Update, once::run(play_audio)).await;
+        tc.task(Update, wait::until(finished_audio)).await;
         info!("***** Finished audio *****");
-        tc.task(once::send(AppExit)).await;
+        tc.task_with(Update, AppExit, once::send()).await;
     });
 }
 
