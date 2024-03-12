@@ -1,6 +1,6 @@
 use bevy::app::AppExit;
 use bevy::prelude::{Commands, Event, EventWriter, In, IntoSystem, NextState, ResMut, Resource, States, World};
-use store::selector::Selector;
+use flurx::selector::Selector;
 
 use crate::selector::{run_system, WorldSelector};
 use crate::world_ptr::WorldPtr;
@@ -88,8 +88,8 @@ impl<System, In, Out, Marker> Selector<WorldPtr> for Once<System, In, Out, Marke
 {
     type Output = Out;
 
-    fn select(&self, world: &WorldPtr) -> Option<Self::Output> {
-        self.0.output(world, Some(run_system(&self.0, world)))
+    fn select(&self, world: WorldPtr) -> Option<Self::Output> {
+        self.0.output(&world, Some(run_system(&self.0, &world)))
     }
 }
 

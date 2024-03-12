@@ -1,5 +1,5 @@
 use bevy::prelude::IntoSystem;
-use store::selector::Selector;
+use flurx::selector::Selector;
 
 use crate::world_ptr::WorldPtr;
 use crate::selector::{run_system, WorldSelector};
@@ -56,8 +56,8 @@ impl<System, In, Marker> Selector<WorldPtr> for Wait<System, In, Marker>
 {
     type Output = ();
 
-    fn select(&self, world: &WorldPtr) -> Option<Self::Output> {
-        self.inner.output(world, match (self.is_while, run_system(&self.inner, world)) {
+    fn select(&self, world: WorldPtr) -> Option<Self::Output> {
+        self.inner.output(&world, match (self.is_while, run_system(&self.inner, &world)) {
             // while
             (true, false) => Some(()),
             // until

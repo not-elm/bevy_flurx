@@ -2,6 +2,9 @@ use std::ptr;
 
 use bevy::prelude::World;
 
+
+#[repr(transparent)]
+#[derive(Clone, Copy)]
 pub struct WorldPtr(*mut World);
 
 impl WorldPtr {

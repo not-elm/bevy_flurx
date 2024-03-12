@@ -1,7 +1,7 @@
 // use std::time::Duration;
 // 
 // use bevy::prelude::*;
-// use store::selector::{delay, repeat};
+// use flurx::selector::{delay, repeat};
 // 
 // use bevy_async_system::AsyncSystemPlugin;
 // use bevy_async_system::scheduler::TaskScheduler;

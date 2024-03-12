@@ -4,7 +4,7 @@ use std::mem::ManuallyDrop;
 
 use bevy::ecs::system::SystemId;
 use bevy::prelude::{IntoSystem, World};
-use store::selector::Selector;
+use flurx::selector::Selector;
 
 use crate::world_ptr::WorldPtr;
 
@@ -64,8 +64,8 @@ impl<System, In, Out, Marker> Selector<WorldPtr> for WorldSelector<System, In, O
 {
     type Output = Out;
 
-    fn select(&self, world: &WorldPtr) -> Option<Self::Output> {
-        self.output(world, run_system(self, world))
+    fn select(&self, world: WorldPtr) -> Option<Self::Output> {
+        self.output(&world, run_system(self, &world))
     }
 }
 

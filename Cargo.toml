@@ -22,7 +22,7 @@ path = "examples/wait/move_shape.rs"
 
 [dependencies]
 bevy = { version = "0.13.0", default-features = false }
-store = { path = "../store" }
+flurx = { version = "0.1.1" }
 futures-lite = "2.2.0"
 
 

@@ -5,7 +5,7 @@ use crate::task::TaskCreator;
 
 #[derive(Default)]
 pub struct TaskScheduler<'a, 'b> {
-    inner: store::Scheduler<'a, 'b, WorldPtr>,
+    inner: flurx::Scheduler<'a, 'b, WorldPtr>,
 }
 
 impl<'a, 'b> TaskScheduler<'a, 'b>
@@ -41,7 +41,6 @@ mod tests {
         let mut app = App::new();
         app
             .add_plugins(AsyncSystemPlugin)
-            .insert_non_send_resource(TaskScheduler::default())
             .add_systems(Update, |mut scheduler: NonSendMut<TaskScheduler>| {
                 scheduler.schedule(|task| async move {
                     task.task(once::insert_non_send_resource(AppExit)).await;

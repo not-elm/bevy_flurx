@@ -1,13 +1,13 @@
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules};
-use store::selector::Selector;
+use flurx::selector::Selector;
 
 
 
 use crate::world_ptr::WorldPtr;
 
 pub struct TaskCreator<'a> {
-    pub(crate) inner: store::task::TaskCreator<'a, WorldPtr>,
+    pub(crate) inner: flurx::task::TaskCreator<'a, WorldPtr>,
 }
 
 
