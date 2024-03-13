@@ -1,8 +1,6 @@
 #![allow(clippy::type_complexity)]
 
-
-use async_compat::CompatExt;
-use bevy::app::{App, First, MainScheduleOrder, Plugin};
+use bevy::app::{App, Last, MainScheduleOrder, Plugin};
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 
@@ -24,25 +22,44 @@ impl Plugin for FlurxPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_non_send_resource::<TaskScheduler>()
-            .init_schedule(AfterFirst);
+            .init_schedule(AfterLast);
         app
             .world
             .resource_mut::<MainScheduleOrder>()
-            .insert_after(First, AfterFirst);
+            .insert_after(Last, AfterLast);
 
-        app.add_systems(AfterFirst, run_scheduler);
+        app.add_systems(AfterLast, run_scheduler);
     }
 }
 
 #[derive(ScheduleLabel, Debug, Clone, PartialEq, Eq, Hash)]
-struct AfterFirst;
+struct AfterLast;
 
 fn run_scheduler(
     world: &mut World
 ) {
     if let Some(mut scheduler) = world.remove_non_send_resource::<TaskScheduler>() {
-        pollster::block_on(scheduler.run(WorldPtr::new(world)).compat());
+        scheduler.run_sync(WorldPtr::new(world));
         world.insert_non_send_resource(scheduler);
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use bevy::app::App;
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::{Event, EventReader, Resource};
+
+    #[derive(Eq, PartialEq, Debug, Resource, Copy, Clone, Default)]
+    pub struct TestResource;
+
+    #[allow(unused)]
+    pub fn came_event<E: Event>(app: &mut App) -> bool {
+        app.world.run_system_once(|mut e: EventReader<E>| {
+            let came = !e.is_empty();
+            e.clear();
+            came
+        })
+    }
+}

@@ -1,39 +1,27 @@
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::ecs::system::BoxedSystem;
 
+use crate::selector::condition::ReactorSystemConfigs;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 
-pub struct TaskCreator<'a> {
-    pub(crate) inner: flurx::task::TaskCreator<'a,  WorldPtr>,
+pub struct ReactiveTask<'a> {
+    pub(crate) inner: flurx::task::ReactiveTask<'a, WorldPtr>,
 }
 
 
-impl<'a> TaskCreator<'a> {
-    pub async fn task<Label, Out>(
+impl<'a> ReactiveTask<'a> {
+    pub async fn will<Label, In, Out, Marker>(
         &self,
         label: Label,
-        system: BoxedSystem<(), Option<Out>>,
+        configs: impl ReactorSystemConfigs<Marker, In=In, Out=Out>,
     ) -> Out
         where
-            Out: 'static,
-            Label: ScheduleLabel + Clone
-    {
-        self.inner.task(WorldSelector::new(label, (), system)).await
-    }
-
-    pub async fn task_with<Label, In, Out>(
-        &self,
-        label: Label,
-        input: In,
-        system: BoxedSystem<In, Option<Out>>,
-    ) -> Out
-        where
+            Label: ScheduleLabel + Clone,
             In: Clone + 'static,
-            Out: 'static,
-            Label: ScheduleLabel + Clone
+            Out: 'static
     {
-        self.inner.task(WorldSelector::new(label, input, system)).await
+        let (input, system) = configs.into_configs();
+        self.inner.will(WorldSelector::new(label, input, system)).await
     }
 }
 

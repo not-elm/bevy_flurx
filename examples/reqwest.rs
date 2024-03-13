@@ -1,12 +1,13 @@
 use bevy::app::{App, Startup};
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Color, Commands, NonSendMut, Query, TextBundle};
+use bevy::prelude::{Camera2dBundle, Color, Commands, In, NonSendMut, Query, TextBundle, Update};
 use bevy::text::{Text, TextStyle};
 use bevy::utils::default;
+use reqwest::StatusCode;
 
 use bevy_async_system::FlurxPlugin;
 use bevy_async_system::scheduler::TaskScheduler;
-use bevy_async_system::selector::once;
+use bevy_async_system::selector::condition::{once, with};
 
 /// You can use [`reqwest`](reqwest).
 ///
@@ -36,16 +37,12 @@ fn setup_ui(mut commands: Commands) {
 
 
 fn setup_async_systems(mut scheduler: NonSendMut<TaskScheduler>) {
-    scheduler.schedule(|tc| async move {
+    scheduler.schedule(|task| async move {
         // This is my git repository uri.
         const URI: &str = "https://github.com/not-elm";
-        let client = reqwest::get(URI).await;
-        tc.task(once::run(move |mut text: Query<&mut Text>| {
-            text.single_mut().sections[0].value = if let Ok(response) = client.as_ref() {
-                format!("status code: {:?}", response.status())
-            } else {
-                "Failed".to_string()
-            };
-        })).await;
+        let status_code = reqwest::get(URI).await.unwrap().status();
+        task.will(Update, with(status_code, once::run(|In(status): In<StatusCode>, mut text: Query<&mut Text>| {
+            text.single_mut().sections[0].value = status.to_string();
+        }))).await;
     });
 }

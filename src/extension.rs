@@ -1,32 +1,38 @@
 use std::future::Future;
 
-use async_compat::CompatExt;
-use bevy::prelude::World;
+use bevy::prelude::{Commands, World};
 
 use crate::scheduler::TaskScheduler;
-use crate::task::TaskCreator;
+use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 
-pub trait ScheduleReactor<'a, 'b> 
-    where 
-        'a: 'b,
-{
-    fn schedule<F>(&mut self, f: impl FnOnce(TaskCreator<'a>) -> F + 'a)
-        where 
-            F: Future<Output=()> + 'b;
+pub trait ScheduleReactor<Fun, Fut, Out> {
+    fn schedule_reactor(&mut self, f: Fun) -> Out;
 }
 
 
-impl<'a, 'b>  ScheduleReactor<'a, 'b> for World 
-      where 'a: 'b,
+impl<Fun, Fut> ScheduleReactor<Fun, Fut, ()> for World
+    where
+        Fun: FnOnce(ReactiveTask<'static>) -> Fut + 'static,
+        Fut: Future + 'static
 {
-    fn schedule<F>(&mut self, f: impl FnOnce(TaskCreator<'a>) -> F + 'a) where
-        
-        F: Future<Output=()> + 'b
-    {
+    fn schedule_reactor(&mut self, f: Fun) {
+        let world_ptr = WorldPtr::new(self);
         let mut scheduler = self.get_non_send_resource_mut::<TaskScheduler>().unwrap();
         scheduler.schedule(f);
-        pollster::block_on(scheduler.run(WorldPtr::new(self)).compat());
+        scheduler.run_sync(world_ptr);
+    }
+}
 
+
+impl<'a, 'b, F, Fut> ScheduleReactor<F, Fut, ()> for Commands<'a, 'b> 
+    where 
+        F: FnOnce(ReactiveTask<'static>) -> Fut + Send + 'static,
+        Fut: Future + 'static
+{
+    fn schedule_reactor(&mut self, f: F) {
+        self.add(|world: &mut World|{
+            world.schedule_reactor(f);
+        });
     }
 }
