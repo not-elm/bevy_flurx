@@ -3,11 +3,11 @@ use std::future::Future;
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 
-pub struct TaskScheduler<'a, 'b> {
+pub(crate) struct ReactiveScheduler<'a, 'b> {
     inner: flurx::Scheduler<'a, 'b, WorldPtr>,
 }
 
-impl<'a, 'b> TaskScheduler<'a, 'b>
+impl<'a, 'b> ReactiveScheduler<'a, 'b>
     where 'a: 'b
 {
     pub fn schedule<F>(&mut self, f: impl FnOnce(ReactiveTask<'a>) -> F + 'a)
@@ -25,7 +25,7 @@ impl<'a, 'b> TaskScheduler<'a, 'b>
     }
 }
 
-impl<'a, 'b> Default for TaskScheduler<'a, 'b>
+impl<'a, 'b> Default for ReactiveScheduler<'a, 'b>
     where 'a: 'b
 {
     fn default() -> Self {

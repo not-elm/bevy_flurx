@@ -10,10 +10,17 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_async_system"
 
+[[example]]
+name = "delay_time"
+path = "examples/delay/time.rs"
 
 [[example]]
-name = "wait_audio"
-path = "examples/wait/wait_for_audio_playback_to_finish.rs"
+name = "delay_frames"
+path = "examples/delay/frames.rs"
+
+[[example]]
+name = "wait_stop_audio"
+path = "examples/wait/wait_stop_audio.rs"
 
 [[example]]
 name = "move_shape"

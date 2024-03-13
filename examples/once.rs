@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
+use bevy_async_system::extension::ScheduleReactor;
 use bevy_async_system::FlurxPlugin;
-use bevy_async_system::scheduler::TaskScheduler;
-use bevy_async_system::selector::condition::{once, with};
+use bevy_async_system::selector::condition::once;
 
 fn main() {
     App::new()
@@ -31,17 +31,17 @@ struct Count(usize);
 struct NonSendCount(usize);
 
 
-fn setup(mut scheduler: NonSendMut<TaskScheduler>) {
-    scheduler.schedule(|tc| async move {
-        tc.will(First, once::run(println_system)).await;
-        tc.will(Update, with(ExampleState::Second, once::state::set())).await;
-        tc.will(Update, once::res::init::<Count>()).await;
-        tc.will(Update, once::non_send::init::<NonSendCount>()).await;
+fn setup(world: &mut World) {
+    world.schedule_reactor(|task| async move {
+        task.will(First, once::run(println_system)).await;
+        task.will(Update, once::state::set(ExampleState::Second)).await;
+        task.will(Update, once::res::init::<Count>()).await;
+        task.will(Update, once::non_send::init::<NonSendCount>()).await;
 
-        let count = tc.will(Update, once::run(return_count)).await;
-        tc.will(Update, with(count, once::res::insert())).await;
-        tc.will(Update, once::run(println_counts)).await;
-        tc.will(Update, once::event::app_exit()).await;
+        let count = task.will(Update, once::run(return_count)).await;
+        task.will(Update, once::res::insert(count)).await;
+        task.will(Update, once::run(println_counts)).await;
+        task.will(Update, once::event::app_exit()).await;
     });
 }
 

@@ -1,20 +1,20 @@
 use bevy::app::AppExit;
-use bevy::prelude::{Event, EventWriter, In, System};
+use bevy::prelude::{Event, EventWriter, In};
 
-use crate::selector::condition::{once, ReactorSystemConfigs, with, WithInput};
+use crate::selector::condition::{once, ReactorSystemConfigs, with};
 
 #[inline]
-pub fn send<E>() -> impl System<In=E, Out=Option<()>>
+pub fn send<E>(event: E) -> impl ReactorSystemConfigs<In=E>
     where E: Event + Clone
 {
-    once::run(|In(event): In<E>, mut w: EventWriter<E>| {
+    with(event, once::run(|In(event): In<E>, mut w: EventWriter<E>| {
         w.send(event);
-    })
+    }))
 }
 
 #[inline]
-pub fn app_exit() -> impl ReactorSystemConfigs<WithInput, In=AppExit, Out=()> {
-    with(AppExit, send::<AppExit>())
+pub fn app_exit() -> impl ReactorSystemConfigs<In=AppExit> {
+    send(AppExit)
 }
 
 
@@ -25,7 +25,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, with};
+    use crate::selector::condition::once;
     use crate::tests::came_event;
 
     #[test]
@@ -35,7 +35,7 @@ mod tests {
             .add_plugins(FlurxPlugin)
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    task.will(First, with(AppExit, once::event::send())).await;
+                    task.will(First, once::event::send(AppExit)).await;
                 });
             });
 

@@ -1,14 +1,14 @@
-use bevy::prelude::{Res, State, States, System};
+use bevy::prelude::{Res, State, States, };
 
-use crate::selector::condition::wait;
+use crate::selector::condition::{ReactorSystemConfigs, wait, with};
 
 #[inline]
-pub fn becomes<S>(state: S) -> impl System<In=(), Out=Option<()>>
+pub fn becomes<S>(state: S) -> impl ReactorSystemConfigs<In=(), Out=()>
     where S: States + 'static
 {
-    wait::until(move |state_now: Res<State<S>>| {
+    with((), wait::until(move |state_now: Res<State<S>>| {
         state_now.as_ref() == &state
-    })
+    }))
 }
 
 

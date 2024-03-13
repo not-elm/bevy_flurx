@@ -3,10 +3,11 @@ use bevy::asset::AssetServer;
 use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::DefaultPlugins;
 use bevy::log::info;
-use bevy::prelude::{AudioBundle, Commands, Entity, NonSendMut, PlaybackSettings, Query, Res};
+use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res, World};
+use bevy_async_system::extension::ScheduleReactor;
 
 use bevy_async_system::FlurxPlugin;
-use bevy_async_system::scheduler::TaskScheduler;
+
 use bevy_async_system::selector::condition::once;
 use bevy_async_system::selector::condition::wait;
 
@@ -21,8 +22,8 @@ fn main() {
 }
 
 
-fn setup(mut scheduler: NonSendMut<TaskScheduler>) {
-    scheduler.schedule(|task| async move {
+fn setup(world: &mut World) {
+    world.schedule_reactor(|task| async move {
         task.will(Update, once::run(play_audio)).await;
         task.will(Update, wait::until(finished_audio)).await;
         info!("***** Finished audio *****");

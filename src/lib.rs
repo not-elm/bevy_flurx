@@ -4,14 +4,14 @@ use bevy::app::{App, Last, MainScheduleOrder, Plugin};
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 
-use crate::scheduler::TaskScheduler;
+use crate::scheduler::ReactiveScheduler;
 use crate::world_ptr::WorldPtr;
 
 pub mod world_ptr;
 pub mod task;
 pub mod scheduler;
 pub mod selector;
-mod extension;
+pub mod extension;
 
 
 /// Provides the async systems.
@@ -21,7 +21,7 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     fn build(&self, app: &mut App) {
         app
-            .init_non_send_resource::<TaskScheduler>()
+            .init_non_send_resource::<ReactiveScheduler>()
             .init_schedule(AfterLast);
         app
             .world
@@ -38,7 +38,7 @@ struct AfterLast;
 fn run_scheduler(
     world: &mut World
 ) {
-    if let Some(mut scheduler) = world.remove_non_send_resource::<TaskScheduler>() {
+    if let Some(mut scheduler) = world.remove_non_send_resource::<ReactiveScheduler>() {
         scheduler.run_sync(WorldPtr::new(world));
         world.insert_non_send_resource(scheduler);
     }

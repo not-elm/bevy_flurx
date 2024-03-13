@@ -2,7 +2,7 @@ use std::future::Future;
 
 use bevy::prelude::{Commands, World};
 
-use crate::scheduler::TaskScheduler;
+use crate::scheduler::ReactiveScheduler;
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 
@@ -18,7 +18,7 @@ impl<Fun, Fut> ScheduleReactor<Fun, Fut, ()> for World
 {
     fn schedule_reactor(&mut self, f: Fun) {
         let world_ptr = WorldPtr::new(self);
-        let mut scheduler = self.get_non_send_resource_mut::<TaskScheduler>().unwrap();
+        let mut scheduler = self.get_non_send_resource_mut::<ReactiveScheduler>().unwrap();
         scheduler.schedule(f);
         scheduler.run_sync(world_ptr);
     }

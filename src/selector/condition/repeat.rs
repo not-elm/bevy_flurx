@@ -1,19 +1,34 @@
-use bevy::prelude::{In, IntoSystem, Local, System};
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use bevy::prelude::{In, IntoSystem, World};
+
+use crate::selector::condition::{ReactorSystemConfigs, with, WithInput};
 
 // TODO: repeat
 #[inline]
-fn repeat<Sys, Input, Out>(count: usize, system: Sys) -> impl System<In=Input, Out=Option<Out>>
+pub fn repeat<Sys, Input, Out, Marker>(count: usize, system: Sys) -> impl ReactorSystemConfigs<WithInput, In=Input, Out=Out>
     where
-        Sys: System<In=Input, Out=Option<Out>>,
-        Out: 'static
+        Input: Clone + 'static,
+        Out: 'static,
+        Sys: ReactorSystemConfigs<Marker, In=Input, Out=Out>,
 {
-    IntoSystem::into_system(system.pipe(move |In(out): In<Option<Out>>, mut count_now: Local<usize>| {
-        let out = out?;
-
-        if count <= *count_now {
-            Some(out)
+    let (input, system) = system.into_configs();
+    let mut system = Some(system);
+    let count_now = AtomicUsize::new(0);
+    let mut system_id = Option::None;
+    with(input, IntoSystem::into_system(move |In(input): In<Input>, world: &mut World| {
+        if let Some(system) = system.take() {
+            system_id.replace(world.register_system(system));
+        }
+        let Some(id) = system_id.as_ref() else {
+            panic!("unreachable");
+        };
+        let output = world.run_system_with_input(*id, input).unwrap()?;
+        let system = world.remove_system(*id).unwrap();
+        if count <= count_now.fetch_add(1, Ordering::Relaxed) {
+            Some(output)
         } else {
-            *count_now += 1;
+            system_id.replace(world.register_boxed_system(system.system()));
             None
         }
     }))
@@ -27,7 +42,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, wait, repeat::repeat};
+    use crate::selector::condition::{once, repeat::repeat, wait};
 
     #[derive(Resource, Clone, Default)]
     struct Test(usize);
@@ -57,6 +72,7 @@ mod tests {
 
 
     // FIXME: このテストは失敗します。
+    #[test]
     fn when_repeat_reset_local() {
         let mut app = App::new();
         app

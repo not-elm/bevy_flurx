@@ -1,6 +1,8 @@
-pub mod state;
-
 use bevy::prelude::{Event, EventReader, In, IntoSystem, System};
+
+use crate::selector::condition::{ReactorSystemConfigs, wait, with};
+
+pub mod state;
 
 #[inline]
 pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
@@ -12,7 +14,7 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
     IntoSystem::into_system(system)
 }
 
-
+#[inline]
 pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
     where
         Sys: IntoSystem<Input, bool, Marker> + 'static
@@ -29,14 +31,36 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
     )
 }
 
-pub fn event<E>() -> impl System<In=(), Out=Option<E>>
+pub fn event<E>() -> impl ReactorSystemConfigs<In=(), Out=E>
     where E: Event + Clone
 {
-    IntoSystem::into_system(|mut er: EventReader<E>| {
+    with((), wait::output(|mut er: EventReader<E>| {
         er.read().next().cloned()
-    })
+    }))
 }
 
+
+// #[inline]
+// pub fn any<
+//     Lhs, LIn, LOut, LMark,
+//     Rhs, RIn, ROut, RMark
+// >(lhs: Lhs, rhs: Rhs) -> impl ReactorSystemConfigs<WithInput, In=((LIn, Lhs), (RIn, Rhs)), Out=()>
+//     where
+//         Lhs: ReactorSystemConfigs<LMark, In=LIn, Out=LOut> + 'static,
+//         Rhs: ReactorSystemConfigs<RMark, In=RIn, Out=ROut> + 'static,
+//         LIn: Clone + 'static,
+//         LOut: Clone + 'static,
+//         RIn: Clone + 'static,
+//         ROut: Clone + 'static
+// {
+//     with(
+//         (lhs.into_configs(), rhs.into_configs()),
+//         |systems: In<((LIn, Lhs), (RIn, Rhs))>|{
+//             
+//             Some(())
+//         }
+//     )
+// }
 
 #[cfg(test)]
 mod tests {
@@ -61,7 +85,7 @@ mod tests {
                     *count == 2
                 })).await;
 
-                task.will(Update, with(AppExit, once::non_send::insert())).await;
+                task.will(Update, once::non_send::insert(AppExit)).await;
             });
         });
 
@@ -86,7 +110,7 @@ mod tests {
                     *count == 4
                 }))).await;
 
-                task.will(Update, with(AppExit, once::non_send::insert())).await;
+                task.will(Update, once::non_send::insert(AppExit)).await;
             });
         });
 
@@ -106,7 +130,7 @@ mod tests {
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
                     let event = task.will(PreUpdate, wait::event::<AppExit>()).await;
-                    task.will(Update, with(event, once::non_send::insert())).await;
+                    task.will(Update, once::non_send::insert(event)).await;
                 });
             });
 

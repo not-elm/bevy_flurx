@@ -1,13 +1,15 @@
+use std::time::Duration;
+
 use bevy::app::{App, Startup};
 use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Color, Commands, In, NonSendMut, Query, TextBundle, Update};
+use bevy::prelude::{Camera2dBundle, Color, Commands, In, Query, TextBundle, Update, World};
 use bevy::text::{Text, TextStyle};
 use bevy::utils::default;
 use reqwest::StatusCode;
 
+use bevy_async_system::extension::ScheduleReactor;
 use bevy_async_system::FlurxPlugin;
-use bevy_async_system::scheduler::TaskScheduler;
-use bevy_async_system::selector::condition::{once, with};
+use bevy_async_system::selector::condition::{delay, once, with};
 
 /// You can use [`reqwest`](reqwest).
 ///
@@ -36,9 +38,10 @@ fn setup_ui(mut commands: Commands) {
 }
 
 
-fn setup_async_systems(mut scheduler: NonSendMut<TaskScheduler>) {
-    scheduler.schedule(|task| async move {
-        // This is my git repository uri.
+fn setup_async_systems(world: &mut World) {
+    world.schedule_reactor(|task| async move {
+        task.will(Update, delay::time(Duration::from_secs(1))).await;
+        // This is my git uri.
         const URI: &str = "https://github.com/not-elm";
         let status_code = reqwest::get(URI).await.unwrap().status();
         task.will(Update, with(status_code, once::run(|In(status): In<StatusCode>, mut text: Query<&mut Text>| {

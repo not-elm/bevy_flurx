@@ -1,12 +1,13 @@
-use bevy::prelude::{In, NextState, ResMut, States, System};
-use crate::selector::condition::once;
+use bevy::prelude::{In, NextState, ResMut, States, };
 
-pub fn set<S>() -> impl System<In=S, Out=Option<()>>
+use crate::selector::condition::{once, ReactorSystemConfigs, with, WithInput};
+
+pub fn set<S>(state: S) -> impl ReactorSystemConfigs<WithInput, In=S>
     where S: States + 'static
 {
-    once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {
+    with(state, once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {
         state.set(input.0);
-    })
+    }))
 }
 
 

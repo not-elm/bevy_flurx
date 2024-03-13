@@ -1,14 +1,13 @@
 use bevy::app::{App, Startup};
 use bevy::DefaultPlugins;
 use bevy::math::Vec2;
-use bevy::prelude::{Camera2dBundle, Color, Commands, Component, NonSendMut, Query, Sprite, Transform, Update, With};
+use bevy::prelude::{Camera2dBundle, Color, Commands, Component, Query, Sprite, Transform, Update, With, World};
 use bevy::sprite::SpriteBundle;
 use bevy::utils::default;
 
+use bevy_async_system::extension::ScheduleReactor;
 use bevy_async_system::FlurxPlugin;
-use bevy_async_system::scheduler::TaskScheduler;
 use bevy_async_system::selector::condition::{once, wait};
-
 
 #[derive(Component)]
 struct Movable;
@@ -45,9 +44,9 @@ fn setup_entities(mut commands: Commands) {
 
 
 fn setup_reactor(
-    mut scheduler: NonSendMut<TaskScheduler>
+    world: &mut World
 ) {
-    scheduler.schedule(|task| async move {
+    world.schedule_reactor(|task| async move {
         task.will(Update, wait::until(move_up)).await;
         task.will(Update, wait::until(move_right)).await;
         print!("*** Finish ***");

@@ -1,32 +1,32 @@
-use bevy::prelude::{In, System, World};
+use bevy::prelude::{In, World};
 
-use crate::selector::condition::once;
+use crate::selector::condition::{once, ReactorSystemConfigs, with};
 
 #[inline]
-pub fn init<R>() -> impl System<In=(), Out=Option<()>>
+pub fn init<R>() -> impl ReactorSystemConfigs<In=()>
     where R: Default + 'static
 {
-    once::run(|world: &mut World| {
+    with((), once::run(|world: &mut World| {
         world.init_non_send_resource::<R>();
-    })
+    }))
 }
 
 #[inline]
-pub fn insert<R>() -> impl System<In=R, Out=Option<()>>
+pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R>
     where R: Clone + 'static
 {
-    once::run(|In(resource): In<R>, world: &mut World| {
+    with(resource, once::run(|In(resource): In<R>, world: &mut World| {
         world.insert_non_send_resource(resource);
-    })
+    }))
 }
 
 #[inline]
-pub fn remove<R>() -> impl System<In=(), Out=Option<()>>
+pub fn remove<R>() -> impl ReactorSystemConfigs<In=()>
     where R: 'static
 {
-    once::run(|world: &mut World| {
+    with((), once::run(|world: &mut World| {
         world.remove_non_send_resource::<R>();
-    })
+    }))
 }
 
 
@@ -38,7 +38,6 @@ mod tests {
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
     use crate::selector::condition::once::non_send;
-    use crate::selector::condition::with;
     use crate::tests::TestResource;
 
     #[test]
@@ -63,7 +62,7 @@ mod tests {
             .add_plugins(FlurxPlugin)
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    task.will(First, with(TestResource, non_send::insert())).await;
+                    task.will(First, non_send::insert(TestResource)).await;
                 });
             });
 
@@ -95,15 +94,15 @@ mod tests {
             .add_plugins(FlurxPlugin)
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    task.will(First, with(AppExit, non_send::insert())).await;
+                    task.will(First, non_send::insert(AppExit)).await;
                     println!("First finished");
-                    task.will(First, with(AppExit, non_send::insert())).await;
+                    task.will(First, non_send::insert(AppExit)).await;
                     println!("PreUpdate finished");
-                    task.will(First, with(AppExit, non_send::insert())).await;
+                    task.will(First, non_send::insert(AppExit)).await;
                     println!("Update finished");
-                    task.will(First, with(AppExit, non_send::insert())).await;
+                    task.will(First, non_send::insert(AppExit)).await;
                     println!("PostUpdate finished");
-                    task.will(First, with(AppExit, non_send::insert())).await;
+                    task.will(First, non_send::insert(AppExit)).await;
                     println!("Last finished");
                 });
             });

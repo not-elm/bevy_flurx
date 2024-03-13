@@ -1,32 +1,32 @@
-use bevy::prelude::{Commands, In, Resource, System};
+use bevy::prelude::{Commands, In, Resource};
 
-use crate::selector::condition::once;
+use crate::selector::condition::{once, ReactorSystemConfigs, with};
 
 #[inline]
-pub fn init<R>() -> impl System<In=(), Out=Option<()>>
+pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
     where R: Resource + Default + 'static
 {
-    once::run(|mut commands: Commands| {
+    with((), once::run(|mut commands: Commands| {
         commands.init_resource::<R>();
-    })
+    }))
 }
 
 #[inline]
-pub fn insert<R>() -> impl System<In=R, Out=Option<()>>
-    where R: Resource + 'static
+pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
+    where R: Resource + Clone + 'static
 {
-    once::run(|input: In<R>, mut commands: Commands| {
+    with(resource, once::run(|input: In<R>, mut commands: Commands| {
         commands.insert_resource(input.0);
-    })
+    }))
 }
 
 #[inline]
-pub fn remove<R>() -> impl System<In=(), Out=Option<()>>
+pub fn remove<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
     where R: Resource + 'static
 {
-    once::run(|mut commands: Commands| {
+    with((), once::run(|mut commands: Commands| {
         commands.remove_resource::<R>();
-    })
+    }))
 }
 
 
@@ -38,7 +38,6 @@ mod tests {
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
     use crate::selector::condition::once::res;
-    use crate::selector::condition::with;
     use crate::tests::TestResource;
 
     #[test]
@@ -63,7 +62,7 @@ mod tests {
             .add_plugins(FlurxPlugin)
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    task.will(First, with(TestResource, res::insert())).await;
+                    task.will(First, res::insert(TestResource)).await;
                 });
             });
 
