@@ -24,11 +24,11 @@ impl<L, R> Select<L, R> {
 /// Waits until either of the two tasks is completed.
 ///
 /// The first thing passed is lhs, the second is rhs.
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 ///
 /// #[derive(Default, Clone, Event)]
 /// struct Event1;

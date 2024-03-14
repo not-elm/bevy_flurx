@@ -5,8 +5,8 @@ use bevy::DefaultPlugins;
 use bevy::log::info;
 use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res, World};
 
-use bevy_async_system::extension::ScheduleReactor;
-use bevy_async_system::prelude::*;
+use bevy_flurx::extension::ScheduleReactor;
+use bevy_flurx::prelude::*;
 
 fn main() {
     App::new()

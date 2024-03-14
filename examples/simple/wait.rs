@@ -2,13 +2,13 @@
 //!
 //! [`wait`] creates a task that run the until the condition is met.
 //!
-//! [`wait`]: bevy_async_system::prelude::wait
+//! [`wait`]: bevy_flurx::prelude::wait
 
 use std::time::Duration;
 
 use bevy::prelude::*;
 
-use bevy_async_system::prelude::*;
+use bevy_flurx::prelude::*;
 
 fn main() {
     App::new()

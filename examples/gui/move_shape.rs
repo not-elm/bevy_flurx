@@ -1,13 +1,5 @@
-use bevy::app::{App, Startup};
-use bevy::DefaultPlugins;
-use bevy::math::Vec2;
-use bevy::prelude::{Camera2dBundle, Color, Commands, Component, Query, Sprite, Transform, Update, With, World};
-use bevy::sprite::SpriteBundle;
-use bevy::utils::default;
-
-use bevy_async_system::extension::ScheduleReactor;
-use bevy_async_system::FlurxPlugin;
-use bevy_async_system::selector::condition::{once, wait};
+use bevy::prelude::*;
+use bevy_flurx::prelude::*;
 
 #[derive(Component)]
 struct Movable;
@@ -25,7 +17,6 @@ fn main() {
         .run();
 }
 
-
 fn setup_entities(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
 
@@ -42,32 +33,47 @@ fn setup_entities(mut commands: Commands) {
     ));
 }
 
-
 fn setup_reactor(
     world: &mut World
 ) {
     world.schedule_reactor(|task| async move {
-        task.will(Update, wait::until(move_up)).await;
-        task.will(Update, wait::until(move_right)).await;
-        print!("*** Finish ***");
-        task.will(Update, once::event::app_exit()).await;
+        loop {
+            task.will(Update, once::run(reset_pos)).await;
+            task.will(Update, wait::until(move_up)).await;
+            task.will(Update, wait::until(move_right)).await;
+            println!("To retry press the R key");
+            task.will(Update, wait::until(input_r_key)).await;
+        }
     });
 }
 
-
-fn move_up(
+fn reset_pos(
     mut shape: Query<&mut Transform, With<Movable>>
-) -> bool {
+) {
     let mut transform = shape.single_mut();
-    transform.translation.y += 1.;
-    300. <= transform.translation.y
+    transform.translation = Vec3::default();
 }
 
-
-fn move_right(
-    mut shape: Query<&mut Transform, With<Movable>>
+fn move_up(
+    mut shape: Query<&mut Transform, With<Movable>>,
+    time: Res<Time>,
 ) -> bool {
     let mut transform = shape.single_mut();
-    transform.translation.x += 1.;
-    500. <= transform.translation.x
+    transform.translation.y += time.delta_seconds() * 100.;
+    150. <= transform.translation.y
+}
+
+fn move_right(
+    mut shape: Query<&mut Transform, With<Movable>>,
+    time: Res<Time>,
+) -> bool {
+    let mut transform = shape.single_mut();
+    transform.translation.x += time.delta_seconds() * 100.;
+    150. <= transform.translation.x
+}
+
+fn input_r_key(
+    keyboard_input: Res<ButtonInput<KeyCode>>
+) -> bool {
+    keyboard_input.just_pressed(KeyCode::KeyR)
 }

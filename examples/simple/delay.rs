@@ -2,7 +2,7 @@
 //!
 //! [`delay`] creates a task that run the until the specified time or frames has elapsed.
 //!
-//! [`delay`]: bevy_async_system::prelude::delay
+//! [`delay`]: bevy_flurx::prelude::delay
 
 use std::time::{Duration, Instant};
 
@@ -10,7 +10,7 @@ use bevy::app::{App, FixedUpdate, Startup};
 use bevy::DefaultPlugins;
 use bevy::prelude::World;
 
-use bevy_async_system::prelude::*;
+use bevy_flurx::prelude::*;
 
 fn main() {
     App::new()

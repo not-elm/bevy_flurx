@@ -7,11 +7,11 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with};
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// #[derive(Default, Resource)]
 /// struct R;
-/// 
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
@@ -35,11 +35,11 @@ pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// #[derive(Resource, Clone)]
 /// struct R;
-/// 
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
@@ -63,11 +63,11 @@ pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// #[derive(Resource)]
 /// struct R;
-/// 
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{

@@ -7,7 +7,7 @@ use crate::prelude::{ReactorSystemConfigs, wait, with};
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 ///
 /// #[derive(Default, Clone, Event)]
 /// struct E;
@@ -40,14 +40,14 @@ pub fn comes<E>() -> impl ReactorSystemConfigs<In=(), Out=()>
 
 
 /// Waits until the specified event is sent.
-/// 
+///
 /// This is similar to [`wait::event::comes`], except that it returns the event itself.
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{

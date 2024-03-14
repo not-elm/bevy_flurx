@@ -8,15 +8,15 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with, WithInput};
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// #[derive(States, Copy, Clone, Hash, Eq, PartialEq, Default, Debug)]
 /// enum S{
 ///     #[default]
 ///     S1,
 ///     S2
 /// };
-/// 
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.init_state::<S>();

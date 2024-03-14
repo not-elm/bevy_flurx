@@ -14,21 +14,21 @@ pub struct ReactiveTask<'a> {
 
 impl<'a> ReactiveTask<'a> {
     /// Create a new task.
-    /// 
+    ///
     /// The argument label indicates which scheduler it will be executed on.
-    /// 
+    ///
     /// See below for configs.
-    /// 
+    ///
     /// - [`once`](crate::prelude::once)
     /// - [`wait`](crate::prelude::wait)
     /// - [`delay`](crate::prelude::delay)
-    /// 
+    ///
     /// ## Example
-    /// 
+    ///
     /// ```no_run
     /// use bevy::app::AppExit;
     /// use bevy::prelude::*;
-    /// use bevy_async_system::prelude::*;
+    /// use bevy_flurx::prelude::*;
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |world: &mut World|{
@@ -61,11 +61,11 @@ impl<'a> ReactiveTask<'a> {
     /// Create a  new initialized task.
     ///
     /// Unlike [`ReactiveTask::run`], returns a task that registered a system.
-    /// 
+    ///
     /// ```no_run
     /// use bevy::app::AppExit;
     /// use bevy::prelude::*;
-    /// use bevy_async_system::prelude::*;
+    /// use bevy_flurx::prelude::*;
     ///
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);

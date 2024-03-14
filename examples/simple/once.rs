@@ -4,10 +4,10 @@
 //!
 //! Please check [`setup`] function in this example for details.
 //! 
-//! [`once`]: bevy_async_system::prelude::once
+//! [`once`]: bevy_flurx::prelude::once
 
 use bevy::prelude::*;
-use bevy_async_system::prelude::*;
+use bevy_flurx::prelude::*;
 
 fn main() {
     App::new()

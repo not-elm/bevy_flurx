@@ -1,5 +1,5 @@
 [package]
-name = "bevy_async_system"
+name = "bevy_flurx"
 version = "0.3.0"
 edition = "2021"
 authors = ["elm"]
@@ -8,7 +8,7 @@ description = "Provides the ability to wait for game status asynchronously."
 keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
-repository = "https://github.com/not-elm/bevy_async_system"
+repository = "https://github.com/not-elm/bevy_flurx"
 
 [[example]]
 name = "delay"
@@ -33,7 +33,7 @@ path = "examples/gui/move_shape.rs"
 
 [dependencies]
 bevy = { version = "0.13.0", default-features = false }
-flurx = { path = "../flurx", features = ["sync"] }
+flurx = { version = "0.1.3", features = ["sync"] }
 futures-lite = "2.2.0"
 futures-polling = "0.1.1"
 

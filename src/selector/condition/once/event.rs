@@ -9,7 +9,7 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with};
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 ///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
@@ -34,7 +34,7 @@ pub fn send<E>(event: E) -> impl ReactorSystemConfigs<In=E>
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 ///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
@@ -59,7 +59,7 @@ pub fn send_default<E>() -> impl ReactorSystemConfigs<In=()>
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 ///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);

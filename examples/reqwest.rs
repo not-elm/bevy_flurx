@@ -7,9 +7,9 @@ use bevy::text::{Text, TextStyle};
 use bevy::utils::default;
 use reqwest::StatusCode;
 
-use bevy_async_system::extension::ScheduleReactor;
-use bevy_async_system::FlurxPlugin;
-use bevy_async_system::selector::condition::{delay, once};
+use bevy_flurx::extension::ScheduleReactor;
+use bevy_flurx::FlurxPlugin;
+use bevy_flurx::selector::condition::{delay, once};
 
 /// You can use [`reqwest`](reqwest).
 ///

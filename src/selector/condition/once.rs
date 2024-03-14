@@ -10,13 +10,13 @@ pub mod non_send;
 
 
 /// Once run a system.
-/// 
+///
 /// The return value will be the system return value.
-/// 
+///
 /// ```
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
@@ -43,14 +43,14 @@ pub fn run<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Op
 }
 
 
-/// Once run a system with input. 
-/// 
+/// Once run a system with input.
+///
 /// The return value will be the system return value.
-/// 
+///
 /// ```
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
-/// 
+/// use bevy_flurx::prelude::*;
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{

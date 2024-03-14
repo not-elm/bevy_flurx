@@ -18,11 +18,11 @@ mod select;
 
 /// Run until it returns Option::Some.
 /// The contents of Some will be return value of the task.
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
@@ -53,7 +53,7 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{

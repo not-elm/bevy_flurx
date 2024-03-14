@@ -3,11 +3,11 @@ use bevy::prelude::{Res, State, States, };
 use crate::selector::condition::{ReactorSystemConfigs, wait, with};
 
 /// Waits until the state becomes the specified.
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
-/// use bevy_async_system::prelude::*;
+/// use bevy_flurx::prelude::*;
 ///
 /// #[derive(Debug, Default, States, Copy, Clone, Hash, Eq, PartialEq)]
 /// enum Status{
