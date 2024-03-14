@@ -13,6 +13,36 @@ pub struct ReactiveTask<'a> {
 
 
 impl<'a> ReactiveTask<'a> {
+    /// Create a new task.
+    /// 
+    /// The argument label indicates which scheduler it will be executed on.
+    /// 
+    /// See below for configs.
+    /// 
+    /// - [`once`](crate::prelude::once)
+    /// - [`wait`](crate::prelude::wait)
+    /// - [`delay`](crate::prelude::delay)
+    /// 
+    /// ## Example
+    /// 
+    /// ```no_run
+    /// use bevy::app::AppExit;
+    /// use bevy::prelude::*;
+    /// use bevy_async_system::prelude::*;
+    /// let mut app = App::new();
+    /// app.add_plugins(FlurxPlugin);
+    /// app.add_systems(Startup, |world: &mut World|{
+    ///     world.schedule_reactor(|task| async move{
+    ///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
+    ///             *count += 1;
+    ///             (*count == 2).then_some(*count)
+    ///         })).await;
+    ///         assert_eq!(count, 2);
+    ///     });
+    /// });
+    /// app.update();
+    /// app.update();
+    ///```
     pub fn will<Label, In, Out, Marker>(
         &self,
         label: Label,
@@ -27,6 +57,29 @@ impl<'a> ReactiveTask<'a> {
         self.inner.will(WorldSelector::new(label, input, system))
     }
 
+
+    /// Create a  new initialized task.
+    ///
+    /// Unlike [`ReactiveTask::run`], returns a task that registered a system.
+    /// 
+    /// ```no_run
+    /// use bevy::app::AppExit;
+    /// use bevy::prelude::*;
+    /// use bevy_async_system::prelude::*;
+    ///
+    /// let mut app = App::new();
+    /// app.add_plugins(FlurxPlugin);
+    /// app.add_systems(Startup, |world: &mut World|{
+    ///     world.schedule_reactor(|task|async move{
+    ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
+    ///         task.will(Update, once::event::send(AppExit)).await;
+    ///         wait_event.await;
+    ///     });
+    /// });
+    /// app.update();
+    /// app.update();
+    /// app.update();
+    /// ```
     pub async fn run<Label, In, Out, Marker>(
         &self,
         label: Label,
