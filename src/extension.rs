@@ -17,21 +17,22 @@ impl<Fun, Fut> ScheduleReactor<Fun, Fut, ()> for World
         Fut: Future + 'static
 {
     fn schedule_reactor(&mut self, f: Fun) {
+        self.init_non_send_resource::<ReactiveScheduler>();
         let world_ptr = WorldPtr::new(self);
         let mut scheduler = self.get_non_send_resource_mut::<ReactiveScheduler>().unwrap();
         scheduler.schedule(f);
-        scheduler.run_sync(world_ptr);
+        scheduler.initialize(world_ptr);
     }
 }
 
 
-impl<'a, 'b, F, Fut> ScheduleReactor<F, Fut, ()> for Commands<'a, 'b> 
-    where 
+impl<'a, 'b, F, Fut> ScheduleReactor<F, Fut, ()> for Commands<'a, 'b>
+    where
         F: FnOnce(ReactiveTask<'static>) -> Fut + Send + 'static,
         Fut: Future + 'static
 {
     fn schedule_reactor(&mut self, f: F) {
-        self.add(|world: &mut World|{
+        self.add(|world: &mut World| {
             world.schedule_reactor(f);
         });
     }

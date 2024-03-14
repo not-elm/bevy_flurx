@@ -2,6 +2,25 @@ use bevy::prelude::{Commands, In, Resource};
 
 use crate::selector::condition::{once, ReactorSystemConfigs, with};
 
+/// Once init a resource.
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+/// 
+/// #[derive(Default, Resource)]
+/// struct R;
+/// 
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move {
+///         task.will(Update, once::res::init::<R>()).await;
+///     });
+/// });
+/// app.update();
+/// ```
 #[inline]
 pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
     where R: Resource + Default + 'static
@@ -11,6 +30,25 @@ pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
     }))
 }
 
+/// Once insert a resource.
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+/// 
+/// #[derive(Resource, Clone)]
+/// struct R;
+/// 
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move {
+///         task.will(Update, once::res::insert(R)).await;
+///     });
+/// });
+/// app.update();
+/// ```
 #[inline]
 pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
     where R: Resource + Clone + 'static
@@ -20,6 +58,25 @@ pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
     }))
 }
 
+/// Once remove a resource.
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::*;
+/// 
+/// #[derive(Resource)]
+/// struct R;
+/// 
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move {
+///         task.will(Update, once::res::remove::<R>()).await;
+///     });
+/// });
+/// app.update();
+/// ```
 #[inline]
 pub fn remove<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
     where R: Resource + 'static

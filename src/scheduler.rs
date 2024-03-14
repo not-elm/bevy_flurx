@@ -1,10 +1,14 @@
 use std::future::Future;
 
+use flurx::Scheduler;
+
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 
+#[derive(Default)]
 pub(crate) struct ReactiveScheduler<'a, 'b> {
-    inner: flurx::Scheduler<'a, 'b, WorldPtr>,
+    non_initializes: Vec<flurx::Scheduler<'a, 'b, WorldPtr>>,
+    pending: Vec<flurx::Scheduler<'a, 'b, WorldPtr>>,
 }
 
 impl<'a, 'b> ReactiveScheduler<'a, 'b>
@@ -13,25 +17,27 @@ impl<'a, 'b> ReactiveScheduler<'a, 'b>
     pub fn schedule<F>(&mut self, f: impl FnOnce(ReactiveTask<'a>) -> F + 'a)
         where F: Future + 'b
     {
-        self.inner.schedule(move |task| async move {
+        let mut scheduler = Scheduler::new();
+        scheduler.schedule(move |task| async move {
             f(ReactiveTask {
                 inner: task
             }).await;
         });
+        self.non_initializes.push(scheduler)
+    }
+
+    pub(crate) fn initialize(&mut self, world: WorldPtr) {
+        while let Some(mut scheduler) = self.non_initializes.pop() {
+            scheduler.run_sync(world);
+            self.pending.push(scheduler);
+        }
     }
 
     pub(crate) fn run_sync(&mut self, world: WorldPtr) {
-        self.inner.run_sync(world)
+        self.pending.iter_mut().for_each(|scheduler| {
+            scheduler.run_sync(world)
+        });
     }
 }
 
-impl<'a, 'b> Default for ReactiveScheduler<'a, 'b>
-    where 'a: 'b
-{
-    fn default() -> Self {
-        Self {
-            inner: flurx::Scheduler::new()
-        }
-    }
-}
 

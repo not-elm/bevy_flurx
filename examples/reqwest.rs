@@ -9,7 +9,7 @@ use reqwest::StatusCode;
 
 use bevy_async_system::extension::ScheduleReactor;
 use bevy_async_system::FlurxPlugin;
-use bevy_async_system::selector::condition::{delay, once, with};
+use bevy_async_system::selector::condition::{delay, once};
 
 /// You can use [`reqwest`](reqwest).
 ///
@@ -37,15 +37,16 @@ fn setup_ui(mut commands: Commands) {
     }));
 }
 
-
 fn setup_async_systems(world: &mut World) {
     world.schedule_reactor(|task| async move {
         task.will(Update, delay::time(Duration::from_secs(1))).await;
-        // This is my git uri.
+        // This is my GitHub uri.
         const URI: &str = "https://github.com/not-elm";
         let status_code = reqwest::get(URI).await.unwrap().status();
-        task.will(Update, with(status_code, once::run(|In(status): In<StatusCode>, mut text: Query<&mut Text>| {
+        task.will(Update, once::run_with(status_code, |In(status): In<StatusCode>, mut text: Query<&mut Text>| {
             text.single_mut().sections[0].value = status.to_string();
-        }))).await;
+        })).await;
+        task.will(Update, delay::time(Duration::from_secs(1))).await;
+        task.will(Update, once::event::app_exit()).await;
     });
 }

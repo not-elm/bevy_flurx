@@ -74,9 +74,8 @@ fn run_reactors<Label: ScheduleLabel>(world: &mut World) {
     let Some(mut runner) = world.remove_non_send_resource::<ReactorRunners<Label>>() else {
         return;
     };
-    if !runner.run(world) {
-        world.insert_non_send_resource(runner)
-    }
+    runner.run(world);
+    world.insert_non_send_resource(runner);
 }
 
 

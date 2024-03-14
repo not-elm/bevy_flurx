@@ -5,6 +5,20 @@ use bevy::time::{Time, Timer};
 
 use crate::selector::condition::{ReactorSystemConfigs, wait, with};
 
+
+/// Delays by the specified amount of time.
+/// 
+/// ```no_run
+/// use std::time::Duration;
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::{delay, ScheduleReactor};
+/// 
+/// fn world(world: &mut World){
+///     world.schedule_reactor(|task| async move{
+///         task.will(Update, delay::time(Duration::from_millis(300))).await;
+///     });
+/// }
+/// ```
 #[inline]
 pub fn time(duration: Duration) -> impl ReactorSystemConfigs<In=(), Out=()> {
     let mut timer = Timer::new(duration, TimerMode::Once);
@@ -15,6 +29,20 @@ pub fn time(duration: Duration) -> impl ReactorSystemConfigs<In=(), Out=()> {
     }))
 }
 
+
+/// Delays the specified number of frames.
+/// 
+/// ```no_run
+/// use std::time::Duration;
+/// use bevy::prelude::*;
+/// use bevy_async_system::prelude::{delay, ScheduleReactor};
+/// 
+/// fn world(world: &mut World){
+///     world.schedule_reactor(|task| async move{
+///         task.will(Update, delay::frames(300)).await;
+///     });
+/// }
+/// ```
 #[inline]
 pub fn frames(frames: usize) -> impl ReactorSystemConfigs<In=(), Out=()> {
     with((), wait::until(move |mut frame_now: Local<usize>| {

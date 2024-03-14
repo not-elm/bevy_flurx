@@ -4,12 +4,9 @@ use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::DefaultPlugins;
 use bevy::log::info;
 use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res, World};
+
 use bevy_async_system::extension::ScheduleReactor;
-
-use bevy_async_system::FlurxPlugin;
-
-use bevy_async_system::selector::condition::once;
-use bevy_async_system::selector::condition::wait;
+use bevy_async_system::prelude::*;
 
 fn main() {
     App::new()
@@ -25,7 +22,7 @@ fn main() {
 fn setup(world: &mut World) {
     world.schedule_reactor(|task| async move {
         task.will(Update, once::run(play_audio)).await;
-        task.will(Update, wait::until(finished_audio)).await;
+        task.will(Update, wait::until(stop_audio)).await;
         info!("***** Finished audio *****");
         task.will(Update, once::event::app_exit()).await;
     });
@@ -43,7 +40,7 @@ fn play_audio(
 }
 
 
-fn finished_audio(
+fn stop_audio(
     mut commands: Commands,
     audio: Query<(Entity, &AudioSink)>,
 ) -> bool {
