@@ -1,8 +1,9 @@
+use std::any::TypeId;
 use std::cell::Cell;
+use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::ecs::system::SystemId;
-use bevy::prelude::{System, World};
+use bevy::prelude::{IntoSystem, System, World};
 use flurx::selector::Selector;
 
 use crate::selector::runner::{initialize_reactor_runner, ReactorSystemOutput};
@@ -14,16 +15,13 @@ mod runner;
 pub mod condition;
 
 
-type MaybeSystemId<In, Out> = Cell<Option<SystemId<In, Out>>>;
-
-
 pub(crate) struct WorldSelector<Label, Sys, In, Out> {
     system: Cell<Option<Sys>>,
-    id: MaybeSystemId<In, Option<Out>>,
+    system_type: Cell<Option<TypeId>>,
     input: In,
     label: Label,
+    _m: PhantomData<Out>,
 }
-
 
 impl<Label, Sys, In, Out> WorldSelector<Label, Sys, In, Out>
     where
@@ -35,25 +33,15 @@ impl<Label, Sys, In, Out> WorldSelector<Label, Sys, In, Out>
     pub(crate) fn new(label: Label, input: In, system: Sys) -> WorldSelector<Label, Sys, In, Out> {
         Self {
             system: Cell::new(Some(system)),
-            id: Cell::new(None),
+            system_type: Cell::new(None),
             input,
             label,
+            _m: PhantomData,
         }
     }
 
     pub(crate) fn output<O>(&self, world: &WorldPtr, output: Option<O>) -> Option<O> {
-        if let Some(output) = output {
-            self.remove_system(world);
-            Some(output)
-        } else {
-            None
-        }
-    }
-
-    fn remove_system(&self, world: &WorldPtr) {
-        if let Some(id) = self.id.get() {
-            let _ = world.as_mut().remove_system(id);
-        }
+        output.map(|output| output)
     }
 }
 
@@ -85,17 +73,16 @@ pub(crate) fn run_system<Label, Sys, In, Out>(
 {
     let world: &mut World = world.as_mut();
 
-    if let Some(id) = selector.id.get() {
-        let output = world.get_non_send_resource_mut::<ReactorSystemOutput<In, Out>>()?.extract_output(&id)?;
-        world.remove_system(id).expect("failed remove system");
-        selector.id.take();
-        Some(output)
-    } else {
-        let system = selector.system.take().take().unwrap();
-        let system_id = world.register_boxed_system(Box::new(system));
-        selector.id.set(Some(system_id));
-        initialize_reactor_runner(world, selector.label.clone(), StandardReactorRunner::new(system_id, selector.input.clone()));
+    if let Some(mut system) = selector.system.take().take() {
+        system.initialize(world);
+        system.apply_deferred(world);
+        selector.system_type.set(Some(system.system_type_id()));
+        initialize_reactor_runner(world, selector.label.clone(), StandardReactorRunner::new(system, selector.input.clone()));
         None
+    } else {
+        let id = selector.system_type.get().unwrap();
+        let output = world.get_non_send_resource_mut::<ReactorSystemOutput<Out>>()?.extract_output(&id)?;
+        Some(output)
     }
 }
 

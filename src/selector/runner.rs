@@ -1,6 +1,8 @@
+use std::any::TypeId;
+
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::ecs::system::SystemId;
 use bevy::prelude::{Schedule, Schedules, World};
+use bevy::utils::HashMap;
 
 use crate::selector::runner::runners::ReactorRunners;
 
@@ -9,31 +11,27 @@ pub(super) mod standard;
 
 
 pub(crate) trait RunReactor {
-    fn run(&self, world: &mut World) -> bool;
+    fn run(&mut self, world: &mut World) -> bool;
 }
 
 
 #[repr(transparent)]
-pub(crate) struct ReactorSystemOutput<In, Out>(Vec<(SystemId<In, Option<Out>>, Out)>);
+pub(crate) struct ReactorSystemOutput<Out>(HashMap<TypeId, Out>);
 
 
-impl<In, Out> ReactorSystemOutput<In, Out> {
-    fn push(&mut self, id: SystemId<In, Option<Out>>, output: Out) {
-        self.0.push((id, output));
+impl<Out> ReactorSystemOutput<Out> {
+    fn push(&mut self, id: TypeId, output: Out) {
+        self.0.insert(id, output);
     }
 
-    pub fn extract_output(&mut self, id: &SystemId<In, Option<Out>>) -> Option<Out> {
-        if let Some(pos) = self.0.iter().position(|(system_id, _)| system_id == id) {
-            Some(self.0.remove(pos).1)
-        } else {
-            None
-        }
+    pub fn extract_output(&mut self, id: &TypeId) -> Option<Out> {
+        self.0.remove(id)
     }
 }
 
-impl<In, Out> Default for ReactorSystemOutput<In, Out> {
+impl<Out> Default for ReactorSystemOutput<Out> {
     fn default() -> Self {
-        Self(Vec::new())
+        Self(HashMap::new())
     }
 }
 

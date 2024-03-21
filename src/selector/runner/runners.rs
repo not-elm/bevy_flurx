@@ -28,7 +28,7 @@ impl<Label> ReactorRunners<Label>
 {
     pub(crate) fn run(&mut self, world: &mut World) -> bool {
         let mut pending = Vec::with_capacity(self.systems.len());
-        while let Some(runner) = self.systems.pop() {
+        while let Some(mut runner) = self.systems.pop() {
             if !runner.run(world) {
                 pending.push(runner);
             }

@@ -1,6 +1,7 @@
+use std::hash::Hasher;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use bevy::prelude::{In, IntoSystem, World};
+use bevy::prelude::{In, IntoSystem, Local, World};
 
 use crate::selector::condition::{ReactorSystemConfigs, with, WithInput};
 
@@ -12,23 +13,26 @@ pub fn repeat<Sys, Input, Out, Marker>(count: usize, system: Sys) -> impl Reacto
         Out: 'static,
         Sys: ReactorSystemConfigs<Marker, In=Input, Out=Out>,
 {
-    let (input, system) = system.into_configs();
-    let mut system = Some(system);
+    use bevy::prelude::System;
+    let (input, mut system) = system.into_configs();
     let count_now = AtomicUsize::new(0);
-    let mut system_id = Option::None;
-    with(input, IntoSystem::into_system(move |In(input): In<Input>, world: &mut World| {
-        if let Some(system) = system.take() {
-            system_id.replace(world.register_system(system));
+
+    with(input, IntoSystem::into_system(move |In(input): In<Input>,
+                                              world: &mut World,
+                                              mut init: Local<bool>| {
+        if !*init {
+            system.initialize(world);
+            *init = true;
         }
-        let Some(id) = system_id.as_ref() else {
-            panic!("unreachable");
-        };
-        let output = world.run_system_with_input(*id, input).unwrap()?;
-        let system = world.remove_system(*id).unwrap();
+
+        let output = unsafe { system.run_unsafe(input, world.as_unsafe_world_cell()) }?;
+        system.apply_deferred(world);
         if count <= count_now.fetch_add(1, Ordering::Relaxed) {
             Some(output)
         } else {
-            system_id.replace(world.register_boxed_system(system.system()));
+            println!("{:?}", system.component_access());
+            world.get_resource_by_id().unwrap().
+            system.initialize(world);
             None
         }
     }))
@@ -95,6 +99,8 @@ mod tests {
         assert!(app.world.get_resource::<Test>().is_none());
         app.update();
         assert!(app.world.get_resource::<Test>().is_none());
+        app.update();
+        app.update();
         app.update();
         assert!(app.world.get_resource::<Test>().is_some());
     }
