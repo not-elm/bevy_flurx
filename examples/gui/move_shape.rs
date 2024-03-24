@@ -1,23 +1,3 @@
-# bevy_flurx
-
-[![Crates.io](https://img.shields.io/crates/v/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
-[![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
-[![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
-
-Provides [`UniTask`](https://github.com/Cysharp/UniTask)-like functionality to asynchronously await game
-state.
-
-This crate was named bevy_async_system, but I've pretty much rebuilt it using [`flurx`](https://github.com/not-elm/flurx).
-
-## Example
-
-All examples are [`here`](./examples).
-
-Here is the code that waits for a simple rectangle to move.
-
-![move_shape](examples/gui/move_shape.gif)
-
-```rust
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
@@ -97,18 +77,3 @@ fn input_r_key(
 ) -> bool {
     keyboard_input.just_pressed(KeyCode::KeyR)
 }
-```
-
-## ChangeLog
-
-Please see [here](https://github.com/not-elm/bey_flurx/blob/main/CHANGELOG.md).
-
-## Compatible Bevy versions
-
-| bevy_flurx | bevy   |
-|------------|--------|
-| 0.3        | 0.13.0 |
-
-## License
-
-This crate is licensed under the MIT License or the Apache License 2.0.

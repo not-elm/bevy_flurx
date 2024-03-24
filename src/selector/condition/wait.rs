@@ -1,9 +1,42 @@
-use bevy::prelude::{Event, EventReader, In, IntoSystem, System};
+//! [`wait`] creates a task that run the until the condition is met.
+//!
+//! - [`wait::output`](crate::prelude::wait::output)
+//! - [`wait::until`](crate::prelude::wait::until)
+//! - [`wait::select`](crate::prelude::wait::select::select)
+//! - [`wait::event::read`](crate::prelude::wait::event::read)
+//! - [`wait::event::comes`](crate::prelude::wait::event::comes)
+//! - [`wait::state::becomes`](crate::prelude::wait::state::becomes)
 
-use crate::selector::condition::{ReactorSystemConfigs, wait, with};
+
+use bevy::prelude::{In, IntoSystem, System};
+
+pub use select::*;
 
 pub mod state;
+pub mod event;
+mod select;
 
+/// Run until it returns Option::Some.
+/// The contents of Some will be return value of the task.
+///
+/// ```
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move{
+///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
+///             *count += 1;
+///             (*count == 2).then_some(*count)
+///         })).await;
+///         assert_eq!(count, 2);
+///     });
+/// });
+/// app.update();
+/// app.update();
+/// ```
 #[inline]
 pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
     where
@@ -14,6 +47,31 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
     IntoSystem::into_system(system)
 }
 
+
+/// Run until it returns true.
+///
+/// ```
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move{
+///         task.will(Update, wait::until(|mut count: Local<u8>|{
+///             *count += 1;
+///             *count == 2
+///         })).await;
+///         task.will(Update, once::non_send::init::<AppExit>()).await;
+///     });
+/// });
+/// app.update();
+/// assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+/// app.update();
+/// assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+/// app.update(); // send app exit
+/// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+/// ```
 #[inline]
 pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
     where
@@ -31,36 +89,6 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
     )
 }
 
-pub fn event<E>() -> impl ReactorSystemConfigs<In=(), Out=E>
-    where E: Event + Clone
-{
-    with((), wait::output(|mut er: EventReader<E>| {
-        er.read().next().cloned()
-    }))
-}
-
-
-// #[inline]
-// pub fn any<
-//     Lhs, LIn, LOut, LMark,
-//     Rhs, RIn, ROut, RMark
-// >(lhs: Lhs, rhs: Rhs) -> impl ReactorSystemConfigs<WithInput, In=((LIn, Lhs), (RIn, Rhs)), Out=()>
-//     where
-//         Lhs: ReactorSystemConfigs<LMark, In=LIn, Out=LOut> + 'static,
-//         Rhs: ReactorSystemConfigs<RMark, In=RIn, Out=ROut> + 'static,
-//         LIn: Clone + 'static,
-//         LOut: Clone + 'static,
-//         RIn: Clone + 'static,
-//         ROut: Clone + 'static
-// {
-//     with(
-//         (lhs.into_configs(), rhs.into_configs()),
-//         |systems: In<((LIn, Lhs), (RIn, Rhs))>|{
-//             
-//             Some(())
-//         }
-//     )
-// }
 
 #[cfg(test)]
 mod tests {
@@ -129,7 +157,7 @@ mod tests {
             .add_plugins(FlurxPlugin)
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    let event = task.will(PreUpdate, wait::event::<AppExit>()).await;
+                    let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
                     task.will(Update, once::non_send::insert(event)).await;
                 });
             });

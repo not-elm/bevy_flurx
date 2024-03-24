@@ -14,6 +14,14 @@ pub mod selector;
 pub mod extension;
 
 
+pub mod prelude{
+    pub use crate::{
+        FlurxPlugin,
+        extension::ScheduleReactor,
+        selector::condition::*
+    };
+}
+
 /// Provides the async systems.
 pub struct FlurxPlugin;
 

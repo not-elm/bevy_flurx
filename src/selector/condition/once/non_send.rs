@@ -2,6 +2,25 @@ use bevy::prelude::{In, World};
 
 use crate::selector::condition::{once, ReactorSystemConfigs, with};
 
+/// Once init a non-send resource.
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+///
+/// #[derive(Default)]
+/// struct R;
+///
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move {
+///         task.will(Update, once::non_send::init::<R>()).await;
+///     });
+/// });
+/// app.update();
+/// ```
 #[inline]
 pub fn init<R>() -> impl ReactorSystemConfigs<In=()>
     where R: Default + 'static
@@ -11,6 +30,25 @@ pub fn init<R>() -> impl ReactorSystemConfigs<In=()>
     }))
 }
 
+/// Once insert a non-send resource.
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+///
+/// #[derive(Clone)]
+/// struct R;
+///
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move {
+///         task.will(Update, once::non_send::insert(R)).await;
+///     });
+/// });
+/// app.update();
+/// ```
 #[inline]
 pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R>
     where R: Clone + 'static
@@ -20,6 +58,24 @@ pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R>
     }))
 }
 
+/// Once remove a non-send resource.
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+///
+/// struct R;
+///
+/// let mut app = App::new();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move {
+///         task.will(Update, once::non_send::remove::<R>()).await;
+///     });
+/// });
+/// app.update();
+/// ```
 #[inline]
 pub fn remove<R>() -> impl ReactorSystemConfigs<In=()>
     where R: 'static
