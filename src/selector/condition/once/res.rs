@@ -140,7 +140,6 @@ mod tests {
             });
 
         app.update();
-;
         assert!(app.world.get_resource::<TestResource>().is_none());
     }
 }

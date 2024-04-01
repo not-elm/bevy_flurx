@@ -1,7 +1,6 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::{IntoSystem, System, World};
-use crate::selector::condition::wait::output;
 
 use crate::selector::runner::{ReactorSystemOutput, RunReactor};
 
@@ -13,6 +12,7 @@ pub(crate) struct StandardReactorRunner<Sys, In, Out> {
 
 
 impl<Sys, In, Out> StandardReactorRunner<Sys, In, Out> {
+    #[inline]
     pub const fn new(
         system: Sys,
         input: In,
@@ -32,7 +32,6 @@ impl<Sys, In, Out> RunReactor for StandardReactorRunner<Sys, In, Option<Out>>
         Out: 'static
 {
     fn run(&mut self, world: &mut World) -> bool {
-       
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(output) = out {

@@ -39,12 +39,7 @@ impl<Label, Sys, In, Out> WorldSelector<Label, Sys, In, Out>
             _m: PhantomData,
         }
     }
-
-    pub(crate) fn output<O>(&self, world: &WorldPtr, output: Option<O>) -> Option<O> {
-        output.map(|output| output)
-    }
 }
-
 
 impl<Label, Sys, In, Out> Selector<WorldPtr> for WorldSelector<Label, Sys, In, Out>
     where
@@ -56,10 +51,9 @@ impl<Label, Sys, In, Out> Selector<WorldPtr> for WorldSelector<Label, Sys, In, O
     type Output = Out;
 
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
-        self.output(&world, run_system(self, &world))
+        run_system(self, &world)
     }
 }
-
 
 pub(crate) fn run_system<Label, Sys, In, Out>(
     selector: &WorldSelector<Label, Sys, In, Out>,
