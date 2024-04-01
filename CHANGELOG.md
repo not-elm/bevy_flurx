@@ -2,6 +2,7 @@
 
 ### Update
 
+- Support for bevy version 1.3.1.
 - Changed the timing at which the reactive scheduler is executed from `AfterLast` to `Main`.
 
 ### Features
@@ -11,7 +12,6 @@
 
 ### Fix
 
-- Support for bevy version 1.3.1.
 - We made it run the system directly instead of [`Worold::register_system`].
 
 ## v0.3.0
