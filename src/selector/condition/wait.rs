@@ -109,7 +109,10 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
 ///     world.schedule_reactor(|task| async move{
-///         task.will(Update, wait::until().await;
+///         task.will(Update, wait::until(|mut count: Local<usize>|{
+///             *count += 1;
+///             *count == 2
+///         })).await;
 ///         task.will(Update, once::non_send::init::<AppExit>()).await;
 ///     });
 /// });
