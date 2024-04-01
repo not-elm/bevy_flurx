@@ -12,7 +12,7 @@
 
 ### Fix
 
-- We made it run the system directly instead of [`Worold::register_system`].
+- We made it run the system directly instead of [`World::register_system`].
 
 ## v0.3.0
 
