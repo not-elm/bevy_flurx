@@ -1,8 +1,8 @@
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Last, MainScheduleOrder, Plugin};
+use bevy::app::{App, Plugin};
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::World;
+use bevy::prelude::{Main, World};
 
 use crate::scheduler::ReactiveScheduler;
 use crate::world_ptr::WorldPtr;
@@ -14,11 +14,11 @@ pub mod selector;
 pub mod extension;
 
 
-pub mod prelude{
+pub mod prelude {
     pub use crate::{
-        FlurxPlugin,
         extension::ScheduleReactor,
-        selector::condition::*
+        FlurxPlugin,
+        selector::condition::*,
     };
 }
 
@@ -28,15 +28,8 @@ pub struct FlurxPlugin;
 
 impl Plugin for FlurxPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .init_non_send_resource::<ReactiveScheduler>()
-            .init_schedule(AfterLast);
-        app
-            .world
-            .resource_mut::<MainScheduleOrder>()
-            .insert_after(Last, AfterLast);
-
-        app.add_systems(AfterLast, run_scheduler);
+        app.init_non_send_resource::<ReactiveScheduler>();
+        app.add_systems(Main, run_scheduler);
     }
 }
 
@@ -58,6 +51,16 @@ mod tests {
     use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Event, EventReader, Resource};
+    use bevy_test_helper::BevyTestHelperPlugin;
+
+    use crate::FlurxPlugin;
+
+    pub fn test_app() -> App {
+        let mut app = App::new();
+        app.add_plugins(BevyTestHelperPlugin);
+        app.add_plugins(FlurxPlugin);
+        app
+    }
 
     #[derive(Eq, PartialEq, Debug, Resource, Copy, Clone, Default)]
     pub struct TestResource;
