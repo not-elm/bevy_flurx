@@ -30,7 +30,6 @@ impl<In, Out, Sys> ReactorSystemConfigs<WithInput> for (In, Sys)
     }
 }
 
-
 impl<Out, Sys> ReactorSystemConfigs<WithoutInput> for Sys
     where
         Sys: System<In=(), Out=Option<Out>>
@@ -70,7 +69,3 @@ pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl ReactorSystemCon
 {
     (input, system)
 }
-
-
-
-
