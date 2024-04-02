@@ -30,6 +30,7 @@ impl<Label, Sys, In, Out> WorldSelector<Label, Sys, In, Out>
         In: 'static,
         Out: 'static
 {
+    #[inline]
     pub(crate) fn new(label: Label, input: In, system: Sys) -> WorldSelector<Label, Sys, In, Out> {
         Self {
             system: Cell::new(Some(system)),
@@ -50,6 +51,7 @@ impl<Label, Sys, In, Out> Selector<WorldPtr> for WorldSelector<Label, Sys, In, O
 {
     type Output = Out;
 
+    #[inline]
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
         run_system(self, &world)
     }

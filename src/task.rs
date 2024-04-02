@@ -43,6 +43,7 @@ impl<'a> ReactiveTask<'a> {
     /// app.update();
     /// app.update();
     ///```
+    #[inline]
     pub fn will<Label, In, Out, Marker>(
         &self,
         label: Label,
@@ -80,6 +81,7 @@ impl<'a> ReactiveTask<'a> {
     /// app.update();
     /// app.update();
     /// ```
+    #[inline]
     pub async fn run<Label, In, Out, Marker>(
         &self,
         label: Label,
