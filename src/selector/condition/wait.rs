@@ -20,7 +20,7 @@ mod select;
 pub mod state;
 pub mod all;
 
-/// Run until it returns Option::Some.
+/// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
 ///
 /// ```

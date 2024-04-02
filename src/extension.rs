@@ -31,6 +31,7 @@ impl<'a, 'b, F, Fut> ScheduleReactor<F, Fut, ()> for Commands<'a, 'b>
         F: FnOnce(ReactiveTask<'static>) -> Fut + Send + 'static,
         Fut: Future + 'static
 {
+    #[inline]
     fn schedule_reactor(&mut self, f: F) {
         self.add(|world: &mut World| {
             world.schedule_reactor(f);

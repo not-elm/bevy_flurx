@@ -27,6 +27,7 @@ pub struct FlurxPlugin;
 
 
 impl Plugin for FlurxPlugin {
+    #[inline]
     fn build(&self, app: &mut App) {
         app.init_non_send_resource::<ReactiveScheduler>();
         app.add_systems(Main, run_scheduler);

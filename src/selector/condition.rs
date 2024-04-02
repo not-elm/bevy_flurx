@@ -25,6 +25,7 @@ impl<In, Out, Sys> ReactorSystemConfigs<WithInput> for (In, Sys)
     type In = In;
     type Out = Out;
 
+    #[inline]
     fn into_configs(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
         (self.0, self.1)
     }
@@ -37,6 +38,7 @@ impl<Out, Sys> ReactorSystemConfigs<WithoutInput> for Sys
     type In = ();
     type Out = Out;
 
+    #[inline]
     fn into_configs(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
         ((), self)
     }

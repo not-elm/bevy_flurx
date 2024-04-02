@@ -14,6 +14,7 @@ pub(super) struct ReactorRunners<Label> {
 impl<Label> Default for ReactorRunners<Label>
     where Label: ScheduleLabel
 {
+    #[inline]
     fn default() -> ReactorRunners<Label> {
         ReactorRunners {
             systems: Vec::new(),
