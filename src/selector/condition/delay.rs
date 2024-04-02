@@ -1,3 +1,8 @@
+//! [`delay`] creates a task that delay the application.
+//! 
+//! - [`delay::time`](crate::prelude::delay::time)
+//! - [`delay::frames`](crate::prelude::delay::frames)
+
 use std::time::Duration;
 
 use bevy::prelude::{Local, Res, TimerMode};
@@ -28,7 +33,6 @@ pub fn time(duration: Duration) -> impl ReactorSystemConfigs<In=(), Out=()> {
             .just_finished()
     }))
 }
-
 
 /// Delays the specified number of frames.
 ///

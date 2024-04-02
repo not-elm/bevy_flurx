@@ -4,25 +4,25 @@
 //! - [`wait::both`](crate::prelude::wait::both)
 //! - [`wait::until`](crate::prelude::wait::until)
 //! - [`wait_all!`](crate::wait_all)
-//! - [`wait::select`](crate::prelude::wait::select::select)
-//! - [`wait::event::read`](crate::prelude::wait::event::read)
-//! - [`wait::event::comes`](crate::prelude::wait::event::comes)
-//! - [`wait::state::becomes`](crate::prelude::wait::state::becomes)
+//! - [`wait::either`](crate::prelude::wait::either::either)
+//! - [`wait::event`](crate::prelude::wait::event)
+//! - [`wait::state`](crate::prelude::wait::state)
 
 use bevy::prelude::{In, IntoSystem, Local, System, World};
-
-pub use select::*;
-
+pub use either::*;
 use crate::prelude::{ReactorSystemConfigs, with, WithInput};
 
 pub mod event;
-mod select;
 pub mod state;
+#[allow(missing_docs)]
 pub mod all;
+mod either;
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
 ///
+/// ## Examples
+/// 
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -54,52 +54,8 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
 
 /// Run until it returns true.
 ///
-/// ```
-/// use bevy::app::AppExit;
-/// use bevy::prelude::*;
-/// use bevy_flurx::prelude::*;
+/// ## Examples
 /// 
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
-/// struct Event1;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
-/// struct Event2;
-/// 
-/// let mut app = App::new();
-/// app.add_event::<Event1>();
-/// app.add_event::<Event2>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move{
-///         let t1 = wait::event::read::<Event1>();
-///         let t2 = wait::event::read::<Event2>();
-///         let (event1, event2) = task.will(Update, wait::both(t1, t2)).await;
-///         assert_eq!(event1, Event1);
-///         assert_eq!(event2, Event2);
-///     });
-/// });
-/// app.update();
-/// app.world.resource_mut::<Events<Event1>>().send_default();
-/// app.world.resource_mut::<Events<Event2>>().send_default();
-/// app.update();
-/// ```
-#[inline]
-pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
-    where
-        Sys: IntoSystem<Input, bool, Marker> + 'static,
-{
-    IntoSystem::into_system(system.pipe(
-        |In(finish): In<bool>| {
-            if finish {
-                Some(())
-            } else {
-                None
-            }
-        },
-    ))
-}
-
-/// Run until both tasks done.
-///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -122,6 +78,56 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 /// app.update(); // send app exit
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+///```
+#[inline]
+pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
+    where
+        Sys: IntoSystem<Input, bool, Marker> + 'static,
+{
+    IntoSystem::into_system(system.pipe(
+        |In(finish): In<bool>| {
+            if finish {
+                Some(())
+            } else {
+                None
+            }
+        },
+    ))
+}
+
+/// Run until both tasks done.
+///
+/// 
+/// ## Examples
+/// 
+/// ```
+/// use bevy::app::AppExit;
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+/// 
+/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// struct Event1;
+/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// struct Event2;
+/// 
+/// let mut app = App::new();
+/// app.add_event::<Event1>();
+/// app.add_event::<Event2>();
+/// app.add_plugins(FlurxPlugin);
+/// app.add_systems(Startup, |world: &mut World|{
+///     world.schedule_reactor(|task| async move{
+///         let (event1, event2) = task.will(Update, wait::both(
+///             wait::event::read::<Event1>(),
+///             wait::event::read::<Event2>()
+///         )).await;
+///         assert_eq!(event1, Event1);
+///         assert_eq!(event2, Event2);
+///     });
+/// });
+/// app.update();
+/// app.world.resource_mut::<Events<Event1>>().send_default();
+/// app.world.resource_mut::<Events<Event2>>().send_default();
+/// app.update();
 /// ```
 pub fn both<LI, LO, LM, RI, RO, RM>(
     lhs: impl ReactorSystemConfigs<LM, In=LI, Out=LO> + 'static,
@@ -151,6 +157,7 @@ pub fn both<LI, LO, LM, RI, RO, RM>(
     )
 }
 
+#[inline]
 fn both_init_systems<LI, LO, RI, RO>(
     init: &mut Local<bool>,
     world: &mut World,

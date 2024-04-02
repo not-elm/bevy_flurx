@@ -1,3 +1,9 @@
+//! 
+//! 
+//! - [`once`]
+//! - [`wait`]
+//! - [`delay`]
+
 use bevy::prelude::System;
 
 pub mod once;
@@ -5,11 +11,13 @@ pub mod wait;
 pub mod repeat;
 pub mod delay;
 
-
+#[doc(hidden)]
 pub struct WithInput;
 
+#[doc(hidden)]
 pub struct WithoutInput;
 
+#[doc(hidden)]
 pub trait ReactorSystemConfigs<Marker = WithInput> {
     type In;
 
@@ -44,11 +52,10 @@ impl<Out, Sys> ReactorSystemConfigs<WithoutInput> for Sys
     }
 }
 
-
+#[doc(hidden)]
 pub trait WithInputSystem<In, Out> {
     fn with(self, input: In) -> impl ReactorSystemConfigs<WithInput, In=In, Out=Out>;
 }
-
 
 impl<In, Out, Sys> WithInputSystem<In, Out> for Sys
     where
@@ -62,6 +69,7 @@ impl<In, Out, Sys> WithInputSystem<In, Out> for Sys
     }
 }
 
+#[doc(hidden)]
 #[inline]
 pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl ReactorSystemConfigs<WithInput, In=Input, Out=Out>
     where

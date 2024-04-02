@@ -1,3 +1,8 @@
+//! You can use [`reqwest`](reqwest).
+//!
+//! I haven't confirmed any other async libraries yet, but I hope to be able to mix all async code together in the future.
+
+
 use std::time::Duration;
 
 use bevy::app::{App, Startup};
@@ -11,9 +16,6 @@ use bevy_flurx::extension::ScheduleReactor;
 use bevy_flurx::FlurxPlugin;
 use bevy_flurx::selector::condition::{delay, once};
 
-/// You can use [`reqwest`](reqwest).
-///
-/// I haven't confirmed any other async libraries yet, but I hope to be able to mix all async code together in the future.
 fn main() {
     App::new()
         .add_plugins((

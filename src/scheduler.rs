@@ -20,9 +20,7 @@ impl<'a, 'b> ReactiveScheduler<'a, 'b>
     {
         let mut scheduler = Scheduler::new();
         scheduler.schedule(move |task| async move {
-            f(ReactiveTask {
-                inner: task
-            }).await;
+            f(ReactiveTask(task)).await;
         });
         self.non_initializes.push(scheduler);
     }

@@ -10,9 +10,8 @@ use crate::selector::runner::{initialize_reactor_runner, ReactorSystemOutput};
 use crate::selector::runner::standard::StandardReactorRunner;
 use crate::world_ptr::WorldPtr;
 
-mod runner;
-
 pub mod condition;
+mod runner;
 
 
 pub(crate) struct WorldSelector<Label, Sys, In, Out> {

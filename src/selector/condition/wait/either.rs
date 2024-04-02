@@ -1,22 +1,27 @@
 use bevy::prelude::{In, IntoSystem, Local, System, World};
-
 use crate::selector::condition::{ReactorSystemConfigs, with, WithInput};
 
+/// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub enum Select<L, R> {
-    Lhs(L),
-    Rhs(R),
+pub enum Either<L, R> {
+    /// The result of the first task which passed to [`wait::either`].
+    Left(L),
+    
+    /// The result of the second task which passed to [`wait::either`].
+    Right(R),
 }
 
-impl<L, R> Select<L, R> {
+impl<L, R> Either<L, R> {
+    /// Return true if the value is left.
     #[inline]
-    pub const fn is_lhs(&self) -> bool {
-        matches!(self, Select::Lhs(_))
+    pub const fn is_left(&self) -> bool {
+        matches!(self, Either::Left(_))
     }
 
+    /// Return true if the value is right.
     #[inline]
-    pub const fn is_rhs(&self) -> bool {
-        matches!(self, Select::Rhs(_))
+    pub const fn is_right(&self) -> bool {
+        matches!(self, Either::Right(_))
     }
 }
 
@@ -42,12 +47,12 @@ impl<L, R> Select<L, R> {
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
 ///     world.schedule_reactor(|task|async move{
-///         let wait_event = task.run(Update, wait::select(
+///         let wait_event = task.run(Update, wait::either(
 ///             wait::event::comes::<Event1>(),
 ///             wait::event::comes::<Event2>()
 ///         )).await;
 ///         task.will(Update, once::event::send(Event1)).await;
-///         assert!(wait_event.await.is_lhs());
+///         assert!(wait_event.await.is_left());
 ///     });
 /// });
 /// app.update();
@@ -55,23 +60,23 @@ impl<L, R> Select<L, R> {
 /// app.update();
 /// ```
 #[inline]
-pub fn select<
-    Lhs, LIn, LOut, LMark,
-    Rhs, RIn, ROut, RMark
->(lhs: Lhs, rhs: Rhs) -> impl ReactorSystemConfigs<WithInput, In=(LIn, RIn), Out=Select<LOut, ROut>>
+pub fn either<
+    LS, LI, LO, LM,
+    RS, RI, RO, RM
+>(lhs: LS, rhs: RS) -> impl ReactorSystemConfigs<WithInput, In=(LI, RI), Out=Either<LO, RO>>
     where
-        Lhs: ReactorSystemConfigs<LMark, In=LIn, Out=LOut> + 'static,
-        Rhs: ReactorSystemConfigs<RMark, In=RIn, Out=ROut> + 'static,
-        LIn: Clone + 'static,
-        LOut: 'static,
-        RIn: Clone + 'static,
-        ROut: 'static
+        LS: ReactorSystemConfigs<LM, In=LI, Out=LO> + 'static,
+        RS: ReactorSystemConfigs<RM, In=RI, Out=RO> + 'static,
+        LI: Clone + 'static,
+        LO: 'static,
+        RI: Clone + 'static,
+        RO: 'static
 {
     let (lin, mut l_system) = lhs.into_configs();
     let (rin, mut r_system) = rhs.into_configs();
     with(
         (lin, rin),
-        IntoSystem::into_system(move |In((lin, rin)): In<(LIn, RIn)>,
+        IntoSystem::into_system(move |In((lin, rin)): In<(LI, RI)>,
                                       world: &mut World,
                                       mut initialized: Local<bool>| {
             if !*initialized {
@@ -81,10 +86,10 @@ pub fn select<
             }
 
             if let Some(lout) = l_system.run(lin, world) {
-                return Some(Select::Lhs(lout));
+                return Some(Either::Left(lout));
             }
 
-            r_system.run(rin, world).map(|rout| Select::Rhs(rout))
+            r_system.run(rin, world).map(|rout| Either::Right(rout))
         }),
     )
 }
@@ -99,10 +104,10 @@ mod tests {
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
     use crate::selector::condition::{once, wait};
-    use crate::selector::condition::wait::{output, Select, until};
+    use crate::selector::condition::wait::{Either, output, until};
 
     #[test]
-    fn wait_any() {
+    fn wait_either() {
         let mut app = App::new();
         app.add_plugins(FlurxPlugin);
         #[derive(Clone)]
@@ -119,7 +124,7 @@ mod tests {
                     (*count == 2).then_some(1)
                 });
 
-                if let Select::Rhs(rhs) = task.will(Update, wait::select(u1, u2)).await {
+                if let Either::Right(rhs) = task.will(Update, wait::either(u1, u2)).await {
                     task.will(Update, once::non_send::insert(Count(rhs))).await;
                 }
             });

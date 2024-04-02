@@ -51,7 +51,7 @@ macro_rules! wait_all {
         {
             let t = $crate::selector::condition::wait::both($t1, $t2);
             $(
-            let t = $crate::prelude::wait::all::private::WaitAll::new(&t).both(t, $tasks);
+            let t = $crate::prelude::wait::all::private::WaitBoth::new(&t).both(t, $tasks);
             )*
             t
         }
@@ -64,22 +64,19 @@ pub mod private {
     use bevy::prelude::{In, IntoSystem, Local, World};
     use crate::prelude::{ReactorSystemConfigs, WithInput};
 
-    pub struct WaitAll<Out> {
-        _m: PhantomData<Out>,
-    }
-
-    impl<Out> WaitAll<Out> {
+    #[repr(transparent)]
+    pub struct WaitBoth<Out>(PhantomData<Out>);
+    
+    impl<Out> WaitBoth<Out> {
         #[inline]
-        pub const fn new<M, In>(_: &impl ReactorSystemConfigs<M, In=In, Out=Out>) -> WaitAll<Out> {
-            Self {
-                _m: PhantomData
-            }
+        pub const fn new<M, In>(_: &impl ReactorSystemConfigs<M, In=In, Out=Out>) -> WaitBoth<Out> {
+            Self(PhantomData)
         }
     }
 
-    macro_rules! wait_all_inner {
+    macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-            impl<$($lhs_out,)*> WaitAll<($($lhs_out,)*)>
+            impl<$($lhs_out,)*> WaitBoth<($($lhs_out,)*)>
                 where
                     $($lhs_out: Send + 'static,)*
             {
@@ -116,18 +113,18 @@ pub mod private {
         };
     }
 
-    wait_all_inner!(In1);
-    wait_all_inner!(In1,In2);
-    wait_all_inner!(In1,In2,In3);
-    wait_all_inner!(In1,In2,In3,In4);
-    wait_all_inner!(In1,In2,In3,In4,In5);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6,In7);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6,In7,In8);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6,In7,In8,In9);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11);
-    wait_all_inner!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11,In12);
+    impl_wait_both!(In1);
+    impl_wait_both!(In1,In2);
+    impl_wait_both!(In1,In2,In3);
+    impl_wait_both!(In1,In2,In3,In4);
+    impl_wait_both!(In1,In2,In3,In4,In5);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11);
+    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11,In12);
 }
 
 #[cfg(test)]

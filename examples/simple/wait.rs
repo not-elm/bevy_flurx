@@ -60,13 +60,14 @@ fn main() {
                 let wait_event = task.run(Update, wait::event::read::<Event2>()).await;
                 task.will(FixedUpdate, delay::time(Duration::from_secs(1))).await;
                 task.will(Update, once::event::send_default::<Event2>()).await;
+                wait_event.await;
                 println!("end [wait::event]");
                 // //============================================================
 
 
                 //=== [wait::select] Run until either of the two tasks is completed.
                 println!("start [wait::select] ..");
-                let wait_event = task.run(Update, wait::select(wait::event::comes::<Event1>(), wait::event::comes::<Event2>())).await;
+                let wait_event = task.run(Update, wait::either(wait::event::comes::<Event1>(), wait::event::comes::<Event2>())).await;
                 task.will(Update, delay::time(Duration::from_secs(1))).await;
                 task.will(Update, once::event::send_default::<Event2>()).await;
                 println!("{:?} came\n", wait_event.await);

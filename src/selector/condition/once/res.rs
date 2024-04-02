@@ -1,3 +1,9 @@
+//! [`once::res`] creates a task that only once run system related to [`Resource`](bevy::prelude::Resource).
+//!
+//! - [`once::res::init`]
+//! - [`once::res::insert`]
+//! - [`once::res::remove`]
+
 use bevy::prelude::{Commands, In, Resource};
 
 use crate::selector::condition::{once, ReactorSystemConfigs, with};

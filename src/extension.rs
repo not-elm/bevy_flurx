@@ -1,3 +1,5 @@
+//! Provides extension methods.
+
 use std::future::Future;
 
 use bevy::prelude::{Commands, World};
@@ -6,10 +8,20 @@ use crate::scheduler::ReactiveScheduler;
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 
+/// Provides a way to create a `Reactor` in the ecs systems. 
+///
+/// This trait is implemented in [`World`] and [`Commands`].
+/// 
+/// It is possible to create a `reactor` via [`Commands`], but please note that in that cause there will be delay
+/// because the command is entered into the command queue once and then the creation process is performed.  
+/// 
+/// [`World`]: bevy::prelude::World
+/// [`Commands`]: bevy::prelude::Commands
 pub trait ScheduleReactor<Fun, Fut, Out> {
+    /// Create a [`Reactor`].
+    /// [`Reactor`] represents the data flow 
     fn schedule_reactor(&mut self, f: Fun) -> Out;
 }
-
 
 impl<Fun, Fut> ScheduleReactor<Fun, Fut, ()> for World
     where
@@ -24,7 +36,6 @@ impl<Fun, Fut> ScheduleReactor<Fun, Fut, ()> for World
         scheduler.initialize(world_ptr);
     }
 }
-
 
 impl<'a, 'b, F, Fut> ScheduleReactor<F, Fut, ()> for Commands<'a, 'b>
     where

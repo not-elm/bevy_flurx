@@ -1,5 +1,11 @@
-use bevy::prelude::{In, World};
+//! [`once::non_send`] creates a task that only once run system related to [`non-send resources`](bevy::prelude::NonSend).
+//!
+//! - [`once::non_send::init`]
+//! - [`once::non_send::insert`]
+//! - [`once::non_send::remove`]
 
+
+use bevy::prelude::{In, World};
 use crate::selector::condition::{once, ReactorSystemConfigs, with};
 
 /// Once init a non-send resource.

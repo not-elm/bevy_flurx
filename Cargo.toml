@@ -52,8 +52,8 @@ redundant_else = "warn"
 match_same_arms = "warn"
 semicolon_if_nothing_returned = "warn"
 
-#[workspace.lints.rust]
-#missing_docs = "warn"
+[workspace.lints.rust]
+missing_docs = "warn"
 
 [lints]
 workspace = true

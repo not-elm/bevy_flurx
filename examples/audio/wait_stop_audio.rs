@@ -1,10 +1,14 @@
+//! This example shows how to wait for audio to stop.
+//! 
+//! Enjoy the sound of birds. 🐤
+
+
 use bevy::app::{App, Startup, Update};
 use bevy::asset::AssetServer;
 use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::DefaultPlugins;
 use bevy::log::info;
 use bevy::prelude::{AudioBundle, Commands, Entity, PlaybackSettings, Query, Res, World};
-
 use bevy_flurx::extension::ScheduleReactor;
 use bevy_flurx::prelude::*;
 
@@ -18,7 +22,6 @@ fn main() {
         .run();
 }
 
-
 fn setup(world: &mut World) {
     world.schedule_reactor(|task| async move {
         task.will(Update, once::run(play_audio)).await;
@@ -27,7 +30,6 @@ fn setup(world: &mut World) {
         task.will(Update, once::event::app_exit()).await;
     });
 }
-
 
 fn play_audio(
     mut commands: Commands,
@@ -38,7 +40,6 @@ fn play_audio(
         settings: PlaybackSettings::ONCE,
     });
 }
-
 
 fn stop_audio(
     mut commands: Commands,

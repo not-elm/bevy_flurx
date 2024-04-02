@@ -1,6 +1,12 @@
-use bevy::prelude::{Event, EventReader};
-use crate::prelude::{ReactorSystemConfigs, wait, with};
+//! [`wait::event`] creates a task related to waiting to receive events.
+//!
+//! - [`wait::event::comes`]
+//! - [`wait::event::read`]
 
+
+use bevy::prelude::{Event, EventReader};
+
+use crate::prelude::{ReactorSystemConfigs, wait, with};
 
 /// Waits until the specified event is sent
 ///

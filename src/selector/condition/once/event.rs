@@ -1,3 +1,10 @@
+//! [`once::event`] creates a task that only once run system related to [`Event`](bevy::prelude::Event).
+//!
+//! - [`once::event::send`]
+//! - [`once::event::send_default`]
+//! - [`once::event::app_exit`]
+
+
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
 

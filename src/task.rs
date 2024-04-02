@@ -1,3 +1,6 @@
+//! Create a task that runs the system until certain conditions are met.
+
+
 use std::future::Future;
 
 use bevy::ecs::schedule::ScheduleLabel;
@@ -7,10 +10,9 @@ use crate::selector::condition::ReactorSystemConfigs;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 
-pub struct ReactiveTask<'a> {
-    pub(crate) inner: flurx::task::ReactiveTask<'a, WorldPtr>,
-}
-
+/// Create a task that runs the system until certain conditions are met.
+#[repr(transparent)]
+pub struct ReactiveTask<'a>(pub(crate) flurx::task::ReactiveTask<'a, WorldPtr>);
 
 impl<'a> ReactiveTask<'a> {
     /// Create a new task.
@@ -44,10 +46,10 @@ impl<'a> ReactiveTask<'a> {
     /// app.update();
     ///```
     #[inline]
-    pub fn will<Label, In, Out, Marker>(
+    pub fn will<Label, In, Out, M>(
         &self,
         label: Label,
-        configs: impl ReactorSystemConfigs<Marker, In=In, Out=Out>,
+        configs: impl ReactorSystemConfigs<M, In=In, Out=Out>,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
@@ -55,11 +57,10 @@ impl<'a> ReactiveTask<'a> {
             Out: 'static
     {
         let (input, system) = configs.into_configs();
-        self.inner.will(WorldSelector::new(label, input, system))
+        self.0.will(WorldSelector::new(label, input, system))
     }
 
-
-    /// Create a  new initialized task.
+    /// Create a new initialized task.
     ///
     /// Unlike [`ReactiveTask::run`], returns a task that registered a system.
     ///
@@ -82,15 +83,15 @@ impl<'a> ReactiveTask<'a> {
     /// app.update();
     /// ```
     #[inline]
-    pub async fn run<Label, In, Out, Marker>(
+    pub async fn run<Label, In, Out, M>(
         &self,
         label: Label,
-        configs: impl ReactorSystemConfigs<Marker, In=In, Out=Out> + 'static,
+        configs: impl ReactorSystemConfigs<M, In=In, Out=Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
             In: Clone + Unpin + 'static,
-            Marker: 'static,
+            M: 'static,
             Out: 'static
     {
         let mut future = self.will(label, configs).polling();

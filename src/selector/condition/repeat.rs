@@ -1,3 +1,5 @@
+//! [`repeat`] is still under development.
+
 // use std::sync::atomic::{AtomicUsize, Ordering};
 // 
 // use bevy::prelude::{In, IntoSystem, World};

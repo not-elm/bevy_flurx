@@ -1,5 +1,9 @@
-use bevy::prelude::{In, NextState, ResMut, States, };
+//! [`once::state`] creates a task that only once run system related to [`States`](bevy::prelude::States).
+//!
+//! - [`once::state::set`]
 
+
+use bevy::prelude::{In, NextState, ResMut, States, };
 use crate::selector::condition::{once, ReactorSystemConfigs, with, WithInput};
 
 

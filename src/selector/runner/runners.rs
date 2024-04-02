@@ -10,7 +10,6 @@ pub(super) struct ReactorRunners<Label> {
     _m: PhantomData<Label>,
 }
 
-
 impl<Label> Default for ReactorRunners<Label>
     where Label: ScheduleLabel
 {
@@ -22,7 +21,6 @@ impl<Label> Default for ReactorRunners<Label>
         }
     }
 }
-
 
 impl<Label> ReactorRunners<Label>
     where Label: ScheduleLabel

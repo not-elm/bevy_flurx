@@ -1,12 +1,18 @@
-use bevy::prelude::{In, IntoSystem, System};
+//! [`once`] creates a task that only once run system.
+//!
+//! - [`once::res`](crate::prelude::once::res)
+//! - [`once::non_send`](crate::prelude::once::res)
+//! - [`once::event`](crate::prelude::once::res)
+//! - [`once::state`](crate::prelude::once::res)
 
+
+use bevy::prelude::{In, IntoSystem, System};
 use crate::prelude::{ReactorSystemConfigs, with, WithInput};
 
 pub mod res;
+pub mod non_send;
 pub mod event;
 pub mod state;
-pub mod non_send;
-
 
 
 /// Once run a system.
@@ -41,7 +47,6 @@ pub fn run<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Op
         Some(input.0)
     }))
 }
-
 
 /// Once run a system with input.
 ///

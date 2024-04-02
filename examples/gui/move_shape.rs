@@ -1,3 +1,7 @@
+//! A very simple 2D sprite movement example.
+//! 
+//! The sprite moves up and then to the right.
+
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
