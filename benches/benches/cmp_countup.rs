@@ -10,7 +10,7 @@ use bevy_flurx::prelude::{once, wait};
 
 #[derive(Resource, Default)]
 struct Exit(bool);
-const LIMIT: usize = 100;
+const LIMIT: usize = 1000;
 
 fn default_version(c: &mut Criterion) {
     c.bench_function("default_version", |b| {

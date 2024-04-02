@@ -6,10 +6,16 @@ description = "Benchmarks for Bevy engine"
 publish = false
 license = "MIT OR Apache-2.0"
 
+#[[bench]]
+#name = "cmp_countup"
+#path = "benches/cmp_countup.rs"
+#harness = false
+
 [[bench]]
-name = "cmp_count_up"
-path = "benches/cmp_count_up.rs"
+name = "cmp_repeat_countup"
+path = "benches/cmp_repeat_countup.rs"
 harness = false
+
 
 [dependencies]
 bevy = { version = "0.13.1", default-features = false }
