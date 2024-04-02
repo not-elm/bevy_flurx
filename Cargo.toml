@@ -39,6 +39,21 @@ futures-polling = "0.1.1"
 
 [dev-dependencies]
 bevy = { version = "0.13.1" }
-bevy_test_helper = { path = "../bevy_test_helper" }
+bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
 reqwest = "0.12.2"
 futures = "0.3.30"
+
+[workspace.lints.clippy]
+type_complexity = "allow"
+doc_markdown = "warn"
+manual_let_else = "warn"
+undocumented_unsafe_blocks = "warn"
+redundant_else = "warn"
+match_same_arms = "warn"
+semicolon_if_nothing_returned = "warn"
+
+#[workspace.lints.rust]
+#missing_docs = "warn"
+
+[lints]
+workspace = true
