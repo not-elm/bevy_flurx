@@ -1,3 +1,15 @@
+## v0.3.2-beta.0
+
+### Breaking changes
+
+- Rename `Select` to `Either`, and `wait::select` to `wait::either`
+
+### Other
+
+- Added comments
+- Added GitHub actions
+- Added Benchmark
+
 ## v0.3.1
 
 ### Update

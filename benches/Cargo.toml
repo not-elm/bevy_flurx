@@ -1,0 +1,17 @@
+[package]
+name = "benches"
+version = "0.1.0"
+edition = "2021"
+description = "Benchmarks for Bevy engine"
+publish = false
+license = "MIT OR Apache-2.0"
+
+[[bench]]
+name = "cmp_count_up"
+path = "benches/cmp_count_up.rs"
+harness = false
+
+[dependencies]
+bevy = { version = "0.13.1", default-features = false }
+bevy_flurx = { path = "../" }
+criterion = "0.5.1"
