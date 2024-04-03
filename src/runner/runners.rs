@@ -3,26 +3,26 @@ use std::marker::PhantomData;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 
-use crate::selector::runner::RunReactor;
+use crate::runner::RunTask;
 
-pub(super) struct ReactorRunners<Label> {
-    pub(super) systems: Vec<Box<dyn RunReactor>>,
+pub(super) struct TaskRunners<Label> {
+    pub(super) systems: Vec<Box<dyn RunTask>>,
     _m: PhantomData<Label>,
 }
 
-impl<Label> Default for ReactorRunners<Label>
+impl<Label> Default for TaskRunners<Label>
     where Label: ScheduleLabel
 {
     #[inline]
-    fn default() -> ReactorRunners<Label> {
-        ReactorRunners {
+    fn default() -> TaskRunners<Label> {
+        TaskRunners {
             systems: Vec::new(),
             _m: PhantomData,
         }
     }
 }
 
-impl<Label> ReactorRunners<Label>
+impl<Label> TaskRunners<Label>
     where Label: ScheduleLabel
 {
     pub(crate) fn run(&mut self, world: &mut World) -> bool {

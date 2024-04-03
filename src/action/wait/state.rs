@@ -5,7 +5,7 @@
 
 use bevy::prelude::{Res, State, States, };
 
-use crate::selector::condition::{ReactorSystemConfigs, wait, with};
+use crate::action::{ReactorAction, wait, with};
 
 /// Waits until the state becomes the specified.
 ///
@@ -39,7 +39,7 @@ use crate::selector::condition::{ReactorSystemConfigs, wait, with};
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
 #[inline]
-pub fn becomes<S>(state: S) -> impl ReactorSystemConfigs<In=(), Out=()>
+pub fn becomes<S>(state: S) -> impl ReactorAction<In=(), Out=()>
     where S: States + 'static
 {
     with((), wait::until(move |state_now: Res<State<S>>| {
@@ -55,7 +55,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, wait};
+    use crate::action::{once, wait};
 
     #[derive(States, Eq, PartialEq, Default, Copy, Clone, Hash, Debug)]
     enum TestState {

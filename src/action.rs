@@ -18,15 +18,15 @@ pub struct WithInput;
 pub struct WithoutInput;
 
 #[doc(hidden)]
-pub trait ReactorSystemConfigs<Marker = WithInput> {
+pub trait ReactorAction<Marker = WithInput> {
     type In;
 
     type Out;
 
-    fn into_configs(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>);
+    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>);
 }
 
-impl<In, Out, Sys> ReactorSystemConfigs<WithInput> for (In, Sys)
+impl<In, Out, Sys> ReactorAction<WithInput> for (In, Sys)
     where
         Sys: System<In=In, Out=Option<Out>>
 {
@@ -34,12 +34,12 @@ impl<In, Out, Sys> ReactorSystemConfigs<WithInput> for (In, Sys)
     type Out = Out;
 
     #[inline]
-    fn into_configs(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
+    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
         (self.0, self.1)
     }
 }
 
-impl<Out, Sys> ReactorSystemConfigs<WithoutInput> for Sys
+impl<Out, Sys> ReactorAction<WithoutInput> for Sys
     where
         Sys: System<In=(), Out=Option<Out>>
 {
@@ -47,31 +47,31 @@ impl<Out, Sys> ReactorSystemConfigs<WithoutInput> for Sys
     type Out = Out;
 
     #[inline]
-    fn into_configs(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
+    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
         ((), self)
     }
 }
 
 #[doc(hidden)]
-pub trait WithInputSystem<In, Out> {
-    fn with(self, input: In) -> impl ReactorSystemConfigs<WithInput, In=In, Out=Out>;
+pub trait WithInputAction<In, Out> {
+    fn with(self, input: In) -> impl ReactorAction<WithInput, In=In, Out=Out>;
 }
 
-impl<In, Out, Sys> WithInputSystem<In, Out> for Sys
+impl<In, Out, Sys> WithInputAction<In, Out> for Sys
     where
         In: Clone + 'static,
         Out: 'static,
         Sys: System<In=In, Out=Option<Out>>,
 {
     #[inline]
-    fn with(self, input: In) -> impl ReactorSystemConfigs<WithInput, In=In, Out=Out> {
+    fn with(self, input: In) -> impl ReactorAction<WithInput, In=In, Out=Out> {
         with(input, self)
     }
 }
 
 #[doc(hidden)]
 #[inline]
-pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl ReactorSystemConfigs<WithInput, In=Input, Out=Out>
+pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl ReactorAction<WithInput, In=Input, Out=Out>
     where
         Sys: System<In=Input, Out=Option<Out>>,
         Input: Clone + 'static,

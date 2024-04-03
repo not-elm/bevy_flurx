@@ -8,7 +8,7 @@
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
 
-use crate::selector::condition::{once, ReactorSystemConfigs, with};
+use crate::action::{once, ReactorAction, with};
 
 
 /// Once send an event.
@@ -28,7 +28,7 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with};
 /// app.update();
 /// ```
 #[inline]
-pub fn send<E>(event: E) -> impl ReactorSystemConfigs<In=E>
+pub fn send<E>(event: E) -> impl ReactorAction<In=E>
     where E: Event + Clone
 {
     with(event, once::run(|In(event): In<E>, mut w: EventWriter<E>| {
@@ -53,7 +53,7 @@ pub fn send<E>(event: E) -> impl ReactorSystemConfigs<In=E>
 /// app.update();
 /// ```
 #[inline]
-pub fn send_default<E>() -> impl ReactorSystemConfigs<In=()>
+pub fn send_default<E>() -> impl ReactorAction<In=()>
     where E: Event + Default
 {
     with((), once::run(|mut w: EventWriter<E>| {
@@ -78,7 +78,7 @@ pub fn send_default<E>() -> impl ReactorSystemConfigs<In=()>
 /// app.update();
 /// ```
 #[inline]
-pub fn app_exit() -> impl ReactorSystemConfigs<In=AppExit> {
+pub fn app_exit() -> impl ReactorAction<In=AppExit> {
     send(AppExit)
 }
 
@@ -90,7 +90,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::once;
+    use crate::action::once;
     use crate::tests::came_event;
 
     #[test]

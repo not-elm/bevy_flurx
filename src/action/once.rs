@@ -7,7 +7,7 @@
 
 
 use bevy::prelude::{In, IntoSystem, System};
-use crate::prelude::{ReactorSystemConfigs, with, WithInput};
+use crate::prelude::{ReactorAction, with, WithInput};
 
 pub mod res;
 pub mod non_send;
@@ -70,7 +70,7 @@ pub fn run<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Op
 /// app.update();
 /// ```
 #[inline]
-pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl ReactorSystemConfigs<WithInput, In=Input, Out=Out>
+pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl ReactorAction<WithInput, In=Input, Out=Out>
     where
         Sys: IntoSystem<Input, Out, Marker>,
         Input: Clone + 'static,

@@ -49,7 +49,7 @@ macro_rules! wait_all {
     ($t1: expr) => {$t};
     ($t1: expr, $t2: expr $(,$tasks: expr)*$(,)?)  => {
         {
-            let t = $crate::selector::condition::wait::both($t1, $t2);
+            let t = $crate::action::wait::both($t1, $t2);
             $(
             let t = $crate::prelude::wait::all::private::WaitBoth::new(&t).both(t, $tasks);
             )*
@@ -62,14 +62,14 @@ macro_rules! wait_all {
 pub mod private {
     use std::marker::PhantomData;
     use bevy::prelude::{In, IntoSystem, Local, World};
-    use crate::prelude::{ReactorSystemConfigs, WithInput};
+    use crate::prelude::{ReactorAction, WithInput};
 
     #[repr(transparent)]
     pub struct WaitBoth<Out>(PhantomData<Out>);
     
     impl<Out> WaitBoth<Out> {
         #[inline]
-        pub const fn new<M, In>(_: &impl ReactorSystemConfigs<M, In=In, Out=Out>) -> WaitBoth<Out> {
+        pub const fn new<M, In>(_: &impl ReactorAction<M, In=In, Out=Out>) -> WaitBoth<Out> {
             Self(PhantomData)
         }
     }
@@ -83,18 +83,18 @@ pub mod private {
                 #[allow(non_snake_case)]
                 pub fn both<LIn, LM, RIn, ROut, RM>(
                     &self,
-                    lhs: impl ReactorSystemConfigs<LM, In=LIn, Out=($($lhs_out,)*)> + 'static,
-                    rhs: impl ReactorSystemConfigs<RM, In=RIn, Out=ROut> + 'static,
-                ) -> impl ReactorSystemConfigs<WithInput, In=(LIn, RIn), Out=($($lhs_out,)* ROut)>
+                    lhs: impl ReactorAction<LM, In=LIn, Out=($($lhs_out,)*)> + 'static,
+                    rhs: impl ReactorAction<RM, In=RIn, Out=ROut> + 'static,
+                ) -> impl ReactorAction<WithInput, In=(LIn, RIn), Out=($($lhs_out,)* ROut)>
                     where
                         RIn: Clone + 'static,
                         LIn: Clone + 'static,
                         ROut: Send + 'static,
                 {
-                    let (l_in, mut l_sys) = lhs.into_configs();
-                    let (r_in, mut r_sys) = rhs.into_configs();
+                    let (l_in, mut l_sys) = lhs.split();
+                    let (r_in, mut r_sys) = rhs.split();
     
-                    $crate::selector::condition::with(
+                    $crate::action::with(
                         (l_in, r_in),
                         IntoSystem::into_system(
                             move |In((l_in, r_in)): In<(LIn, RIn)>,

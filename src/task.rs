@@ -6,7 +6,7 @@ use std::future::Future;
 use bevy::ecs::schedule::ScheduleLabel;
 use futures_polling::FuturePollingExt;
 
-use crate::selector::condition::ReactorSystemConfigs;
+use crate::action::ReactorAction;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 
@@ -49,14 +49,14 @@ impl<'a> ReactiveTask<'a> {
     pub fn will<Label, In, Out, M>(
         &self,
         label: Label,
-        configs: impl ReactorSystemConfigs<M, In=In, Out=Out>,
+        configs: impl ReactorAction<M, In=In, Out=Out>,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
             In: Clone + 'static,
             Out: 'static
     {
-        let (input, system) = configs.into_configs();
+        let (input, system) = configs.split();
         self.0.will(WorldSelector::new(label, input, system))
     }
 
@@ -86,7 +86,7 @@ impl<'a> ReactiveTask<'a> {
     pub async fn run<Label, In, Out, M>(
         &self,
         label: Label,
-        configs: impl ReactorSystemConfigs<M, In=In, Out=Out> + 'static,
+        configs: impl ReactorAction<M, In=In, Out=Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
@@ -108,7 +108,7 @@ mod tests {
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
     use crate::prelude::wait;
-    use crate::selector::condition::once;
+    use crate::action::once;
 
     #[test]
     fn run() {

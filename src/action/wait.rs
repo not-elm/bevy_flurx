@@ -10,7 +10,7 @@
 
 use bevy::prelude::{In, IntoSystem, Local, System, World};
 pub use either::*;
-use crate::prelude::{ReactorSystemConfigs, with, WithInput};
+use crate::prelude::{ReactorAction, with, WithInput};
 
 pub mod event;
 pub mod state;
@@ -130,17 +130,17 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// app.update();
 /// ```
 pub fn both<LI, LO, LM, RI, RO, RM>(
-    lhs: impl ReactorSystemConfigs<LM, In=LI, Out=LO> + 'static,
-    rhs: impl ReactorSystemConfigs<RM, In=RI, Out=RO> + 'static,
-) -> impl ReactorSystemConfigs<WithInput, In=(LI, RI), Out=(LO, RO)>
+    lhs: impl ReactorAction<LM, In=LI, Out=LO> + 'static,
+    rhs: impl ReactorAction<RM, In=RI, Out=RO> + 'static,
+) -> impl ReactorAction<WithInput, In=(LI, RI), Out=(LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,
         LO: Send + 'static,
         RO: Send + 'static,
 {
-    let (l_in, mut l_sys) = lhs.into_configs();
-    let (r_in, mut r_sys) = rhs.into_configs();
+    let (l_in, mut l_sys) = lhs.split();
+    let (r_in, mut r_sys) = rhs.split();
 
     with(
         (l_in, r_in),
@@ -211,8 +211,8 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, wait, with};
-    use crate::selector::condition::wait::until;
+    use crate::action::{once, wait, with};
+    use crate::action::wait::until;
     use crate::tests::test_app;
 
     #[test]

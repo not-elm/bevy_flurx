@@ -6,12 +6,9 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{IntoSystem, System, World};
 use flurx::selector::Selector;
 
-use crate::selector::runner::{initialize_reactor_runner, ReactorSystemOutput};
-use crate::selector::runner::standard::StandardReactorRunner;
+use crate::runner::{initialize_task_runner, TaskOutputMap};
+use crate::runner::standard::MultiTimesRunner;
 use crate::world_ptr::WorldPtr;
-
-pub mod condition;
-mod runner;
 
 
 pub(crate) struct WorldSelector<Label, Sys, In, Out> {
@@ -72,11 +69,11 @@ pub(crate) fn run_system<Label, Sys, In, Out>(
         system.initialize(world);
         system.apply_deferred(world);
         selector.system_type.set(Some(system.system_type_id()));
-        initialize_reactor_runner(world, selector.label.clone(), StandardReactorRunner::new(system, selector.input.clone()));
+        initialize_task_runner(world, selector.label.clone(), MultiTimesRunner::new(system, selector.input.clone()));
         None
     } else {
         let id = selector.system_type.get().unwrap();
-        let output = world.get_non_send_resource_mut::<ReactorSystemOutput<Out>>()?.extract_output(&id)?;
+        let output = world.get_non_send_resource_mut::<TaskOutputMap<Out>>()?.extract_output(&id)?;
         Some(output)
     }
 }

@@ -4,22 +4,21 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules, World};
 use bevy::utils::HashMap;
 
-use crate::selector::runner::runners::ReactorRunners;
+use crate::runner::runners::TaskRunners;
 
-pub(super) mod runners;
-pub(super) mod standard;
+pub(crate) mod runners;
+pub(crate) mod standard;
+pub(crate) mod once;
 
-
-pub(crate) trait RunReactor {
+pub(crate) trait RunTask {
     fn run(&mut self, world: &mut World) -> bool;
 }
 
 
 #[repr(transparent)]
-pub(crate) struct ReactorSystemOutput<Out>(HashMap<TypeId, Out>);
+pub(crate) struct TaskOutputMap<Out>(HashMap<TypeId, Out>);
 
-
-impl<Out> ReactorSystemOutput<Out> {
+impl<Out> TaskOutputMap<Out> {
     fn push(&mut self, id: TypeId, output: Out) {
         self.0.insert(id, output);
     }
@@ -29,20 +28,20 @@ impl<Out> ReactorSystemOutput<Out> {
     }
 }
 
-impl<Out> Default for ReactorSystemOutput<Out> {
+impl<Out> Default for TaskOutputMap<Out> {
     fn default() -> Self {
         Self(HashMap::new())
     }
 }
 
-pub(crate) fn initialize_reactor_runner<Label>(
+pub(crate) fn initialize_task_runner<Label>(
     world: &mut World,
     label: Label,
-    runner: impl RunReactor + 'static,
+    runner: impl RunTask + 'static,
 )
     where Label: ScheduleLabel + Clone
 {
-    if let Some(mut reactor) = world.get_non_send_resource_mut::<ReactorRunners<Label>>() {
+    if let Some(mut reactor) = world.get_non_send_resource_mut::<TaskRunners<Label>>() {
         reactor.systems.push(Box::new(runner));
     } else {
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
@@ -50,9 +49,9 @@ pub(crate) fn initialize_reactor_runner<Label>(
         };
 
         let schedule = initialize_schedule(&mut schedules, label);
-        schedule.add_systems(run_reactors::<Label>);
+        schedule.add_systems(run_task_runners::<Label>);
 
-        let mut reactor = ReactorRunners::<Label>::default();
+        let mut reactor = TaskRunners::<Label>::default();
         reactor.systems.push(Box::new(runner));
         world.insert_non_send_resource(reactor);
     }
@@ -68,8 +67,8 @@ fn initialize_schedule<Label>(schedules: &mut Schedules, schedule_label: Label) 
     schedules.get_mut(schedule_label.intern()).unwrap()
 }
 
-fn run_reactors<Label: ScheduleLabel>(world: &mut World) {
-    let Some(mut runner) = world.remove_non_send_resource::<ReactorRunners<Label>>() else {
+fn run_task_runners<Label: ScheduleLabel>(world: &mut World) {
+    let Some(mut runner) = world.remove_non_send_resource::<TaskRunners<Label>>() else {
         return;
     };
     runner.run(world);

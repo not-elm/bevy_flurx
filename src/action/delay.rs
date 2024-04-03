@@ -8,7 +8,7 @@ use std::time::Duration;
 use bevy::prelude::{Local, Res, TimerMode};
 use bevy::time::{Time, Timer};
 
-use crate::selector::condition::{ReactorSystemConfigs, wait, with};
+use crate::action::{ReactorAction, wait, with};
 
 
 /// Delays by the specified amount of time.
@@ -25,7 +25,7 @@ use crate::selector::condition::{ReactorSystemConfigs, wait, with};
 /// }
 /// ```
 #[inline]
-pub fn time(duration: Duration) -> impl ReactorSystemConfigs<In=(), Out=()> {
+pub fn time(duration: Duration) -> impl ReactorAction<In=(), Out=()> {
     let mut timer = Timer::new(duration, TimerMode::Once);
     with((), wait::until(move |time: Res<Time>| {
         timer
@@ -48,7 +48,7 @@ pub fn time(duration: Duration) -> impl ReactorSystemConfigs<In=(), Out=()> {
 /// }
 /// ```
 #[inline]
-pub fn frames(frames: usize) -> impl ReactorSystemConfigs<In=(), Out=()> {
+pub fn frames(frames: usize) -> impl ReactorAction<In=(), Out=()> {
     with((), wait::until(move |mut frame_now: Local<usize>| {
         *frame_now += 1;
         frames <= *frame_now
@@ -64,7 +64,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{delay, once};
+    use crate::action::{delay, once};
 
     #[test]
     fn delay_2frames() {

@@ -6,7 +6,7 @@
 
 use bevy::prelude::{Commands, In, Resource};
 
-use crate::selector::condition::{once, ReactorSystemConfigs, with};
+use crate::action::{once, ReactorAction, with};
 
 /// Once init a resource.
 ///
@@ -28,7 +28,7 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with};
 /// app.update();
 /// ```
 #[inline]
-pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
+pub fn init<R>() -> impl ReactorAction<In=(), Out=()>
     where R: Resource + Default + 'static
 {
     with((), once::run(|mut commands: Commands| {
@@ -56,7 +56,7 @@ pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
 /// app.update();
 /// ```
 #[inline]
-pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
+pub fn insert<R>(resource: R) -> impl ReactorAction<In=R, Out=()>
     where R: Resource + Clone + 'static
 {
     with(resource, once::run(|input: In<R>, mut commands: Commands| {
@@ -84,7 +84,7 @@ pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
 /// app.update();
 /// ```
 #[inline]
-pub fn remove<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
+pub fn remove<R>() -> impl ReactorAction<In=(), Out=()>
     where R: Resource + 'static
 {
     with((), once::run(|mut commands: Commands| {
@@ -100,7 +100,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::once::res;
+    use crate::action::once::res;
     use crate::tests::TestResource;
 
     #[test]

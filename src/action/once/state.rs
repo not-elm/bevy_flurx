@@ -4,7 +4,7 @@
 
 
 use bevy::prelude::{In, NextState, ResMut, States, };
-use crate::selector::condition::{once, ReactorSystemConfigs, with, WithInput};
+use crate::action::{once, ReactorAction, with, WithInput};
 
 
 /// Once set a next state.
@@ -32,7 +32,7 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with, WithInput};
 /// app.update();
 /// assert_eq!(*app.world.resource_ref::<State<S>>().get(), S::S2);
 /// ```
-pub fn set<S>(state: S) -> impl ReactorSystemConfigs<WithInput, In=S>
+pub fn set<S>(state: S) -> impl ReactorAction<WithInput, In=S>
     where S: States + 'static
 {
     with(state, once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {

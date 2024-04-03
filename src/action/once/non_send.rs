@@ -6,7 +6,7 @@
 
 
 use bevy::prelude::{In, World};
-use crate::selector::condition::{once, ReactorSystemConfigs, with};
+use crate::action::{once, ReactorAction, with};
 
 /// Once init a non-send resource.
 ///
@@ -28,7 +28,7 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with};
 /// app.update();
 /// ```
 #[inline]
-pub fn init<R>() -> impl ReactorSystemConfigs<In=()>
+pub fn init<R>() -> impl ReactorAction<In=()>
     where R: Default + 'static
 {
     with((), once::run(|world: &mut World| {
@@ -56,7 +56,7 @@ pub fn init<R>() -> impl ReactorSystemConfigs<In=()>
 /// app.update();
 /// ```
 #[inline]
-pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R>
+pub fn insert<R>(resource: R) -> impl ReactorAction<In=R>
     where R: Clone + 'static
 {
     with(resource, once::run(|In(resource): In<R>, world: &mut World| {
@@ -83,7 +83,7 @@ pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R>
 /// app.update();
 /// ```
 #[inline]
-pub fn remove<R>() -> impl ReactorSystemConfigs<In=()>
+pub fn remove<R>() -> impl ReactorAction<In=()>
     where R: 'static
 {
     with((), once::run(|world: &mut World| {
@@ -99,7 +99,7 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::once::non_send;
+    use crate::action::once::non_send;
     use crate::tests::TestResource;
 
     #[test]

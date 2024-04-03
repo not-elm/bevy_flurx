@@ -1,5 +1,5 @@
 use bevy::prelude::{In, IntoSystem, Local, System, World};
-use crate::selector::condition::{ReactorSystemConfigs, with, WithInput};
+use crate::action::{ReactorAction, with, WithInput};
 
 /// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -63,17 +63,17 @@ impl<L, R> Either<L, R> {
 pub fn either<
     LS, LI, LO, LM,
     RS, RI, RO, RM
->(lhs: LS, rhs: RS) -> impl ReactorSystemConfigs<WithInput, In=(LI, RI), Out=Either<LO, RO>>
+>(lhs: LS, rhs: RS) -> impl ReactorAction<WithInput, In=(LI, RI), Out=Either<LO, RO>>
     where
-        LS: ReactorSystemConfigs<LM, In=LI, Out=LO> + 'static,
-        RS: ReactorSystemConfigs<RM, In=RI, Out=RO> + 'static,
+        LS: ReactorAction<LM, In=LI, Out=LO> + 'static,
+        RS: ReactorAction<RM, In=RI, Out=RO> + 'static,
         LI: Clone + 'static,
         LO: 'static,
         RI: Clone + 'static,
         RO: 'static
 {
-    let (lin, mut l_system) = lhs.into_configs();
-    let (rin, mut r_system) = rhs.into_configs();
+    let (lin, mut l_system) = lhs.split();
+    let (rin, mut r_system) = rhs.split();
     with(
         (lin, rin),
         IntoSystem::into_system(move |In((lin, rin)): In<(LI, RI)>,
@@ -103,8 +103,8 @@ mod tests {
 
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, wait};
-    use crate::selector::condition::wait::{Either, output, until};
+    use crate::action::{once, wait};
+    use crate::action::wait::{Either, output, until};
 
     #[test]
     fn wait_either() {

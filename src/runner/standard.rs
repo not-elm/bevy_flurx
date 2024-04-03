@@ -2,21 +2,20 @@ use std::marker::PhantomData;
 
 use bevy::prelude::{IntoSystem, System, World};
 
-use crate::selector::runner::{ReactorSystemOutput, RunReactor};
+use crate::runner::{TaskOutputMap, RunTask};
 
-pub(crate) struct StandardReactorRunner<Sys, In, Out> {
+pub(crate) struct MultiTimesRunner<Sys, In, Out> {
     system: Sys,
     input: In,
-    _m: PhantomData<(In, Out)>,
+    _m: PhantomData<Out>,
 }
 
-
-impl<Sys, In, Out> StandardReactorRunner<Sys, In, Out> {
+impl<Sys, In, Out> MultiTimesRunner<Sys, In, Out> {
     #[inline]
     pub const fn new(
         system: Sys,
         input: In,
-    ) -> StandardReactorRunner<Sys, In, Out> {
+    ) -> MultiTimesRunner<Sys, In, Out> {
         Self {
             system,
             input,
@@ -25,7 +24,7 @@ impl<Sys, In, Out> StandardReactorRunner<Sys, In, Out> {
     }
 }
 
-impl<Sys, In, Out> RunReactor for StandardReactorRunner<Sys, In, Option<Out>>
+impl<Sys, In, Out> RunTask for MultiTimesRunner<Sys, In, Option<Out>>
     where
         Sys: System<In=In, Out=Option<Out>>,
         In: Clone + 'static,
@@ -35,8 +34,8 @@ impl<Sys, In, Out> RunReactor for StandardReactorRunner<Sys, In, Option<Out>>
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(output) = out {
-            world.init_non_send_resource::<ReactorSystemOutput<Out>>();
-            let mut map = world.remove_non_send_resource::<ReactorSystemOutput<Out>>().unwrap();
+            world.init_non_send_resource::<TaskOutputMap<Out>>();
+            let mut map = world.remove_non_send_resource::<TaskOutputMap<Out>>().unwrap();
             map.push(self.system.system_type_id(), output);
             world.insert_non_send_resource(map);
             true
