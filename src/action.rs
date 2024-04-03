@@ -15,6 +15,7 @@ pub mod once;
 pub mod wait;
 pub mod repeat;
 pub mod delay;
+mod sequence;
 
 #[doc(hidden)]
 pub struct WithInput;
@@ -28,9 +29,7 @@ pub trait TaskAction<Marker = WithInput> {
 
     type Out;
 
-    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>);
-
-    fn create_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask;
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask;
 }
 
 impl<Out, Sys> TaskAction<WithoutInput> for Sys
@@ -42,16 +41,10 @@ impl<Out, Sys> TaskAction<WithoutInput> for Sys
     type Out = Out;
 
     #[inline(always)]
-    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
-        ((), self)
-    }
-
-    #[inline(always)]
-    fn create_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
         MultiTimesRunner::new(self, (), output)
     }
 }
-
 
 #[inline(always)]
 pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl TaskAction<WithInput, In=Input, Out=Out>
@@ -73,15 +66,11 @@ impl<Sys, In, Out> TaskAction for WithAction<Sys, In, Out>
           Out: 'static
 {
     type In = In;
+
     type Out = Out;
 
     #[inline(always)]
-    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
-        (self.0, self.1)
-    }
-
-    #[inline(always)]
-    fn create_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
         MultiTimesRunner::new(self.1, self.0, output)
     }
 }

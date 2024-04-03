@@ -6,7 +6,7 @@ pub(crate) struct MultiTimesRunner<Sys, In, Out> {
     system: Sys,
     input: In,
     output: TaskOutput<Out>,
-    init: bool
+    init: bool,
 }
 
 impl<Sys, In, Out> MultiTimesRunner<Sys, In, Out> {
@@ -20,7 +20,7 @@ impl<Sys, In, Out> MultiTimesRunner<Sys, In, Out> {
             system,
             input,
             output,
-            init: false
+            init: false,
         }
     }
 }
@@ -32,7 +32,7 @@ impl<Sys, In, Out> RunTask for MultiTimesRunner<Sys, In, Out>
         Out: 'static
 {
     fn run(&mut self, world: &mut World) -> bool {
-        if !self.init{
+        if !self.init {
             self.system.initialize(world);
             self.init = true;
         }
@@ -40,7 +40,7 @@ impl<Sys, In, Out> RunTask for MultiTimesRunner<Sys, In, Out>
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(output) = out {
-            self.output.borrow_mut().replace(output);
+            self.output.replace(output);
             true
         } else {
             false

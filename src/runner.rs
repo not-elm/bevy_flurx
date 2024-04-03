@@ -9,9 +9,44 @@ use crate::runner::runners::TaskRunners;
 pub(crate) mod runners;
 pub(crate) mod multi_times;
 pub(crate) mod once;
+pub(crate) mod sequence;
+pub(crate) mod both;
+pub(crate) mod either;
 
 
-pub(crate) type TaskOutput<O> = Rc<RefCell<Option<O>>>;
+pub(crate) struct TaskOutput<O>(Rc<RefCell<Option<O>>>);
+
+impl<O> Clone for TaskOutput<O> {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
+impl<O> Default for TaskOutput<O> {
+    #[inline]
+    fn default() -> Self {
+        Self(Rc::new(RefCell::new(Option::None)))
+    }
+}
+
+impl<O> TaskOutput<O> {
+    #[inline]
+    pub fn replace(&self, o: O) {
+        self.0.borrow_mut().replace(o);
+    }
+
+    #[inline]
+    pub fn take(&self) -> Option<O> {
+        self.0.borrow_mut().take()
+    }
+
+    #[inline(always)]
+    pub fn is_none(&self) -> bool {
+        self.0.borrow().is_none()
+    }
+}
+
 
 pub trait RunTask {
     fn run(&mut self, world: &mut World) -> bool;

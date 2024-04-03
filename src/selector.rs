@@ -1,6 +1,5 @@
-use std::cell::{Cell, RefCell};
+use std::cell::Cell;
 use std::marker::PhantomData;
-use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
@@ -29,7 +28,7 @@ impl<Label, M, Action, In, Out> WorldSelector<Label, Action, In, Out, M>
     pub(crate) fn new(label: Label, action: Action) -> WorldSelector<Label, Action, In, Out, M> {
         Self {
             action: Cell::new(Option::Some(action)),
-            output: Rc::new(RefCell::new(Option::None)),
+            output: TaskOutput::default(),
             label,
             _m: PhantomData,
         }
@@ -50,11 +49,11 @@ impl<Label, M, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Acti
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
         let world: &mut World = world.as_mut();
         if let Some(action) = self.action.take() {
-            let runner = action.create_runner(self.output.clone());
+            let runner = action.to_runner(self.output.clone());
             initialize_task_runner(world, self.label.clone(), runner);
             None
         } else {
-            let output = self.output.borrow_mut().take()?;
+            let output = self.output.take()?;
             Some(output)
         }
     }

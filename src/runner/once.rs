@@ -43,7 +43,7 @@ impl<Sys, In, Out> RunTask for OnceRunner<Sys, In, Out>
         let out = self.system.run(input, world);
         self.system.apply_deferred(world);
         if let Some(output) = out {
-            self.output.borrow_mut().replace(output);
+            self.output.replace(output);
             true
         } else {
             false

@@ -84,7 +84,7 @@ pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl Task
     })), PhantomData)
 }
 
-struct OnceAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
+pub(crate) struct OnceAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
     where In: 'static,
           Sys: System<In=In, Out=Option<Out>>;
 
@@ -97,11 +97,7 @@ impl<Sys, In, Out> TaskAction for OnceAction<Sys, In, Out>
     type In = In;
     type Out = Out;
 
-    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
-        (self.0, self.1)
-    }
-
-    fn create_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
         OnceRunner::new(self.1, self.0, output)
     }
 }

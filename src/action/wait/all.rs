@@ -51,7 +51,7 @@ macro_rules! wait_all {
         {
             let t = $crate::action::wait::both($t1, $t2);
             $(
-            let t = $crate::prelude::wait::all::private::WaitBoth::new(&t).both(t, $tasks);
+            let t = $crate::prelude::wait::all::private::FlatBothRunner::new(t, $tasks);
             )*
             t
         }
@@ -62,54 +62,86 @@ macro_rules! wait_all {
 pub mod private {
     use std::marker::PhantomData;
 
-    use bevy::prelude::{In, IntoSystem, Local, World};
+    use bevy::prelude::World;
 
-    use crate::prelude::{TaskAction, WithInput};
+    use crate::action::TaskAction;
+    use crate::runner::{RunTask, TaskOutput};
 
-    #[repr(transparent)]
-    pub struct WaitBoth<Out>(PhantomData<Out>);
+    trait RunBoth<O> {
+        fn run_both(&mut self, output: &mut TaskOutput<O>, world: &mut World) -> bool;
+    }
 
-    impl<Out> WaitBoth<Out> {
+    impl<O, R: RunBoth<O>> RunTask for (TaskOutput<O>, R) {
         #[inline(always)]
-        pub const fn new<M, In>(_: &impl TaskAction<M, In=In, Out=Out>) -> WaitBoth<Out> {
-            Self(PhantomData)
+        fn run(&mut self, world: &mut World) -> bool {
+            self.1.run_both(&mut self.0, world)
+        }
+    }
+
+    pub struct FlatBothRunner<I1, I2, O1, O2, M1, M2> {
+        r1: Box<dyn RunTask>,
+        r2: Box<dyn RunTask>,
+        o1: TaskOutput<O1>,
+        o2: TaskOutput<O2>,
+        _m: PhantomData<(I1, I2, M1, M2)>,
+    }
+
+    impl<I1, I2, O1, O2, M1, M2> FlatBothRunner<I1, I2, O1, O2, M1, M2> {
+        #[inline]
+        pub fn new(
+            a1: impl TaskAction<M1, In=I1, Out=O1> + 'static,
+            a2: impl TaskAction<M2, In=I2, Out=O2> + 'static,
+        ) -> FlatBothRunner<I1, I2, O1, O2, M1, M2>
+            where
+                M1: 'static,
+                M2: 'static
+        {
+            let o1 = TaskOutput::default();
+            let o2 = TaskOutput::default();
+            let r1 = a1.to_runner(o1.clone());
+            let r2 = a2.to_runner(o2.clone());
+            Self {
+                r1: Box::new(r1),
+                r2: Box::new(r2),
+                o1,
+                o2,
+                _m: PhantomData,
+            }
         }
     }
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-            impl<$($lhs_out,)*> WaitBoth<($($lhs_out,)*)>
-                where
-                    $($lhs_out: Send + 'static,)*
-            {
-                #[allow(non_snake_case)]
-                pub fn both<LIn, LM, RIn, ROut, RM>(
-                    &self,
-                    lhs: impl TaskAction<LM, In=LIn, Out=($($lhs_out,)*)> + 'static,
-                    rhs: impl TaskAction<RM, In=RIn, Out=ROut> + 'static,
-                ) -> impl TaskAction<WithInput, In=(LIn, RIn), Out=($($lhs_out,)* ROut)>
-                    where
-                        RIn: Clone + 'static,
-                        LIn: Clone + 'static,
-                        ROut: Send + 'static,
-                {
-                    let (l_in, mut l_sys) = lhs.split();
-                    let (r_in, mut r_sys) = rhs.split();
-    
-                    $crate::action::with(
-                        (l_in, r_in),
-                        IntoSystem::into_system(
-                            move |In((l_in, r_in)): In<(LIn, RIn)>,
-                                  world: &mut World,
-                                  mut init: Local<bool>,
-                                  mut l_out: Local<Option<($($lhs_out,)*)>>,
-                                  mut r_out: Local<Option<ROut>>| {
-                                $crate::prelude::wait::both_init_systems(&mut init, world, &mut l_sys, &mut r_sys);
-                                let (($($lhs_out,)*), r_out) = $crate::prelude::wait::both_run_systems(world, l_in, &mut l_sys, &mut l_out, r_in, &mut r_sys, &mut r_out)?;
-                                Some(($($lhs_out,)* r_out))
-                            },
-                        ),
-                    )
+              impl<I1, I2, $($lhs_out,)* O2, M1, M2> TaskAction for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2>
+              {
+                    type In = (I1, I2);
+                    type Out = ($($lhs_out,)* O2);
+
+                    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+                        (output, self)
+                    }
+              }
+
+            impl<I1, I2, $($lhs_out,)* O2, M1, M2> RunBoth<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
+                  #[allow(non_snake_case)]
+                  fn run_both(&mut self,  output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut World) -> bool {
+                    if self.o1.is_none(){
+                        self.r1.run(world);
+                    }
+                    if self.o2.is_none(){
+                        self.r2.run(world);
+                    }
+                    if let Some(($($lhs_out,)*)) = self.o1.take(){
+                        if let Some(out2) = self.o2.take(){
+                            output.replace(($($lhs_out,)* out2));
+                            true
+                        }else{
+                            self.o1.replace(($($lhs_out,)*));
+                            false
+                        }
+                    }else{
+                        false
+                    }
                 }
             }
         };
