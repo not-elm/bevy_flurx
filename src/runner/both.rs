@@ -4,6 +4,7 @@ use bevy::prelude::World;
 
 use crate::action::TaskAction;
 use crate::runner::{RunTask, TaskOutput};
+use crate::runner::macros::output_combine;
 
 pub(crate) struct BothRunner<I1, I2, O1, O2, M1, M2> {
     r1: Box<dyn RunTask>,
@@ -48,16 +49,6 @@ impl<I1, I2, O1, O2, M1, M2> RunTask for BothRunner<I1, I2, O1, O2, M1, M2> {
         if self.o2.is_none() {
             self.r2.run(world);
         }
-        if let Some(out1) = self.o1.take() {
-            if let Some(out2) = self.o2.take() {
-                self.output.replace((out1, out2));
-                true
-            } else {
-                self.o1.replace(out1);
-                false
-            }
-        } else {
-            false
-        }
+        output_combine!(&self.o1, &self.o2, &self.output)
     }
 }

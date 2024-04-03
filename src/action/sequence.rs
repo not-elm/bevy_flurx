@@ -1,40 +1,100 @@
-
-use crate::prelude::TaskAction;
-
+#[macro_export]
 macro_rules! sequence {
-    ($action: expr) => {$action};
-    ($action1: expr, $action2: expr $(,$action: expr)*$(,)?) => {
-        
+    ($action: expr $(,)?) => {$action};
+    ($action1: expr, $action2: expr $(,$action: expr)*$(,)?)  => {
+        {
+            let a = $crate::private::SequenceRunner::new($crate::action::to_tuple($action1), $action2);
+            $(
+            let a = $crate::private::SequenceRunner::new(a, $action);
+            )*
+            a
+        }
     };
 }
 
-pub trait Then<In, Out> {
-    fn then<O>(self, next: impl TaskAction<In=Out, Out=O>) -> impl TaskAction<In=In, Out=O>;
+#[cfg(test)]
+mod tests {
+    use bevy::app::{AppExit, Startup, Update};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::{EventWriter, ResMut, Resource, World};
+    use bevy_test_helper::event::TestEvent1;
+
+    use crate::action::{once, wait};
+    use crate::extension::ScheduleReactor;
+    use crate::tests::test_app;
+
+    #[test]
+    fn one() {
+        let mut app = test_app();
+        app
+            .add_systems(Startup, |world: &mut World| {
+                world.schedule_reactor(|task| async move {
+                    task.will(Update, sequence! {
+                        once::non_send::insert(AppExit)
+                    }).await;
+                });
+            });
+
+        app.update();
+        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+    }
+
+    #[test]
+    fn two() {
+        let mut app = test_app();
+
+        app
+            .add_systems(Startup, |world: &mut World| {
+                world.schedule_reactor(|task| async move {
+                    task.will(Update, sequence! {
+                        wait::event::read::<TestEvent1>(),
+                        once::non_send::insert(AppExit)
+                    }).await;
+                });
+            });
+
+        app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        app.update();
+        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+    }
+
+    #[test]
+    fn three() {
+        let mut app = test_app();
+        #[derive(Resource, Default)]
+        struct Count1(usize);
+
+        #[derive(Resource, Default)]
+        struct Count2(usize);
+
+        app
+            .init_resource::<Count1>()
+            .init_resource::<Count2>()
+            .add_systems(Startup, |world: &mut World| {
+                world.schedule_reactor(|task| async move {
+                    task.will(Update, sequence! {
+                        once::run(|mut c:  ResMut<Count1>|{
+                            c.0 += 1;
+                        }),
+                        wait::until(|mut c:  ResMut<Count2>|{
+                            c.0 += 1;
+                            c.0 == 2
+                        }),
+                        once::non_send::insert(AppExit)
+                    }).await;
+                });
+            });
+        app.update();
+        assert_eq!(app.world.resource::<Count1>().0, 1);
+        assert_eq!(app.world.resource::<Count2>().0, 1);
+        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        
+        app.update();
+        assert_eq!(app.world.resource::<Count1>().0, 1);
+        assert_eq!(app.world.resource::<Count2>().0, 2);
+        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+    }
 }
-
-pub struct ThenAction<First, Second> {
-    first: First,
-    second: Second,
-}
-
-// impl<
-//     First, I1, O1,
-//     Second, O2
-// > TaskAction for ThenAction<First, Second>
-//     where
-//         First: TaskAction<In=I1, Out=O1>,
-//         Second: TaskAction<In=O1, Out=O2>
-// {
-//     type In = I1;
-//
-//     type Out = O2;
-//
-//     fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
-//         let o = Rc::new()
-//     }
-// }
-
-
 
 
 

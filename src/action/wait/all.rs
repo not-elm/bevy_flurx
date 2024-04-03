@@ -46,37 +46,26 @@
 /// ```
 #[macro_export]
 macro_rules! wait_all {
-    ($t1: expr) => {$t};
-    ($t1: expr, $t2: expr $(,$tasks: expr)*$(,)?)  => {
+    ($action: expr $(,)?) => {$action};
+    ($action1: expr, $action2: expr $(,$action: expr)*$(,)?)  => {
         {
-            let t = $crate::action::wait::both($t1, $t2);
+            let a = $crate::action::wait::both($action1, $action2);
             $(
-            let t = $crate::prelude::wait::all::private::FlatBothRunner::new(t, $tasks);
+            let a = $crate::prelude::wait::all::private::FlatBothRunner::new(a, $action);
             )*
-            t
+            a
         }
     };
 }
 
 #[doc(hidden)]
+#[allow(non_snake_case)]
 pub mod private {
     use std::marker::PhantomData;
 
-    use bevy::prelude::World;
-
     use crate::action::TaskAction;
-    use crate::runner::{RunTask, TaskOutput};
-
-    trait RunBoth<O> {
-        fn run_both(&mut self, output: &mut TaskOutput<O>, world: &mut World) -> bool;
-    }
-
-    impl<O, R: RunBoth<O>> RunTask for (TaskOutput<O>, R) {
-        #[inline(always)]
-        fn run(&mut self, world: &mut World) -> bool {
-            self.1.run_both(&mut self.0, world)
-        }
-    }
+    use crate::runner::{RunTask, RunWithTaskOutput, TaskOutput};
+    use crate::runner::macros::impl_tuple_runner;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, M1, M2> {
         r1: Box<dyn RunTask>,
@@ -112,19 +101,19 @@ pub mod private {
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-              impl<I1, I2, $($lhs_out,)* O2, M1, M2> TaskAction for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2>
-              {
+              impl<I1, I2, $($lhs_out,)* O2, M1, M2> TaskAction for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
                     type In = (I1, I2);
                     type Out = ($($lhs_out,)* O2);
 
+                    #[inline(always)]
                     fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
                         (output, self)
                     }
               }
 
-            impl<I1, I2, $($lhs_out,)* O2, M1, M2> RunBoth<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
+            impl<I1, I2, $($lhs_out,)* O2, M1, M2> RunWithTaskOutput<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
                   #[allow(non_snake_case)]
-                  fn run_both(&mut self,  output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut World) -> bool {
+                  fn run_with_task_output(&mut self, output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut bevy::prelude::World) -> bool {
                     if self.o1.is_none(){
                         self.r1.run(world);
                     }
@@ -147,18 +136,7 @@ pub mod private {
         };
     }
 
-    impl_wait_both!(In1);
-    impl_wait_both!(In1,In2);
-    impl_wait_both!(In1,In2,In3);
-    impl_wait_both!(In1,In2,In3,In4);
-    impl_wait_both!(In1,In2,In3,In4,In5);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11);
-    impl_wait_both!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11,In12);
+    impl_tuple_runner!(impl_wait_both);
 }
 
 #[cfg(test)]
@@ -178,13 +156,14 @@ mod tests {
         app
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    let t1 = wait::event::read::<TestEvent1>();
-                    let t2 = wait::event::read::<TestEvent2>();
-                    let count = wait::until(|mut c: Local<usize>| {
-                        *c += 1;
-                        *c == 3
-                    });
-                    let (event1, event2, ..) = task.will(Update, wait_all!(t1, t2, count)).await;
+                    let (event1, event2, ..) = task.will(Update, wait_all!(
+                        wait::event::read::<TestEvent1>(),
+                        wait::event::read::<TestEvent2>(),
+                        wait::until(|mut c: Local<usize>| {
+                            *c += 1;
+                            *c == 3
+                        })
+                    )).await;
                     assert_eq!(event1, TestEvent1);
                     assert_eq!(event2, TestEvent2);
                     task.will(Update, once::non_send::insert(AppExit)).await;

@@ -97,6 +97,7 @@ impl<Sys, In, Out> TaskAction for OnceAction<Sys, In, Out>
     type In = In;
     type Out = Out;
 
+    #[inline]
     fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
         OnceRunner::new(self.1, self.0, output)
     }

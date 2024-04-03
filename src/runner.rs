@@ -31,14 +31,19 @@ impl<O> Default for TaskOutput<O> {
 }
 
 impl<O> TaskOutput<O> {
-    #[inline]
+    #[inline(always)]
     pub fn replace(&self, o: O) {
         self.0.borrow_mut().replace(o);
     }
 
-    #[inline]
+    #[inline(always)]
     pub fn take(&self) -> Option<O> {
         self.0.borrow_mut().take()
+    }
+
+    #[inline(always)]
+    pub fn is_some(&self) -> bool {
+        self.0.borrow().is_some()
     }
 
     #[inline(always)]
@@ -93,4 +98,65 @@ fn run_task_runners<Label: ScheduleLabel>(world: &mut World) {
     world.insert_non_send_resource(runner);
 }
 
+pub(crate) trait RunWithTaskOutput<O> {
+    fn run_with_task_output(&mut self, output: &mut TaskOutput<O>, world: &mut World) -> bool;
+}
 
+impl<O, R: RunWithTaskOutput<O>> RunTask for (TaskOutput<O>, R) {
+    #[inline(always)]
+    fn run(&mut self, world: &mut World) -> bool {
+        self.1.run_with_task_output(&mut self.0, world)
+    }
+}
+
+pub(crate) mod macros {
+    macro_rules! output_combine {
+        ($o1: expr, $o2: expr, $output: expr $(,)?) => {
+            if let Some(out1) = $o1.take() {
+                if let Some(out2) = $o2.take() {
+                    $output.replace((out1, out2));
+                    true
+                } else {
+                    $o1.replace(out1);
+                    false
+                }
+            } else {
+                false
+            }
+        };
+
+        ($o1: expr, $o2: expr, $output: expr $(,$out: ident)*) => {
+            if let Some(($($out,)*)) = $o1.take() {
+                if let Some(out2) = $o2.take() {
+                    $output.replace(($($out,)* out2));
+                    true
+                } else {
+                    $o1.replace(($($out,)*));
+                    false
+                }
+            } else {
+                false
+            }
+        };
+    }
+
+    macro_rules! impl_tuple_runner {
+        ($impl_macro: ident) => {
+            $impl_macro!(In1);
+            $impl_macro!(In1,In2);
+            $impl_macro!(In1,In2,In3);
+            $impl_macro!(In1,In2,In3,In4);
+            $impl_macro!(In1,In2,In3,In4,In5);
+            $impl_macro!(In1,In2,In3,In4,In5,In6);
+            $impl_macro!(In1,In2,In3,In4,In5,In6,In7);
+            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8);
+            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9);
+            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10);
+            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11);
+            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11,In12);
+        };
+    }
+
+    pub(crate) use output_combine;
+    pub(crate) use impl_tuple_runner;
+}

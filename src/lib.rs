@@ -38,6 +38,12 @@ pub mod prelude {
         action::*,
     };
 }
+#[doc(hidden)]
+pub mod private{
+    pub use crate::{
+        runner::sequence::SequenceRunner
+    };
+}
 mod world_ptr;
 mod scheduler;
 mod runner;
