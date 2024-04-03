@@ -6,7 +6,7 @@ use bevy::prelude::World;
 use crate::runner::RunTask;
 
 pub(super) struct TaskRunners<Label> {
-    pub(super) systems: Vec<Box<dyn RunTask>>,
+    pub(super) runners: Vec<Box<dyn RunTask>>,
     _m: PhantomData<Label>,
 }
 
@@ -16,7 +16,7 @@ impl<Label> Default for TaskRunners<Label>
     #[inline]
     fn default() -> TaskRunners<Label> {
         TaskRunners {
-            systems: Vec::new(),
+            runners: Vec::new(),
             _m: PhantomData,
         }
     }
@@ -26,8 +26,8 @@ impl<Label> TaskRunners<Label>
     where Label: ScheduleLabel
 {
     pub(crate) fn run(&mut self, world: &mut World) -> bool {
-        let mut pending = Vec::with_capacity(self.systems.len());
-        while let Some(mut runner) = self.systems.pop() {
+        let mut pending = Vec::with_capacity(self.runners.len());
+        while let Some(mut runner) = self.runners.pop() {
             if !runner.run(world) {
                 pending.push(runner);
             }
@@ -35,7 +35,7 @@ impl<Label> TaskRunners<Label>
         if pending.is_empty() {
             true
         } else {
-            self.systems = pending;
+            self.runners = pending;
             false
         }
     }

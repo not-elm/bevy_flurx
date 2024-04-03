@@ -6,8 +6,12 @@
 //! - [`once::state`](crate::prelude::once::res)
 
 
+use std::marker::PhantomData;
 use bevy::prelude::{In, IntoSystem, System};
-use crate::prelude::{ReactorAction, with, WithInput};
+
+use crate::prelude::{TaskAction, WithInput};
+use crate::runner::{RunTask, TaskOutput};
+use crate::runner::once::OnceRunner;
 
 pub mod res;
 pub mod non_send;
@@ -36,16 +40,15 @@ pub mod state;
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn run<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
+#[inline(always)]
+pub fn run<Sys, Out, M>(system: Sys) -> impl TaskAction<In=(), Out=Out>
     where
-        Sys: IntoSystem<Input, Out, Marker>,
-        Input: 'static,
+        Sys: IntoSystem<(), Out, M>,
         Out: 'static
 {
-    IntoSystem::into_system(system.pipe(|input: In<Out>| {
+    OnceAction((), IntoSystem::into_system(system.pipe(|input: In<Out>| {
         Some(input.0)
-    }))
+    })), PhantomData)
 }
 
 /// Once run a system with input.
@@ -69,13 +72,37 @@ pub fn run<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Op
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl ReactorAction<WithInput, In=Input, Out=Out>
+#[inline(always)]
+pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl TaskAction<WithInput, In=Input, Out=Out>
     where
         Sys: IntoSystem<Input, Out, Marker>,
-        Input: Clone + 'static,
+        Input: 'static,
         Out: 'static
 {
-    with(input, run(system))
+    OnceAction(input, IntoSystem::into_system(system.pipe(|input: In<Out>| {
+        Some(input.0)
+    })), PhantomData)
+}
+
+struct OnceAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
+    where In: 'static,
+          Sys: System<In=In, Out=Option<Out>>;
+
+impl<Sys, In, Out> TaskAction for OnceAction<Sys, In, Out>
+    where In: 'static,
+          Out: 'static,
+          Sys: System<In=In, Out=Option<Out>>,
+
+{
+    type In = In;
+    type Out = Out;
+
+    fn split(self) -> (Self::In, impl System<In=Self::In, Out=Option<Self::Out>>) {
+        (self.0, self.1)
+    }
+
+    fn create_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+        OnceRunner::new(self.1, self.0, output)
+    }
 }
 

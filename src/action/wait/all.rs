@@ -61,15 +61,17 @@ macro_rules! wait_all {
 #[doc(hidden)]
 pub mod private {
     use std::marker::PhantomData;
+
     use bevy::prelude::{In, IntoSystem, Local, World};
-    use crate::prelude::{ReactorAction, WithInput};
+
+    use crate::prelude::{TaskAction, WithInput};
 
     #[repr(transparent)]
     pub struct WaitBoth<Out>(PhantomData<Out>);
-    
+
     impl<Out> WaitBoth<Out> {
-        #[inline]
-        pub const fn new<M, In>(_: &impl ReactorAction<M, In=In, Out=Out>) -> WaitBoth<Out> {
+        #[inline(always)]
+        pub const fn new<M, In>(_: &impl TaskAction<M, In=In, Out=Out>) -> WaitBoth<Out> {
             Self(PhantomData)
         }
     }
@@ -83,9 +85,9 @@ pub mod private {
                 #[allow(non_snake_case)]
                 pub fn both<LIn, LM, RIn, ROut, RM>(
                     &self,
-                    lhs: impl ReactorAction<LM, In=LIn, Out=($($lhs_out,)*)> + 'static,
-                    rhs: impl ReactorAction<RM, In=RIn, Out=ROut> + 'static,
-                ) -> impl ReactorAction<WithInput, In=(LIn, RIn), Out=($($lhs_out,)* ROut)>
+                    lhs: impl TaskAction<LM, In=LIn, Out=($($lhs_out,)*)> + 'static,
+                    rhs: impl TaskAction<RM, In=RIn, Out=ROut> + 'static,
+                ) -> impl TaskAction<WithInput, In=(LIn, RIn), Out=($($lhs_out,)* ROut)>
                     where
                         RIn: Clone + 'static,
                         LIn: Clone + 'static,
@@ -164,6 +166,30 @@ mod tests {
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 
         app.world.run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
+        app.update();
+        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+
+        app.update();
+        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+    }
+
+    #[test]
+    fn wait_all_with_once() {
+        let mut app = test_app();
+        app
+            .add_systems(Startup, |world: &mut World| {
+                world.schedule_reactor(|task| async move {
+                    let (event1, ..) = task.will(Update, wait_all!(
+                        wait::event::read::<TestEvent1>(),
+                        once::run(||{
+
+                        })
+                    )).await;
+                    assert_eq!(event1, TestEvent1);
+                    task.will(Update, once::non_send::insert(AppExit)).await;
+                });
+            });
+        app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 

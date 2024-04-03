@@ -6,7 +6,8 @@
 
 
 use bevy::prelude::{In, World};
-use crate::action::{once, ReactorAction, with};
+
+use crate::action::{once, TaskAction};
 
 /// Once init a non-send resource.
 ///
@@ -27,13 +28,13 @@ use crate::action::{once, ReactorAction, with};
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn init<R>() -> impl ReactorAction<In=()>
+#[inline(always)]
+pub fn init<R>() -> impl TaskAction<In=(), Out=()>
     where R: Default + 'static
 {
-    with((), once::run(|world: &mut World| {
+    once::run(|world: &mut World| {
         world.init_non_send_resource::<R>();
-    }))
+    })
 }
 
 /// Once insert a non-send resource.
@@ -55,13 +56,13 @@ pub fn init<R>() -> impl ReactorAction<In=()>
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn insert<R>(resource: R) -> impl ReactorAction<In=R>
-    where R: Clone + 'static
+#[inline(always)]
+pub fn insert<R>(resource: R) -> impl TaskAction<In=R, Out=()>
+    where R: 'static
 {
-    with(resource, once::run(|In(resource): In<R>, world: &mut World| {
+    once::run_with(resource, |In(resource): In<R>, world: &mut World| {
         world.insert_non_send_resource(resource);
-    }))
+    })
 }
 
 /// Once remove a non-send resource.
@@ -82,13 +83,13 @@ pub fn insert<R>(resource: R) -> impl ReactorAction<In=R>
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn remove<R>() -> impl ReactorAction<In=()>
+#[inline(always)]
+pub fn remove<R>() -> impl TaskAction<In=(), Out=()>
     where R: 'static
 {
-    with((), once::run(|world: &mut World| {
+    once::run(|world: &mut World| {
         world.remove_non_send_resource::<R>();
-    }))
+    })
 }
 
 
@@ -97,9 +98,9 @@ mod tests {
     use bevy::app::{App, AppExit, First, Startup};
     use bevy::prelude::World;
 
+    use crate::action::once::non_send;
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::action::once::non_send;
     use crate::tests::TestResource;
 
     #[test]

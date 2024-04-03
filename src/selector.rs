@@ -1,82 +1,66 @@
-use std::any::TypeId;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
+use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{IntoSystem, System, World};
+use bevy::prelude::World;
 use flurx::selector::Selector;
 
-use crate::runner::{initialize_task_runner, TaskOutputMap};
-use crate::runner::standard::MultiTimesRunner;
+use crate::action::TaskAction;
+use crate::runner::{initialize_task_runner, TaskOutput};
 use crate::world_ptr::WorldPtr;
 
-
-pub(crate) struct WorldSelector<Label, Sys, In, Out> {
-    system: Cell<Option<Sys>>,
-    system_type: Cell<Option<TypeId>>,
-    input: In,
+pub(crate) struct WorldSelector<Label, Action, In, Out, M> {
+    action: Cell<Option<Action>>,
+    output: TaskOutput<Out>,
     label: Label,
-    _m: PhantomData<Out>,
+    _m: PhantomData<(In, M)>,
 }
 
-impl<Label, Sys, In, Out> WorldSelector<Label, Sys, In, Out>
+impl<Label, M, Action, In, Out> WorldSelector<Label, Action, In, Out, M>
     where
         Label: ScheduleLabel + Clone,
-        Sys: System<In=In, Out=Option<Out>>,
+        Action: TaskAction<M, In=In, Out=Out>,
         In: 'static,
-        Out: 'static
+        Out: 'static,
+        M: 'static,
 {
     #[inline]
-    pub(crate) fn new(label: Label, input: In, system: Sys) -> WorldSelector<Label, Sys, In, Out> {
+    pub(crate) fn new(label: Label, action: Action) -> WorldSelector<Label, Action, In, Out, M> {
         Self {
-            system: Cell::new(Some(system)),
-            system_type: Cell::new(None),
-            input,
+            action: Cell::new(Option::Some(action)),
+            output: Rc::new(RefCell::new(Option::None)),
             label,
             _m: PhantomData,
         }
     }
 }
 
-impl<Label, Sys, In, Out> Selector<WorldPtr> for WorldSelector<Label, Sys, In, Out>
+impl<Label, M, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Action, In, Out, M>
     where
         Label: ScheduleLabel + Clone,
-        Sys: System<In=In, Out=Option<Out>>,
-        In: Clone + 'static,
-        Out: 'static
+        Action: TaskAction<M, In=In, Out=Out> + 'static,
+        In: 'static,
+        Out: 'static,
+        M: 'static
 {
     type Output = Out;
 
     #[inline]
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
-        run_system(self, &world)
+        let world: &mut World = world.as_mut();
+        if let Some(action) = self.action.take() {
+            let runner = action.create_runner(self.output.clone());
+            initialize_task_runner(world, self.label.clone(), runner);
+            None
+        } else {
+            let output = self.output.borrow_mut().take()?;
+            Some(output)
+        }
     }
 }
 
-pub(crate) fn run_system<Label, Sys, In, Out>(
-    selector: &WorldSelector<Label, Sys, In, Out>,
-    world: &WorldPtr,
-) -> Option<Out>
-    where
-        Label: ScheduleLabel + Clone,
-        Sys: System<In=In, Out=Option<Out>>,
-        In: Clone + 'static,
-        Out: 'static
-{
-    let world: &mut World = world.as_mut();
 
-    if let Some(mut system) = selector.system.take().take() {
-        system.initialize(world);
-        system.apply_deferred(world);
-        selector.system_type.set(Some(system.system_type_id()));
-        initialize_task_runner(world, selector.label.clone(), MultiTimesRunner::new(system, selector.input.clone()));
-        None
-    } else {
-        let id = selector.system_type.get().unwrap();
-        let output = world.get_non_send_resource_mut::<TaskOutputMap<Out>>()?.extract_output(&id)?;
-        Some(output)
-    }
-}
 
 
 

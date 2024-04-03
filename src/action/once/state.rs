@@ -4,7 +4,7 @@
 
 
 use bevy::prelude::{In, NextState, ResMut, States, };
-use crate::action::{once, ReactorAction, with, WithInput};
+use crate::action::{once, TaskAction, WithInput};
 
 
 /// Once set a next state.
@@ -32,12 +32,12 @@ use crate::action::{once, ReactorAction, with, WithInput};
 /// app.update();
 /// assert_eq!(*app.world.resource_ref::<State<S>>().get(), S::S2);
 /// ```
-pub fn set<S>(state: S) -> impl ReactorAction<WithInput, In=S>
+pub fn set<S>(state: S) -> impl TaskAction<WithInput, In=S, Out=()>
     where S: States + 'static
 {
-    with(state, once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {
+    once::run_with(state, |input: In<S>, mut state: ResMut<NextState<S>>| {
         state.set(input.0);
-    }))
+    })
 }
 
 

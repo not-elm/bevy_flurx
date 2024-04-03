@@ -1,5 +1,5 @@
 use bevy::prelude::{In, IntoSystem, Local, System, World};
-use crate::action::{ReactorAction, with, WithInput};
+use crate::action::{TaskAction, with, WithInput};
 
 /// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -13,13 +13,13 @@ pub enum Either<L, R> {
 
 impl<L, R> Either<L, R> {
     /// Return true if the value is left.
-    #[inline]
+    #[inline(always)]
     pub const fn is_left(&self) -> bool {
         matches!(self, Either::Left(_))
     }
 
     /// Return true if the value is right.
-    #[inline]
+    #[inline(always)]
     pub const fn is_right(&self) -> bool {
         matches!(self, Either::Right(_))
     }
@@ -63,10 +63,10 @@ impl<L, R> Either<L, R> {
 pub fn either<
     LS, LI, LO, LM,
     RS, RI, RO, RM
->(lhs: LS, rhs: RS) -> impl ReactorAction<WithInput, In=(LI, RI), Out=Either<LO, RO>>
+>(lhs: LS, rhs: RS) -> impl TaskAction<WithInput, In=(LI, RI), Out=Either<LO, RO>>
     where
-        LS: ReactorAction<LM, In=LI, Out=LO> + 'static,
-        RS: ReactorAction<RM, In=RI, Out=RO> + 'static,
+        LS: TaskAction<LM, In=LI, Out=LO> + 'static,
+        RS: TaskAction<RM, In=RI, Out=RO> + 'static,
         LI: Clone + 'static,
         LO: 'static,
         RI: Clone + 'static,

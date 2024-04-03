@@ -1,37 +1,20 @@
-use std::any::TypeId;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules, World};
-use bevy::utils::HashMap;
 
 use crate::runner::runners::TaskRunners;
 
 pub(crate) mod runners;
-pub(crate) mod standard;
+pub(crate) mod multi_times;
 pub(crate) mod once;
 
-pub(crate) trait RunTask {
+
+pub(crate) type TaskOutput<O> = Rc<RefCell<Option<O>>>;
+
+pub trait RunTask {
     fn run(&mut self, world: &mut World) -> bool;
-}
-
-
-#[repr(transparent)]
-pub(crate) struct TaskOutputMap<Out>(HashMap<TypeId, Out>);
-
-impl<Out> TaskOutputMap<Out> {
-    fn push(&mut self, id: TypeId, output: Out) {
-        self.0.insert(id, output);
-    }
-
-    pub fn extract_output(&mut self, id: &TypeId) -> Option<Out> {
-        self.0.remove(id)
-    }
-}
-
-impl<Out> Default for TaskOutputMap<Out> {
-    fn default() -> Self {
-        Self(HashMap::new())
-    }
 }
 
 pub(crate) fn initialize_task_runner<Label>(
@@ -41,8 +24,8 @@ pub(crate) fn initialize_task_runner<Label>(
 )
     where Label: ScheduleLabel + Clone
 {
-    if let Some(mut reactor) = world.get_non_send_resource_mut::<TaskRunners<Label>>() {
-        reactor.systems.push(Box::new(runner));
+    if let Some(mut runners) = world.get_non_send_resource_mut::<TaskRunners<Label>>() {
+        runners.runners.push(Box::new(runner));
     } else {
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
@@ -51,9 +34,9 @@ pub(crate) fn initialize_task_runner<Label>(
         let schedule = initialize_schedule(&mut schedules, label);
         schedule.add_systems(run_task_runners::<Label>);
 
-        let mut reactor = TaskRunners::<Label>::default();
-        reactor.systems.push(Box::new(runner));
-        world.insert_non_send_resource(reactor);
+        let mut runners = TaskRunners::<Label>::default();
+        runners.runners.push(Box::new(runner));
+        world.insert_non_send_resource(runners);
     }
 }
 

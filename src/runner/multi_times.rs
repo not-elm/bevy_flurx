@@ -1,13 +1,12 @@
-use std::marker::PhantomData;
+use bevy::prelude::{System, World};
 
-use bevy::prelude::{IntoSystem, System, World};
-
-use crate::runner::{TaskOutputMap, RunTask};
+use crate::runner::{RunTask, TaskOutput};
 
 pub(crate) struct MultiTimesRunner<Sys, In, Out> {
     system: Sys,
     input: In,
-    _m: PhantomData<Out>,
+    output: TaskOutput<Out>,
+    init: bool
 }
 
 impl<Sys, In, Out> MultiTimesRunner<Sys, In, Out> {
@@ -15,29 +14,33 @@ impl<Sys, In, Out> MultiTimesRunner<Sys, In, Out> {
     pub const fn new(
         system: Sys,
         input: In,
+        output: TaskOutput<Out>,
     ) -> MultiTimesRunner<Sys, In, Out> {
         Self {
             system,
             input,
-            _m: PhantomData,
+            output,
+            init: false
         }
     }
 }
 
-impl<Sys, In, Out> RunTask for MultiTimesRunner<Sys, In, Option<Out>>
+impl<Sys, In, Out> RunTask for MultiTimesRunner<Sys, In, Out>
     where
         Sys: System<In=In, Out=Option<Out>>,
         In: Clone + 'static,
         Out: 'static
 {
     fn run(&mut self, world: &mut World) -> bool {
+        if !self.init{
+            self.system.initialize(world);
+            self.init = true;
+        }
+
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(output) = out {
-            world.init_non_send_resource::<TaskOutputMap<Out>>();
-            let mut map = world.remove_non_send_resource::<TaskOutputMap<Out>>().unwrap();
-            map.push(self.system.system_type_id(), output);
-            world.insert_non_send_resource(map);
+            self.output.borrow_mut().replace(output);
             true
         } else {
             false

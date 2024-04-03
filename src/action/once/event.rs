@@ -8,8 +8,7 @@
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
 
-use crate::action::{once, ReactorAction, with};
-
+use crate::action::{once, TaskAction};
 
 /// Once send an event.
 ///
@@ -27,13 +26,13 @@ use crate::action::{once, ReactorAction, with};
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn send<E>(event: E) -> impl ReactorAction<In=E>
-    where E: Event + Clone
+#[inline(always)]
+pub fn send<E>(event: E) -> impl TaskAction<In=E, Out=()>
+    where E: Event
 {
-    with(event, once::run(|In(event): In<E>, mut w: EventWriter<E>| {
+    once::run_with(event, |In(event): In<E>, mut w: EventWriter<E>| {
         w.send(event);
-    }))
+    })
 }
 
 /// Once send an event using [`Default`] trait.
@@ -52,13 +51,13 @@ pub fn send<E>(event: E) -> impl ReactorAction<In=E>
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn send_default<E>() -> impl ReactorAction<In=()>
+#[inline(always)]
+pub fn send_default<E>() -> impl TaskAction<In=(), Out=()>
     where E: Event + Default
 {
-    with((), once::run(|mut w: EventWriter<E>| {
+    once::run(|mut w: EventWriter<E>| {
         w.send(E::default());
-    }))
+    })
 }
 
 /// Once send [`AppExit`](bevy::app::AppExit).
@@ -77,8 +76,8 @@ pub fn send_default<E>() -> impl ReactorAction<In=()>
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn app_exit() -> impl ReactorAction<In=AppExit> {
+#[inline(always)]
+pub fn app_exit() -> impl TaskAction<In=AppExit> {
     send(AppExit)
 }
 
@@ -88,9 +87,9 @@ mod tests {
     use bevy::app::{App, AppExit, First, Startup};
     use bevy::prelude::World;
 
+    use crate::action::once;
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::action::once;
     use crate::tests::came_event;
 
     #[test]
@@ -107,7 +106,7 @@ mod tests {
         app.update();
         assert!(came_event::<AppExit>(&mut app));
     }
-    
+
     #[test]
     fn send_default_event() {
         let mut app = App::new();

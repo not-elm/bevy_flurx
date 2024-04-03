@@ -10,7 +10,7 @@
 
 use bevy::prelude::{In, IntoSystem, Local, System, World};
 pub use either::*;
-use crate::prelude::{ReactorAction, with, WithInput};
+use crate::prelude::{TaskAction, with, WithInput};
 
 pub mod event;
 pub mod state;
@@ -42,7 +42,7 @@ mod either;
 /// app.update();
 /// app.update();
 /// ```
-#[inline]
+#[inline(always)]
 pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
     where
         Sys: IntoSystem<Input, Option<Out>, Marker>,
@@ -79,7 +79,7 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
 /// app.update(); // send app exit
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 ///```
-#[inline]
+#[inline(always)]
 pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
     where
         Sys: IntoSystem<Input, bool, Marker> + 'static,
@@ -130,9 +130,9 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// app.update();
 /// ```
 pub fn both<LI, LO, LM, RI, RO, RM>(
-    lhs: impl ReactorAction<LM, In=LI, Out=LO> + 'static,
-    rhs: impl ReactorAction<RM, In=RI, Out=RO> + 'static,
-) -> impl ReactorAction<WithInput, In=(LI, RI), Out=(LO, RO)>
+    lhs: impl TaskAction<LM, In=LI, Out=LO> + 'static,
+    rhs: impl TaskAction<RM, In=RI, Out=RO> + 'static,
+) -> impl TaskAction<WithInput, In=(LI, RI), Out=(LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,

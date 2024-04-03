@@ -29,7 +29,6 @@ fn main() {
         .run();
 }
 
-
 fn setup_ui(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
     commands.spawn(TextBundle::from_section("Loading", TextStyle {

@@ -6,7 +6,7 @@
 
 use bevy::prelude::{Event, EventReader};
 
-use crate::prelude::{ReactorAction, wait, with};
+use crate::prelude::{TaskAction, wait, with};
 
 /// Waits until the specified event is sent
 ///
@@ -35,8 +35,8 @@ use crate::prelude::{ReactorAction, wait, with};
 /// app.update();
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
-#[inline]
-pub fn comes<E>() -> impl ReactorAction<In=(), Out=()>
+#[inline(always)]
+pub fn comes<E>() -> impl TaskAction<In=(), Out=()>
     where E: Event
 {
     with((), wait::until(|er: EventReader<E>| {
@@ -69,8 +69,8 @@ pub fn comes<E>() -> impl ReactorAction<In=(), Out=()>
 /// app.update();
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
-#[inline]
-pub fn read<E>() -> impl ReactorAction<In=(), Out=E>
+#[inline(always)]
+pub fn read<E>() -> impl TaskAction<In=(), Out=E>
     where E: Event + Clone
 {
     with((), wait::output(|mut er: EventReader<E>| {

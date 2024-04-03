@@ -26,8 +26,7 @@ use bevy::prelude::{Main, World};
 
 use crate::scheduler::ReactiveScheduler;
 use crate::world_ptr::WorldPtr;
-#[allow(missing_docs)]
-pub mod selector;
+
 pub mod extension;
 pub mod task;
 pub mod action;
@@ -42,6 +41,7 @@ pub mod prelude {
 mod world_ptr;
 mod scheduler;
 mod runner;
+mod selector;
 
 /// Provides the async systems.
 pub struct FlurxPlugin;

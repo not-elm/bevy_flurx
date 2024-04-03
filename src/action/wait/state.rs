@@ -5,7 +5,7 @@
 
 use bevy::prelude::{Res, State, States, };
 
-use crate::action::{ReactorAction, wait, with};
+use crate::action::{TaskAction, wait, with};
 
 /// Waits until the state becomes the specified.
 ///
@@ -38,8 +38,8 @@ use crate::action::{ReactorAction, wait, with};
 /// app.update();
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
-#[inline]
-pub fn becomes<S>(state: S) -> impl ReactorAction<In=(), Out=()>
+#[inline(always)]
+pub fn becomes<S>(state: S) -> impl TaskAction<In=(), Out=()>
     where S: States + 'static
 {
     with((), wait::until(move |state_now: Res<State<S>>| {
