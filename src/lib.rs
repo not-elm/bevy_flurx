@@ -24,7 +24,7 @@
 use bevy::app::{App, Plugin};
 use bevy::prelude::{Main, World};
 
-use crate::scheduler::ReactiveScheduler;
+use crate::scheduler::{ReactiveScheduler, Retry};
 use crate::world_ptr::WorldPtr;
 
 pub mod extension;
@@ -55,8 +55,10 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        app.init_non_send_resource::<ReactiveScheduler>();
-        app.add_systems(Main, run_scheduler);
+        app
+            .init_non_send_resource::<ReactiveScheduler>()
+            .init_resource::<Retry>()
+            .add_systems(Main, run_scheduler);
     }
 }
 
@@ -64,7 +66,7 @@ fn run_scheduler(
     world: &mut World
 ) {
     if let Some(mut scheduler) = world.remove_non_send_resource::<ReactiveScheduler>() {
-        scheduler.run_sync(WorldPtr::new(world));
+        scheduler.run_sync(world);
         world.insert_non_send_resource(scheduler);
     }
 }

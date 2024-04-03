@@ -88,7 +88,7 @@ mod tests {
         assert_eq!(app.world.resource::<Count1>().0, 1);
         assert_eq!(app.world.resource::<Count2>().0, 1);
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
-        
+
         app.update();
         assert_eq!(app.world.resource::<Count1>().0, 1);
         assert_eq!(app.world.resource::<Count2>().0, 2);
