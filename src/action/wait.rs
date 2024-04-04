@@ -24,6 +24,8 @@ pub mod state;
 pub mod switch;
 #[allow(missing_docs)]
 pub mod all;
+#[cfg(feature = "audio")]
+pub mod audio;
 mod either;
 
 

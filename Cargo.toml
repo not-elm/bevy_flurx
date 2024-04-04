@@ -71,6 +71,10 @@ futures = "0.3.30"
 criterion = "0.5.1"
 bevy-inspector-egui = "0.23.4"
 
+[features]
+default = ["audio"]
+audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
+
 [workspace.lints.clippy]
 type_complexity = "allow"
 doc_markdown = "warn"

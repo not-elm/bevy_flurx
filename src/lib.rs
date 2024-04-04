@@ -43,7 +43,9 @@ pub mod prelude {
 
 #[doc(hidden)]
 pub mod private {
-    pub use crate::runner::sequence::SequenceRunner;
+    pub use crate::runner::{
+        sequence_with_output::SequenceWithOutputRunner
+    };
 }
 
 mod world_ptr;

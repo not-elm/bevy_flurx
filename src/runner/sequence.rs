@@ -1,8 +1,9 @@
 use std::marker::PhantomData;
 
+use bevy::prelude::World;
+
 use crate::action::TaskAction;
-use crate::runner::{TaskRunner, RunWithTaskOutput, TaskOutput};
-use crate::runner::macros::{impl_tuple_runner, output_combine};
+use crate::runner::{RunWithTaskOutput, TaskOutput, TaskRunner};
 
 pub struct SequenceRunner<I1, I2, O1, O2, M1, M2> {
     r1: Box<dyn TaskRunner>,
@@ -36,32 +37,29 @@ impl<I1, I2, O1, O2, M1, M2> SequenceRunner<I1, I2, O1, O2, M1, M2> {
     }
 }
 
-macro_rules! impl_sequence_runner {
-    ($($lhs_out: ident $(,)?)*) => {
-        impl<I1, I2, $($lhs_out,)* O2, M1, M2> TaskAction for SequenceRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
-            type In = (I1, I2);
-            type Out = ($($lhs_out,)* O2);
+impl<I1, I2, O1, O2, M1, M2> TaskAction for SequenceRunner<I1, I2, O1, O2, M1, M2>{
+    type In = I1;
+    type Out = O2;
 
-            #[inline(always)]
-            fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-                (output, self)
-            }
-        }
-
-        #[allow(non_snake_case)]
-        impl<I1, I2, $($lhs_out,)* O2, M1, M2> RunWithTaskOutput<($($lhs_out,)* O2)> for SequenceRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
-            fn run_with_task_output(&mut self, output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut bevy::prelude::World) -> bool {
-                if self.o1.is_none() {
-                    self.r1.run(world);
-                }
-                if self.o1.is_some() && self.o2.is_none() {
-                    self.r2.run(world);
-                }
-                output_combine!(&self.o1, &self.o2, output, $($lhs_out),*)
-            }
-        }
+    #[inline(always)]
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
+        (output, self)
     }
 }
 
-impl_tuple_runner!(impl_sequence_runner);
-
+impl<I1, I2, O1, O2, M1, M2> RunWithTaskOutput<O2> for SequenceRunner<I1, I2, O1, O2, M1, M2> {
+    fn run_with_task_output(&mut self, output: &mut TaskOutput<O2>, world: &mut World) -> bool {
+        if self.o1.is_none() {
+            self.r1.run(world);
+        }
+        if self.o1.is_some() && self.o2.is_none() {
+            self.r2.run(world);
+        }
+        if let Some(o) = self.o2.take(){
+            output.replace(o);
+            true
+        }else{
+            false
+        }
+    }
+}

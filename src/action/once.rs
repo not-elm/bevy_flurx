@@ -18,6 +18,8 @@ pub mod non_send;
 pub mod event;
 pub mod state;
 pub mod switch;
+#[cfg(feature = "audio")]
+pub mod audio;
 
 
 /// Once run a system.
