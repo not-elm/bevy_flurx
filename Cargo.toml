@@ -26,6 +26,10 @@ name = "wait"
 path = "examples/simple/wait.rs"
 
 [[example]]
+name = "sequence"
+path = "examples/simple/sequence.rs"
+
+[[example]]
 name = "wait_stop_audio"
 path = "examples/audio/wait_stop_audio.rs"
 
@@ -56,7 +60,7 @@ futures-polling = "0.1.1"
 
 [dev-dependencies]
 bevy = { version = "0.13.1" }
-bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
+bevy_test_helper = { path = "../bevy_test_helper" }
 reqwest = "0.12.2"
 futures = "0.3.30"
 criterion = "0.5.1"
