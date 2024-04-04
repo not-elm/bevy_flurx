@@ -35,6 +35,7 @@ pub mod action;
 pub mod prelude {
     pub use crate::{
         action::*,
+        task::ReactiveTask,
         extension::ScheduleReactor,
         FlurxPlugin,
     };
@@ -85,6 +86,7 @@ fn run_scheduler(
 mod tests {
     use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
+    use bevy::input::InputPlugin;
     use bevy::prelude::{Event, EventReader, Resource};
     use bevy_test_helper::BevyTestHelperPlugin;
 
@@ -94,6 +96,7 @@ mod tests {
         let mut app = App::new();
         app.add_plugins(BevyTestHelperPlugin);
         app.add_plugins(FlurxPlugin);
+        app.add_plugins(InputPlugin);
         app
     }
 

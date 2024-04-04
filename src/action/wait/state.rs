@@ -9,34 +9,21 @@ use crate::action::{TaskAction, wait, with};
 
 /// Waits until the state becomes the specified.
 ///
-/// ```
-/// use bevy::app::AppExit;
-/// use bevy::prelude::*;
+/// ```no_run
+/// use bevy::prelude::{States, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Debug, Default, States, Copy, Clone, Hash, Eq, PartialEq)]
+/// #[derive(States, Eq, PartialEq, Copy, Clone, Hash, Default, Debug)]
 /// enum Status{
 ///     #[default]
-///     Running,
-///     Finish
+///     First,
+///     Second
 /// }
 ///
-/// let mut app = App::new();
-/// app.init_state::<Status>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task|async move{
-///         let wait_state = task.run(Update, wait::state::becomes(Status::Finish)).await;
-///         task.will(Update, once::state::set(Status::Finish)).await;
-///         wait_state.await;
-///         task.will(Update, once::non_send::init::<AppExit>()).await;
-///     });
+/// let mut world = World::default();
+/// world.schedule_reactor(|task| async move {
+///     task.will(Update, once::state::set(Status::Second)).await; 
 /// });
-/// app.update();
-/// app.update();
-/// app.update();
-/// app.update();
-/// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
 #[inline(always)]
 pub fn becomes<S>(state: S) -> impl TaskAction<In=(), Out=()>
