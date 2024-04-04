@@ -17,6 +17,7 @@ pub mod res;
 pub mod non_send;
 pub mod event;
 pub mod state;
+pub mod switch;
 
 
 /// Once run a system.

@@ -15,6 +15,7 @@ pub mod once;
 pub mod wait;
 pub mod repeat;
 pub mod delay;
+pub mod switch;
 mod sequence;
 
 

@@ -2,6 +2,8 @@
 //! 
 //! The sprite moves up and then to the right.
 
+mod rotate;
+
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
