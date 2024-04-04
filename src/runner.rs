@@ -10,8 +10,10 @@ pub(crate) mod runners;
 pub(crate) mod multi_times;
 pub(crate) mod once;
 pub(crate) mod sequence;
+pub(crate) mod sequence_with_output;
 pub(crate) mod both;
 pub(crate) mod either;
+
 
 /// Represents the output of the task.
 /// See details [`TaskRunner`].
@@ -53,14 +55,14 @@ impl<O> TaskOutput<O> {
     }
 }
 
-/// 
+///
 pub trait TaskRunner {
     /// Run the system. 
     ///
     /// The structure that implements [`TaskRunner`] is given [`TaskOutput`],
     /// if the system termination condition is met, return `true` and
     /// pass the system output to [`TaskOutput`].
-    /// 
+    ///
     fn run(&mut self, world: &mut World) -> bool;
 }
 
@@ -115,6 +117,7 @@ impl<O, R: RunWithTaskOutput<O>> TaskRunner for (TaskOutput<O>, R) {
         self.1.run_with_task_output(&mut self.0, world)
     }
 }
+
 
 pub(crate) mod macros {
     macro_rules! output_combine {

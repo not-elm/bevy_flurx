@@ -15,7 +15,8 @@ pub mod once;
 pub mod wait;
 pub mod repeat;
 pub mod delay;
-mod sequence;
+pub mod sequence;
+mod sequence_with_output;
 
 
 #[doc(hidden)]

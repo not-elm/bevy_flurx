@@ -1,4 +1,4 @@
-//! [`sequence!`] create actions that execute the passed actions in sequence.
+//! [`sequence_with_output!`] create actions that execute the passed actions in sequence.
 //! 
 //! It has advantage that if the previous action finishes, 
 //! the next will start within in that frame. 
@@ -6,7 +6,7 @@
 use bevy::core::FrameCount;
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
-use bevy_flurx::sequence;
+use bevy_flurx::sequence_with_output;
 
 fn main() {
     App::new()
@@ -40,7 +40,7 @@ fn setup_non_sequence(world: &mut World) {
 
 fn setup_sequence(world: &mut World) {
     world.schedule_reactor(|task| async move {
-        task.will(Update, sequence! {
+        task.will(Update, sequence_with_output! {
             once::run(|frame: Res<FrameCount>|{
                 println!("[sequence once1] frame: {}", frame.0);
             }),
