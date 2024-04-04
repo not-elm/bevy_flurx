@@ -1,3 +1,28 @@
+/// Create actions that execute the passed actions in sequence.
+/// 
+/// It has advantage that if the previous action finishes, 
+/// the next will start within in that frame. 
+/// 
+/// For example, the code below defines three actions, 
+/// all of which are executed during one frame.
+/// 
+/// ```no_run
+/// use bevy::app::{App, Update};
+/// use bevy::prelude::World;
+/// use bevy_flurx::prelude::*;
+/// use bevy_flurx::sequence;
+///
+/// let mut app = App::new();
+/// app.world.schedule_reactor(|task| async move{
+///     task.will(Update, sequence!{
+///         once::run(||{}),
+///         once::run(||{}),
+///         once::event::app_exit()
+///     }).await;
+/// });
+/// app.update();
+/// ```
+/// 
 #[macro_export]
 macro_rules! sequence {
     ($action: expr $(,)?) => {$action};

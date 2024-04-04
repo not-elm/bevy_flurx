@@ -85,7 +85,7 @@ pub fn app_exit() -> impl TaskAction<In=AppExit> {
 #[cfg(test)]
 mod tests {
     use bevy::app::{App, AppExit, First, Startup};
-    use bevy::prelude::World;
+    use bevy::prelude::{Update, World};
 
     use crate::action::once;
     use crate::extension::ScheduleReactor;
@@ -105,6 +105,27 @@ mod tests {
 
         app.update();
         assert!(came_event::<AppExit>(&mut app));
+    }
+
+       #[test]
+    fn s3() {
+        let mut app = App::new();
+        app
+            .add_plugins(FlurxPlugin)
+            .add_systems(Startup, |world: &mut World| {
+                world.schedule_reactor(|task| async move {
+                    task.will(Update, once::run(||{
+                        println!("1");
+                    })).await;
+                     println!("2");
+                    task.will(Update, once::run(||{
+                        println!("3");
+                    })).await;
+                });
+            });
+
+        app.update();
+
     }
 
     #[test]

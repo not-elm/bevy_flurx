@@ -1,4 +1,5 @@
-//! Testing the difference between not using Flurx and using Flurx in a simple countdown.
+//! Testing the difference between not using sequence! and using.
+#![allow(missing_docs)]
 
 use bevy::app::{App, Startup};
 use bevy::prelude::{ResMut, Resource, Update, World};

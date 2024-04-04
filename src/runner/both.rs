@@ -3,12 +3,12 @@ use std::marker::PhantomData;
 use bevy::prelude::World;
 
 use crate::action::TaskAction;
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskRunner, TaskOutput};
 use crate::runner::macros::output_combine;
 
 pub(crate) struct BothRunner<I1, I2, O1, O2, M1, M2> {
-    r1: Box<dyn RunTask>,
-    r2: Box<dyn RunTask>,
+    r1: Box<dyn TaskRunner>,
+    r2: Box<dyn TaskRunner>,
     o1: TaskOutput<O1>,
     o2: TaskOutput<O2>,
     output: TaskOutput<(O1, O2)>,
@@ -41,7 +41,7 @@ impl<I1, I2, O1, O2, M1, M2> BothRunner<I1, I2, O1, O2, M1, M2> {
     }
 }
 
-impl<I1, I2, O1, O2, M1, M2> RunTask for BothRunner<I1, I2, O1, O2, M1, M2> {
+impl<I1, I2, O1, O2, M1, M2> TaskRunner for BothRunner<I1, I2, O1, O2, M1, M2> {
     fn run(&mut self, world: &mut World) -> bool {
         if self.o1.is_none() {
             self.r1.run(world);

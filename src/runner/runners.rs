@@ -3,10 +3,10 @@ use std::marker::PhantomData;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 
-use crate::runner::RunTask;
+use crate::runner::TaskRunner;
 
 pub(super) struct TaskRunners<Label> {
-    pub(super) runners: Vec<Box<dyn RunTask>>,
+    pub(super) runners: Vec<Box<dyn TaskRunner>>,
     _m: PhantomData<Label>,
 }
 

@@ -13,8 +13,9 @@ pub(crate) mod sequence;
 pub(crate) mod both;
 pub(crate) mod either;
 
-
-pub(crate) struct TaskOutput<O>(Rc<RefCell<Option<O>>>);
+/// Represents the output of the task.
+/// See details [`TaskRunner`].
+pub struct TaskOutput<O>(Rc<RefCell<Option<O>>>);
 
 impl<O> Clone for TaskOutput<O> {
     #[inline]
@@ -52,15 +53,21 @@ impl<O> TaskOutput<O> {
     }
 }
 
-
-pub trait RunTask {
+/// 
+pub trait TaskRunner {
+    /// Run the system. 
+    ///
+    /// The structure that implements [`TaskRunner`] is given [`TaskOutput`],
+    /// if the system termination condition is met, return `true` and
+    /// pass the system output to [`TaskOutput`].
+    /// 
     fn run(&mut self, world: &mut World) -> bool;
 }
 
 pub(crate) fn initialize_task_runner<Label>(
     world: &mut World,
     label: Label,
-    runner: impl RunTask + 'static,
+    runner: impl TaskRunner + 'static,
 )
     where Label: ScheduleLabel + Clone
 {
@@ -102,7 +109,7 @@ pub(crate) trait RunWithTaskOutput<O> {
     fn run_with_task_output(&mut self, output: &mut TaskOutput<O>, world: &mut World) -> bool;
 }
 
-impl<O, R: RunWithTaskOutput<O>> RunTask for (TaskOutput<O>, R) {
+impl<O, R: RunWithTaskOutput<O>> TaskRunner for (TaskOutput<O>, R) {
     #[inline(always)]
     fn run(&mut self, world: &mut World) -> bool {
         self.1.run_with_task_output(&mut self.0, world)

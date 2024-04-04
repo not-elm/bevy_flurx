@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::action::{TaskAction, WithInput};
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskRunner, TaskOutput};
 use crate::runner::either::EitherRunner;
 
 /// This enum represents the result of [`wait::either`].
@@ -104,7 +104,7 @@ impl<
     type Out = Either<LO, RO>;
 
     #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
         EitherRunner::new(output, self.lhs, self.rhs)
     }
 }

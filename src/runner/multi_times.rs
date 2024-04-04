@@ -1,6 +1,6 @@
 use bevy::prelude::{System, World};
 
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskRunner, TaskOutput};
 
 pub(crate) struct MultiTimesRunner<Sys, In, Out> {
     system: Sys,
@@ -25,7 +25,7 @@ impl<Sys, In, Out> MultiTimesRunner<Sys, In, Out> {
     }
 }
 
-impl<Sys, In, Out> RunTask for MultiTimesRunner<Sys, In, Out>
+impl<Sys, In, Out> TaskRunner for MultiTimesRunner<Sys, In, Out>
     where
         Sys: System<In=In, Out=Option<Out>>,
         In: Clone + 'static,

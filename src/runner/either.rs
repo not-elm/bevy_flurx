@@ -4,11 +4,11 @@ use bevy::prelude::World;
 
 use crate::action::TaskAction;
 use crate::action::wait::Either;
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskRunner, TaskOutput};
 
 pub(crate) struct EitherRunner<I1, I2, O1, O2, M1, M2> {
-    r1: Box<dyn RunTask>,
-    r2: Box<dyn RunTask>,
+    r1: Box<dyn TaskRunner>,
+    r2: Box<dyn TaskRunner>,
     o1: TaskOutput<O1>,
     o2: TaskOutput<O2>,
     output: TaskOutput<Either<O1, O2>>,
@@ -41,7 +41,7 @@ impl<I1, I2, O1, O2, M1, M2> EitherRunner<I1, I2, O1, O2, M1, M2> {
     }
 }
 
-impl<I1, I2, O1, O2, M1, M2> RunTask for EitherRunner<I1, I2, O1, O2, M1, M2> {
+impl<I1, I2, O1, O2, M1, M2> TaskRunner for EitherRunner<I1, I2, O1, O2, M1, M2> {
     fn run(&mut self, world: &mut World) -> bool {
         self.r1.run(world);
         if let Some(lhs) = self.o1.take() {

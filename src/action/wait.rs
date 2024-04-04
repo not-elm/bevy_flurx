@@ -15,7 +15,7 @@ use bevy::prelude::{In, IntoSystem, System};
 pub use either::*;
 
 use crate::prelude::TaskAction;
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskRunner, TaskOutput};
 use crate::runner::both::BothRunner;
 
 pub mod event;
@@ -174,7 +174,7 @@ impl<
     type Out = (LO, RO);
 
     #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
         BothRunner::new(output, self.lhs, self.rhs)
     }
 }

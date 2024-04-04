@@ -64,12 +64,12 @@ pub mod private {
     use std::marker::PhantomData;
 
     use crate::action::TaskAction;
-    use crate::runner::{RunTask, RunWithTaskOutput, TaskOutput};
+    use crate::runner::{TaskRunner, RunWithTaskOutput, TaskOutput};
     use crate::runner::macros::impl_tuple_runner;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, M1, M2> {
-        r1: Box<dyn RunTask>,
-        r2: Box<dyn RunTask>,
+        r1: Box<dyn TaskRunner>,
+        r2: Box<dyn TaskRunner>,
         o1: TaskOutput<O1>,
         o2: TaskOutput<O2>,
         _m: PhantomData<(I1, I2, M1, M2)>,
@@ -106,7 +106,7 @@ pub mod private {
                     type Out = ($($lhs_out,)* O2);
 
                     #[inline(always)]
-                    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+                    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
                         (output, self)
                     }
               }

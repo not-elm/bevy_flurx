@@ -1,4 +1,5 @@
-//! Testing the difference between not using Flurx and using Flurx in a simple countdown.
+//! Testing the difference between not using Flurx and using Flurx in a simple repeat countdown.
+#![allow(missing_docs)]
 
 use bevy::app::{App, AppExit, Startup};
 use bevy::prelude::{Event, EventReader, EventWriter, Local, ResMut, Resource, Update, World};

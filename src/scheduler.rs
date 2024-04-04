@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::future::Future;
 
-use bevy::prelude::{Resource, World};
+use bevy::prelude::World;
 use flurx::Scheduler;
 
 use crate::task::ReactiveTask;
@@ -31,11 +31,8 @@ impl<'a, 'b> ReactiveScheduler<'a, 'b>
     pub(crate) fn run_sync(&mut self, world: &mut World) {
         let mut s = VecDeque::with_capacity(self.schedulers.len());
         while let Some(mut schedule) = self.schedulers.pop_front() {
-            world.resource_mut::<Retry>().0 = true;
-            while world.resource_mut::<Retry>().0{
-                schedule.run_sync(WorldPtr::new(world));
-            }
-            if schedule.exists_pending_reactors(){
+            schedule.run_sync(WorldPtr::new(world));
+            if schedule.exists_pending_reactors() {
                 s.push_back(schedule);
             }
         }
@@ -43,6 +40,3 @@ impl<'a, 'b> ReactiveScheduler<'a, 'b>
     }
 }
 
-
-#[derive(Resource, Debug, Default)]
-pub(crate) struct Retry(pub bool);

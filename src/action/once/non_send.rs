@@ -132,8 +132,7 @@ mod tests {
         app.update();
         assert!(app.world.get_non_send_resource::<TestResource>().is_some());
     }
-
-
+    
     #[test]
     fn remove_non_send_resource() {
         let mut app = App::new();

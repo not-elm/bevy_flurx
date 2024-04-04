@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 
 use bevy::prelude::{System, World};
 
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskOutput, TaskRunner};
 use crate::runner::multi_times::MultiTimesRunner;
 
 pub mod once;
@@ -24,13 +24,16 @@ pub struct WithInput;
 #[doc(hidden)]
 pub struct WithoutInput;
 
-#[doc(hidden)]
+/// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
 pub trait TaskAction<Marker = WithInput> {
+    /// The input of the system.
     type In;
 
+    /// The output of the system.
     type Out;
 
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask;
+    /// Convert itself to [`TaskRunner`](crate::runner::TaskRunner).
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner;
 }
 
 impl<Out, Sys> TaskAction<WithoutInput> for Sys
@@ -42,41 +45,43 @@ impl<Out, Sys> TaskAction<WithoutInput> for Sys
     type Out = Out;
 
     #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
         MultiTimesRunner::new(self, (), output)
     }
 }
 
-#[inline(always)]
+/// Create the action based on the system and its input value.
+#[inline]
 pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl TaskAction<WithInput, In=Input, Out=Out>
     where
         Sys: System<In=Input, Out=Option<Out>>,
         Input: Clone + 'static,
         Out: 'static
 {
+    struct WithAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
+        where In: Clone + 'static,
+              Sys: System<In=In, Out=Option<Out>>;
+
+    impl<Sys, In, Out> TaskAction for WithAction<Sys, In, Out>
+        where In: Clone + 'static,
+              Sys: System<In=In, Out=Option<Out>>,
+              Out: 'static
+    {
+        type In = In;
+
+        type Out = Out;
+
+        #[inline(always)]
+        fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
+            MultiTimesRunner::new(self.1, self.0, output)
+        }
+    }
+    
     WithAction(input, system, PhantomData)
 }
 
-struct WithAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
-    where In: Clone + 'static,
-          Sys: System<In=In, Out=Option<Out>>;
-
-impl<Sys, In, Out> TaskAction for WithAction<Sys, In, Out>
-    where In: Clone + 'static,
-          Sys: System<In=In, Out=Option<Out>>,
-          Out: 'static
-{
-    type In = In;
-
-    type Out = Out;
-
-    #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
-        MultiTimesRunner::new(self.1, self.0, output)
-    }
-}
-
-pub fn to_tuple<M, I, O>(action: impl TaskAction<M, In=I, Out=O> + 'static) -> impl TaskAction<M, In=I, Out=(O,)> 
+/// Convert to the output of action to tuple. 
+pub fn to_tuple<M, I, O>(action: impl TaskAction<M, In=I, Out=O> + 'static) -> impl TaskAction<M, In=I, Out=(O, )>
     where
         M: 'static
 {
@@ -88,9 +93,9 @@ pub fn to_tuple<M, I, O>(action: impl TaskAction<M, In=I, Out=O> + 'static) -> i
             M: 'static
     {
         type In = I;
-        type Out = (O,);
+        type Out = (O, );
 
-        fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+        fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
             let o = TaskOutput::default();
             let r = self.0.to_runner(o.clone());
             Runner {
@@ -102,15 +107,15 @@ pub fn to_tuple<M, I, O>(action: impl TaskAction<M, In=I, Out=O> + 'static) -> i
     }
 
     struct Runner<O> {
-        r: Box<dyn RunTask>,
+        r: Box<dyn TaskRunner>,
         o: TaskOutput<O>,
-        output: TaskOutput<(O,)>,
+        output: TaskOutput<(O, )>,
     }
-    impl<O> RunTask for Runner<O> {
+    impl<O> TaskRunner for Runner<O> {
         fn run(&mut self, world: &mut World) -> bool {
             self.r.run(world);
             if let Some(o) = self.o.take() {
-                self.output.replace((o,));
+                self.output.replace((o, ));
                 true
             } else {
                 false

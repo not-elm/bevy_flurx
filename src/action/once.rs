@@ -10,7 +10,7 @@ use std::marker::PhantomData;
 use bevy::prelude::{In, IntoSystem, System};
 
 use crate::prelude::{TaskAction, WithInput};
-use crate::runner::{RunTask, TaskOutput};
+use crate::runner::{TaskRunner, TaskOutput};
 use crate::runner::once::OnceRunner;
 
 pub mod res;
@@ -98,7 +98,7 @@ impl<Sys, In, Out> TaskAction for OnceAction<Sys, In, Out>
     type Out = Out;
 
     #[inline]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl RunTask {
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
         OnceRunner::new(self.1, self.0, output)
     }
 }
