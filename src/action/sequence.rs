@@ -1,10 +1,51 @@
+//! Provides a mechanism for sequentially combining actions.
+//! 
+//! [`Then`] trait is implemented on all actions and can be combined
+//! in method chains like `once::run(||{}).then(once::run(||{}))` 
+//! 
+//! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
+
+
+use crate::action::TaskAction;
+use crate::runner::sequence::SequenceRunner;
+
+/// Create the action combined with the subsequent action.
+/// 
+/// You can create an action that combines multiple actions
+/// by connecting them with a method chain.
+/// 
+/// You can also use [`sequence!`](crate::sequence) instead of this trait.
+pub trait Then<I1, O1, M1> {
+    /// Returns the action combined with the subsequent action.
+    /// 
+    /// The action's output will be that of the subsequent action.
+    fn then<I2, O2, M2>(self, action: impl TaskAction<M2, In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
+        where M2: 'static;
+}
+
+impl<I1, O1, M1, A> Then<I1, O1, M1> for A
+    where
+        A: TaskAction<M1, In=I1, Out=O1> + 'static,
+        M1: 'static
+{
+    fn then<I2, O2, M2>(self, action: impl TaskAction<M2, In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
+        where M2: 'static
+    {
+        SequenceRunner::new(self, action)
+    }
+}
+
 /// Create actions that execute the passed actions in sequence.
-/// 
-/// It has advantage that if the previous action finishes, 
-/// the next will start within in that frame. 
-/// 
-/// For example, the code below defines three actions, 
+///
+/// It has advantage that if the previous action finishes,
+/// the next will start within in that frame.
+///
+/// For example, the code below defines three actions,
 /// all of which are executed during one frame.
+///
+/// You can also use [`Then`] instead of this macro.
+/// 
+/// The output will be that of the last action passed.
 /// 
 /// ```no_run
 /// use bevy::app::{App, Update};
@@ -14,112 +55,124 @@
 ///
 /// let mut app = App::new();
 /// app.world.schedule_reactor(|task| async move{
-///     task.will(Update, sequence!{
+///     let o = task.will(Update, sequence!{
 ///         once::run(||{}),
 ///         once::run(||{}),
-///         once::event::app_exit()
+///         once::run(||{ 1 + 1}),
 ///     }).await;
+///     assert_eq!(o, 2);
 /// });
 /// app.update();
 /// ```
-/// 
+///
 #[macro_export]
 macro_rules! sequence {
     ($action: expr $(,)?) => {$action};
     ($action1: expr, $action2: expr $(,$action: expr)*$(,)?)  => {
         {
-            let a = $crate::private::SequenceRunner::new($crate::action::to_tuple($action1), $action2);
+            use $crate::action::sequence::Then;
+            let a = $action1.then($action2);
             $(
-            let a = $crate::private::SequenceRunner::new(a, $action);
+            let a = a.then($action);
             )*
             a
         }
     };
 }
 
+
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, Startup, Update};
-    use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{EventWriter, ResMut, Resource, World};
-    use bevy_test_helper::event::TestEvent1;
+    use bevy::app::Startup;
+    use bevy::prelude::{Resource, Update, World};
+    use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{once, wait};
+    use crate::action::once;
+    use crate::action::sequence::Then;
     use crate::extension::ScheduleReactor;
     use crate::tests::test_app;
 
-    #[test]
-    fn one() {
-        let mut app = test_app();
-        app
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    task.will(Update, sequence! {
-                        once::non_send::insert(AppExit)
-                    }).await;
-                });
-            });
+    #[derive(Resource, Eq, PartialEq, Debug)]
+    struct Mark1;
 
-        app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
-    }
+    #[derive(Resource, Eq, PartialEq, Debug)]
+    struct Mark2;
+
+    #[derive(Resource, Eq, PartialEq, Debug)]
+    struct OutputUSize(usize);
+
 
     #[test]
     fn two() {
         let mut app = test_app();
 
-        app
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    task.will(Update, sequence! {
-                        wait::event::read::<TestEvent1>(),
-                        once::non_send::insert(AppExit)
-                    }).await;
-                });
+        app.add_systems(Startup, |world: &mut World| {
+            world.schedule_reactor(|task| async move {
+                task.will(Update, once::run(|| {})
+                    .then(once::res::insert(Mark1)),
+                ).await;
             });
-
-        app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        });
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        app.assert_resource_eq(Mark1);
     }
 
     #[test]
     fn three() {
         let mut app = test_app();
-        #[derive(Resource, Default)]
-        struct Count1(usize);
 
-        #[derive(Resource, Default)]
-        struct Count2(usize);
-
-        app
-            .init_resource::<Count1>()
-            .init_resource::<Count2>()
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    task.will(Update, sequence! {
-                        once::run(|mut c:  ResMut<Count1>|{
-                            c.0 += 1;
-                        }),
-                        wait::until(|mut c:  ResMut<Count2>|{
-                            c.0 += 1;
-                            c.0 == 2
-                        }),
-                        once::non_send::insert(AppExit)
-                    }).await;
-                });
+        app.add_systems(Startup, |world: &mut World| {
+            world.schedule_reactor(|task| async move {
+                task.will(Update, once::run(|| {})
+                    .then(once::res::insert(Mark1))
+                    .then(once::res::insert(Mark2)),
+                ).await;
             });
+        });
         app.update();
-        assert_eq!(app.world.resource::<Count1>().0, 1);
-        assert_eq!(app.world.resource::<Count2>().0, 1);
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        app.assert_resource_eq(Mark1);
+        app.assert_resource_eq(Mark2);
+    }
 
+
+    #[test]
+    fn output_is_2() {
+        let mut app = test_app();
+
+        app.add_systems(Startup, |world: &mut World| {
+            world.schedule_reactor(|task| async move {
+                let output = task.will(Update, once::run(|| {})
+                    .then(once::res::insert(Mark1))
+                    .then(once::res::insert(Mark2))
+                    .then(once::run(|| { 1 + 1 })),
+                ).await;
+                task.will(Update, once::res::insert(OutputUSize(output))).await;
+            });
+        });
         app.update();
-        assert_eq!(app.world.resource::<Count1>().0, 1);
-        assert_eq!(app.world.resource::<Count2>().0, 2);
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        app.update();
+        app.assert_resource_eq(OutputUSize(2));
+    }
+
+    #[test]
+    fn using_sequence_macro() {
+        let mut app = test_app();
+
+        app.add_systems(Startup, |world: &mut World| {
+            world.schedule_reactor(|task| async move {
+                let output = task.will(Update, sequence! {
+                    once::run(||{}),
+                    once::res::insert(Mark1),
+                    once::res::insert(Mark2),
+                    once::run(||{1 + 1})
+                }).await;
+                task.will(Update, once::res::insert(OutputUSize(output))).await;
+            });
+        });
+        app.update();
+        app.assert_resource_eq(Mark1);
+        app.assert_resource_eq(Mark2);
+        app.update();
+        app.assert_resource_eq(OutputUSize(2));
     }
 }
-
-
-

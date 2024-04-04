@@ -69,7 +69,6 @@ criterion = "0.5.1"
 default = ["audio"]
 audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
 
-
 [workspace.lints.clippy]
 type_complexity = "allow"
 doc_markdown = "warn"

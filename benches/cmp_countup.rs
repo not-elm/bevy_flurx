@@ -6,7 +6,6 @@ use bevy::prelude::{EventReader, EventWriter, Local, ResMut, Resource, Update, W
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::{FlurxPlugin, sequence};
-
 use bevy_flurx::extension::ScheduleReactor;
 use bevy_flurx::prelude::{once, wait};
 

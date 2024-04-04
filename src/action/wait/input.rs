@@ -141,7 +141,7 @@ mod tests {
 
     use crate::action::{once, wait};
     use crate::extension::ScheduleReactor;
-    use crate::sequence;
+    use crate::sequence_with_output;
     use crate::tests::test_app;
 
     #[test]
@@ -149,7 +149,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
-                task.will(First, sequence! {
+                task.will(First, sequence_with_output! {
                     wait::input::just_pressed(KeyCode::KeyA),
                     wait::input::pressed(KeyA),
                     once::run(|world: &mut World|{
@@ -172,13 +172,13 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
-                task.will(First, sequence! {
+                task.will(First, sequence_with_output! {
                     wait::input::any_pressed([KeyA, KeyB]),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
                     })
                 }).await;
-                task.will(First, sequence! {
+                task.will(First, sequence_with_output! {
                     wait::input::any_pressed([KeyA, KeyD]),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
@@ -209,7 +209,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
-                task.will(First, sequence! {
+                task.will(First, sequence_with_output! {
                     wait::input::all_pressed([KeyA, KeyB]),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
@@ -235,7 +235,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
-                task.will(First, sequence! {
+                task.will(First, sequence_with_output! {
                     wait::input::just_released(KeyA),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
@@ -261,7 +261,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
-                task.will(First, sequence! {
+                task.will(First, sequence_with_output! {
                     wait::input::any_just_released([KeyCode::KeyA, KeyCode::KeyB]),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
