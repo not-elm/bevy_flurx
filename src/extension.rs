@@ -32,8 +32,7 @@ impl<Fun, Fut> ScheduleReactor<Fun, Fut, ()> for World
         self.init_non_send_resource::<ReactiveScheduler>();
         let world_ptr = WorldPtr::new(self);
         let mut scheduler = self.get_non_send_resource_mut::<ReactiveScheduler>().unwrap();
-        scheduler.schedule(f);
-        scheduler.initialize(world_ptr);
+        scheduler.schedule(world_ptr, f);
     }
 }
 

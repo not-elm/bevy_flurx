@@ -14,7 +14,7 @@ use reqwest::StatusCode;
 
 use bevy_flurx::extension::ScheduleReactor;
 use bevy_flurx::FlurxPlugin;
-use bevy_flurx::selector::condition::{delay, once};
+use bevy_flurx::prelude::{delay, once};
 
 fn main() {
     App::new()
@@ -28,7 +28,6 @@ fn main() {
         ))
         .run();
 }
-
 
 fn setup_ui(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());

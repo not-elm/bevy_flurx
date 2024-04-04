@@ -6,7 +6,7 @@
 
 use bevy::prelude::{Commands, In, Resource};
 
-use crate::selector::condition::{once, ReactorSystemConfigs, with};
+use crate::action::{once, TaskAction};
 
 /// Once init a resource.
 ///
@@ -27,13 +27,13 @@ use crate::selector::condition::{once, ReactorSystemConfigs, with};
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
+#[inline(always)]
+pub fn init<R>() -> impl TaskAction<In=(), Out=()>
     where R: Resource + Default + 'static
 {
-    with((), once::run(|mut commands: Commands| {
+    once::run(|mut commands: Commands| {
         commands.init_resource::<R>();
-    }))
+    })
 }
 
 /// Once insert a resource.
@@ -55,13 +55,13 @@ pub fn init<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
-    where R: Resource + Clone + 'static
+#[inline(always)]
+pub fn insert<R>(resource: R) -> impl TaskAction<In=R, Out=()>
+    where R: Resource + 'static
 {
-    with(resource, once::run(|input: In<R>, mut commands: Commands| {
+    once::run_with(resource, |input: In<R>, mut commands: Commands| {
         commands.insert_resource(input.0);
-    }))
+    })
 }
 
 /// Once remove a resource.
@@ -83,13 +83,13 @@ pub fn insert<R>(resource: R) -> impl ReactorSystemConfigs<In=R, Out=()>
 /// });
 /// app.update();
 /// ```
-#[inline]
-pub fn remove<R>() -> impl ReactorSystemConfigs<In=(), Out=()>
+#[inline(always)]
+pub fn remove<R>() -> impl TaskAction<In=(), Out=()>
     where R: Resource + 'static
 {
-    with((), once::run(|mut commands: Commands| {
+    once::run(|mut commands: Commands| {
         commands.remove_resource::<R>();
-    }))
+    })
 }
 
 
@@ -98,9 +98,9 @@ mod tests {
     use bevy::app::{App, First, Startup};
     use bevy::prelude::World;
 
+    use crate::action::once::res;
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::once::res;
     use crate::tests::TestResource;
 
     #[test]

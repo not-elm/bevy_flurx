@@ -1,25 +1,28 @@
-use bevy::prelude::{In, IntoSystem, Local, System, World};
-use crate::selector::condition::{ReactorSystemConfigs, with, WithInput};
+use std::marker::PhantomData;
+
+use crate::action::{TaskAction, WithInput};
+use crate::runner::{TaskRunner, TaskOutput};
+use crate::runner::either::EitherRunner;
 
 /// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Either<L, R> {
     /// The result of the first task which passed to [`wait::either`].
     Left(L),
-    
+
     /// The result of the second task which passed to [`wait::either`].
     Right(R),
 }
 
 impl<L, R> Either<L, R> {
     /// Return true if the value is left.
-    #[inline]
+    #[inline(always)]
     pub const fn is_left(&self) -> bool {
         matches!(self, Either::Left(_))
     }
 
     /// Return true if the value is right.
-    #[inline]
+    #[inline(always)]
     pub const fn is_right(&self) -> bool {
         matches!(self, Either::Right(_))
     }
@@ -59,39 +62,51 @@ impl<L, R> Either<L, R> {
 /// app.update();
 /// app.update();
 /// ```
-#[inline]
+#[inline(always)]
 pub fn either<
     LS, LI, LO, LM,
     RS, RI, RO, RM
->(lhs: LS, rhs: RS) -> impl ReactorSystemConfigs<WithInput, In=(LI, RI), Out=Either<LO, RO>>
+>(lhs: LS, rhs: RS) -> impl TaskAction<WithInput, In=(LI, RI), Out=Either<LO, RO>>
     where
-        LS: ReactorSystemConfigs<LM, In=LI, Out=LO> + 'static,
-        RS: ReactorSystemConfigs<RM, In=RI, Out=RO> + 'static,
-        LI: Clone + 'static,
+        LS: TaskAction<LM, In=LI, Out=LO> + 'static,
+        RS: TaskAction<RM, In=RI, Out=RO> + 'static,
+        LI: 'static,
         LO: 'static,
-        RI: Clone + 'static,
-        RO: 'static
+        RI: 'static,
+        RO: 'static,
+        LM: 'static,
+        RM: 'static
 {
-    let (lin, mut l_system) = lhs.into_configs();
-    let (rin, mut r_system) = rhs.into_configs();
-    with(
-        (lin, rin),
-        IntoSystem::into_system(move |In((lin, rin)): In<(LI, RI)>,
-                                      world: &mut World,
-                                      mut initialized: Local<bool>| {
-            if !*initialized {
-                l_system.initialize(world);
-                r_system.initialize(world);
-                *initialized = true;
-            }
+    EitherAction {
+        lhs,
+        rhs,
+        _m: PhantomData,
+    }
+}
 
-            if let Some(lout) = l_system.run(lin, world) {
-                return Some(Either::Left(lout));
-            }
+struct EitherAction<L, LI, LO, LM, R, RI, RO, RM> {
+    lhs: L,
+    rhs: R,
+    _m: PhantomData<(LI, LO, RI, RO, LM, RM)>,
+}
 
-            r_system.run(rin, world).map(|rout| Either::Right(rout))
-        }),
-    )
+impl<
+    L, LI, LO, LM,
+    R, RI, RO, RM
+> TaskAction for EitherAction<L, LI, LO, LM, R, RI, RO, RM>
+    where
+        L: TaskAction<LM, In=LI, Out=LO> + 'static,
+        R: TaskAction<RM, In=RI, Out=RO> + 'static,
+        LM: 'static,
+        RM: 'static
+{
+    type In = (LI, RI);
+    type Out = Either<LO, RO>;
+
+    #[inline(always)]
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
+        EitherRunner::new(output, self.lhs, self.rhs)
+    }
 }
 
 
@@ -101,10 +116,10 @@ mod tests {
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Local, Update, World};
 
+    use crate::action::{once, wait};
+    use crate::action::wait::{Either, output, until};
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, wait};
-    use crate::selector::condition::wait::{Either, output, until};
 
     #[test]
     fn wait_either() {

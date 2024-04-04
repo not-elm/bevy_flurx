@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.3.1"
+version = "0.3.2-beta.0"
 edition = "2021"
 authors = ["elm"]
 categories = ["asynchronous", "game-development"]
@@ -9,6 +9,9 @@ keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
+
+[workspace]
+exclude = ["benches"]
 
 [[example]]
 name = "delay"
@@ -23,6 +26,10 @@ name = "wait"
 path = "examples/simple/wait.rs"
 
 [[example]]
+name = "sequence"
+path = "examples/simple/sequence.rs"
+
+[[example]]
 name = "wait_stop_audio"
 path = "examples/audio/wait_stop_audio.rs"
 
@@ -30,6 +37,20 @@ path = "examples/audio/wait_stop_audio.rs"
 name = "move_shape"
 path = "examples/gui/move_shape.rs"
 
+[[bench]]
+name = "cmp_countup"
+path = "benches/cmp_countup.rs"
+harness = false
+#
+[[bench]]
+name = "cmp_repeat_countup"
+path = "benches/cmp_repeat_countup.rs"
+harness = false
+
+[[bench]]
+name = "sequence"
+path = "benches/sequence.rs"
+harness = false
 
 [dependencies]
 bevy = { version = "0.13.1", default-features = false }
@@ -42,6 +63,12 @@ bevy = { version = "0.13.1" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
 reqwest = "0.12.2"
 futures = "0.3.30"
+criterion = "0.5.1"
+
+[features]
+default = ["audio"]
+audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
+
 
 [workspace.lints.clippy]
 type_complexity = "allow"

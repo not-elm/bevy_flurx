@@ -3,31 +3,31 @@ use std::marker::PhantomData;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 
-use crate::selector::runner::RunReactor;
+use crate::runner::TaskRunner;
 
-pub(super) struct ReactorRunners<Label> {
-    pub(super) systems: Vec<Box<dyn RunReactor>>,
+pub(super) struct TaskRunners<Label> {
+    pub(super) runners: Vec<Box<dyn TaskRunner>>,
     _m: PhantomData<Label>,
 }
 
-impl<Label> Default for ReactorRunners<Label>
+impl<Label> Default for TaskRunners<Label>
     where Label: ScheduleLabel
 {
     #[inline]
-    fn default() -> ReactorRunners<Label> {
-        ReactorRunners {
-            systems: Vec::new(),
+    fn default() -> TaskRunners<Label> {
+        TaskRunners {
+            runners: Vec::new(),
             _m: PhantomData,
         }
     }
 }
 
-impl<Label> ReactorRunners<Label>
+impl<Label> TaskRunners<Label>
     where Label: ScheduleLabel
 {
     pub(crate) fn run(&mut self, world: &mut World) -> bool {
-        let mut pending = Vec::with_capacity(self.systems.len());
-        while let Some(mut runner) = self.systems.pop() {
+        let mut pending = Vec::with_capacity(self.runners.len());
+        while let Some(mut runner) = self.runners.pop() {
             if !runner.run(world) {
                 pending.push(runner);
             }
@@ -35,7 +35,7 @@ impl<Label> ReactorRunners<Label>
         if pending.is_empty() {
             true
         } else {
-            self.systems = pending;
+            self.runners = pending;
             false
         }
     }

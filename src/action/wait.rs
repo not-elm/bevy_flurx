@@ -8,26 +8,36 @@
 //! - [`wait::event`](crate::prelude::wait::event)
 //! - [`wait::state`](crate::prelude::wait::state)
 
-use bevy::prelude::{In, IntoSystem, Local, System, World};
+use std::marker::PhantomData;
+
+use bevy::prelude::{In, IntoSystem, System};
+
 pub use either::*;
-use crate::prelude::{ReactorSystemConfigs, with, WithInput};
+
+use crate::prelude::TaskAction;
+use crate::runner::{TaskRunner, TaskOutput};
+use crate::runner::both::BothRunner;
 
 pub mod event;
+pub mod input;
 pub mod state;
 #[allow(missing_docs)]
 pub mod all;
+#[cfg(feature = "audio")]
+pub mod audio;
 mod either;
+
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
 ///
 /// ## Examples
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// let mut app = App::new();
 /// app.add_plugins(FlurxPlugin);
 /// app.add_systems(Startup, |world: &mut World|{
@@ -42,7 +52,7 @@ mod either;
 /// app.update();
 /// app.update();
 /// ```
-#[inline]
+#[inline(always)]
 pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
     where
         Sys: IntoSystem<Input, Option<Out>, Marker>,
@@ -79,7 +89,7 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
 /// app.update(); // send app exit
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 ///```
-#[inline]
+#[inline(always)]
 pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
     where
         Sys: IntoSystem<Input, bool, Marker> + 'static,
@@ -97,19 +107,19 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 
 /// Run until both tasks done.
 ///
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event1;
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event2;
-/// 
+///
 /// let mut app = App::new();
 /// app.add_event::<Event1>();
 /// app.add_event::<Event2>();
@@ -130,75 +140,46 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// app.update();
 /// ```
 pub fn both<LI, LO, LM, RI, RO, RM>(
-    lhs: impl ReactorSystemConfigs<LM, In=LI, Out=LO> + 'static,
-    rhs: impl ReactorSystemConfigs<RM, In=RI, Out=RO> + 'static,
-) -> impl ReactorSystemConfigs<WithInput, In=(LI, RI), Out=(LO, RO)>
+    lhs: impl TaskAction<LM, In=LI, Out=LO> + 'static,
+    rhs: impl TaskAction<RM, In=RI, Out=RO> + 'static,
+) -> impl TaskAction<In=(LI, RI), Out=(LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,
         LO: Send + 'static,
         RO: Send + 'static,
+        LM: 'static,
+        RM: 'static
 {
-    let (l_in, mut l_sys) = lhs.into_configs();
-    let (r_in, mut r_sys) = rhs.into_configs();
-
-    with(
-        (l_in, r_in),
-        IntoSystem::into_system(
-            move |In((l_in, r_in)): In<(LI, RI)>,
-                  world: &mut World,
-                  mut init: Local<bool>,
-                  mut l_out: Local<Option<LO>>,
-                  mut r_out: Local<Option<RO>>| {
-                both_init_systems(&mut init, world, &mut l_sys, &mut r_sys);
-                both_run_systems(world, l_in, &mut l_sys, &mut l_out, r_in, &mut r_sys, &mut r_out)
-            }
-        ),
-    )
-}
-
-#[inline]
-fn both_init_systems<LI, LO, RI, RO>(
-    init: &mut Local<bool>,
-    world: &mut World,
-    l_sys: &mut impl System<In=LI, Out=Option<LO>>,
-    r_sys: &mut impl System<In=RI, Out=Option<RO>>,
-) {
-    if !(**init) {
-        l_sys.initialize(world);
-        r_sys.initialize(world);
-        **init = true;
+    BothAction {
+        lhs,
+        rhs,
+        _m: PhantomData,
     }
 }
 
-fn both_run_systems<LI, LO, RI, RO>(
-    world: &mut World,
-    l_in: LI,
-    l_sys: &mut impl System<In=LI, Out=Option<LO>>,
-    l_out: &mut Local<Option<LO>>,
-    r_in: RI,
-    r_sys: &mut impl System<In=RI, Out=Option<RO>>,
-    r_out: &mut Local<Option<RO>>,
-) -> Option<(LO, RO)>
+struct BothAction<L, LI, LO, LM, R, RI, RO, RM> {
+    lhs: L,
+    rhs: R,
+    _m: PhantomData<(LI, LO, RI, RO, LM, RM)>,
+}
+
+impl<
+    L, LI, LO, LM,
+    R, RI, RO, RM
+> TaskAction for BothAction<L, LI, LO, LM, R, RI, RO, RM>
     where
-        LO: Send,
-        RO: Send
+        L: TaskAction<LM, In=LI, Out=LO> + 'static,
+        R: TaskAction<RM, In=RI, Out=RO> + 'static,
+        LM: 'static,
+        RM: 'static
 {
-    if l_out.is_none() {
-        **l_out = l_sys.run(l_in, world);
-        l_sys.apply_deferred(world);
-    }
-    if r_out.is_none() {
-        **r_out = r_sys.run(r_in, world);
-        r_sys.apply_deferred(world);
-    }
+    type In = (LI, RI);
+    type Out = (LO, RO);
 
-    let l_out_value = l_out.take()?;
-    if let Some(r_out_value) = r_out.take() {
-        Some((l_out_value, r_out_value))
-    } else {
-        l_out.replace(l_out_value);
-        None
+    #[inline(always)]
+    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
+        BothRunner::new(output, self.lhs, self.rhs)
     }
 }
 
@@ -209,10 +190,10 @@ mod tests {
     use bevy::prelude::{EventWriter, In, Local, Update, World};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
+    use crate::action::{once, wait, with};
+    use crate::action::wait::until;
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::selector::condition::{once, wait, with};
-    use crate::selector::condition::wait::until;
     use crate::tests::test_app;
 
     #[test]

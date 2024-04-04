@@ -6,7 +6,7 @@ use std::future::Future;
 use bevy::ecs::schedule::ScheduleLabel;
 use futures_polling::FuturePollingExt;
 
-use crate::selector::condition::ReactorSystemConfigs;
+use crate::action::TaskAction;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 
@@ -21,7 +21,7 @@ impl<'a> ReactiveTask<'a> {
     ///
     /// See below for configs.
     ///
-    /// - [`once`](crate::prelude::once)
+    /// - [`once`](crate::prelude::once_action)
     /// - [`wait`](crate::prelude::wait)
     /// - [`delay`](crate::prelude::delay)
     ///
@@ -49,15 +49,15 @@ impl<'a> ReactiveTask<'a> {
     pub fn will<Label, In, Out, M>(
         &self,
         label: Label,
-        configs: impl ReactorSystemConfigs<M, In=In, Out=Out>,
+        action: impl TaskAction<M, In=In, Out=Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
-            In: Clone + 'static,
-            Out: 'static
+            In: 'static,
+            Out: 'static,
+            M: 'static
     {
-        let (input, system) = configs.into_configs();
-        self.0.will(WorldSelector::new(label, input, system))
+        self.0.will(WorldSelector::new(label, action))
     }
 
     /// Create a new initialized task.
@@ -86,15 +86,15 @@ impl<'a> ReactiveTask<'a> {
     pub async fn run<Label, In, Out, M>(
         &self,
         label: Label,
-        configs: impl ReactorSystemConfigs<M, In=In, Out=Out> + 'static,
+        action: impl TaskAction<M, In=In, Out=Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
-            In: Clone + Unpin + 'static,
+            In: Unpin + 'static,
             M: 'static,
             Out: 'static
     {
-        let mut future = self.will(label, configs).polling();
+        let mut future = self.will(label, action).polling();
         let _ = future.poll_once().await;
         future
     }
@@ -108,7 +108,7 @@ mod tests {
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
     use crate::prelude::wait;
-    use crate::selector::condition::once;
+    use crate::action::once;
 
     #[test]
     fn run() {

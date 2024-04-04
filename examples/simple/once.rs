@@ -4,7 +4,7 @@
 //!
 //! Please check [`setup`] function in this example for details.
 //! 
-//! [`once`]: bevy_flurx::prelude::once
+//! [`once`]: bevy_flurx::prelude::once_action
 
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
