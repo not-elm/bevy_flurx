@@ -84,13 +84,14 @@ pub fn app_exit() -> impl TaskAction<In=AppExit> {
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, First, Startup};
-    use bevy::prelude::{Update, World};
+    use bevy::app::{App, AppExit, First, Startup, Update};
+    use bevy::prelude::World;
+    use bevy_test_helper::share::{create_shares, Share};
 
     use crate::action::once;
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
-    use crate::tests::came_event;
+    use crate::tests::{came_event, test_app};
 
     #[test]
     fn send_event() {
@@ -107,27 +108,6 @@ mod tests {
         assert!(came_event::<AppExit>(&mut app));
     }
 
-       #[test]
-    fn s3() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    task.will(Update, once::run(||{
-                        println!("1");
-                    })).await;
-                     println!("2");
-                    task.will(Update, once::run(||{
-                        println!("3");
-                    })).await;
-                });
-            });
-
-        app.update();
-
-    }
-
     #[test]
     fn send_default_event() {
         let mut app = App::new();
@@ -141,5 +121,24 @@ mod tests {
 
         app.update();
         assert!(came_event::<AppExit>(&mut app));
+    }
+
+    /// If register a reactor in `Startup` and execute `once::run`,
+    /// make sure to proceed with subsequent processing during that frame.
+    #[test]
+    fn it_s1_to_be_true() {
+        let mut app = test_app();
+        let (s1, s2) = create_shares::<bool>();
+        app.insert_resource(s2);
+        app.add_systems(Startup, |world: &mut World| {
+            let s2 = world.remove_resource::<Share<bool>>().unwrap();
+            world.schedule_reactor(|task| async move {
+                task.will(Update, once::run(|| {})).await;
+                s2.set(true);
+            });
+        });
+
+        app.update();
+        assert!(*s1.lock());
     }
 }

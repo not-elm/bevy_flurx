@@ -4,14 +4,14 @@
 //! For example, how can I play a sound effect just before the character starts moving,
 //! and then not accept any input until the character stop movement and 
 //! the sound effect finished playing?  
-//! 
+//!
 //! If only one process is waiting, simply use an event reader,
 //! but if more than one, you will probably need to create a structure to manage the status of multiple processes.
-//! 
+//!
 //! This problem is common in event-driven applications, and is often solved with async-await;
 //! This library also resolve this using async-await.
 //! Specifically, I use an asynchronous processing flow that I call `Reactor`.
-//! 
+//!
 //! `Reactor` can be used partially. 
 //! This means there is no need to rewrite existing applications to use this library.
 //! And I recommend using it partially. 
@@ -21,31 +21,33 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Plugin};
-use bevy::prelude::{Main, World};
+use bevy::app::{App, Last, MainScheduleOrder, Plugin};
+use bevy::ecs::schedule::ScheduleLabel;
+use bevy::prelude::World;
 
-use crate::scheduler::{ReactiveScheduler, Retry};
-use crate::world_ptr::WorldPtr;
+use crate::scheduler::ReactiveScheduler;
 
 pub mod extension;
 pub mod task;
 pub mod action;
+
 #[allow(missing_docs)]
 pub mod prelude {
     pub use crate::{
+        action::*,
         extension::ScheduleReactor,
         FlurxPlugin,
-        action::*,
     };
 }
+
 #[doc(hidden)]
-pub mod private{
-    pub use crate::{
-        runner::sequence::SequenceRunner
-    };
+pub mod private {
+    pub use crate::runner::sequence::SequenceRunner;
 }
+
 mod world_ptr;
 mod scheduler;
+#[allow(missing_docs)]
 mod runner;
 mod selector;
 
@@ -56,11 +58,18 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
+            .init_schedule(AfterLast)
             .init_non_send_resource::<ReactiveScheduler>()
-            .init_resource::<Retry>()
-            .add_systems(Main, run_scheduler);
+            .add_systems(Last, run_scheduler);
+        app
+            .world
+            .resource_mut::<MainScheduleOrder>()
+            .insert_after(Last, AfterLast);
     }
 }
+
+#[derive(ScheduleLabel, Debug, Copy, Clone, Eq, PartialEq, Hash)]
+struct AfterLast;
 
 fn run_scheduler(
     world: &mut World
