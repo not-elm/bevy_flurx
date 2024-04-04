@@ -13,7 +13,7 @@ use crate::action::{TaskAction, wait, with};
 /// use bevy::prelude::{States, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(States, Eq, PartialEq, Copy, Clone, Hash, Default)]
+/// #[derive(States, Eq, PartialEq, Copy, Clone, Hash, Default, Debug)]
 /// enum Status{
 ///     #[default]
 ///     First,
