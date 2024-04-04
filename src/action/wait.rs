@@ -19,10 +19,12 @@ use crate::runner::{TaskRunner, TaskOutput};
 use crate::runner::both::BothRunner;
 
 pub mod event;
+pub mod input;
 pub mod state;
 #[allow(missing_docs)]
 pub mod all;
 mod either;
+
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
