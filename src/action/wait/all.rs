@@ -63,7 +63,7 @@ macro_rules! wait_all {
 pub mod private {
     use bevy::prelude::{Deref, DerefMut};
 
-    use crate::action::TaskAction;
+    use crate::action::{ TaskAction};
     use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, TaskRunner};
     use crate::runner::base::BaseTwoRunner;
     use crate::runner::macros::impl_tuple_runner;
@@ -72,11 +72,17 @@ pub mod private {
     pub struct FlatBothRunner<I1, I2, O1, O2>(BaseTwoRunner<I1, I2, O1, O2>);
 
 
-    impl<I1, I2, O1, O2> FlatBothRunner<I1, I2, O1, O2> {
+    impl<I1, I2, O1, O2> FlatBothRunner<I1, I2, O1, O2>
+        where
+            I1: 'static,
+            I2: 'static,
+            O1: 'static,
+            O2: 'static,
+    {
         #[inline]
         pub fn new(
-            a1: impl TaskAction<In=I1, Out=O1> + 'static,
-            a2: impl TaskAction<In=I2, Out=O2> + 'static,
+            a1: impl TaskAction<I1, O1> + 'static,
+            a2: impl TaskAction<I2, O2> + 'static,
         ) -> FlatBothRunner<I1, I2, O1, O2> {
             Self(BaseTwoRunner::new(a1, a2))
         }
@@ -84,10 +90,15 @@ pub mod private {
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-            impl<I1, I2, $($lhs_out,)* O2> TaskAction for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2> {
-                type In = (I1, I2);
+            impl<I1, I2, $($lhs_out,)* O2> TaskAction< (I1, I2), ($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2>
+                where
+                    I1: 'static,
+                    I2: 'static,
+                    $($lhs_out: 'static,)*
+                    O2: 'static,
 
-                type Out = ($($lhs_out,)* O2);
+
+            {
 
                 #[inline(always)]
                 fn to_runner(self, token: CancellationToken, output: TaskOutput<($($lhs_out,)* O2)>) -> impl TaskRunner {
@@ -96,7 +107,15 @@ pub mod private {
             }
 
 
-            impl<I1, I2, $($lhs_out,)* O2> RunWithTaskOutput<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2> {
+            impl<I1, I2, $($lhs_out,)* O2> RunWithTaskOutput<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2>
+                where
+                    I1: 'static,
+                    I2: 'static,
+                    $($lhs_out: 'static,)*
+                    O2: 'static,
+
+
+            {
                 type In = (I1, I2);
 
                 #[allow(non_snake_case)]

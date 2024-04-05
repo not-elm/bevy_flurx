@@ -8,7 +8,7 @@ use std::time::Duration;
 use bevy::prelude::{Local, Res, TimerMode};
 use bevy::time::{Time, Timer};
 
-use crate::action::{TaskAction, wait, with};
+use crate::action::{ TaskAction, wait, with};
 
 
 /// Delays by the specified amount of time.
@@ -25,7 +25,7 @@ use crate::action::{TaskAction, wait, with};
 /// }
 /// ```
 #[inline(always)]
-pub fn time(duration: Duration) -> impl TaskAction<In=(), Out=()> {
+pub fn time(duration: Duration) -> impl TaskAction< (), ()> {
     let mut timer = Timer::new(duration, TimerMode::Once);
     with((), wait::until(move |time: Res<Time>| {
         timer
@@ -48,7 +48,7 @@ pub fn time(duration: Duration) -> impl TaskAction<In=(), Out=()> {
 /// }
 /// ```
 #[inline(always)]
-pub fn frames(frames: usize) -> impl TaskAction<In=(), Out=()> {
+pub fn frames(frames: usize) -> impl TaskAction< (), ()> {
     with((), wait::until(move |mut frame_now: Local<usize>| {
         *frame_now += 1;
         frames <= *frame_now

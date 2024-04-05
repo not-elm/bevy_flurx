@@ -5,7 +5,7 @@
 
 use bevy::prelude::{Res, State, States, };
 
-use crate::action::{TaskAction, wait, with};
+use crate::action::{ TaskAction, wait, with};
 
 /// Waits until the state becomes the specified.
 ///
@@ -26,7 +26,7 @@ use crate::action::{TaskAction, wait, with};
 /// });
 /// ```
 #[inline(always)]
-pub fn becomes<S>(state: S) -> impl TaskAction<In=(), Out=()>
+pub fn becomes<S>(state: S) -> impl TaskAction< (), ()>
     where S: States + 'static
 {
     with((), wait::until(move |state_now: Res<State<S>>| {

@@ -171,47 +171,47 @@ fn setup_reactor(world: &mut World) {
             }
             task.will(Update, {
                 once::switch::off::<Loading>()
-                    .then_action(once::run(despawn_block))
-                    .then_action(once::run(progress_clean_up))
-                    .then_action(wait::input::just_pressed(KeyCode::KeyR))
+                    .then(once::run(despawn_block))
+                    .then(once::run(progress_clean_up))
+                    .then(wait::input::just_pressed(KeyCode::KeyR))
             }).await;
         }
     });
 }
 
-fn expand_horizon() -> impl TaskAction<In=(), Out=((), ())> {
+fn expand_horizon() -> impl TaskAction< (), ((), ())> {
     delay::time(Duration::from_millis(DELAY))
-        .then_action(once::run(play_audio))
-        .then_action(wait::both(
+        .then(once::run(play_audio))
+        .then(wait::both(
             wait::until(stop_audio),
             scale_up(|v| &mut v.z),
         ))
 }
 
-fn expand_vertical() -> impl TaskAction<In=(), Out=((), ())> {
+fn expand_vertical() -> impl TaskAction< (), ((), ())> {
     delay::time(Duration::from_millis(DELAY))
-        .then_action(once::run(play_audio))
-        .then_action(wait::both(
+        .then(once::run(play_audio))
+        .then(wait::both(
             wait::until(stop_audio),
             scale_up(|v| &mut v.x),
         ))
 }
 
-fn shrink_vertical() -> impl TaskAction<In=(), Out=()> {
+fn shrink_vertical() -> impl TaskAction< (), ()> {
     delay::time(Duration::from_millis(DELAY))
-        .then_action(once::run(play_audio))
-        .then_action(scale_down(0.01, |v| &mut v.z))
-        .then_action(wait::until(stop_audio))
+        .then(once::run(play_audio))
+        .then(scale_down(0.01, |v| &mut v.z))
+        .then(wait::until(stop_audio))
 }
 
-fn shrink_horizon() -> impl TaskAction<In=(), Out=()> {
+fn shrink_horizon() -> impl TaskAction< (), ()> {
     delay::time(Duration::from_millis(DELAY))
-        .then_action(once::run(play_audio))
-        .then_action(wait::both(
+        .then(once::run(play_audio))
+        .then(wait::both(
             scale_down(0.0, |v| &mut v.y),
             scale_down(0.0, |v| &mut v.x),
         ))
-        .then_action(wait::until(stop_audio))
+        .then(wait::until(stop_audio))
 }
 
 
@@ -293,7 +293,7 @@ fn rotate_camera(
     }
 }
 
-fn scale_up(f: impl Fn(&mut Vec3) -> &mut f32 + Send + Sync + 'static) -> impl TaskAction<In=(), Out=()> {
+fn scale_up(f: impl Fn(&mut Vec3) -> &mut f32 + Send + Sync + 'static) -> impl TaskAction< (), ()> {
     with((), wait::until(move |mut cubes: Query<&mut Transform, With<Block>>,
                                mut tick: Local<f32>,
                                time: Res<Time>,
@@ -311,7 +311,7 @@ fn scale_up(f: impl Fn(&mut Vec3) -> &mut f32 + Send + Sync + 'static) -> impl T
     }))
 }
 
-fn scale_down(dist: f32, f: impl Fn(&mut Vec3) -> &mut f32 + Send + Sync + 'static) -> impl TaskAction<In=(), Out=()> {
+fn scale_down(dist: f32, f: impl Fn(&mut Vec3) -> &mut f32 + Send + Sync + 'static) -> impl TaskAction< (), ()> {
     with((), wait::until(move |mut cubes: Query<&mut Transform, With<Block>>,
                                mut tick: Local<f32>,
                                time: Res<Time>,

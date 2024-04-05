@@ -13,7 +13,7 @@ use std::hash::Hash;
 use bevy::input::ButtonInput;
 use bevy::prelude::{In, Res};
 
-use crate::action::{TaskAction, wait, with};
+use crate::action::{ TaskAction, wait, with};
 
 /// Waits until item has just been pressed.
 ///
@@ -27,10 +27,10 @@ use crate::action::{TaskAction, wait, with};
 /// });
 /// ```
 #[inline(always)]
-pub fn just_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl TaskAction<In=(), Out=()> {
-    wait::until(move |input: Res<ButtonInput<T>>| {
+pub fn just_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl TaskAction< (), ()> {
+    with((), wait::until(move |input: Res<ButtonInput<T>>| {
         input.just_pressed(item)
-    })
+    }))
 }
 
 /// Waits until keycode has been pressed.
@@ -45,10 +45,10 @@ pub fn just_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> imp
 /// });
 /// ```
 #[inline(always)]
-pub fn pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl TaskAction<In=(), Out=()> {
-    wait::until(move |input: Res<ButtonInput<T>>| {
+pub fn pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl TaskAction< (), ()> {
+    with((), wait::until(move |input: Res<ButtonInput<T>>| {
         input.pressed(item)
-    })
+    }))
 }
 
 /// Waits until any keycode in inputs has been pressed.
@@ -63,7 +63,7 @@ pub fn pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl Tas
 /// });
 /// ```
 #[inline(always)]
-pub fn any_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl IntoIterator<Item=T>) -> impl TaskAction<In=Vec<T>, Out=()> {
+pub fn any_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl IntoIterator<Item=T>) -> impl TaskAction< Vec<T>, ()> {
     let items = items.into_iter().collect::<Vec<_>>();
     with(items, wait::until(|In(items): In<Vec<T>>,
                              input: Res<ButtonInput<T>>| {
@@ -83,7 +83,7 @@ pub fn any_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl Into
 /// });
 /// ```
 #[inline(always)]
-pub fn all_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl IntoIterator<Item=T>) -> impl TaskAction<In=Vec<T>, Out=()> {
+pub fn all_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl IntoIterator<Item=T>) -> impl TaskAction< Vec<T>, ()> {
     let items = items.into_iter().collect::<Vec<_>>();
     with(items, wait::until(|In(items): In<Vec<T>>,
                              input: Res<ButtonInput<T>>| {
@@ -103,10 +103,10 @@ pub fn all_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl Into
 /// });
 /// ```
 #[inline(always)]
-pub fn just_released<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl TaskAction<In=(), Out=()> {
-    wait::until(move |input: Res<ButtonInput<T>>| {
+pub fn just_released<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> impl TaskAction< (), ()> {
+    with((), wait::until(move |input: Res<ButtonInput<T>>| {
         input.just_released(item)
-    })
+    }))
 }
 
 /// Waits any keycode in inputs have just been released.
@@ -121,7 +121,7 @@ pub fn just_released<T: Copy + Eq + Hash + Send + Sync + 'static>(item: T) -> im
 /// });
 /// ```
 #[inline(always)]
-pub fn any_just_released<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl IntoIterator<Item=T>) -> impl TaskAction<In=Vec<T>, Out=()> {
+pub fn any_just_released<T: Copy + Eq + Hash + Send + Sync + 'static>(items: impl IntoIterator<Item=T>) -> impl TaskAction< Vec<T>, ()> {
     let items = items.into_iter().collect::<Vec<_>>();
     with(items, wait::until(|In(items): In<Vec<T>>,
                              input: Res<ButtonInput<T>>| {
@@ -151,8 +151,8 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 task.will(First, wait::input::just_pressed(KeyCode::KeyA)
-                    .then_action(wait::input::pressed(KeyA))
-                    .then_action(once::run(|world: &mut World| {
+                    .then(wait::input::pressed(KeyA))
+                    .then(once::run(|world: &mut World| {
                         world.set_bool(true);
                     })),
                 ).await;

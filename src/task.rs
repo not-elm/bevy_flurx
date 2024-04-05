@@ -49,12 +49,12 @@ impl<'a> ReactiveTask<'a> {
     pub fn will<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<In=In, Out=Out> + 'static,
+        action: impl TaskAction<In, Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
             In: 'static,
-            Out: 'static,
+            Out: 'static
 
     {
         self.0.will(WorldSelector::new(label, action))
@@ -86,7 +86,7 @@ impl<'a> ReactiveTask<'a> {
     pub async fn run<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<In=In, Out=Out> + 'static,
+        action: impl TaskAction<In, Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
@@ -104,10 +104,10 @@ mod tests {
     use bevy::app::{App, AppExit, First, Startup, Update};
     use bevy::prelude::World;
 
+    use crate::action::once;
     use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
     use crate::prelude::wait;
-    use crate::action::once;
 
     #[test]
     fn run() {

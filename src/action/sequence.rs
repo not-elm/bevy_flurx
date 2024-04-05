@@ -6,7 +6,7 @@
 //! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
 
 
-use crate::action::TaskAction;
+use crate::action::{ TaskAction};
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::RunnerIntoAction;
 use crate::runner::sequence::SequenceRunner;
@@ -21,7 +21,7 @@ pub trait Then<I1, O1> {
     /// Returns the action combined with the subsequent action.
     ///
     /// The action's output will be that of the subsequent action.
-    fn then_action<I2, O2>(self, action: impl TaskAction<In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
+    fn then<I2, O2>(self, action: impl TaskAction<I2, O2> + 'static) -> impl TaskAction<I1, O2>
         where
             I2: 'static,
             O2: 'static;
@@ -29,12 +29,12 @@ pub trait Then<I1, O1> {
 
 impl<I1, O1, A> Then<I1, O1> for A
     where
-        A: TaskAction<In=I1, Out=O1> + 'static,
+        A: TaskAction<I1, O1> + 'static,
         I1: 'static,
         O1: 'static
 {
     #[inline]
-    fn then_action<I2, O2>(self, action: impl TaskAction<In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
+    fn then<I2, O2>(self, action: impl TaskAction<I2, O2> + 'static) -> impl TaskAction<I1, O2>
         where
             I2: 'static,
             O2: 'static
@@ -80,9 +80,9 @@ macro_rules! sequence {
     ($action1: expr, $action2: expr $(,$action: expr)*$(,)?)  => {
         {
             use $crate::action::sequence::Then;
-            $action1.then_action($action2)
+            $action1.then($action2)
             $(
-            .then_action($action)
+            .then($action)
             )*
         }
     };
@@ -117,7 +117,7 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 task.will(Update, once::run(|| {})
-                    .then_action(once::res::insert(Mark1)),
+                    .then(once::res::insert(Mark1)),
                 ).await;
             });
         });
@@ -132,8 +132,8 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 task.will(Update, once::run(|| {})
-                    .then_action(once::res::insert(Mark1))
-                    .then_action(once::res::insert(Mark2)),
+                    .then(once::res::insert(Mark1))
+                    .then(once::res::insert(Mark2)),
                 ).await;
             });
         });
@@ -150,9 +150,9 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 let output = task.will(Update, once::run(|| {})
-                    .then_action(once::res::insert(Mark1))
-                    .then_action(once::res::insert(Mark2))
-                    .then_action(once::run(|| { 1 + 1 })),
+                    .then(once::res::insert(Mark1))
+                    .then(once::res::insert(Mark2))
+                    .then(once::run(|| { 1 + 1 })),
                 ).await;
                 task.will(Update, once::res::insert(OutputUSize(output))).await;
             });

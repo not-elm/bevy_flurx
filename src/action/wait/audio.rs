@@ -20,7 +20,7 @@ use crate::action::{TaskAction, wait, with};
 ///     task.will(Update, wait::audio::finished(entity)).await;
 /// });
 /// ```
-pub fn finished(entity: Entity) -> impl TaskAction<In=Entity, Out=()> {
+pub fn finished(entity: Entity) -> impl TaskAction< Entity, ()> {
     with(entity, wait::until(|In(entity): In<Entity>,
                               mut commands: Commands,
                               audio: Query<(Entity, &AudioSink)>| {

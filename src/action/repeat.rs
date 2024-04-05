@@ -8,11 +8,11 @@
 // 
 // // TODO: repeat
 // #[inline]
-// fn repeat<Sys, Input, Out, Marker>(count: usize, system: Sys) -> impl ReactorSystemConfigs<WithInput, In=Input, Out=Out>
+// fn repeat<Sys,Input, Out, Marker>(count: usize, system: Sys) -> impl ReactorSystemConfigs<WithInput,Input, Out>
 //     where
 //         Input: Clone + 'static,
 //         Out: 'static,
-//         Sys: ReactorSystemConfigs<Marker, In=Input, Out=Out>,
+//         Sys: ReactorSystemConfigs<Marker,Input, Out>,
 // {
 //     let (input, system) = system.into_configs();
 //     let mut system = Some(system);

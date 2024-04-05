@@ -17,13 +17,12 @@ pub(crate) struct WorldSelector<Label, Action, In, Out> {
     _m: PhantomData<In>,
 }
 
-impl<Label, Action, In, Out> WorldSelector<Label, Action, In, Out>
+impl<Label, Action,In, Out> WorldSelector<Label, Action, In, Out>
     where
         Label: ScheduleLabel + Clone,
-        Action: TaskAction<In=In, Out=Out>,
+        Action: TaskAction<In, Out>,
         In: 'static,
         Out: 'static,
-       
 {
     #[inline]
     pub(crate) fn new(label: Label, action: Action) -> WorldSelector<Label, Action, In, Out> {
@@ -40,7 +39,7 @@ impl<Label, Action, In, Out> WorldSelector<Label, Action, In, Out>
 impl<Label, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Action, In, Out>
     where
         Label: ScheduleLabel + Clone,
-        Action: TaskAction<In=In, Out=Out> + 'static,
+        Action: TaskAction<In, Out> + 'static,
         In: 'static,
         Out: 'static
 {

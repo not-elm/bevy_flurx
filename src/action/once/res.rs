@@ -6,7 +6,9 @@
 
 use bevy::prelude::{Commands, In, Resource};
 
-use crate::action::{once, TaskAction};
+use crate::action::{ once, TaskAction};
+use crate::action::seed::ActionSeed;
+use crate::prelude::seed::Seed;
 
 /// Once init a resource.
 ///
@@ -28,7 +30,7 @@ use crate::action::{once, TaskAction};
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn init<R>() -> impl TaskAction<In=(), Out=()>
+pub fn init<R>() -> impl ActionSeed + Seed
     where R: Resource + Default + 'static
 {
     once::run(|mut commands: Commands| {
@@ -56,7 +58,7 @@ pub fn init<R>() -> impl TaskAction<In=(), Out=()>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn insert<R>(resource: R) -> impl TaskAction<In=R, Out=()>
+pub fn insert<R>(resource: R) -> impl TaskAction< R, ()>
     where R: Resource + 'static
 {
     once::run_with(resource, |input: In<R>, mut commands: Commands| {
@@ -84,7 +86,7 @@ pub fn insert<R>(resource: R) -> impl TaskAction<In=R, Out=()>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn remove<R>() -> impl TaskAction<In=(), Out=()>
+pub fn remove<R>() -> impl ActionSeed + Seed
     where R: Resource + 'static
 {
     once::run(|mut commands: Commands| {

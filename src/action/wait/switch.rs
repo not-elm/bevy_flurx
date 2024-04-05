@@ -6,13 +6,13 @@
 
 use bevy::prelude::Res;
 
-use crate::action::{wait, with};
+use crate::action::{ wait, with};
 use crate::action::switch::Switch;
 use crate::prelude::TaskAction;
 
 /// Waits until the switch turned on.
 #[inline]
-pub fn on<M: Send + Sync + 'static>() -> impl TaskAction<In=(), Out=()> {
+pub fn on<M: Send + Sync + 'static>() -> impl TaskAction< (), ()> {
     with((), wait::until(|switch: Option<Res<Switch<M>>>| {
         switch.is_some_and(|s| s.turned_on())
     }))
@@ -20,7 +20,7 @@ pub fn on<M: Send + Sync + 'static>() -> impl TaskAction<In=(), Out=()> {
 
 /// Waits until the switch turned off.
 #[inline]
-pub fn off<M: Send + Sync + 'static>() -> impl TaskAction<In=(), Out=()> {
+pub fn off<M: Send + Sync + 'static>() -> impl TaskAction< (), ()> {
     with((), wait::until(|switch: Option<Res<Switch<M>>>| {
         switch.is_some_and(|s| s.turned_off())
     }))

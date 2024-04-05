@@ -37,6 +37,7 @@ pub mod prelude {
         action::*,
         action::sequence::Then,
         action::switch::*,
+        action::pipe::Pipe,
         task::ReactiveTask,
         extension::ScheduleReactor,
         FlurxPlugin,

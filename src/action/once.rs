@@ -7,7 +7,8 @@
 
 
 use bevy::prelude::{In, IntoSystem};
-
+use crate::action::seed::{ActionSeed, Seed};
+use crate::action::seed::once::OnceSeed;
 use crate::prelude::TaskAction;
 use crate::runner::once::OnceRunner;
 use crate::runner::RunnerIntoAction;
@@ -43,14 +44,15 @@ pub mod audio;
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn run<Sys, Out, M>(system: Sys) -> impl TaskAction<In=(), Out=Out>
+pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + Seed
     where
-        Sys: IntoSystem<(), Out, M>,
+        Sys: IntoSystem<I, Out, M>,
+        I: 'static,
         Out: 'static
 {
-    RunnerIntoAction::new(OnceRunner::new((), IntoSystem::into_system(system.pipe(|input: In<Out>| {
-        Some(input.0)
-    }))))
+    OnceSeed::new(system.pipe(|In(out): In<Out>|{
+        Some(out)
+    }))
 }
 
 /// Once run a system with input.
@@ -75,7 +77,7 @@ pub fn run<Sys, Out, M>(system: Sys) -> impl TaskAction<In=(), Out=Out>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl TaskAction<In=Input, Out=Out>
+pub fn run_with<Sys,Input, Out, Marker>(input:Input, system: Sys) -> impl TaskAction<Input, Out>
     where
         Sys: IntoSystem<Input, Out, Marker>,
         Input: 'static,

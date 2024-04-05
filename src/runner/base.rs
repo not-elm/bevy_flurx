@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+
 use crate::action::TaskAction;
 use crate::runner::{CancellationToken, TaskOutput, TaskRunner};
 
@@ -12,11 +13,17 @@ pub struct BaseTwoRunner<I1, I2, O1, O2> {
     _m: PhantomData<(I1, I2)>,
 }
 
-impl<I1, I2, O1, O2> BaseTwoRunner<I1, I2, O1, O2> {
+impl<I1, I2, O1, O2> BaseTwoRunner<I1, I2, O1, O2>
+    where
+        I1: 'static,
+        I2: 'static,
+        O1: 'static,
+        O2: 'static,
+{
     #[inline]
     pub fn new(
-        a1: impl TaskAction<In=I1, Out=O1> + 'static,
-        a2: impl TaskAction<In=I2, Out=O2> + 'static,
+        a1: impl TaskAction<I1, O1> + 'static,
+        a2: impl TaskAction<I2, O2> + 'static,
     ) -> BaseTwoRunner<I1, I2, O1, O2>
     {
         let o1 = TaskOutput::default();
@@ -36,12 +43,12 @@ impl<I1, I2, O1, O2> BaseTwoRunner<I1, I2, O1, O2> {
         }
     }
 
-    pub fn cancel_if_need(&mut self, token: &CancellationToken) -> bool{
-        if token.requested_cancel(){
+    pub fn cancel_if_need(&mut self, token: &CancellationToken) -> bool {
+        if token.requested_cancel() {
             self.t1.cancel();
             self.t2.cancel();
             true
-        }else{
+        } else {
             false
         }
     }

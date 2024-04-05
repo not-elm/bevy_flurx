@@ -1,4 +1,4 @@
-use crate::action::TaskAction;
+use crate::action::{ TaskAction};
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::either::EitherRunner;
 use crate::runner::RunnerIntoAction;
@@ -64,11 +64,11 @@ impl<L, R> Either<L, R> {
 #[inline(always)]
 pub fn either<
     LS, LI, LO,
-    RS, RI, RO
->(lhs: LS, rhs: RS) -> impl TaskAction<In=(LI, RI), Out=Either<LO, RO>>
+    RS, RI, RO,
+>(lhs: LS, rhs: RS) -> impl TaskAction<(LI, RI), Either<LO, RO>>
     where
-        LS: TaskAction<In=LI, Out=LO> + 'static,
-        RS: TaskAction<In=RI, Out=RO> + 'static,
+        LS: TaskAction<LI, LO> + 'static,
+        RS: TaskAction<RI, RO> + 'static,
         LI: 'static,
         LO: 'static,
         RI: 'static,

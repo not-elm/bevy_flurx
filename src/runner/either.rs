@@ -1,13 +1,21 @@
 use bevy::prelude::{Deref, DerefMut, World};
 
 use crate::action::wait::Either;
-use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, };
+use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput};
 use crate::runner::base::BaseTwoRunner;
 
 #[derive(Deref, DerefMut)]
 pub(crate) struct EitherRunner<I1, I2, O1, O2>(pub(crate) BaseTwoRunner<I1, I2, O1, O2>);
 
-impl<I1, I2, O1, O2> RunWithTaskOutput<Either<O1, O2>> for EitherRunner<I1, I2, O1, O2> {
+impl<I1, I2, O1, O2> RunWithTaskOutput<Either<O1, O2>> for EitherRunner<I1, I2, O1, O2>
+    where
+        I1: 'static,
+        I2: 'static,
+        O1: 'static,
+        O2: 'static,
+
+
+{
     type In = (I1, I2);
 
     fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<Either<O1, O2>>, world: &mut World) -> bool {

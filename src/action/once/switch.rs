@@ -7,12 +7,13 @@
 use bevy::prelude::World;
 
 use crate::action::once;
+use crate::action::seed::ActionSeed;
 use crate::action::switch::Switch;
-use crate::prelude::TaskAction;
+use crate::prelude::seed::Seed;
 
 /// Turns [`Switch`](crate::prelude::Switch) on.
 #[inline]
-pub fn on<M>() -> impl TaskAction<In=(), Out=()>
+pub fn on<M>() -> impl ActionSeed + Seed
     where M: Send + Sync + 'static
 {
     once::run(|world: &mut World| {
@@ -22,7 +23,7 @@ pub fn on<M>() -> impl TaskAction<In=(), Out=()>
 
 /// Turns [`Switch`](crate::prelude::Switch) off.
 #[inline]
-pub fn off<M>() -> impl TaskAction<In=(), Out=()>
+pub fn off<M>() -> impl ActionSeed + Seed
     where M: Send + Sync + 'static
 {
     once::run(|world: &mut World| {

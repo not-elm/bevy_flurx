@@ -9,10 +9,12 @@
 //! - [`wait::state`](crate::prelude::wait::state)
 
 
-use bevy::prelude::{In, IntoSystem, System};
+use bevy::prelude::{In, IntoSystem};
 
 pub use either::*;
 
+use crate::action::seed::{ActionSeed, Seed};
+use crate::action::seed::wait::WaitSeed;
 use crate::prelude::TaskAction;
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::both::BothRunner;
@@ -54,13 +56,13 @@ mod either;
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
+pub fn output<Sys,Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Out> + Seed
     where
         Sys: IntoSystem<Input, Option<Out>, Marker>,
-        Input: 'static,
+        Input: Clone + 'static,
         Out: 'static,
 {
-    IntoSystem::into_system(system)
+    WaitSeed::new(IntoSystem::into_system(system))
 }
 
 /// Run until it returns true.
@@ -91,11 +93,12 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
 /// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 ///```
 #[inline(always)]
-pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
+pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + Seed
     where
-        Sys: IntoSystem<Input, bool, Marker> + 'static,
+        Sys: IntoSystem<Input, bool, M> + 'static,
+        Input: Clone + 'static,
 {
-    IntoSystem::into_system(system.pipe(
+    WaitSeed::new(IntoSystem::into_system(system.pipe(
         |In(finish): In<bool>| {
             if finish {
                 Some(())
@@ -103,7 +106,7 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
                 None
             }
         },
-    ))
+    )))
 }
 
 /// Run until both tasks done.
@@ -141,14 +144,15 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// app.update();
 /// ```
 pub fn both<LI, LO, RI, RO>(
-    lhs: impl TaskAction<In=LI, Out=LO> + 'static,
-    rhs: impl TaskAction<In=RI, Out=RO> + 'static,
-) -> impl TaskAction<In=(LI, RI), Out=(LO, RO)>
+    lhs: impl TaskAction<LI, LO> + 'static,
+    rhs: impl TaskAction<RI, RO> + 'static,
+) -> impl TaskAction<(LI, RI), (LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,
         LO: Send + 'static,
         RO: Send + 'static,
+
 {
     RunnerIntoAction::new(BothRunner(BaseTwoRunner::new(lhs, rhs)))
 }

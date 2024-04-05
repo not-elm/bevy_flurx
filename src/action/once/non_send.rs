@@ -7,7 +7,9 @@
 
 use bevy::prelude::{In, World};
 
-use crate::action::{once, TaskAction};
+use crate::action::{ once, TaskAction};
+use crate::action::seed::ActionSeed;
+use crate::prelude::seed::Seed;
 
 /// Once init a non-send resource.
 ///
@@ -29,7 +31,7 @@ use crate::action::{once, TaskAction};
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn init<R>() -> impl TaskAction<In=(), Out=()>
+pub fn init<R>() -> impl ActionSeed + Seed
     where R: Default + 'static
 {
     once::run(|world: &mut World| {
@@ -57,7 +59,7 @@ pub fn init<R>() -> impl TaskAction<In=(), Out=()>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn insert<R>(resource: R) -> impl TaskAction<In=R, Out=()>
+pub fn insert<R>(resource: R) -> impl TaskAction<R, ()>
     where R: 'static
 {
     once::run_with(resource, |In(resource): In<R>, world: &mut World| {
@@ -84,7 +86,7 @@ pub fn insert<R>(resource: R) -> impl TaskAction<In=R, Out=()>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn remove<R>() -> impl TaskAction<In=(), Out=()>
+pub fn remove<R>() -> impl ActionSeed + Seed
     where R: 'static
 {
     once::run(|world: &mut World| {

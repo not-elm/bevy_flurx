@@ -5,7 +5,7 @@ use std::rc::Rc;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules, World};
 
-use crate::action::TaskAction;
+use crate::action::{ TaskAction};
 use crate::runner::runners::TaskRunners;
 
 pub(crate) mod runners;
@@ -15,6 +15,7 @@ pub(crate) mod sequence;
 pub(crate) mod both;
 pub(crate) mod either;
 pub(crate) mod base;
+pub(crate) mod pipe;
 
 
 /// Represents the output of the task.
@@ -55,6 +56,13 @@ impl<O> TaskOutput<O> {
     #[inline(always)]
     pub fn is_none(&self) -> bool {
         self.0.borrow().is_none()
+    }
+}
+
+impl<O: Clone> TaskOutput<O> {
+    #[inline(always)]
+    pub fn cloned(&self) -> Option<O> {
+        self.0.borrow_mut().clone()
     }
 }
 
@@ -131,7 +139,7 @@ fn run_task_runners<Label: ScheduleLabel>(world: &mut World) {
 
 pub trait RunWithTaskOutput<O> {
     type In;
-    
+
     fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<O>, world: &mut World) -> bool;
 }
 
@@ -142,11 +150,10 @@ impl<O, R: RunWithTaskOutput<O>> TaskRunner for (CancellationToken, TaskOutput<O
     }
 }
 
-
 pub struct RunnerIntoAction<O, R>(pub R, PhantomData<O>);
 
-impl<O, R> RunnerIntoAction<O, R> 
-    where 
+impl<O, R> RunnerIntoAction<O, R>
+    where
         R: RunWithTaskOutput<O>
 {
     #[inline]
@@ -155,11 +162,11 @@ impl<O, R> RunnerIntoAction<O, R>
     }
 }
 
-impl<O: 'static, R: RunWithTaskOutput<O> + 'static> TaskAction for RunnerIntoAction<O, R> {
-    type In = R::In;
-
-    type Out = O;
-
+impl<O, R> TaskAction<R::In, O> for RunnerIntoAction<O, R>
+    where
+        O: 'static,
+        R: RunWithTaskOutput<O> + 'static
+{
     #[inline(always)]
     fn to_runner(self, token: CancellationToken, output: TaskOutput<O>) -> impl TaskRunner {
         (token, output, self.0)
