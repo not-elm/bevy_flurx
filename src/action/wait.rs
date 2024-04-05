@@ -8,15 +8,15 @@
 //! - [`wait::event`](crate::prelude::wait::event)
 //! - [`wait::state`](crate::prelude::wait::state)
 
-use std::marker::PhantomData;
 
 use bevy::prelude::{In, IntoSystem, System};
 
 pub use either::*;
 
 use crate::prelude::TaskAction;
-use crate::runner::{TaskRunner, TaskOutput};
+use crate::runner::base::BaseTwoRunner;
 use crate::runner::both::BothRunner;
+use crate::runner::RunnerIntoAction;
 
 pub mod event;
 pub mod input;
@@ -140,49 +140,19 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// app.world.resource_mut::<Events<Event2>>().send_default();
 /// app.update();
 /// ```
-pub fn both<LI, LO, LM, RI, RO, RM>(
-    lhs: impl TaskAction<LM, In=LI, Out=LO> + 'static,
-    rhs: impl TaskAction<RM, In=RI, Out=RO> + 'static,
+pub fn both<LI, LO, RI, RO>(
+    lhs: impl TaskAction<In=LI, Out=LO> + 'static,
+    rhs: impl TaskAction<In=RI, Out=RO> + 'static,
 ) -> impl TaskAction<In=(LI, RI), Out=(LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,
         LO: Send + 'static,
         RO: Send + 'static,
-        LM: 'static,
-        RM: 'static
 {
-    BothAction {
-        lhs,
-        rhs,
-        _m: PhantomData,
-    }
+    RunnerIntoAction::new(BothRunner(BaseTwoRunner::new(lhs, rhs)))
 }
 
-struct BothAction<L, LI, LO, LM, R, RI, RO, RM> {
-    lhs: L,
-    rhs: R,
-    _m: PhantomData<(LI, LO, RI, RO, LM, RM)>,
-}
-
-impl<
-    L, LI, LO, LM,
-    R, RI, RO, RM
-> TaskAction for BothAction<L, LI, LO, LM, R, RI, RO, RM>
-    where
-        L: TaskAction<LM, In=LI, Out=LO> + 'static,
-        R: TaskAction<RM, In=RI, Out=RO> + 'static,
-        LM: 'static,
-        RM: 'static
-{
-    type In = (LI, RI);
-    type Out = (LO, RO);
-
-    #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-        BothRunner::new(output, self.lhs, self.rhs)
-    }
-}
 
 #[cfg(test)]
 mod tests {

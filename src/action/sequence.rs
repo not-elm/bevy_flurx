@@ -1,39 +1,48 @@
 //! Provides a mechanism for sequentially combining actions.
-//! 
+//!
 //! [`Then`] trait is implemented on all actions and can be combined
 //! in method chains like `once::run(||{}).then(once::run(||{}))` 
-//! 
+//!
 //! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
 
 
 use crate::action::TaskAction;
+use crate::runner::base::BaseTwoRunner;
+use crate::runner::RunnerIntoAction;
 use crate::runner::sequence::SequenceRunner;
 
 /// Create the action combined with the subsequent action.
-/// 
+///
 /// You can create an action that combines multiple actions
 /// by connecting them with a method chain.
-/// 
+///
 /// You can also use [`sequence!`](crate::sequence) instead of this trait.
-pub trait Then<I1, O1, M1> {
+pub trait Then<I1, O1> {
     /// Returns the action combined with the subsequent action.
-    /// 
+    ///
     /// The action's output will be that of the subsequent action.
-    fn then<I2, O2, M2>(self, action: impl TaskAction<M2, In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
-        where M2: 'static;
+    fn then_action<I2, O2>(self, action: impl TaskAction<In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
+        where
+            I2: 'static,
+            O2: 'static;
 }
 
-impl<I1, O1, M1, A> Then<I1, O1, M1> for A
+impl<I1, O1, A> Then<I1, O1> for A
     where
-        A: TaskAction<M1, In=I1, Out=O1> + 'static,
-        M1: 'static
+        A: TaskAction<In=I1, Out=O1> + 'static,
+        I1: 'static,
+        O1: 'static
 {
-    fn then<I2, O2, M2>(self, action: impl TaskAction<M2, In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
-        where M2: 'static
+    #[inline]
+    fn then_action<I2, O2>(self, action: impl TaskAction<In=I2, Out=O2> + 'static) -> impl TaskAction<In=I1, Out=O2>
+        where
+            I2: 'static,
+            O2: 'static
     {
-        SequenceRunner::new(self, action)
+        RunnerIntoAction::new(SequenceRunner(BaseTwoRunner::new(self, action)))
     }
 }
+
 
 /// Create actions that execute the passed actions in sequence.
 ///
@@ -44,9 +53,9 @@ impl<I1, O1, M1, A> Then<I1, O1, M1> for A
 /// all of which are executed during one frame.
 ///
 /// You can also use [`Then`] instead of this macro.
-/// 
+///
 /// The output will be that of the last action passed.
-/// 
+///
 /// ```no_run
 /// use bevy::app::{App, Update};
 /// use bevy::prelude::World;
@@ -71,11 +80,10 @@ macro_rules! sequence {
     ($action1: expr, $action2: expr $(,$action: expr)*$(,)?)  => {
         {
             use $crate::action::sequence::Then;
-            let a = $action1.then($action2);
+            $action1.then_action($action2)
             $(
-            let a = a.then($action);
+            .then_action($action)
             )*
-            a
         }
     };
 }
@@ -109,7 +117,7 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 task.will(Update, once::run(|| {})
-                    .then(once::res::insert(Mark1)),
+                    .then_action(once::res::insert(Mark1)),
                 ).await;
             });
         });
@@ -124,8 +132,8 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 task.will(Update, once::run(|| {})
-                    .then(once::res::insert(Mark1))
-                    .then(once::res::insert(Mark2)),
+                    .then_action(once::res::insert(Mark1))
+                    .then_action(once::res::insert(Mark2)),
                 ).await;
             });
         });
@@ -142,9 +150,9 @@ mod tests {
         app.add_systems(Startup, |world: &mut World| {
             world.schedule_reactor(|task| async move {
                 let output = task.will(Update, once::run(|| {})
-                    .then(once::res::insert(Mark1))
-                    .then(once::res::insert(Mark2))
-                    .then(once::run(|| { 1 + 1 })),
+                    .then_action(once::res::insert(Mark1))
+                    .then_action(once::res::insert(Mark2))
+                    .then_action(once::run(|| { 1 + 1 })),
                 ).await;
                 task.will(Update, once::res::insert(OutputUSize(output))).await;
             });

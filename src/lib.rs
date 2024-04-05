@@ -35,6 +35,8 @@ pub mod action;
 pub mod prelude {
     pub use crate::{
         action::*,
+        action::sequence::Then,
+        action::switch::*,
         task::ReactiveTask,
         extension::ScheduleReactor,
         FlurxPlugin,
@@ -44,7 +46,7 @@ pub mod prelude {
 #[doc(hidden)]
 pub mod private {
     pub use crate::runner::{
-        sequence_with_output::SequenceWithOutputRunner
+        RunnerIntoAction
     };
 }
 
@@ -82,7 +84,6 @@ fn run_scheduler(
         world.insert_non_send_resource(scheduler);
     }
 }
-
 
 #[cfg(test)]
 mod tests {

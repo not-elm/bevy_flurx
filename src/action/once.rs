@@ -6,12 +6,11 @@
 //! - [`once::state`](crate::prelude::once::res)
 
 
-use std::marker::PhantomData;
-use bevy::prelude::{In, IntoSystem, System};
+use bevy::prelude::{In, IntoSystem};
 
-use crate::prelude::{TaskAction, WithInput};
-use crate::runner::{TaskRunner, TaskOutput};
+use crate::prelude::TaskAction;
 use crate::runner::once::OnceRunner;
+use crate::runner::RunnerIntoAction;
 
 pub mod res;
 pub mod non_send;
@@ -49,9 +48,9 @@ pub fn run<Sys, Out, M>(system: Sys) -> impl TaskAction<In=(), Out=Out>
         Sys: IntoSystem<(), Out, M>,
         Out: 'static
 {
-    OnceAction((), IntoSystem::into_system(system.pipe(|input: In<Out>| {
+    RunnerIntoAction::new(OnceRunner::new((), IntoSystem::into_system(system.pipe(|input: In<Out>| {
         Some(input.0)
-    })), PhantomData)
+    }))))
 }
 
 /// Once run a system with input.
@@ -76,33 +75,15 @@ pub fn run<Sys, Out, M>(system: Sys) -> impl TaskAction<In=(), Out=Out>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl TaskAction<WithInput, In=Input, Out=Out>
+pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> impl TaskAction<In=Input, Out=Out>
     where
         Sys: IntoSystem<Input, Out, Marker>,
         Input: 'static,
         Out: 'static
 {
-    OnceAction(input, IntoSystem::into_system(system.pipe(|input: In<Out>| {
+    RunnerIntoAction::new(OnceRunner::new(input, IntoSystem::into_system(system.pipe(|input: In<Out>| {
         Some(input.0)
-    })), PhantomData)
+    }))))
 }
 
-pub(crate) struct OnceAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
-    where In: 'static,
-          Sys: System<In=In, Out=Option<Out>>;
-
-impl<Sys, In, Out> TaskAction for OnceAction<Sys, In, Out>
-    where In: 'static,
-          Out: 'static,
-          Sys: System<In=In, Out=Option<Out>>,
-
-{
-    type In = In;
-    type Out = Out;
-
-    #[inline]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-        OnceRunner::new(self.1, self.0, output)
-    }
-}
 

@@ -61,59 +61,49 @@ macro_rules! wait_all {
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub mod private {
-    use std::marker::PhantomData;
+    use bevy::prelude::{Deref, DerefMut};
 
     use crate::action::TaskAction;
-    use crate::runner::{TaskRunner, RunWithTaskOutput, TaskOutput};
+    use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, TaskRunner};
+    use crate::runner::base::BaseTwoRunner;
     use crate::runner::macros::impl_tuple_runner;
 
-    pub struct FlatBothRunner<I1, I2, O1, O2, M1, M2> {
-        r1: Box<dyn TaskRunner>,
-        r2: Box<dyn TaskRunner>,
-        o1: TaskOutput<O1>,
-        o2: TaskOutput<O2>,
-        _m: PhantomData<(I1, I2, M1, M2)>,
-    }
+    #[derive(Deref, DerefMut)]
+    pub struct FlatBothRunner<I1, I2, O1, O2>(BaseTwoRunner<I1, I2, O1, O2>);
 
-    impl<I1, I2, O1, O2, M1, M2> FlatBothRunner<I1, I2, O1, O2, M1, M2> {
+
+    impl<I1, I2, O1, O2> FlatBothRunner<I1, I2, O1, O2> {
         #[inline]
         pub fn new(
-            a1: impl TaskAction<M1, In=I1, Out=O1> + 'static,
-            a2: impl TaskAction<M2, In=I2, Out=O2> + 'static,
-        ) -> FlatBothRunner<I1, I2, O1, O2, M1, M2>
-            where
-                M1: 'static,
-                M2: 'static
-        {
-            let o1 = TaskOutput::default();
-            let o2 = TaskOutput::default();
-            let r1 = a1.to_runner(o1.clone());
-            let r2 = a2.to_runner(o2.clone());
-            Self {
-                r1: Box::new(r1),
-                r2: Box::new(r2),
-                o1,
-                o2,
-                _m: PhantomData,
-            }
+            a1: impl TaskAction<In=I1, Out=O1> + 'static,
+            a2: impl TaskAction<In=I2, Out=O2> + 'static,
+        ) -> FlatBothRunner<I1, I2, O1, O2> {
+            Self(BaseTwoRunner::new(a1, a2))
         }
     }
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-              impl<I1, I2, $($lhs_out,)* O2, M1, M2> TaskAction for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
-                    type In = (I1, I2);
-                    type Out = ($($lhs_out,)* O2);
+            impl<I1, I2, $($lhs_out,)* O2> TaskAction for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2> {
+                type In = (I1, I2);
 
-                    #[inline(always)]
-                    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-                        (output, self)
+                type Out = ($($lhs_out,)* O2);
+
+                #[inline(always)]
+                fn to_runner(self, token: CancellationToken, output: TaskOutput<($($lhs_out,)* O2)>) -> impl TaskRunner {
+                    (token, output, self)
+                }
+            }
+
+
+            impl<I1, I2, $($lhs_out,)* O2> RunWithTaskOutput<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2> {
+                type In = (I1, I2);
+
+                #[allow(non_snake_case)]
+                  fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut bevy::prelude::World) -> bool {
+                    if self.cancel_if_need(token){
+                        return true;
                     }
-              }
-
-            impl<I1, I2, $($lhs_out,)* O2, M1, M2> RunWithTaskOutput<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, M1, M2> {
-                  #[allow(non_snake_case)]
-                  fn run_with_task_output(&mut self, output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut bevy::prelude::World) -> bool {
                     if self.o1.is_none(){
                         self.r1.run(world);
                     }
@@ -156,7 +146,7 @@ mod tests {
         app
             .add_systems(Startup, |world: &mut World| {
                 world.schedule_reactor(|task| async move {
-                    let (event1, event2, ..) = task.will(Update, wait_all!(
+                    let (event1, event2, ()) = task.will(Update, wait_all!(
                         wait::event::read::<TestEvent1>(),
                         wait::event::read::<TestEvent2>(),
                         wait::until(|mut c: Local<usize>| {

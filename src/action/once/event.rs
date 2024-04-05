@@ -77,7 +77,7 @@ pub fn send_default<E>() -> impl TaskAction<In=(), Out=()>
 /// app.update();
 /// ```
 #[inline(always)]
-pub fn app_exit() -> impl TaskAction<In=AppExit> {
+pub fn app_exit() -> impl TaskAction<In=AppExit, Out=()> {
     send(AppExit)
 }
 

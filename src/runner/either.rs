@@ -1,56 +1,28 @@
-use std::marker::PhantomData;
+use bevy::prelude::{Deref, DerefMut, World};
 
-use bevy::prelude::World;
-
-use crate::action::TaskAction;
 use crate::action::wait::Either;
-use crate::runner::{TaskRunner, TaskOutput};
+use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, };
+use crate::runner::base::BaseTwoRunner;
 
-pub(crate) struct EitherRunner<I1, I2, O1, O2, M1, M2> {
-    r1: Box<dyn TaskRunner>,
-    r2: Box<dyn TaskRunner>,
-    o1: TaskOutput<O1>,
-    o2: TaskOutput<O2>,
-    output: TaskOutput<Either<O1, O2>>,
-    _m: PhantomData<(I1, I2, M1, M2)>,
-}
+#[derive(Deref, DerefMut)]
+pub(crate) struct EitherRunner<I1, I2, O1, O2>(pub(crate) BaseTwoRunner<I1, I2, O1, O2>);
 
-impl<I1, I2, O1, O2, M1, M2> EitherRunner<I1, I2, O1, O2, M1, M2> {
-    #[inline]
-    pub fn new(
-        output: TaskOutput<Either<O1, O2>>,
-        lhs: impl TaskAction<M1, In=I1, Out=O1> + 'static,
-        rhs: impl TaskAction<M2, In=I2, Out=O2> + 'static,
-    ) -> EitherRunner<I1, I2, O1, O2, M1, M2> 
-        where 
-            M1: 'static,
-            M2: 'static
-    {
-        let o1 = TaskOutput::default();
-        let o2 = TaskOutput::default();
-        let first_runner = lhs.to_runner(o1.clone());
-        let second_runner = rhs.to_runner(o2.clone());
-        Self {
-            r1: Box::new(first_runner),
-            r2: Box::new(second_runner),
-            o1,
-            o2,
-            output,
-            _m: PhantomData,
+impl<I1, I2, O1, O2> RunWithTaskOutput<Either<O1, O2>> for EitherRunner<I1, I2, O1, O2> {
+    type In = (I1, I2);
+
+    fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<Either<O1, O2>>, world: &mut World) -> bool {
+        if self.cancel_if_need(token) {
+            return true;
         }
-    }
-}
 
-impl<I1, I2, O1, O2, M1, M2> TaskRunner for EitherRunner<I1, I2, O1, O2, M1, M2> {
-    fn run(&mut self, world: &mut World) -> bool {
         self.r1.run(world);
         if let Some(lhs) = self.o1.take() {
-            self.output.replace(Either::Left(lhs));
+            output.replace(Either::Left(lhs));
             return true;
         }
         self.r2.run(world);
         if let Some(rhs) = self.o2.take() {
-            self.output.replace(Either::Right(rhs));
+            output.replace(Either::Right(rhs));
             true
         } else {
             false

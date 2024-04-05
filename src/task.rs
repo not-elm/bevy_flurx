@@ -46,16 +46,16 @@ impl<'a> ReactiveTask<'a> {
     /// app.update();
     ///```
     #[inline]
-    pub fn will<Label, In, Out, M>(
+    pub fn will<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<M, In=In, Out=Out> + 'static,
+        action: impl TaskAction<In=In, Out=Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
             In: 'static,
             Out: 'static,
-            M: 'static
+
     {
         self.0.will(WorldSelector::new(label, action))
     }
@@ -83,15 +83,14 @@ impl<'a> ReactiveTask<'a> {
     /// app.update();
     /// ```
     #[inline]
-    pub async fn run<Label, In, Out, M>(
+    pub async fn run<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<M, In=In, Out=Out> + 'static,
+        action: impl TaskAction<In=In, Out=Out> + 'static,
     ) -> impl Future<Output=Out> + 'a
         where
             Label: ScheduleLabel + Clone,
-            In: Unpin + 'static,
-            M: 'static,
+            In: 'static,
             Out: 'static
     {
         let mut future = self.will(label, action).polling();

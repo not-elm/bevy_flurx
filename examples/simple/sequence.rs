@@ -6,7 +6,7 @@
 use bevy::core::FrameCount;
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
-use bevy_flurx::sequence_with_output;
+use bevy_flurx::sequence;
 
 fn main() {
     App::new()
@@ -40,7 +40,7 @@ fn setup_non_sequence(world: &mut World) {
 
 fn setup_sequence(world: &mut World) {
     world.schedule_reactor(|task| async move {
-        task.will(Update, sequence_with_output! {
+        task.will(Update, sequence! {
             once::run(|frame: Res<FrameCount>|{
                 println!("[sequence once1] frame: {}", frame.0);
             }),

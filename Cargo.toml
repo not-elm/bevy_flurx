@@ -38,9 +38,8 @@ name = "move_shape"
 path = "examples/gui/move_shape.rs"
 
 [[example]]
-name = "rotate"
-path = "examples/gui/rotate.rs"
-
+name = "loading"
+path = "examples/gui/loading.rs"
 
 [[bench]]
 name = "cmp_countup"

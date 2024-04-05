@@ -5,10 +5,9 @@
 //! - [`delay`]
 
 use std::marker::PhantomData;
-
 use bevy::prelude::{System, World};
 
-use crate::runner::{TaskOutput, TaskRunner};
+use crate::runner::{CancellationToken, RunnerIntoAction, RunWithTaskOutput, TaskOutput, TaskRunner};
 use crate::runner::multi_times::MultiTimesRunner;
 
 pub mod once;
@@ -16,112 +15,83 @@ pub mod wait;
 pub mod repeat;
 pub mod delay;
 pub mod sequence;
-mod sequence_with_output;
-
-
-#[doc(hidden)]
-pub struct WithInput;
-
-#[doc(hidden)]
-pub struct WithoutInput;
+pub mod switch;
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
-pub trait TaskAction<Marker = WithInput> {
-    /// The input of the system.
+pub trait TaskAction {
+    /// The input value of the system.
     type In;
-
-    /// The output of the system.
+    
+    /// The output value of the system.
     type Out;
-
+    
     /// Convert itself to [`TaskRunner`](crate::runner::TaskRunner).
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner;
+    fn to_runner(self, token: CancellationToken, output: TaskOutput<Self::Out>) -> impl TaskRunner ;
 }
 
-impl<Out, Sys> TaskAction<WithoutInput> for Sys
+impl<Out, Sys> TaskAction for Sys
     where
         Sys: System<In=(), Out=Option<Out>>,
         Out: 'static
 {
     type In = ();
+
     type Out = Out;
 
     #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-        MultiTimesRunner::new(self, (), output)
+    fn to_runner(self, token: CancellationToken, output: TaskOutput<Out>) -> impl TaskRunner {
+        (token, output, MultiTimesRunner::new(self, ()))
     }
 }
 
 /// Create the action based on the system and its input value.
-#[inline]
-pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl TaskAction<WithInput, In=Input, Out=Out>
+#[inline(always)]
+pub fn with<Sys, Input, Out>(input: Input, system: Sys) -> impl TaskAction<In=Input, Out=Out>
     where
         Sys: System<In=Input, Out=Option<Out>>,
         Input: Clone + 'static,
         Out: 'static
 {
-    struct WithAction<Sys, In, Out>(In, Sys, PhantomData<Out>)
-        where In: Clone + 'static,
-              Sys: System<In=In, Out=Option<Out>>;
-
-    impl<Sys, In, Out> TaskAction for WithAction<Sys, In, Out>
-        where In: Clone + 'static,
-              Sys: System<In=In, Out=Option<Out>>,
-              Out: 'static
-    {
-        type In = In;
-
-        type Out = Out;
-
-        #[inline(always)]
-        fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-            MultiTimesRunner::new(self.1, self.0, output)
-        }
-    }
-    
-    WithAction(input, system, PhantomData)
+    RunnerIntoAction::new(MultiTimesRunner::new(system, input))
 }
 
 /// Convert to the output of action to tuple. 
-pub fn to_tuple<M, I, O>(action: impl TaskAction<M, In=I, Out=O> + 'static) -> impl TaskAction<M, In=I, Out=(O, )>
+pub fn to_tuple<M, I, O>(action: impl TaskAction<In=I, Out=O> + 'static) -> impl TaskAction<In=I, Out=(O, )>
     where
+        I: 'static,
+        O: 'static,
         M: 'static
 {
-    struct Action<A, I, O>(A, PhantomData<(I, O)>);
-
-    impl<M, I, O, A> TaskAction<M> for Action<A, I, O>
-        where
-            A: TaskAction<M, In=I, Out=O> + 'static,
-            M: 'static
-    {
-        type In = I;
-        type Out = (O, );
-
-        fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-            let o = TaskOutput::default();
-            let r = self.0.to_runner(o.clone());
-            Runner {
-                r: Box::new(r),
-                o,
-                output,
-            }
-        }
-    }
-
-    struct Runner<O> {
+    struct Runner<I, O> {
         r: Box<dyn TaskRunner>,
         o: TaskOutput<O>,
-        output: TaskOutput<(O, )>,
+        token: CancellationToken,
+        _m: PhantomData<I>
     }
-    impl<O> TaskRunner for Runner<O> {
-        fn run(&mut self, world: &mut World) -> bool {
+    impl<I, O> RunWithTaskOutput<(O, )> for Runner<I, O> {
+        type In = I;
+        
+        fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<(O, )>, world: &mut World) -> bool {
+            if token.requested_cancel() {
+                self.token.cancel();
+                return true;
+            }
             self.r.run(world);
             if let Some(o) = self.o.take() {
-                self.output.replace((o, ));
+                output.replace((o, ));
                 true
             } else {
                 false
             }
         }
     }
-    Action(action, PhantomData)
+    let token = CancellationToken::default();
+    let o = TaskOutput::default();
+    let r = action.to_runner(token.clone(), o.clone());
+    RunnerIntoAction::new(Runner {
+        r: Box::new(r),
+        o,
+        token,
+        _m: PhantomData
+    })
 }
