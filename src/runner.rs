@@ -1,11 +1,13 @@
 use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Schedule, Schedules, World};
+use bevy::prelude::{IntoSystemConfigs, Schedule, Schedules, World};
 
 use crate::action::{ TaskAction};
+use crate::flurx_initialize;
 use crate::runner::runners::TaskRunners;
 
 pub(crate) mod runners;
@@ -69,18 +71,18 @@ impl<O: Clone> TaskOutput<O> {
 
 /// Structure for canceling a task
 #[derive(Default, Clone)]
-pub struct CancellationToken(Rc<RefCell<Option<()>>>);
+pub struct CancellationToken(Arc<Mutex<Option<()>>>);
 
 impl CancellationToken {
     #[inline(always)]
     pub fn requested_cancel(&self) -> bool {
-        self.0.borrow().is_some()
+        self.0.lock().unwrap().is_some()
     }
 
 
     #[inline(always)]
     pub fn cancel(&self) {
-        self.0.borrow_mut().replace(());
+        self.0.lock().unwrap().replace(());
     }
 }
 
@@ -111,7 +113,7 @@ pub(crate) fn initialize_task_runner<Label>(
         };
 
         let schedule = initialize_schedule(&mut schedules, label);
-        schedule.add_systems(run_task_runners::<Label>);
+        schedule.add_systems(run_task_runners::<Label>.after(flurx_initialize));
 
         let mut runners = TaskRunners::<Label>::default();
         runners.runners.push(Box::new(runner));

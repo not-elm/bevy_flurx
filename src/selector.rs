@@ -17,7 +17,7 @@ pub(crate) struct WorldSelector<Label, Action, In, Out> {
     _m: PhantomData<In>,
 }
 
-impl<Label, Action,In, Out> WorldSelector<Label, Action, In, Out>
+impl<Label, Action, In, Out> WorldSelector<Label, Action, In, Out>
     where
         Label: ScheduleLabel + Clone,
         Action: TaskAction<In, Out>,
@@ -25,12 +25,12 @@ impl<Label, Action,In, Out> WorldSelector<Label, Action, In, Out>
         Out: 'static,
 {
     #[inline]
-    pub(crate) fn new(label: Label, action: Action) -> WorldSelector<Label, Action, In, Out> {
+    pub(crate) fn new(label: Label, action: Action, token: CancellationToken) -> WorldSelector<Label, Action, In, Out> {
         Self {
             action: Cell::new(Option::Some(action)),
             output: TaskOutput::default(),
             label,
-            token: CancellationToken::default(),
+            token,
             _m: PhantomData,
         }
     }
@@ -53,9 +53,7 @@ impl<Label, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Action,
             initialize_task_runner(world, self.label.clone(), runner);
             None
         } else {
-            let output = self.output.take()?;
-            self.token.cancel();
-            Some(output)
+            self.output.take()
         }
     }
 }

@@ -6,7 +6,7 @@
 //! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
 
 
-use crate::action::{ TaskAction};
+use crate::action::{TaskAction};
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::RunnerIntoAction;
 use crate::runner::sequence::SequenceRunner;
@@ -62,8 +62,7 @@ impl<I1, O1, A> Then<I1, O1> for A
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::sequence;
 ///
-/// let mut app = App::new();
-/// app.world.schedule_reactor(|task| async move{
+/// Flurx::schedule(|task|async move{
 ///     let o = task.will(Update, sequence!{
 ///         once::run(||{}),
 ///         once::run(||{}),
@@ -71,7 +70,6 @@ impl<I1, O1, A> Then<I1, O1> for A
 ///     }).await;
 ///     assert_eq!(o, 2);
 /// });
-/// app.update();
 /// ```
 ///
 #[macro_export]
@@ -92,12 +90,13 @@ macro_rules! sequence {
 #[cfg(test)]
 mod tests {
     use bevy::app::Startup;
-    use bevy::prelude::{Resource, Update, World};
+    use bevy::prelude::{Commands, Resource, Update};
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::once;
     use crate::action::sequence::Then;
-    use crate::extension::ScheduleReactor;
+    use crate::scheduler::Flurx;
+
     use crate::tests::test_app;
 
     #[derive(Resource, Eq, PartialEq, Debug)]
@@ -114,12 +113,12 @@ mod tests {
     fn two() {
         let mut app = test_app();
 
-        app.add_systems(Startup, |world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert(Mark1)),
                 ).await;
-            });
+            }));
         });
         app.update();
         app.assert_resource_eq(Mark1);
@@ -129,13 +128,13 @@ mod tests {
     fn three() {
         let mut app = test_app();
 
-        app.add_systems(Startup, |world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert(Mark1))
                     .then(once::res::insert(Mark2)),
                 ).await;
-            });
+            }));
         });
         app.update();
         app.assert_resource_eq(Mark1);
@@ -147,15 +146,15 @@ mod tests {
     fn output_is_2() {
         let mut app = test_app();
 
-        app.add_systems(Startup, |world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 let output = task.will(Update, once::run(|| {})
                     .then(once::res::insert(Mark1))
                     .then(once::res::insert(Mark2))
                     .then(once::run(|| { 1 + 1 })),
                 ).await;
                 task.will(Update, once::res::insert(OutputUSize(output))).await;
-            });
+            }));
         });
         app.update();
         app.update();
@@ -166,8 +165,8 @@ mod tests {
     fn using_sequence_macro() {
         let mut app = test_app();
 
-        app.add_systems(Startup, |world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 let output = task.will(Update, sequence! {
                     once::run(||{}),
                     once::res::insert(Mark1),
@@ -175,7 +174,7 @@ mod tests {
                     once::run(||{1 + 1})
                 }).await;
                 task.will(Update, once::res::insert(OutputUSize(output))).await;
-            });
+            }));
         });
         app.update();
         app.assert_resource_eq(Mark1);

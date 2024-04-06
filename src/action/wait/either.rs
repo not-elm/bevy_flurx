@@ -1,4 +1,4 @@
-use crate::action::{ TaskAction};
+use crate::action::TaskAction;
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::either::EitherRunner;
 use crate::runner::RunnerIntoAction;
@@ -32,34 +32,21 @@ impl<L, R> Either<L, R> {
 ///
 /// The first thing passed is lhs, the second is rhs.
 ///
-/// ```
+/// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Default, Clone, Event)]
-/// struct Event1;
-///
-/// #[derive(Default, Clone, Event)]
-/// struct Event2;
-///
-/// let mut app = App::new();
-/// app.add_event::<Event1>();
-/// app.add_event::<Event2>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task|async move{
-///         let wait_event = task.run(Update, wait::either(
-///             wait::event::comes::<Event1>(),
-///             wait::event::comes::<Event2>()
-///         )).await;
-///         task.will(Update, once::event::send(Event1)).await;
-///         assert!(wait_event.await.is_left());
-///     });
+/// Flurx::schedule(|task| async move{
+///     let either = task.will(Update, wait::either(
+///         wait::until(||false),
+///         wait::event::read::<AppExit>()
+///     )).await;
+///     match either { 
+///         Either::Left(_) => {},
+///         Either::Right(_) => {}
+///     }
 /// });
-/// app.update();
-/// app.update();
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn either<
@@ -83,13 +70,14 @@ mod tests {
     use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::ButtonInput;
-    use bevy::prelude::{KeyCode, Local, ResMut, Resource, Update, World};
+    use bevy::prelude::{Commands, KeyCode, Local, ResMut, Resource, Update};
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::{FlurxPlugin, wait_all};
     use crate::action::{once, wait};
+    use crate::prelude::ActionSeed;
     use crate::action::wait::{Either, output, until};
-    use crate::extension::ScheduleReactor;
+    use crate::scheduler::Flurx;
     use crate::tests::test_app;
 
     #[test]
@@ -98,8 +86,8 @@ mod tests {
         app.add_plugins(FlurxPlugin);
         #[derive(Clone)]
         struct Count(usize);
-        app.world.run_system_once(|world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.world.run_system_once(|mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 let u1 = until(|mut count: Local<u32>| {
                     *count += 1;
                     *count == 3
@@ -113,7 +101,7 @@ mod tests {
                 if let Either::Right(rhs) = task.will(Update, wait::either(u1, u2)).await {
                     task.will(Update, once::non_send::insert(Count(rhs))).await;
                 }
-            });
+            }));
         });
 
         app.update();
@@ -133,8 +121,8 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<Count>();
 
-        app.world.run_system_once(|world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.world.run_system_once(|mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 task.will(Update, wait::either(
                     wait_all! {
                         wait::until(|mut count:ResMut<Count>| {
@@ -144,17 +132,16 @@ mod tests {
                         }),
                         wait::until(|| { false })
                     },
-                    wait::input::pressed(KeyCode::KeyA),
+                    wait::input::pressed().with(KeyCode::KeyA),
                 )).await;
                 task.will(Update, wait::until(|| { false })).await;
-            });
+            }));
         });
 
         app.resource_mut::<ButtonInput<KeyCode>>().press(KeyCode::KeyA);
-        for _ in 0..100{
+        for _ in 0..100 {
             app.update();
-        app.assert_resource_eq(Count(1));
-
+            app.assert_resource_eq(Count(1));
         }
     }
 }

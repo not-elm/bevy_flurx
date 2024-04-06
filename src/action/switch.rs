@@ -62,11 +62,11 @@ pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
 ///         
 ///         switch.off();
 ///     }).run_if(switch_turned_on::<HeavyTask>))
-///     .add_systems(Update, |world: &mut World|{
-///         world.schedule_reactor(|task| async move{
+///     .add_systems(Update, |mut commands: Commands|{
+///         commands.spawn(Flurx::schedule(|task| async move{
 ///             task.will(Update, once::switch::on::<HeavyTask>()).await;
 ///             task.will(Update, wait::switch::off::<HeavyTask>()).await;
-///         }); 
+///         })); 
 ///     });
 /// ```
 #[derive(Debug, Eq, PartialEq)]

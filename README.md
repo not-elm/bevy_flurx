@@ -76,7 +76,7 @@ fn setup_entities(mut commands: Commands) {
 fn setup_reactor(
     world: &mut World
 ) {
-    world.schedule_reactor(|task| async move {
+    commands.spawn(Flurx::schedule(|task| async move {
         loop {
             task.will(Update, once::run(reset_pos)).await;
             task.will(Update, wait::until(move_up)).await;

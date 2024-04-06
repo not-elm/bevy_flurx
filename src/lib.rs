@@ -21,11 +21,13 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Last, MainScheduleOrder, Plugin};
+use bevy::app::{App, First, Last, MainScheduleOrder, Plugin, PostStartup};
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::World;
+use bevy::prelude::{Added, Entity, Without, World};
 
-use crate::scheduler::ReactiveScheduler;
+use crate::prelude::Flurx;
+use crate::scheduler::Initialized;
+use crate::world_ptr::WorldPtr;
 
 pub mod extension;
 pub mod task;
@@ -35,20 +37,20 @@ pub mod action;
 pub mod prelude {
     pub use crate::{
         action::*,
+        action::pipe::Pipe,
         action::sequence::Then,
         action::switch::*,
-        action::pipe::Pipe,
-        task::ReactiveTask,
-        extension::ScheduleReactor,
+        action::wait::either::Either,
+        action::seed::{ActionSeed, Seed},
         FlurxPlugin,
+        scheduler::Flurx,
+        task::ReactiveTask,
     };
 }
 
 #[doc(hidden)]
 pub mod private {
-    pub use crate::runner::{
-        RunnerIntoAction
-    };
+    pub use crate::runner::RunnerIntoAction;
 }
 
 mod world_ptr;
@@ -65,8 +67,10 @@ impl Plugin for FlurxPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_schedule(AfterLast)
-            .init_non_send_resource::<ReactiveScheduler>()
-            .add_systems(Last, run_scheduler);
+            .add_systems(AfterLast, run_scheduler)
+            .add_systems(PostStartup, flurx_initialize)
+            .add_systems(First, flurx_initialize);
+
         app
             .world
             .resource_mut::<MainScheduleOrder>()
@@ -77,20 +81,41 @@ impl Plugin for FlurxPlugin {
 #[derive(ScheduleLabel, Debug, Copy, Clone, Eq, PartialEq, Hash)]
 struct AfterLast;
 
+fn flurx_initialize(
+    world: &mut World
+) {
+    let world_ptr = WorldPtr::new(world);
+    let mut entities = vec![];
+    for (entity, mut flurx) in world
+        .query_filtered::<(Entity, &mut Flurx), (Added<Flurx>, Without<Initialized>)>()
+        .iter_mut(world) {
+        flurx.scheduler.run_sync(world_ptr);
+        entities.push(entity);
+    }
+
+    for entity in entities {
+        world.entity_mut(entity).insert(Initialized);
+    }
+}
+
 fn run_scheduler(
     world: &mut World
 ) {
-    if let Some(mut scheduler) = world.remove_non_send_resource::<ReactiveScheduler>() {
-        scheduler.run_sync(world);
-        world.insert_non_send_resource(scheduler);
+    let world_ptr = WorldPtr::new(world);
+    for mut flurx in world
+        .query::<&mut Flurx>()
+        .iter_mut(world) {
+        flurx.scheduler.run_sync(world_ptr);
     }
 }
+
 
 #[cfg(test)]
 mod tests {
     use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
+    use bevy::log::LogPlugin;
     use bevy::prelude::{Event, EventReader, Resource};
     use bevy_test_helper::BevyTestHelperPlugin;
 
@@ -98,9 +123,12 @@ mod tests {
 
     pub fn test_app() -> App {
         let mut app = App::new();
-        app.add_plugins(BevyTestHelperPlugin);
-        app.add_plugins(FlurxPlugin);
-        app.add_plugins(InputPlugin);
+        app.add_plugins((
+            BevyTestHelperPlugin,
+            LogPlugin::default(),
+            FlurxPlugin,
+            InputPlugin
+        ));
         app
     }
 

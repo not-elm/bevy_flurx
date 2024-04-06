@@ -46,7 +46,7 @@
 //     use bevy::app::{App, First, Startup};
 //     use bevy::prelude::{Local, ResMut, Resource, World};
 // 
-//     use crate::extension::ScheduleReactor;
+//
 //     use crate::FlurxPlugin;
 //     use crate::selector::condition::{once, repeat::repeat, wait};
 // 
@@ -59,8 +59,8 @@
 //         app
 //             .add_plugins(FlurxPlugin)
 //             .init_resource::<Test>()
-//             .add_systems(Startup, |world: &mut World| {
-//                 world.schedule_reactor(|task| async move {
+//             .add_systems(Startup, |mut commands: Commands| {
+//                 commands.spawn(Flurx::schedule(|task| async move {
 //                     task.will(First, repeat(2, once::run(|mut test: ResMut<Test>| {
 //                         test.0 += 1;
 //                     }))).await;
@@ -81,8 +81,8 @@
 //         let mut app = App::new();
 //         app
 //             .add_plugins(FlurxPlugin)
-//             .add_systems(Startup, |world: &mut World| {
-//                 world.schedule_reactor(|task| async move {
+//             .add_systems(Startup, |mut commands: Commands| {
+//                 commands.spawn(Flurx::schedule(|task| async move {
 //                     task.will(First, repeat(1, wait::until(|mut count: Local<usize>| {
 //                         *count += 1;
 //                         println!("{count:?}");

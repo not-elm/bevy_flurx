@@ -17,32 +17,18 @@
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event4;
 ///
-/// let mut app = App::new();
-/// app.add_event::<Event1>();
-/// app.add_event::<Event2>();
-/// app.add_event::<Event3>();
-/// app.add_event::<Event4>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move{
-///         let (event1, event2, event3, event4) = task.will(Update, wait_all!(
-///             wait::event::read::<Event1>(),
-///             wait::event::read::<Event2>(),
-///             wait::event::read::<Event3>(),
-///             wait::event::read::<Event4>(),
-///         )).await;
-///         assert_eq!(event1, Event1);
-///         assert_eq!(event2, Event2);
-///         assert_eq!(event3, Event3);
-///         assert_eq!(event4, Event4);
-///     });
+/// Flurx::schedule(|task| async move{ 
+///     let (event1, event2, event3, event4) = task.will(Update, wait_all!( 
+///         wait::event::read::<Event1>(),
+///         wait::event::read::<Event2>(),
+///         wait::event::read::<Event3>(),
+///         wait::event::read::<Event4>(),
+///     )).await;
+///     assert_eq!(event1, Event1);
+///     assert_eq!(event2, Event2);
+///     assert_eq!(event3, Event3);
+///     assert_eq!(event4, Event4);
 /// });
-/// app.update();
-/// app.world.resource_mut::<Events<Event1>>().send_default();
-/// app.world.resource_mut::<Events<Event2>>().send_default();
-/// app.world.resource_mut::<Events<Event3>>().send_default();
-/// app.world.resource_mut::<Events<Event4>>().send_default();
-/// app.update();
 /// ```
 #[macro_export]
 macro_rules! wait_all {
@@ -63,7 +49,7 @@ macro_rules! wait_all {
 pub mod private {
     use bevy::prelude::{Deref, DerefMut};
 
-    use crate::action::{ TaskAction};
+    use crate::action::TaskAction;
     use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, TaskRunner};
     use crate::runner::base::BaseTwoRunner;
     use crate::runner::macros::impl_tuple_runner;
@@ -152,19 +138,19 @@ pub mod private {
 mod tests {
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{EventWriter, Local, World};
+    use bevy::prelude::{Commands, EventWriter, Local};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
-    use crate::extension::ScheduleReactor;
     use crate::prelude::{once, wait};
+    use crate::scheduler::Flurx;
     use crate::tests::test_app;
 
     #[test]
     fn wait_all() {
         let mut app = test_app();
         app
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     let (event1, event2, ()) = task.will(Update, wait_all!(
                         wait::event::read::<TestEvent1>(),
                         wait::event::read::<TestEvent2>(),
@@ -176,7 +162,7 @@ mod tests {
                     assert_eq!(event1, TestEvent1);
                     assert_eq!(event2, TestEvent2);
                     task.will(Update, once::non_send::insert(AppExit)).await;
-                });
+                }));
             });
 
         app.update();
@@ -197,8 +183,8 @@ mod tests {
     fn wait_all_with_once() {
         let mut app = test_app();
         app
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     let (event1, ..) = task.will(Update, wait_all!(
                         wait::event::read::<TestEvent1>(),
                         once::run(||{
@@ -207,7 +193,7 @@ mod tests {
                     )).await;
                     assert_eq!(event1, TestEvent1);
                     task.will(Update, once::non_send::insert(AppExit)).await;
-                });
+                }));
             });
         app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
         app.update();

@@ -46,7 +46,6 @@ impl<Sys, In, Out> RunWithTaskOutput<Out> for MultiTimesRunner<Sys, In, Out>
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(o) = out {
-            token.cancel();
             output.replace(o);
             true
         } else {

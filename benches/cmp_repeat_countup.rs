@@ -2,12 +2,11 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, AppExit, Startup};
-use bevy::prelude::{Event, EventReader, EventWriter, Local, ResMut, Resource, Update, World};
+use bevy::prelude::{Commands, Event, EventReader, EventWriter, Local, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use bevy_flurx::extension::ScheduleReactor;
 use bevy_flurx::FlurxPlugin;
-use bevy_flurx::prelude::{once, wait};
+use bevy_flurx::prelude::{Flurx, once, wait};
 
 #[derive(Resource, Default)]
 struct Exit(bool);
@@ -65,8 +64,8 @@ fn flurx_version(c: &mut Criterion) {
             app
                 .add_plugins(FlurxPlugin)
                 .init_resource::<Exit>()
-                .add_systems(Startup, |world: &mut World| {
-                    world.schedule_reactor(|task| async move {
+                .add_systems(Startup, |mut commands: Commands| {
+                    commands.spawn(Flurx::schedule(|task| async move {
                         for _ in 0..REPEAT {
                             task.will(Update, wait::until(|mut count: Local<usize>| {
                                 *count += 1;
@@ -76,7 +75,7 @@ fn flurx_version(c: &mut Criterion) {
                         task.will(Update, once::run(|mut exit: ResMut<Exit>| {
                             exit.0 = true;
                         })).await;
-                    });
+                    }));
                 });
 
             while !app.world.resource::<Exit>().0 {

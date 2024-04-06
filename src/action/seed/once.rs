@@ -34,7 +34,7 @@ impl<In, Out, Sys> ActionSeed<In, Out> for OnceSeed<In, Out, Sys>
         Out: 'static
 {
     #[inline]
-    fn into_action(self, input: In) -> impl TaskAction< In, Out> {
+    fn with(self, input: In) -> impl TaskAction< In, Out> {
         RunnerIntoAction::new(OnceRunner::new(input, self.system))
     }
 }

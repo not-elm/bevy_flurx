@@ -46,7 +46,7 @@ impl<I1, O1, O2, Seed> PipeRunner<I1, O1, O2, Seed>
         if let Some(o1) = self.o1.cloned() {
             let Some(action) = self.seed
                 .take()
-                .map(|p| p.into_action(o1))else {
+                .map(|p| p.with(o1))else {
                 return;
             };
             self.r2.replace(Box::new(action.to_runner(self.t2.clone(), output)));

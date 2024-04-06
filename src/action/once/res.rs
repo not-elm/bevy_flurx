@@ -6,28 +6,21 @@
 
 use bevy::prelude::{Commands, In, Resource};
 
-use crate::action::{ once, TaskAction};
+use crate::action::{once, TaskAction};
 use crate::action::seed::ActionSeed;
 use crate::prelude::seed::Seed;
 
 /// Once init a resource.
 ///
 /// ```no_run
-/// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
+/// #[derive(Resource, Default)]
+/// struct Res;
 ///
-/// #[derive(Default, Resource)]
-/// struct R;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::res::init::<R>()).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::res::init::<Res>()).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn init<R>() -> impl ActionSeed + Seed
@@ -41,24 +34,17 @@ pub fn init<R>() -> impl ActionSeed + Seed
 /// Once insert a resource.
 ///
 /// ```no_run
-/// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
+/// #[derive(Resource)]
+/// struct Res;
 ///
-/// #[derive(Resource, Clone)]
-/// struct R;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::res::insert(R)).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::res::insert(Res)).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn insert<R>(resource: R) -> impl TaskAction< R, ()>
+pub fn insert<R>(resource: R) -> impl TaskAction<R, ()>
     where R: Resource + 'static
 {
     once::run_with(resource, |input: In<R>, mut commands: Commands| {
@@ -69,21 +55,14 @@ pub fn insert<R>(resource: R) -> impl TaskAction< R, ()>
 /// Once remove a resource.
 ///
 /// ```no_run
-/// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
 /// #[derive(Resource)]
-/// struct R;
+/// struct Res;
 ///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::res::remove::<R>()).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::res::remove::<Res>()).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn remove<R>() -> impl ActionSeed + Seed
@@ -98,11 +77,11 @@ pub fn remove<R>() -> impl ActionSeed + Seed
 #[cfg(test)]
 mod tests {
     use bevy::app::{App, First, Startup};
-    use bevy::prelude::World;
+    use bevy::prelude::Commands;
 
     use crate::action::once::res;
-    use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
+    use crate::scheduler::Flurx;
     use crate::tests::TestResource;
 
     #[test]
@@ -110,10 +89,10 @@ mod tests {
         let mut app = App::new();
         app
             .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     task.will(First, res::init::<TestResource>()).await;
-                });
+                }));
             });
 
         app.update();
@@ -125,10 +104,10 @@ mod tests {
         let mut app = App::new();
         app
             .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     task.will(First, res::insert(TestResource)).await;
-                });
+                }));
             });
 
         app.update();
@@ -141,10 +120,10 @@ mod tests {
         app
             .add_plugins(FlurxPlugin)
             .init_resource::<TestResource>()
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     task.will(First, res::remove::<TestResource>()).await;
-                });
+                }));
             });
 
         app.update();

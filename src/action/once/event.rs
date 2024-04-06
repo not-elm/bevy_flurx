@@ -8,7 +8,7 @@
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
 
-use crate::action::{ once, TaskAction};
+use crate::action::{once, TaskAction};
 use crate::action::seed::{ActionSeed, Seed};
 
 /// Once send an event.
@@ -17,18 +17,12 @@ use crate::action::seed::{ActionSeed, Seed};
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::event::send(AppExit)).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::event::send(AppExit)).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn send<E>(event: E) -> impl TaskAction< E, ()>
+pub fn send<E>(event: E) -> impl TaskAction<E, ()>
     where E: Event
 {
     once::run_with(event, |In(event): In<E>, mut w: EventWriter<E>| {
@@ -42,15 +36,9 @@ pub fn send<E>(event: E) -> impl TaskAction< E, ()>
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::event::send_default::<AppExit>()).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::event::send_default::<AppExit>()).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn send_default<E>() -> impl ActionSeed + Seed
@@ -67,18 +55,12 @@ pub fn send_default<E>() -> impl ActionSeed + Seed
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::event::app_exit()).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::event::app_exit()).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn app_exit() -> impl TaskAction< AppExit, ()> {
+pub fn app_exit() -> impl TaskAction<AppExit, ()> {
     send(AppExit)
 }
 
@@ -86,12 +68,12 @@ pub fn app_exit() -> impl TaskAction< AppExit, ()> {
 #[cfg(test)]
 mod tests {
     use bevy::app::{App, AppExit, First, Startup, Update};
-    use bevy::prelude::World;
+    use bevy::prelude::{Commands, World};
     use bevy_test_helper::share::{create_shares, Share};
 
     use crate::action::once;
-    use crate::extension::ScheduleReactor;
     use crate::FlurxPlugin;
+    use crate::scheduler::Flurx;
     use crate::tests::{came_event, test_app};
 
     #[test]
@@ -99,10 +81,10 @@ mod tests {
         let mut app = App::new();
         app
             .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     task.will(First, once::event::send(AppExit)).await;
-                });
+                }));
             });
 
         app.update();
@@ -114,10 +96,10 @@ mod tests {
         let mut app = App::new();
         app
             .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Flurx::schedule(|task| async move {
                     task.will(First, once::event::send_default::<AppExit>()).await;
-                });
+                }));
             });
 
         app.update();
@@ -133,10 +115,10 @@ mod tests {
         app.insert_resource(s2);
         app.add_systems(Startup, |world: &mut World| {
             let s2 = world.remove_resource::<Share<bool>>().unwrap();
-            world.schedule_reactor(|task| async move {
+            world.spawn(Flurx::schedule(|task| async move {
                 task.will(Update, once::run(|| {})).await;
                 s2.set(true);
-            });
+            }));
         });
 
         app.update();

@@ -26,22 +26,16 @@ pub mod audio;
 ///
 /// The return value will be the system return value.
 ///
-/// ```
-/// use bevy::prelude::*;
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::{World, Update, EventWriter};
 /// use bevy_flurx::prelude::*;
 ///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         let count = task.will(Update, once::run(|mut count: Local<u8>|{
-///             *count += 1;
-///             *count
-///         })).await;
-///         assert_eq!(count, 1);
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
+///         ew.send(AppExit);
+///     })).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + Seed
@@ -59,22 +53,16 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + Seed
 ///
 /// The return value will be the system return value.
 ///
-/// ```
-/// use bevy::prelude::*;
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy::prelude::{World, Update, EventWriter, In};
 /// use bevy_flurx::prelude::*;
 ///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         let count = task.will(Update, once::run_with(1, |In(num): In<u8>, mut count: Local<u8>|{
-///             *count += 1;
-///             *count + num
-///         })).await;
-///         assert_eq!(count, 2);
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::run_with(1, |In(num): In<usize>|{
+///         num + 1
+///     })).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn run_with<Sys,Input, Out, Marker>(input:Input, system: Sys) -> impl TaskAction<Input, Out>

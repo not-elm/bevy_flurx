@@ -36,7 +36,7 @@ impl<In, Out, Sys> ActionSeed<In, Out> for WaitSeed<In, Out, Sys>
         Out: 'static
 {
     #[inline]
-    fn into_action(self, input: In) -> impl TaskAction< In, Out> {
+    fn with(self, input: In) -> impl TaskAction< In, Out> {
         RunnerIntoAction::new(MultiTimesRunner::new(self.system, input))
     }
 }

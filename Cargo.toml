@@ -13,33 +13,8 @@ repository = "https://github.com/not-elm/bevy_flurx"
 [workspace]
 exclude = ["benches"]
 
-[[example]]
-name = "delay"
-path = "examples/simple/delay.rs"
 
-[[example]]
-name = "once"
-path = "examples/simple/once.rs"
 
-[[example]]
-name = "wait"
-path = "examples/simple/wait.rs"
-
-[[example]]
-name = "sequence"
-path = "examples/simple/sequence.rs"
-
-[[example]]
-name = "wait_stop_audio"
-path = "examples/audio/wait_stop_audio.rs"
-
-[[example]]
-name = "move_shape"
-path = "examples/gui/move_shape.rs"
-
-[[example]]
-name = "loading"
-path = "examples/gui/loading.rs"
 
 [[bench]]
 name = "cmp_countup"

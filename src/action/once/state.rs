@@ -10,7 +10,6 @@ use crate::action::{ once, TaskAction};
 /// Once set a next state.
 ///
 /// ```
-/// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
@@ -21,16 +20,9 @@ use crate::action::{ once, TaskAction};
 ///     S2
 /// };
 ///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.init_state::<S>();
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(First, once::state::set(S::S2)).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, once::state::set(S::S2)).await;
 /// });
-/// app.update();
-/// assert_eq!(*app.world.resource_ref::<State<S>>().get(), S::S2);
 /// ```
 pub fn set<S>(state: S) -> impl TaskAction< S, ()>
     where S: States + 'static

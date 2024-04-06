@@ -29,13 +29,12 @@ impl<I1, O1, Action> Pipe<I1, O1> for Action
 mod tests {
     use bevy::app::{AppExit, Startup};
     use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Commands, In, Resource, Update, World};
+    use bevy::prelude::{Commands, In, Resource, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, wait};
-    use crate::extension::ScheduleReactor;
-    use crate::prelude::{Pipe, Then};
+    use crate::prelude::{Flurx, Pipe, Then};
     use crate::tests::test_app;
 
     #[derive(Resource, Debug, Eq, PartialEq)]
@@ -44,8 +43,8 @@ mod tests {
     #[test]
     fn one_pipe() {
         let mut app = test_app();
-        app.add_systems(Startup, |world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 task.will(Update, {
                     once::run(|| { 1 + 1 })
                         .pipe(once::run(|In(input): In<usize>, mut cmd: Commands| {
@@ -53,7 +52,7 @@ mod tests {
                         }))
                 })
                     .await;
-            });
+            }));
         });
         app.update();
         app.assert_resource_eq(Num(2));
@@ -62,16 +61,16 @@ mod tests {
     #[test]
     fn pipe_3() {
         let mut app = test_app();
-        app.add_systems(Startup, |world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flurx::schedule(|task| async move {
                 task.will(Update, once::run(|| { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>| { num * num }))
                     .pipe(wait::until(|In(num): In<usize>| {
                         num == 4
                     }))
-                    .then(once::event::app_exit())
+                    .then(once::event::app_exit()),
                 ).await;
-            });
+            }));
         });
         let mut er = ManualEventReader::<AppExit>::default();
         app.update();

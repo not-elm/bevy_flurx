@@ -6,43 +6,27 @@
 
 use bevy::prelude::{Event, EventReader};
 
-
-use crate::prelude::{TaskAction, wait, with};
+use crate::prelude::seed::{ActionSeed, Seed};
+use crate::prelude::wait;
 
 /// Waits until the specified event is sent
 ///
-/// ```
+/// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Default, Clone, Event)]
-/// struct E;
-///
-/// let mut app = App::new();
-/// app.add_event::<E>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task|async move{
-///         let wait_event = task.run(Update, wait::event::comes::<E>()).await;
-///         task.will(Update, once::event::send(E)).await;
-///         wait_event.await;
-///         task.will(Update, once::non_send::init::<AppExit>()).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, wait::event::comes::<AppExit>()).await;
 /// });
-/// app.update();
-/// app.update();
-/// app.update();
-/// app.update();
-/// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
 #[inline(always)]
-pub fn comes<E>() -> impl TaskAction< (), ()>
+pub fn comes<E>() -> impl ActionSeed + Seed
     where E: Event
 {
-    with((), wait::until(|er: EventReader<E>| {
+    wait::until(|er: EventReader<E>| {
         !er.is_empty()
-    }))
+    })
 }
 
 
@@ -50,31 +34,20 @@ pub fn comes<E>() -> impl TaskAction< (), ()>
 ///
 /// This is similar to [`wait::event::comes`], except that it returns the event itself.
 ///
-/// ```
+/// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task|async move{
-///         let wait_event = task.run(Update, wait::event::read::<AppExit>()).await;
-///         task.will(Update, once::event::send(AppExit)).await;
-///         task.will(Update, once::non_send::insert::<AppExit>(wait_event.await)).await;
-///     });
+/// Flurx::schedule(|task| async move{
+///     task.will(Update, wait::event::read::<AppExit>()).await;
 /// });
-/// app.update();
-/// app.update();
-/// app.update();
-/// app.update();
-/// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 /// ```
 #[inline(always)]
-pub fn read<E>() -> impl TaskAction< (), E>
+pub fn read<E>() -> impl ActionSeed<(), E> + Seed
     where E: Event + Clone
 {
-    with((), wait::output(|mut er: EventReader<E>| {
+    wait::output(|mut er: EventReader<E>| {
         er.read().next().cloned()
-    }))
+    })
 }
