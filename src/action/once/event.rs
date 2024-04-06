@@ -6,7 +6,7 @@
 
 
 use bevy::app::AppExit;
-use bevy::prelude::{Event, EventWriter, In};
+use bevy::prelude::{Event, EventReader, EventWriter, In};
 
 use crate::action::{Action, once};
 use crate::action::seed::{ActionSeed, SeedMark};
@@ -18,14 +18,14 @@ use crate::action::seed::{ActionSeed, SeedMark};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::send(AppExit)).await;
+///     task.will(Update, once::event::send().with(AppExit)).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn send<E>(event: E) -> impl Action<E, ()>
+pub fn send<E>() -> impl ActionSeed<E> + SeedMark
     where E: Event
 {
-    once::run_with(event, |In(event): In<E>, mut w: EventWriter<E>| {
+    once::run(|In(event): In<E>, mut w: EventWriter<E>| {
         w.send(event);
     })
 }
@@ -61,8 +61,9 @@ pub fn send_default<E>() -> impl ActionSeed + SeedMark
 /// ```
 #[inline(always)]
 pub fn app_exit() -> impl Action<AppExit, ()> {
-    send(AppExit)
+    send().with(AppExit)
 }
+
 
 
 #[cfg(test)]
@@ -74,13 +75,14 @@ mod tests {
     use crate::action::once;
     use crate::reactor::Reactor;
     use crate::tests::{came_event, test_app};
+    use crate::prelude::ActionSeed;
 
     #[test]
     fn send_event() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, once::event::send(AppExit)).await;
+                task.will(First, once::event::send().with(AppExit)).await;
             }));
         });
 

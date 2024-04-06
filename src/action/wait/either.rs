@@ -97,7 +97,7 @@ mod tests {
                 });
 
                 if let Either::Right(rhs) = task.will(Update, wait::either(u1, u2)).await {
-                    task.will(Update, once::non_send::insert(Count(rhs))).await;
+                    task.will(Update, once::non_send::insert().with(Count(rhs))).await;
                 }
             }));
         });
@@ -124,7 +124,6 @@ mod tests {
                 task.will(Update, wait::either(
                     wait_all! {
                         wait::until(|mut count:ResMut<Count>| {
-                            println!("DDD");
                             count.0 += 1;
                             false
                         }),

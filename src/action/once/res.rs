@@ -6,7 +6,7 @@
 
 use bevy::prelude::{Commands, In, Resource};
 
-use crate::action::{Action, once};
+use crate::action::{once};
 use crate::action::seed::ActionSeed;
 use crate::prelude::seed::SeedMark;
 
@@ -40,14 +40,14 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 /// struct Res;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::res::insert(Res)).await;
+///     task.will(Update, once::res::insert().with(Res)).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn insert<R>(resource: R) -> impl Action<R, ()>
+pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
     where R: Resource + 'static
 {
-    once::run_with(resource, |input: In<R>, mut commands: Commands| {
+    once::run(|input: In<R>, mut commands: Commands| {
         commands.insert_resource(input.0);
     })
 }
@@ -82,6 +82,7 @@ mod tests {
     use crate::action::once::res;
     use crate::reactor::Reactor;
     use crate::tests::{test_app, TestResource};
+    use crate::prelude::ActionSeed;
 
     #[test]
     fn init_resource() {
@@ -101,7 +102,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, res::insert(TestResource)).await;
+                task.will(First, res::insert().with(TestResource)).await;
             }));
         });
 

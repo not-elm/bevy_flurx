@@ -7,7 +7,7 @@
 
 use bevy::prelude::{In, World};
 
-use crate::action::{Action, once};
+use crate::action::once;
 use crate::action::seed::ActionSeed;
 use crate::prelude::seed::SeedMark;
 
@@ -42,14 +42,14 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 /// struct Res;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::non_send::insert(Res)).await;
+///     task.will(Update, once::non_send::insert().with(Res)).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn insert<R>(resource: R) -> impl Action<R, ()>
+pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
     where R: 'static
 {
-    once::run_with(resource, |In(resource): In<R>, world: &mut World| {
+    once::run(|In(resource): In<R>, world: &mut World| {
         world.insert_non_send_resource(resource);
     })
 }
@@ -78,10 +78,11 @@ pub fn remove<R>() -> impl ActionSeed + SeedMark
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, First, Startup};
+    use bevy::app::{AppExit, First, Last, PreUpdate, Startup, Update};
     use bevy::prelude::Commands;
 
     use crate::action::once::non_send;
+    use crate::prelude::ActionSeed;
     use crate::reactor::Reactor;
     use crate::tests::{test_app, TestResource};
 
@@ -103,7 +104,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, non_send::insert(TestResource)).await;
+                task.will(First, non_send::insert().with(TestResource)).await;
             }));
         });
 
@@ -130,15 +131,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, non_send::insert(AppExit)).await;
+                task.will(First, non_send::insert().with(AppExit)).await;
                 println!("First finished");
-                task.will(First, non_send::insert(AppExit)).await;
+                task.will(PreUpdate, non_send::insert().with(AppExit)).await;
                 println!("PreUpdate finished");
-                task.will(First, non_send::insert(AppExit)).await;
+                task.will(Update, non_send::insert().with(AppExit)).await;
                 println!("Update finished");
-                task.will(First, non_send::insert(AppExit)).await;
+                task.will(Update, non_send::insert().with(AppExit)).await;
                 println!("PostUpdate finished");
-                task.will(First, non_send::insert(AppExit)).await;
+                task.will(Last, non_send::insert().with(AppExit)).await;
                 println!("Last finished");
             }));
         });

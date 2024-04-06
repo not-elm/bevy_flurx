@@ -141,7 +141,7 @@ mod tests {
     use bevy::prelude::{Commands, EventWriter, Local};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
-    use crate::prelude::{once, wait};
+    use crate::prelude::{once, wait, ActionSeed};
     use crate::reactor::Reactor;
     use crate::tests::test_app;
 
@@ -161,7 +161,7 @@ mod tests {
                     )).await;
                     assert_eq!(event1, TestEvent1);
                     assert_eq!(event2, TestEvent2);
-                    task.will(Update, once::non_send::insert(AppExit)).await;
+                    task.will(Update, once::non_send::insert().with(AppExit)).await;
                 }));
             });
 
@@ -192,7 +192,7 @@ mod tests {
                         })
                     )).await;
                     assert_eq!(event1, TestEvent1);
-                    task.will(Update, once::non_send::insert(AppExit)).await;
+                    task.will(Update, once::non_send::insert().with(AppExit)).await;
                 }));
             });
         app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
