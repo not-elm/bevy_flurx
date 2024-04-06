@@ -15,7 +15,7 @@ pub use either::*;
 
 use crate::action::seed::{ActionSeed, Seed};
 use crate::action::seed::wait::WaitSeed;
-use crate::prelude::TaskAction;
+use crate::prelude::Action;
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::both::BothRunner;
 use crate::runner::RunnerIntoAction;
@@ -40,7 +40,7 @@ pub mod either;
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// Flurx::schedule(|task| async move{
 ///     task.will(Update, wait::output(||{
 ///         Some(())
@@ -108,9 +108,9 @@ pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + Seed
 /// });
 /// ```
 pub fn both<LI, LO, RI, RO>(
-    lhs: impl TaskAction<LI, LO> + 'static,
-    rhs: impl TaskAction<RI, RO> + 'static,
-) -> impl TaskAction<(LI, RI), (LO, RO)>
+    lhs: impl Action<LI, LO> + 'static,
+    rhs: impl Action<RI, RO> + 'static,
+) -> impl Action<(LI, RI), (LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,

@@ -21,14 +21,14 @@ pub mod seed;
 
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
-pub trait TaskAction<In, Out> {
+pub trait Action<In, Out> {
     /// Convert itself to [`TaskRunner`](crate::runner::TaskRunner).
     fn to_runner(self, token: CancellationToken, output: TaskOutput<Out>) -> impl TaskRunner + 'static;
 }
 
 
 /// Convert to the output of action to tuple. 
-pub fn to_tuple<I, O>(action: impl TaskAction<I, O> + 'static) -> impl TaskAction<I, (O, )>
+pub fn to_tuple<I, O>(action: impl Action<I, O> + 'static) -> impl Action<I, (O, )>
     where
         I: 'static,
         O: 'static

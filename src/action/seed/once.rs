@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use bevy::prelude::System;
 
 use crate::action::seed::{ActionSeed, Seed};
-use crate::action::TaskAction;
+use crate::action::Action;
 use crate::private::RunnerIntoAction;
 use crate::runner::once::OnceRunner;
 
@@ -34,7 +34,7 @@ impl<In, Out, Sys> ActionSeed<In, Out> for OnceSeed<In, Out, Sys>
         Out: 'static
 {
     #[inline]
-    fn with(self, input: In) -> impl TaskAction< In, Out> {
+    fn with(self, input: In) -> impl Action< In, Out> {
         RunnerIntoAction::new(OnceRunner::new(input, self.system))
     }
 }

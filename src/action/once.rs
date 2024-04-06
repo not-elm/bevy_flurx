@@ -9,7 +9,7 @@
 use bevy::prelude::{In, IntoSystem};
 use crate::action::seed::{ActionSeed, Seed};
 use crate::action::seed::once::OnceSeed;
-use crate::prelude::TaskAction;
+use crate::prelude::Action;
 use crate::runner::once::OnceRunner;
 use crate::runner::RunnerIntoAction;
 
@@ -65,7 +65,7 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + Seed
 /// });
 /// ```
 #[inline(always)]
-pub fn run_with<Sys,Input, Out, Marker>(input:Input, system: Sys) -> impl TaskAction<Input, Out>
+pub fn run_with<Sys,Input, Out, Marker>(input:Input, system: Sys) -> impl Action<Input, Out>
     where
         Sys: IntoSystem<Input, Out, Marker>,
         Input: 'static,

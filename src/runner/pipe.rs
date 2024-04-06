@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::prelude::World;
-use crate::action::TaskAction;
+use crate::action::Action;
 use crate::prelude::seed::ActionSeed;
 
 
@@ -24,7 +24,7 @@ impl<I1, O1, O2, Seed> PipeRunner<I1, O1, O2, Seed>
         O1: Clone + 'static
 {
     pub fn new(
-        a1: impl TaskAction<I1, O1> + 'static,
+        a1: impl Action<I1, O1> + 'static,
         seed: Seed
     ) -> PipeRunner<I1, O1, O2, Seed>{
         let o1 = TaskOutput::default();

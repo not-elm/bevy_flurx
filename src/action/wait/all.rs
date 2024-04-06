@@ -17,8 +17,8 @@
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event4;
 ///
-/// Flurx::schedule(|task| async move{ 
-///     let (event1, event2, event3, event4) = task.will(Update, wait_all!( 
+/// Flurx::schedule(|task| async move{
+///     let (event1, event2, event3, event4) = task.will(Update, wait_all!(
 ///         wait::event::read::<Event1>(),
 ///         wait::event::read::<Event2>(),
 ///         wait::event::read::<Event3>(),
@@ -49,7 +49,7 @@ macro_rules! wait_all {
 pub mod private {
     use bevy::prelude::{Deref, DerefMut};
 
-    use crate::action::TaskAction;
+    use crate::action::Action;
     use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, TaskRunner};
     use crate::runner::base::BaseTwoRunner;
     use crate::runner::macros::impl_tuple_runner;
@@ -67,8 +67,8 @@ pub mod private {
     {
         #[inline]
         pub fn new(
-            a1: impl TaskAction<I1, O1> + 'static,
-            a2: impl TaskAction<I2, O2> + 'static,
+            a1: impl Action<I1, O1> + 'static,
+            a2: impl Action<I2, O2> + 'static,
         ) -> FlatBothRunner<I1, I2, O1, O2> {
             Self(BaseTwoRunner::new(a1, a2))
         }
@@ -76,7 +76,7 @@ pub mod private {
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-            impl<I1, I2, $($lhs_out,)* O2> TaskAction< (I1, I2), ($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2>
+            impl<I1, I2, $($lhs_out,)* O2> Action< (I1, I2), ($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2>
                 where
                     I1: 'static,
                     I2: 'static,

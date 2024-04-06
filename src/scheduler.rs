@@ -1,12 +1,10 @@
 use std::future::Future;
-use bevy::log::info;
 
 use bevy::prelude::Component;
 
 use crate::runner::CancellationToken;
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
-
 
 #[derive(Component, Debug)]
 pub(crate) struct Initialized;
@@ -40,7 +38,6 @@ impl Flurx {
 
 impl Drop for Flurx {
     fn drop(&mut self) {
-        info!("DROP");
         self.token.cancel();
     }
 }

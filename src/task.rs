@@ -6,7 +6,7 @@ use std::future::Future;
 use bevy::ecs::schedule::ScheduleLabel;
 use futures_polling::FuturePollingExt;
 
-use crate::action::TaskAction;
+use crate::action::Action;
 use crate::runner::CancellationToken;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
@@ -53,7 +53,7 @@ impl ReactiveTask {
     pub fn will<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<In, Out> + 'static,
+        action: impl Action<In, Out> + 'static,
     ) -> impl Future<Output=Out>
         where
             Label: ScheduleLabel + Clone,
@@ -90,7 +90,7 @@ impl ReactiveTask {
     pub async fn run<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<In, Out> + 'static,
+        action: impl Action<In, Out> + 'static,
     ) -> impl Future<Output=Out>
         where
             Label: ScheduleLabel + Clone,

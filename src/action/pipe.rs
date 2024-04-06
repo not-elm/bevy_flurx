@@ -1,22 +1,22 @@
 use crate::action::seed::ActionSeed;
-use crate::action::TaskAction;
+use crate::action::Action;
 use crate::private::RunnerIntoAction;
 use crate::runner::pipe::PipeRunner;
 
 pub trait Pipe<I1, O1> {
-    fn pipe<O2>(self, action: impl ActionSeed<O1, O2> + 'static) -> impl TaskAction<I1, O2>
+    fn pipe<O2>(self, action: impl ActionSeed<O1, O2> + 'static) -> impl Action<I1, O2>
         where
             O2: 'static;
 }
 
-impl<I1, O1, Action> Pipe<I1, O1> for Action
+impl<I1, O1, Act> Pipe<I1, O1> for Act
     where
-        Action: TaskAction<I1, O1> + 'static,
+        Act: Action<I1, O1> + 'static,
         I1: 'static,
         O1: Clone + 'static
 {
     #[inline(always)]
-    fn pipe<O2>(self, action: impl ActionSeed<O1, O2> + 'static) -> impl TaskAction<I1, O2>
+    fn pipe<O2>(self, action: impl ActionSeed<O1, O2> + 'static) -> impl Action<I1, O2>
         where
             O2: 'static
     {

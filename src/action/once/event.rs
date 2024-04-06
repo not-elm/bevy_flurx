@@ -8,7 +8,7 @@
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
 
-use crate::action::{once, TaskAction};
+use crate::action::{once, Action};
 use crate::action::seed::{ActionSeed, Seed};
 
 /// Once send an event.
@@ -22,7 +22,7 @@ use crate::action::seed::{ActionSeed, Seed};
 /// });
 /// ```
 #[inline(always)]
-pub fn send<E>(event: E) -> impl TaskAction<E, ()>
+pub fn send<E>(event: E) -> impl Action<E, ()>
     where E: Event
 {
     once::run_with(event, |In(event): In<E>, mut w: EventWriter<E>| {
@@ -60,7 +60,7 @@ pub fn send_default<E>() -> impl ActionSeed + Seed
 /// });
 /// ```
 #[inline(always)]
-pub fn app_exit() -> impl TaskAction<AppExit, ()> {
+pub fn app_exit() -> impl Action<AppExit, ()> {
     send(AppExit)
 }
 

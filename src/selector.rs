@@ -5,7 +5,7 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 use flurx::selector::Selector;
 
-use crate::action::TaskAction;
+use crate::action::Action;
 use crate::runner::{CancellationToken, initialize_task_runner, TaskOutput};
 use crate::world_ptr::WorldPtr;
 
@@ -17,15 +17,15 @@ pub(crate) struct WorldSelector<Label, Action, In, Out> {
     _m: PhantomData<In>,
 }
 
-impl<Label, Action, In, Out> WorldSelector<Label, Action, In, Out>
+impl<Label, Act, In, Out> WorldSelector<Label, Act, In, Out>
     where
         Label: ScheduleLabel + Clone,
-        Action: TaskAction<In, Out>,
+        Act: Action<In, Out>,
         In: 'static,
         Out: 'static,
 {
     #[inline]
-    pub(crate) fn new(label: Label, action: Action, token: CancellationToken) -> WorldSelector<Label, Action, In, Out> {
+    pub(crate) fn new(label: Label, action: Act, token: CancellationToken) -> WorldSelector<Label, Act, In, Out> {
         Self {
             action: Cell::new(Option::Some(action)),
             output: TaskOutput::default(),
@@ -36,10 +36,10 @@ impl<Label, Action, In, Out> WorldSelector<Label, Action, In, Out>
     }
 }
 
-impl<Label, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Action, In, Out>
+impl<Label, Act, In, Out> Selector<WorldPtr> for WorldSelector<Label, Act, In, Out>
     where
         Label: ScheduleLabel + Clone,
-        Action: TaskAction<In, Out> + 'static,
+        Act: Action<In, Out> + 'static,
         In: 'static,
         Out: 'static
 {

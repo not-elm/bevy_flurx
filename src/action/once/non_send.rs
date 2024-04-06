@@ -7,7 +7,7 @@
 
 use bevy::prelude::{In, World};
 
-use crate::action::{once, TaskAction};
+use crate::action::{once, Action};
 use crate::action::seed::ActionSeed;
 use crate::prelude::seed::Seed;
 
@@ -46,7 +46,7 @@ pub fn init<R>() -> impl ActionSeed + Seed
 /// });
 /// ```
 #[inline(always)]
-pub fn insert<R>(resource: R) -> impl TaskAction<R, ()>
+pub fn insert<R>(resource: R) -> impl Action<R, ()>
     where R: 'static
 {
     once::run_with(resource, |In(resource): In<R>, world: &mut World| {

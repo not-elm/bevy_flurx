@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::prelude::System;
 
-use crate::action::{ TaskAction};
+use crate::action::{Action};
 use crate::action::seed::{ActionSeed, Seed};
 use crate::private::RunnerIntoAction;
 use crate::runner::multi_times::MultiTimesRunner;
@@ -36,7 +36,7 @@ impl<In, Out, Sys> ActionSeed<In, Out> for WaitSeed<In, Out, Sys>
         Out: 'static
 {
     #[inline]
-    fn with(self, input: In) -> impl TaskAction< In, Out> {
+    fn with(self, input: In) -> impl Action< In, Out> {
         RunnerIntoAction::new(MultiTimesRunner::new(self.system, input))
     }
 }

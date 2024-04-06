@@ -5,7 +5,7 @@
 
 use bevy::prelude::{In, NextState, ResMut, States};
 
-use crate::action::{ once, TaskAction};
+use crate::action::{once, Action};
 
 /// Once set a next state.
 ///
@@ -24,7 +24,7 @@ use crate::action::{ once, TaskAction};
 ///     task.will(Update, once::state::set(S::S2)).await;
 /// });
 /// ```
-pub fn set<S>(state: S) -> impl TaskAction< S, ()>
+pub fn set<S>(state: S) -> impl Action< S, ()>
     where S: States + 'static
 {
     once::run_with(state, |input: In<S>, mut state: ResMut<NextState<S>>| {

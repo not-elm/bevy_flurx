@@ -1,4 +1,4 @@
-use crate::action::TaskAction;
+use crate::action::Action;
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::either::EitherRunner;
 use crate::runner::RunnerIntoAction;
@@ -42,7 +42,7 @@ impl<L, R> Either<L, R> {
 ///         wait::until(||false),
 ///         wait::event::read::<AppExit>()
 ///     )).await;
-///     match either { 
+///     match either {
 ///         Either::Left(_) => {},
 ///         Either::Right(_) => {}
 ///     }
@@ -52,10 +52,10 @@ impl<L, R> Either<L, R> {
 pub fn either<
     LS, LI, LO,
     RS, RI, RO,
->(lhs: LS, rhs: RS) -> impl TaskAction<(LI, RI), Either<LO, RO>>
+>(lhs: LS, rhs: RS) -> impl Action<(LI, RI), Either<LO, RO>>
     where
-        LS: TaskAction<LI, LO> + 'static,
-        RS: TaskAction<RI, RO> + 'static,
+        LS: Action<LI, LO> + 'static,
+        RS: Action<RI, RO> + 'static,
         LI: 'static,
         LO: 'static,
         RI: 'static,

@@ -6,7 +6,7 @@ use std::sync::{Arc, Mutex};
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{IntoSystemConfigs, Schedule, Schedules, World};
 
-use crate::action::{ TaskAction};
+use crate::action::{Action};
 use crate::flurx_initialize;
 use crate::runner::runners::TaskRunners;
 
@@ -164,7 +164,7 @@ impl<O, R> RunnerIntoAction<O, R>
     }
 }
 
-impl<O, R> TaskAction<R::In, O> for RunnerIntoAction<O, R>
+impl<O, R> Action<R::In, O> for RunnerIntoAction<O, R>
     where
         O: 'static,
         R: RunWithTaskOutput<O> + 'static

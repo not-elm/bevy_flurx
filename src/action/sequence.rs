@@ -6,7 +6,7 @@
 //! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
 
 
-use crate::action::{TaskAction};
+use crate::action::{Action};
 use crate::runner::base::BaseTwoRunner;
 use crate::runner::RunnerIntoAction;
 use crate::runner::sequence::SequenceRunner;
@@ -21,7 +21,7 @@ pub trait Then<I1, O1> {
     /// Returns the action combined with the subsequent action.
     ///
     /// The action's output will be that of the subsequent action.
-    fn then<I2, O2>(self, action: impl TaskAction<I2, O2> + 'static) -> impl TaskAction<I1, O2>
+    fn then<I2, O2>(self, action: impl Action<I2, O2> + 'static) -> impl Action<I1, O2>
         where
             I2: 'static,
             O2: 'static;
@@ -29,12 +29,12 @@ pub trait Then<I1, O1> {
 
 impl<I1, O1, A> Then<I1, O1> for A
     where
-        A: TaskAction<I1, O1> + 'static,
+        A: Action<I1, O1> + 'static,
         I1: 'static,
         O1: 'static
 {
     #[inline]
-    fn then<I2, O2>(self, action: impl TaskAction<I2, O2> + 'static) -> impl TaskAction<I1, O2>
+    fn then<I2, O2>(self, action: impl Action<I2, O2> + 'static) -> impl Action<I1, O2>
         where
             I2: 'static,
             O2: 'static
