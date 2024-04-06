@@ -8,7 +8,8 @@
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
 
-use crate::action::{once, TaskAction};
+use crate::action::{Action, once};
+use crate::action::seed::{ActionSeed, SeedMark};
 
 /// Once send an event.
 ///
@@ -16,18 +17,12 @@ use crate::action::{once, TaskAction};
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::event::send(AppExit)).await;
-///     });
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, once::event::send(AppExit)).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn send<E>(event: E) -> impl TaskAction<In=E, Out=()>
+pub fn send<E>(event: E) -> impl Action<E, ()>
     where E: Event
 {
     once::run_with(event, |In(event): In<E>, mut w: EventWriter<E>| {
@@ -41,18 +36,12 @@ pub fn send<E>(event: E) -> impl TaskAction<In=E, Out=()>
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::event::send_default::<AppExit>()).await;
-///     });
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, once::event::send_default::<AppExit>()).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn send_default<E>() -> impl TaskAction<In=(), Out=()>
+pub fn send_default<E>() -> impl ActionSeed + SeedMark
     where E: Event + Default
 {
     once::run(|mut w: EventWriter<E>| {
@@ -66,43 +55,34 @@ pub fn send_default<E>() -> impl TaskAction<In=(), Out=()>
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move {
-///         task.will(Update, once::event::app_exit()).await;
-///     });
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, once::event::app_exit()).await;
 /// });
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn app_exit() -> impl TaskAction<In=AppExit> {
+pub fn app_exit() -> impl Action<AppExit, ()> {
     send(AppExit)
 }
 
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, First, Startup, Update};
-    use bevy::prelude::World;
+    use bevy::app::{AppExit, First, Startup, Update};
+    use bevy::prelude::{Commands, World};
     use bevy_test_helper::share::{create_shares, Share};
 
     use crate::action::once;
-    use crate::extension::ScheduleReactor;
-    use crate::FlurxPlugin;
+    use crate::reactor::Reactor;
     use crate::tests::{came_event, test_app};
 
     #[test]
     fn send_event() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    task.will(First, once::event::send(AppExit)).await;
-                });
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(First, once::event::send(AppExit)).await;
+            }));
+        });
 
         app.update();
         assert!(came_event::<AppExit>(&mut app));
@@ -110,14 +90,12 @@ mod tests {
 
     #[test]
     fn send_default_event() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    task.will(First, once::event::send_default::<AppExit>()).await;
-                });
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(First, once::event::send_default::<AppExit>()).await;
+            }));
+        });
 
         app.update();
         assert!(came_event::<AppExit>(&mut app));
@@ -132,10 +110,10 @@ mod tests {
         app.insert_resource(s2);
         app.add_systems(Startup, |world: &mut World| {
             let s2 = world.remove_resource::<Share<bool>>().unwrap();
-            world.schedule_reactor(|task| async move {
+            world.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::run(|| {})).await;
                 s2.set(true);
-            });
+            }));
         });
 
         app.update();

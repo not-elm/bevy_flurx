@@ -1,23 +1,28 @@
 use std::cell::RefCell;
+use std::marker::PhantomData;
 use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Schedule, Schedules, World};
+use bevy::prelude::{IntoSystemConfigs, Schedule, Schedules, World};
 
+use crate::action::Action;
+use crate::flurx_initialize;
 use crate::runner::runners::TaskRunners;
 
 pub(crate) mod runners;
 pub(crate) mod multi_times;
 pub(crate) mod once;
 pub(crate) mod sequence;
-pub(crate) mod sequence_with_output;
 pub(crate) mod both;
 pub(crate) mod either;
+pub(crate) mod base;
+pub(crate) mod pipe;
 
 
 /// Represents the output of the task.
 /// See details [`TaskRunner`].
 pub struct TaskOutput<O>(Rc<RefCell<Option<O>>>);
+
 
 impl<O> Clone for TaskOutput<O> {
     #[inline]
@@ -55,6 +60,32 @@ impl<O> TaskOutput<O> {
     }
 }
 
+impl<O: Clone> TaskOutput<O> {
+    #[inline(always)]
+    pub fn cloned(&self) -> Option<O> {
+        self.0.borrow_mut().clone()
+    }
+}
+
+
+/// Structure for canceling a task
+#[derive(Default, Clone)]
+pub struct CancellationToken(Rc<RefCell<Option<()>>>);
+
+impl CancellationToken {
+    #[inline(always)]
+    pub fn requested_cancel(&self) -> bool {
+        self.0.borrow().is_some()
+    }
+
+
+    #[inline(always)]
+    pub fn cancel(&self) {
+        self.0.borrow_mut().replace(());
+    }
+}
+
+
 ///
 pub trait TaskRunner {
     /// Run the system. 
@@ -81,7 +112,7 @@ pub(crate) fn initialize_task_runner<Label>(
         };
 
         let schedule = initialize_schedule(&mut schedules, label);
-        schedule.add_systems(run_task_runners::<Label>);
+        schedule.add_systems(run_task_runners::<Label>.after(flurx_initialize));
 
         let mut runners = TaskRunners::<Label>::default();
         runners.runners.push(Box::new(runner));
@@ -89,7 +120,7 @@ pub(crate) fn initialize_task_runner<Label>(
     }
 }
 
-fn initialize_schedule<Label>(schedules: &mut Schedules, schedule_label: Label) -> &mut Schedule
+pub(crate) fn initialize_schedule<Label>(schedules: &mut Schedules, schedule_label: Label) -> &mut Schedule
     where Label: ScheduleLabel + Clone
 {
     if !schedules.contains(schedule_label.clone()) {
@@ -107,14 +138,39 @@ fn run_task_runners<Label: ScheduleLabel>(world: &mut World) {
     world.insert_non_send_resource(runner);
 }
 
-pub(crate) trait RunWithTaskOutput<O> {
-    fn run_with_task_output(&mut self, output: &mut TaskOutput<O>, world: &mut World) -> bool;
+pub trait RunWithTaskOutput<O> {
+    type In;
+
+    fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<O>, world: &mut World) -> bool;
 }
 
-impl<O, R: RunWithTaskOutput<O>> TaskRunner for (TaskOutput<O>, R) {
+impl<O, R: RunWithTaskOutput<O>> TaskRunner for (CancellationToken, TaskOutput<O>, R) {
     #[inline(always)]
     fn run(&mut self, world: &mut World) -> bool {
-        self.1.run_with_task_output(&mut self.0, world)
+        self.2.run_with_task_output(&mut self.0, &mut self.1, world)
+    }
+}
+
+pub struct RunnerIntoAction<O, R>(pub R, PhantomData<O>);
+
+impl<O, R> RunnerIntoAction<O, R>
+    where
+        R: RunWithTaskOutput<O>
+{
+    #[inline]
+    pub const fn new(runner: R) -> RunnerIntoAction<O, R> {
+        RunnerIntoAction(runner, PhantomData)
+    }
+}
+
+impl<O, R> Action<R::In, O> for RunnerIntoAction<O, R>
+    where
+        O: 'static,
+        R: RunWithTaskOutput<O> + 'static
+{
+    #[inline(always)]
+    fn to_runner(self, token: CancellationToken, output: TaskOutput<O>) -> impl TaskRunner {
+        (token, output, self.0)
     }
 }
 

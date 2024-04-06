@@ -1,8 +1,7 @@
-use std::marker::PhantomData;
-
-use crate::action::{TaskAction, WithInput};
-use crate::runner::{TaskRunner, TaskOutput};
+use crate::action::Action;
+use crate::runner::base::BaseTwoRunner;
 use crate::runner::either::EitherRunner;
+use crate::runner::RunnerIntoAction;
 
 /// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -33,102 +32,60 @@ impl<L, R> Either<L, R> {
 ///
 /// The first thing passed is lhs, the second is rhs.
 ///
-/// ```
+/// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Default, Clone, Event)]
-/// struct Event1;
-///
-/// #[derive(Default, Clone, Event)]
-/// struct Event2;
-///
-/// let mut app = App::new();
-/// app.add_event::<Event1>();
-/// app.add_event::<Event2>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task|async move{
-///         let wait_event = task.run(Update, wait::either(
-///             wait::event::comes::<Event1>(),
-///             wait::event::comes::<Event2>()
-///         )).await;
-///         task.will(Update, once::event::send(Event1)).await;
-///         assert!(wait_event.await.is_left());
-///     });
+/// Reactor::schedule(|task| async move{
+///     let either = task.will(Update, wait::either(
+///         wait::until(||false),
+///         wait::event::read::<AppExit>()
+///     )).await;
+///     match either {
+///         Either::Left(_) => {}
+///         Either::Right(_) => {}
+///     }
 /// });
-/// app.update();
-/// app.update();
-/// app.update();
 /// ```
 #[inline(always)]
 pub fn either<
-    LS, LI, LO, LM,
-    RS, RI, RO, RM
->(lhs: LS, rhs: RS) -> impl TaskAction<WithInput, In=(LI, RI), Out=Either<LO, RO>>
+    LS, LI, LO,
+    RS, RI, RO,
+>(lhs: LS, rhs: RS) -> impl Action<(LI, RI), Either<LO, RO>>
     where
-        LS: TaskAction<LM, In=LI, Out=LO> + 'static,
-        RS: TaskAction<RM, In=RI, Out=RO> + 'static,
+        LS: Action<LI, LO> + 'static,
+        RS: Action<RI, RO> + 'static,
         LI: 'static,
         LO: 'static,
         RI: 'static,
         RO: 'static,
-        LM: 'static,
-        RM: 'static
 {
-    EitherAction {
-        lhs,
-        rhs,
-        _m: PhantomData,
-    }
-}
-
-struct EitherAction<L, LI, LO, LM, R, RI, RO, RM> {
-    lhs: L,
-    rhs: R,
-    _m: PhantomData<(LI, LO, RI, RO, LM, RM)>,
-}
-
-impl<
-    L, LI, LO, LM,
-    R, RI, RO, RM
-> TaskAction for EitherAction<L, LI, LO, LM, R, RI, RO, RM>
-    where
-        L: TaskAction<LM, In=LI, Out=LO> + 'static,
-        R: TaskAction<RM, In=RI, Out=RO> + 'static,
-        LM: 'static,
-        RM: 'static
-{
-    type In = (LI, RI);
-    type Out = Either<LO, RO>;
-
-    #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-        EitherRunner::new(output, self.lhs, self.rhs)
-    }
+    RunnerIntoAction::new(EitherRunner(BaseTwoRunner::new(lhs, rhs)))
 }
 
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Local, Update, World};
+    use bevy::input::ButtonInput;
+    use bevy::prelude::{Commands, KeyCode, Local, ResMut, Resource, Update};
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, wait};
     use crate::action::wait::{Either, output, until};
-    use crate::extension::ScheduleReactor;
-    use crate::FlurxPlugin;
+    use crate::prelude::ActionSeed;
+    use crate::reactor::Reactor;
+    use crate::tests::test_app;
+    use crate::wait_all;
 
     #[test]
     fn wait_either() {
-        let mut app = App::new();
-        app.add_plugins(FlurxPlugin);
+        let mut app = test_app();
         #[derive(Clone)]
         struct Count(usize);
-        app.world.run_system_once(|world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.world.run_system_once(|mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let u1 = until(|mut count: Local<u32>| {
                     *count += 1;
                     *count == 3
@@ -142,7 +99,7 @@ mod tests {
                 if let Either::Right(rhs) = task.will(Update, wait::either(u1, u2)).await {
                     task.will(Update, once::non_send::insert(Count(rhs))).await;
                 }
-            });
+            }));
         });
 
         app.update();
@@ -152,5 +109,37 @@ mod tests {
 
         app.update();
         assert_eq!(app.world.non_send_resource::<Count>().0, 1);
+    }
+
+    #[test]
+    fn no_run_after_either() {
+        #[derive(Resource, Default, Debug, Eq, PartialEq)]
+        struct Count(usize);
+
+        let mut app = test_app();
+        app.init_resource::<Count>();
+
+        app.world.run_system_once(|mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, wait::either(
+                    wait_all! {
+                        wait::until(|mut count:ResMut<Count>| {
+                            println!("DDD");
+                            count.0 += 1;
+                            false
+                        }),
+                        wait::until(|| { false })
+                    },
+                    wait::input::pressed().with(KeyCode::KeyA),
+                )).await;
+                task.will(Update, wait::until(|| { false })).await;
+            }));
+        });
+
+        app.resource_mut::<ButtonInput<KeyCode>>().press(KeyCode::KeyA);
+        for _ in 0..100 {
+            app.update();
+            app.assert_resource_eq(Count(1));
+        }
     }
 }

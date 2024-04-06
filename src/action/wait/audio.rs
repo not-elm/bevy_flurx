@@ -5,7 +5,8 @@
 use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::prelude::{Commands, Entity, In, Query};
 
-use crate::action::{TaskAction, wait, with};
+use crate::action::wait;
+use crate::prelude::seed::{ActionSeed, SeedMark};
 
 /// Waits until the audio associated with the passed [`Entity`](bevy::prelude::Entity)
 /// has finished playing.
@@ -14,16 +15,17 @@ use crate::action::{TaskAction, wait, with};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// let mut world = World::new();
-/// world.schedule_reactor(|task| async move{
-///     let entity = task.will(Update, once::audio::play("<audio_path>", PlaybackSettings::ONCE)).await;
-///     task.will(Update, wait::audio::finished(entity)).await;
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, {
+///         once::audio::play("<audio_path>", PlaybackSettings::ONCE)
+///             .pipe(wait::audio::finished())
+///     }).await;
 /// });
 /// ```
-pub fn finished(entity: Entity) -> impl TaskAction<In=Entity, Out=()> {
-    with(entity, wait::until(|In(entity): In<Entity>,
-                              mut commands: Commands,
-                              audio: Query<(Entity, &AudioSink)>| {
+pub fn finished() -> impl ActionSeed<Entity, ()> + SeedMark {
+    wait::until(|In(entity): In<Entity>,
+                 mut commands: Commands,
+                 audio: Query<(Entity, &AudioSink)>| {
         let Ok((entity, audio)) = audio.get(entity) else { return false; };
         if audio.empty() {
             commands.entity(entity).despawn();
@@ -31,5 +33,5 @@ pub fn finished(entity: Entity) -> impl TaskAction<In=Entity, Out=()> {
         } else {
             false
         }
-    }))
+    })
 }

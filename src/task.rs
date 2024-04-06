@@ -6,15 +6,19 @@ use std::future::Future;
 use bevy::ecs::schedule::ScheduleLabel;
 use futures_polling::FuturePollingExt;
 
-use crate::action::TaskAction;
+use crate::action::Action;
+use crate::runner::CancellationToken;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 
 /// Create a task that runs the system until certain conditions are met.
-#[repr(transparent)]
-pub struct ReactiveTask<'a>(pub(crate) flurx::task::ReactiveTask<'a, WorldPtr>);
 
-impl<'a> ReactiveTask<'a> {
+pub struct ReactiveTask {
+    pub(crate) task: flurx::task::ReactiveTask<'static, WorldPtr>,
+    pub(crate) token: CancellationToken,
+}
+
+impl ReactiveTask {
     /// Create a new task.
     ///
     /// The argument label indicates which scheduler it will be executed on.
@@ -33,31 +37,31 @@ impl<'a> ReactiveTask<'a> {
     /// use bevy_flurx::prelude::*;
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
-    /// app.add_systems(Startup, |world: &mut World|{
-    ///     world.schedule_reactor(|task| async move{
+    /// app.add_systems(Startup, |mut commands: Commands|{
+    ///     commands.spawn(Reactor::schedule(|task| async move{
     ///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
     ///             *count += 1;
     ///             (*count == 2).then_some(*count)
     ///         })).await;
     ///         assert_eq!(count, 2);
-    ///     });
+    ///     }));
     /// });
     /// app.update();
     /// app.update();
     ///```
     #[inline]
-    pub fn will<Label, In, Out, M>(
+    pub fn will<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<M, In=In, Out=Out> + 'static,
-    ) -> impl Future<Output=Out> + 'a
+        action: impl Action<In, Out> + 'static,
+    ) -> impl Future<Output=Out>
         where
             Label: ScheduleLabel + Clone,
             In: 'static,
-            Out: 'static,
-            M: 'static
+            Out: 'static
+
     {
-        self.0.will(WorldSelector::new(label, action))
+        self.task.will(WorldSelector::new(label, action, self.token.clone()))
     }
 
     /// Create a new initialized task.
@@ -71,27 +75,26 @@ impl<'a> ReactiveTask<'a> {
     ///
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
-    /// app.add_systems(Startup, |world: &mut World|{
-    ///     world.schedule_reactor(|task|async move{
+    /// app.add_systems(Startup, |mut commands: Commands|{
+    ///     commands.spawn(Reactor::schedule(|task|async move{
     ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
     ///         task.will(Update, once::event::send(AppExit)).await;
     ///         wait_event.await;
-    ///     });
+    ///     }));
     /// });
     /// app.update();
     /// app.update();
     /// app.update();
     /// ```
     #[inline]
-    pub async fn run<Label, In, Out, M>(
+    pub async fn run<Label, In, Out>(
         &self,
         label: Label,
-        action: impl TaskAction<M, In=In, Out=Out> + 'static,
-    ) -> impl Future<Output=Out> + 'a
+        action: impl Action<In, Out> + 'static,
+    ) -> impl Future<Output=Out>
         where
             Label: ScheduleLabel + Clone,
-            In: Unpin + 'static,
-            M: 'static,
+            In: 'static,
             Out: 'static
     {
         let mut future = self.will(label, action).polling();
@@ -102,27 +105,25 @@ impl<'a> ReactiveTask<'a> {
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, First, Startup, Update};
-    use bevy::prelude::World;
+    use bevy::app::{AppExit, First, Startup, Update};
+    use bevy::prelude::Commands;
 
-    use crate::extension::ScheduleReactor;
-    use crate::FlurxPlugin;
-    use crate::prelude::wait;
     use crate::action::once;
+    use crate::prelude::wait;
+    use crate::reactor::Reactor;
+    use crate::tests::test_app;
 
     #[test]
     fn run() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
-                    let event_task = task.run(First, wait::event::read::<AppExit>()).await;
-                    task.will(Update, once::event::send(AppExit)).await;
-                    event_task.await;
-                    task.will(Update, once::non_send::insert(AppExit)).await;
-                });
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let event_task = task.run(First, wait::event::read::<AppExit>()).await;
+                task.will(Update, once::event::send(AppExit)).await;
+                event_task.await;
+                task.will(Update, once::non_send::insert(AppExit)).await;
+            }));
+        });
 
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());

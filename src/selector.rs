@@ -5,43 +5,43 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::World;
 use flurx::selector::Selector;
 
-use crate::action::TaskAction;
-use crate::runner::{initialize_task_runner, TaskOutput};
+use crate::action::Action;
+use crate::runner::{CancellationToken, initialize_task_runner, TaskOutput};
 use crate::world_ptr::WorldPtr;
 
-pub(crate) struct WorldSelector<Label, Action, In, Out, M> {
+pub(crate) struct WorldSelector<Label, Action, In, Out> {
     action: Cell<Option<Action>>,
     output: TaskOutput<Out>,
     label: Label,
-    _m: PhantomData<(In, M)>,
+    token: CancellationToken,
+    _m: PhantomData<In>,
 }
 
-impl<Label, M, Action, In, Out> WorldSelector<Label, Action, In, Out, M>
+impl<Label, Act, In, Out> WorldSelector<Label, Act, In, Out>
     where
         Label: ScheduleLabel + Clone,
-        Action: TaskAction<M, In=In, Out=Out>,
+        Act: Action<In, Out>,
         In: 'static,
         Out: 'static,
-        M: 'static,
 {
     #[inline]
-    pub(crate) fn new(label: Label, action: Action) -> WorldSelector<Label, Action, In, Out, M> {
+    pub(crate) fn new(label: Label, action: Act, token: CancellationToken) -> WorldSelector<Label, Act, In, Out> {
         Self {
             action: Cell::new(Option::Some(action)),
             output: TaskOutput::default(),
             label,
+            token,
             _m: PhantomData,
         }
     }
 }
 
-impl<Label, M, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Action, In, Out, M>
+impl<Label, Act, In, Out> Selector<WorldPtr> for WorldSelector<Label, Act, In, Out>
     where
         Label: ScheduleLabel + Clone,
-        Action: TaskAction<M, In=In, Out=Out> + 'static,
+        Act: Action<In, Out> + 'static,
         In: 'static,
-        Out: 'static,
-        M: 'static
+        Out: 'static
 {
     type Output = Out;
 
@@ -49,12 +49,11 @@ impl<Label, M, Action, In, Out> Selector<WorldPtr> for WorldSelector<Label, Acti
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
         let world: &mut World = world.as_mut();
         if let Some(action) = self.action.take() {
-            let runner = action.to_runner(self.output.clone());
+            let runner = action.to_runner(self.token.clone(), self.output.clone());
             initialize_task_runner(world, self.label.clone(), runner);
             None
         } else {
-            let output = self.output.take()?;
-            Some(output)
+            self.output.take()
         }
     }
 }

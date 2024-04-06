@@ -8,19 +8,22 @@
 //! - [`wait::event`](crate::prelude::wait::event)
 //! - [`wait::state`](crate::prelude::wait::state)
 
-use std::marker::PhantomData;
 
-use bevy::prelude::{In, IntoSystem, System};
+use bevy::prelude::{In, IntoSystem};
 
 pub use either::*;
 
-use crate::prelude::TaskAction;
-use crate::runner::{TaskRunner, TaskOutput};
+use crate::action::seed::{ActionSeed, SeedMark};
+use crate::action::seed::wait::WaitSeed;
+use crate::prelude::Action;
+use crate::runner::base::BaseTwoRunner;
 use crate::runner::both::BothRunner;
+use crate::runner::RunnerIntoAction;
 
 pub mod event;
 pub mod input;
 pub mod state;
+pub mod switch;
 #[allow(missing_docs)]
 pub mod all;
 #[cfg(feature = "audio")]
@@ -38,28 +41,20 @@ mod either;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move{
-///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
-///             *count += 1;
-///             (*count == 2).then_some(*count)
-///         })).await;
-///         assert_eq!(count, 2);
-///     });
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, wait::output(||{
+///         Some(())
+///     })).await;
 /// });
-/// app.update();
-/// app.update();
 /// ```
 #[inline(always)]
-pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out=Option<Out>>
+pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Out> + SeedMark
     where
         Sys: IntoSystem<Input, Option<Out>, Marker>,
-        Input: 'static,
+        Input: Clone + 'static,
         Out: 'static,
 {
-    IntoSystem::into_system(system)
+    WaitSeed::new(IntoSystem::into_system(system))
 }
 
 /// Run until it returns true.
@@ -70,31 +65,21 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl System<In=Input, Out
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
-/// let mut app = App::new();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move{
-///         task.will(Update, wait::until(|mut count: Local<usize>|{
-///             *count += 1;
-///             *count == 2
-///         })).await;
-///         task.will(Update, once::non_send::init::<AppExit>()).await;
-///     });
+///
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, wait::until(|mut count: Local<usize>|{
+///         *count += 1;
+///         *count == 4
+///     })).await;
 /// });
-/// app.update();
-/// assert!(app.world.get_non_send_resource::<AppExit>().is_none());
-/// app.update();
-/// assert!(app.world.get_non_send_resource::<AppExit>().is_none());
-/// app.update(); // send app exit
-/// assert!(app.world.get_non_send_resource::<AppExit>().is_some());
 ///```
 #[inline(always)]
-pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Option<()>>
+pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + SeedMark
     where
-        Sys: IntoSystem<Input, bool, Marker> + 'static,
+        Sys: IntoSystem<Input, bool, M> + 'static,
+        Input: Clone + 'static,
 {
-    IntoSystem::into_system(system.pipe(
+    WaitSeed::new(IntoSystem::into_system(system.pipe(
         |In(finish): In<bool>| {
             if finish {
                 Some(())
@@ -102,7 +87,7 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
                 None
             }
         },
-    ))
+    )))
 }
 
 /// Run until both tasks done.
@@ -115,94 +100,46 @@ pub fn until<Input, Sys, Marker>(system: Sys) -> impl System<In=Input, Out=Optio
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
-/// struct Event1;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
-/// struct Event2;
-///
-/// let mut app = App::new();
-/// app.add_event::<Event1>();
-/// app.add_event::<Event2>();
-/// app.add_plugins(FlurxPlugin);
-/// app.add_systems(Startup, |world: &mut World|{
-///     world.schedule_reactor(|task| async move{
-///         let (event1, event2) = task.will(Update, wait::both(
-///             wait::event::read::<Event1>(),
-///             wait::event::read::<Event2>()
-///         )).await;
-///         assert_eq!(event1, Event1);
-///         assert_eq!(event2, Event2);
-///     });
+/// Reactor::schedule(|task|async move{
+///     task.will(Update, wait::both(
+///         wait::input::just_pressed(),
+///         wait::event::read::<AppExit>()
+///     )).await;
 /// });
-/// app.update();
-/// app.world.resource_mut::<Events<Event1>>().send_default();
-/// app.world.resource_mut::<Events<Event2>>().send_default();
-/// app.update();
 /// ```
-pub fn both<LI, LO, LM, RI, RO, RM>(
-    lhs: impl TaskAction<LM, In=LI, Out=LO> + 'static,
-    rhs: impl TaskAction<RM, In=RI, Out=RO> + 'static,
-) -> impl TaskAction<In=(LI, RI), Out=(LO, RO)>
+pub fn both<LI, LO, RI, RO>(
+    lhs: impl Action<LI, LO> + 'static,
+    rhs: impl Action<RI, RO> + 'static,
+) -> impl Action<(LI, RI), (LO, RO)>
     where
         RI: Clone + 'static,
         LI: Clone + 'static,
         LO: Send + 'static,
         RO: Send + 'static,
-        LM: 'static,
-        RM: 'static
+
 {
-    BothAction {
-        lhs,
-        rhs,
-        _m: PhantomData,
-    }
+    RunnerIntoAction::new(BothRunner(BaseTwoRunner::new(lhs, rhs)))
 }
 
-struct BothAction<L, LI, LO, LM, R, RI, RO, RM> {
-    lhs: L,
-    rhs: R,
-    _m: PhantomData<(LI, LO, RI, RO, LM, RM)>,
-}
-
-impl<
-    L, LI, LO, LM,
-    R, RI, RO, RM
-> TaskAction for BothAction<L, LI, LO, LM, R, RI, RO, RM>
-    where
-        L: TaskAction<LM, In=LI, Out=LO> + 'static,
-        R: TaskAction<RM, In=RI, Out=RO> + 'static,
-        LM: 'static,
-        RM: 'static
-{
-    type In = (LI, RI);
-    type Out = (LO, RO);
-
-    #[inline(always)]
-    fn to_runner(self, output: TaskOutput<Self::Out>) -> impl TaskRunner {
-        BothRunner::new(output, self.lhs, self.rhs)
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, PreUpdate, Startup};
+    use bevy::app::{AppExit, PreUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{EventWriter, In, Local, Update, World};
+    use bevy::prelude::{Commands, EventWriter, In, Local, Update};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
-    use crate::action::{once, wait, with};
+    use crate::action::{once, wait};
     use crate::action::wait::until;
-    use crate::extension::ScheduleReactor;
-    use crate::FlurxPlugin;
+    use crate::prelude::ActionSeed;
+    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
     fn count_up() {
-        let mut app = App::new();
-        app.add_plugins(FlurxPlugin);
-
-        app.world.run_system_once(|world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        let mut app = test_app();
+        app.world.run_system_once(|mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     until(|mut count: Local<u32>| {
@@ -213,7 +150,7 @@ mod tests {
                     .await;
 
                 task.will(Update, once::non_send::insert(AppExit)).await;
-            });
+            }));
         });
 
         app.update();
@@ -226,27 +163,22 @@ mod tests {
 
     #[test]
     fn count_up_until_with_input() {
-        let mut app = App::new();
-        app.add_plugins(FlurxPlugin);
+        let mut app = test_app();
 
-        app.world.run_system_once(|world: &mut World| {
-            world.schedule_reactor(|task| async move {
+        app.world.run_system_once(|mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
-                    with(
-                        1,
-                        until(|input: In<u32>, mut count: Local<u32>| {
-                            *count += 1 + input.0;
-                            *count == 4
-                        }),
-                    ),
+                    until(|input: In<u32>, mut count: Local<u32>| {
+                        *count += 1 + input.0;
+                        *count == 4
+                    }).with(1),
                 )
                     .await;
 
                 task.will(Update, once::non_send::insert(AppExit)).await;
-            });
+            }));
         });
-
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
         app.update();
@@ -257,13 +189,13 @@ mod tests {
 
     #[test]
     fn wait_event() {
-        let mut app = App::new();
-        app.add_plugins(FlurxPlugin)
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+        let mut app = test_app();
+        app
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
                     task.will(Update, once::non_send::insert(event)).await;
-                });
+                }));
             });
 
         app.update();
@@ -282,8 +214,8 @@ mod tests {
     fn both_read_event1_and_event2() {
         let mut app = test_app();
         app
-            .add_systems(Startup, |world: &mut World| {
-                world.schedule_reactor(|task| async move {
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let t1 = wait::event::read::<TestEvent1>();
                     let t2 = wait::event::read::<TestEvent2>();
 
@@ -291,7 +223,7 @@ mod tests {
                     assert_eq!(event1, TestEvent1);
                     assert_eq!(event2, TestEvent2);
                     task.will(Update, once::non_send::insert(AppExit)).await;
-                });
+                }));
             });
 
         app.update();

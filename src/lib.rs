@@ -21,11 +21,11 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Last, MainScheduleOrder, Plugin};
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::World;
+use bevy::app::{App, Plugin, PostStartup, PostUpdate};
+use bevy::prelude::{Added, Commands, Entity, Query, With, Without, World};
 
-use crate::scheduler::ReactiveScheduler;
+use crate::reactor::{Initialized, Reactor};
+use crate::world_ptr::WorldPtr;
 
 pub mod extension;
 pub mod task;
@@ -35,21 +35,25 @@ pub mod action;
 pub mod prelude {
     pub use crate::{
         action::*,
-        task::ReactiveTask,
+        action::pipe::Pipe,
+        action::seed::{ActionSeed, SeedMark},
+        action::sequence::Then,
+        action::switch::*,
+        action::wait::Either,
         extension::ScheduleReactor,
         FlurxPlugin,
+        reactor::Reactor,
+        task::ReactiveTask
     };
 }
 
 #[doc(hidden)]
 pub mod private {
-    pub use crate::runner::{
-        sequence_with_output::SequenceWithOutputRunner
-    };
+    pub use crate::runner::RunnerIntoAction;
 }
 
 mod world_ptr;
-mod scheduler;
+mod reactor;
 #[allow(missing_docs)]
 mod runner;
 mod selector;
@@ -61,25 +65,48 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
-            .init_schedule(AfterLast)
-            .init_non_send_resource::<ReactiveScheduler>()
-            .add_systems(Last, run_scheduler);
-        app
-            .world
-            .resource_mut::<MainScheduleOrder>()
-            .insert_after(Last, AfterLast);
+            .add_systems(PostStartup, (
+                flurx_initialize,
+                insert_initialized
+            ))
+            .add_systems(PostUpdate, (
+                run_scheduler,
+                insert_initialized
+            ));
     }
 }
 
-#[derive(ScheduleLabel, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-struct AfterLast;
+fn flurx_initialize(
+    world: &mut World
+) {
+    let world_ptr = WorldPtr::new(world);
+    for mut flurx in world
+        .query_filtered::<&mut Reactor, (Added<Reactor>, Without<Initialized>)>()
+        .iter_mut(world) {
+        flurx.scheduler.run_sync(world_ptr);
+    }
+}
+
+fn insert_initialized(
+    mut commands: Commands,
+    flurx: Query<Entity, (With<Reactor>, Without<Initialized>)>,
+) {
+    for entity in flurx.iter() {
+        commands.entity(entity).insert(Initialized);
+    }
+}
 
 fn run_scheduler(
     world: &mut World
 ) {
-    if let Some(mut scheduler) = world.remove_non_send_resource::<ReactiveScheduler>() {
-        scheduler.run_sync(world);
-        world.insert_non_send_resource(scheduler);
+    let world_ptr = WorldPtr::new(world);
+    for (mut flurx, initialized) in world
+        .query::<(&mut Reactor, Option<&Initialized>)>()
+        .iter_mut(world) {
+        flurx.scheduler.run_sync(world_ptr);
+        if initialized.is_none() {
+            flurx.scheduler.run_sync(world_ptr);
+        }
     }
 }
 
@@ -96,9 +123,11 @@ mod tests {
 
     pub fn test_app() -> App {
         let mut app = App::new();
-        app.add_plugins(BevyTestHelperPlugin);
-        app.add_plugins(FlurxPlugin);
-        app.add_plugins(InputPlugin);
+        app.add_plugins((
+            BevyTestHelperPlugin,
+            FlurxPlugin,
+            InputPlugin
+        ));
         app
     }
 

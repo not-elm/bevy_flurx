@@ -13,35 +13,14 @@ repository = "https://github.com/not-elm/bevy_flurx"
 [workspace]
 exclude = ["benches"]
 
-[[example]]
-name = "delay"
-path = "examples/simple/delay.rs"
 
-[[example]]
-name = "once"
-path = "examples/simple/once.rs"
 
-[[example]]
-name = "wait"
-path = "examples/simple/wait.rs"
-
-[[example]]
-name = "sequence"
-path = "examples/simple/sequence.rs"
-
-[[example]]
-name = "wait_stop_audio"
-path = "examples/audio/wait_stop_audio.rs"
-
-[[example]]
-name = "move_shape"
-path = "examples/gui/move_shape.rs"
 
 [[bench]]
 name = "cmp_countup"
 path = "benches/cmp_countup.rs"
 harness = false
-#
+
 [[bench]]
 name = "cmp_repeat_countup"
 path = "benches/cmp_repeat_countup.rs"
@@ -53,7 +32,7 @@ path = "benches/sequence.rs"
 harness = false
 
 [dependencies]
-bevy = { version = "0.13.1", default-features = false }
+bevy = { version = "0.13.2", default-features = false }
 flurx = { version = "0.1.3", features = ["sync"] }
 futures-lite = "2.2.0"
 futures-polling = "0.1.1"
