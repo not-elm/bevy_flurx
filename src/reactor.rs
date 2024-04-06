@@ -25,7 +25,7 @@ pub struct Reactor {
 impl Reactor {
     /// Create new [`Reactor`].
     /// 
-    /// The scheduled [`Reactor`] will be run and initialized at [`PostUpdate`](bevy::prelude::PostUpdate)(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
+    /// The scheduled [`Reactor`] will be run and initialized at [`RunReactor`](crate::RunReactor)(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
     /// 
     /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
     /// to reduce the delay until initialization.

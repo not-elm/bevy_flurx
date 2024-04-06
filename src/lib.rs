@@ -82,6 +82,7 @@ impl Plugin for FlurxPlugin {
     }
 }
 
+/// Runs after the [`PostUpdate`](bevy::prelude::PostUpdate). 
 #[derive(ScheduleLabel, Eq, PartialEq, Debug, Copy, Clone, Hash)]
 struct RunReactor;
 
