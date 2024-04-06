@@ -20,19 +20,19 @@ exclude = ["benches"]
 name = "cmp_countup"
 path = "benches/cmp_countup.rs"
 harness = false
-#
-#[[bench]]
-#name = "cmp_repeat_countup"
-#path = "benches/cmp_repeat_countup.rs"
-#harness = false
-#
-#[[bench]]
-#name = "sequence"
-#path = "benches/sequence.rs"
-#harness = false
+
+[[bench]]
+name = "cmp_repeat_countup"
+path = "benches/cmp_repeat_countup.rs"
+harness = false
+
+[[bench]]
+name = "sequence"
+path = "benches/sequence.rs"
+harness = false
 
 [dependencies]
-bevy = { version = "0.13.1", default-features = false }
+bevy = { version = "0.13.2", default-features = false }
 flurx = { version = "0.1.3", features = ["sync"] }
 futures-lite = "2.2.0"
 futures-polling = "0.1.1"
@@ -43,7 +43,6 @@ bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
 reqwest = "0.12.2"
 futures = "0.3.30"
 criterion = "0.5.1"
-bevy-inspector-egui = "0.23.4"
 
 [features]
 default = ["audio"]
