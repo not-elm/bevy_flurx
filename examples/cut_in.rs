@@ -1,5 +1,6 @@
+//! This example shows a simple cut-in implementation.
 //!
-//!
+//! Cut-in will start by pressing the R key.
 
 
 use std::f32::consts::PI;
@@ -47,6 +48,7 @@ fn spawn_reactor(
     mut commands: Commands
 ) {
     commands.spawn(Reactor::schedule(|task| async move {
+        info!("please press [`R`] key!");
         task.will(Update, {
             wait::input::just_pressed().with(KeyCode::KeyR)
                 .then(once::switch::on::<CutInBackground>())

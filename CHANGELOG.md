@@ -3,19 +3,13 @@
 ### Features
 
 - It is no longer necessary to implement the `Clone` trait on the value passed to `once`.
-- Added `sequence!` action; please check the [`example`](./examples/simple/sequence.rs) for details.
+- Added `Sequence`, `Pipe`, `Switch` and `Reactor`. please see this [pull request](https://github.com/not-elm/bevy_flurx/pull/9)
 
 ### Breaking changes
 
 - Rename `Select` to `Either`, and `wait::select` to `wait::either`
-- Changed the schedule label for the reactor to run back to `AfterLast`.
+- Changed the schedule label for the reactor to run back to `PostUpdate`.
 - Due to major internal changes, various modules were moved. if it has been importing via prelude, it probably has no effect.
-
-### Other
-
-- Added comments
-- Added GitHub actions
-- Added Benchmark
 
 ## v0.3.1
 

@@ -7,12 +7,14 @@
 > [!CAUTION]
 > `bevy_flurx` is currently in the early stages of development and is subject to breaking changes.
 
+Significant changes have occurred in version `0.3.2-beta.0`.
+Please check [CHANGELOG](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md) and
+[here](https://github.com/not-elm/bevy_flurx/pull/9) for more details.
+
 This library provides a mechanism for more sequential description of delays, character movement,
 waiting for user input, and other state waits.
 
-## Example
-
-All examples are [`here`](./examples).
+As an example, here is an example of a cut-in effect that involves waiting for user input, a slight delay, and a sprite to move.
 
 ![cut_in](examples/cut_in.gif)
 <details>
@@ -44,6 +46,10 @@ fn spawn_reactor(
     }));
 }
 ```
+
+## Example
+
+All examples are [`here`](./examples).
 
 </details>
 
