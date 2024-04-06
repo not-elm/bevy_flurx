@@ -10,6 +10,28 @@ use crate::runner::pipe::PipeRunner;
 /// Provides the mechanism to pipe the actions. 
 pub trait Pipe<I1, O1> {
     /// Combine this action and the passed [`ActionSeed`]. 
+    /// 
+    /// ## Examples
+    /// 
+    /// ```no_run
+    /// use bevy::prelude::*;
+    /// use bevy_flurx::prelude::*;
+    ///
+    /// #[derive(Component)]
+    /// struct Hp(u8);
+    ///
+    /// #[derive(Event, Clone)]
+    /// struct PlayerHit(Entity);
+    ///
+    /// Reactor::schedule(|task| async move{
+    ///     task.will(Update, {
+    ///         wait::event::read::<PlayerHit>()
+    ///             .pipe(once::run(|In(PlayerHit(entity)): In<PlayerHit>, mut players: Query<&mut Hp>|{
+    ///                 players.get_mut(entity).unwrap().0 -= 10;
+    ///             }))
+    ///     }).await;
+    /// });
+    /// ```
     fn pipe<O2>(self, action: impl ActionSeed<O1, O2> + 'static) -> impl Action<I1, O2>
         where
             O2: 'static;

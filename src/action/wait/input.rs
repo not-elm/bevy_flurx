@@ -18,6 +18,8 @@ use crate::action::seed::{ActionSeed, SeedMark};
 
 /// Waits until item has just been pressed.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -38,6 +40,8 @@ pub fn just_pressed<T>() -> impl ActionSeed<T> + SeedMark
 
 /// Waits until keycode has been pressed.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -58,6 +62,8 @@ pub fn pressed<T>() -> impl ActionSeed<T> + SeedMark
 
 /// Waits until any keycode in inputs has been pressed.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -79,6 +85,8 @@ pub fn any_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
 
 /// Waits until all keycodes in inputs have been pressed.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -99,6 +107,8 @@ pub fn all_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
 
 /// Waits keycode has just been released.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -119,6 +129,8 @@ pub fn just_released<T>() -> impl ActionSeed<T> + SeedMark
 
 /// Waits any keycode in inputs have just been released.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;

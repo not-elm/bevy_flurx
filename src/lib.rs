@@ -71,7 +71,7 @@ impl Plugin for FlurxPlugin {
                 flurx_initialize,
                 insert_initialized
             ))
-            .add_systems(RunReactor, (
+            .add_systems(PostUpdate, (
                 run_reactors,
                 insert_initialized
             ));
@@ -89,10 +89,10 @@ fn flurx_initialize(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
-    for mut flurx in world
+    for mut reactor in world
         .query_filtered::<&mut Reactor, (Added<Reactor>, Without<Initialized>)>()
         .iter_mut(world) {
-        flurx.scheduler.run_sync(world_ptr);
+        reactor.scheduler.run_sync(world_ptr);
     }
 }
 

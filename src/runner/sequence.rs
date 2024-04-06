@@ -12,8 +12,6 @@ impl<I1, I2, O1, O2> RunWithTaskOutput<O2> for SequenceRunner<I1, I2, O1, O2>
         I2: 'static,
         O1: 'static,
         O2: 'static,
-
-
 {
     type In = I1;
 

@@ -10,6 +10,8 @@ use crate::prelude::{ActionSeed, SeedMark};
 
 /// Waits until the state becomes the specified.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{States, World, Update};
 /// use bevy_flurx::prelude::*;

@@ -21,6 +21,20 @@ pub trait Then<I1, O1> {
     /// Returns the action combined with the subsequent action.
     ///
     /// The action's output will be that of the subsequent action.
+    /// 
+    /// ## Examples
+    /// 
+    /// ```no_run
+    /// use bevy::prelude::*;
+    /// use bevy_flurx::prelude::*;
+    /// 
+    /// Reactor::schedule(|task| async move{
+    ///     task.will(Update, {
+    ///         wait::input::just_pressed().with(KeyCode::KeyR)
+    ///             .then(once::event::app_exit())
+    ///     }).await;
+    /// });
+    /// ```
     fn then<I2, O2>(self, action: impl Action<I2, O2> + 'static) -> impl Action<I1, O2>
         where
             I2: 'static,

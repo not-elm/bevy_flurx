@@ -32,6 +32,8 @@ impl<L, R> Either<L, R> {
 ///
 /// The first thing passed is lhs, the second is rhs.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;

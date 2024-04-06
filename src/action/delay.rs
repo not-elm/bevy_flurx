@@ -13,6 +13,8 @@ use crate::prelude::{ActionSeed, SeedMark};
 
 /// Delays by the specified amount of time.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use std::time::Duration;
 /// use bevy::prelude::{World, Update};
@@ -42,6 +44,8 @@ pub fn time() -> impl ActionSeed<Duration> + SeedMark {
 
 /// Delays the specified number of frames.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;

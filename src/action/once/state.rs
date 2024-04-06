@@ -10,6 +10,8 @@ use crate::prelude::{ActionSeed, SeedMark};
 
 /// Once set a next state.
 ///
+/// ## Examples
+/// 
 /// ```
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;

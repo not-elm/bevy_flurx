@@ -92,7 +92,6 @@ pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + SeedMark
 
 /// Run until both tasks done.
 ///
-///
 /// ## Examples
 ///
 /// ```

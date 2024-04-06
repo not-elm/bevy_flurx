@@ -12,6 +12,19 @@ use crate::action::switch::Switch;
 use crate::prelude::seed::SeedMark;
 
 /// Turns [`Switch`](crate::prelude::Switch) on.
+/// 
+/// ## Examples
+/// 
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+/// 
+/// struct Animation;
+/// 
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, once::switch::on::<Animation>()).await;
+/// });
+/// ```
 #[inline]
 pub fn on<M>() -> impl ActionSeed + SeedMark
     where M: Send + Sync + 'static
@@ -22,6 +35,19 @@ pub fn on<M>() -> impl ActionSeed + SeedMark
 }
 
 /// Turns [`Switch`](crate::prelude::Switch) off.
+/// 
+/// ## Examples
+/// 
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+/// 
+/// struct Animation;
+/// 
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, once::switch::off::<Animation>()).await;
+/// });
+/// ```
 #[inline]
 pub fn off<M>() -> impl ActionSeed + SeedMark
     where M: Send + Sync + 'static

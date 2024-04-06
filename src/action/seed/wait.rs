@@ -25,9 +25,7 @@ impl<In, Out, Sys> WaitSeed<In, Out, Sys>
     }
 }
 
-
 impl<In, Out, Sys> SeedMark for WaitSeed<In, Out, Sys>{}
-
 
 impl<In, Out, Sys> ActionSeed<In, Out> for WaitSeed<In, Out, Sys>
     where

@@ -13,6 +13,8 @@ use crate::prelude::seed::SeedMark;
 
 /// Once init a non-send resource.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -35,6 +37,8 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 
 /// Once insert a non-send resource.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -56,6 +60,8 @@ pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
 
 /// Once remove a non-send resource.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;

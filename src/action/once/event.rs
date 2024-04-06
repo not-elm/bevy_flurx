@@ -13,6 +13,8 @@ use crate::action::seed::{ActionSeed, SeedMark};
 
 /// Once send an event.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -32,6 +34,8 @@ pub fn send<E>() -> impl ActionSeed<E> + SeedMark
 
 /// Once send an event using [`Default`] trait.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -51,6 +55,8 @@ pub fn send_default<E>() -> impl ActionSeed + SeedMark
 
 /// Once send [`AppExit`](bevy::app::AppExit).
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -65,6 +71,8 @@ pub fn app_exit() -> impl Action<AppExit, ()> {
 }
 
 /// Call [`EventReader::clear`](bevy::prelude::EventReader::clear).
+/// 
+/// ## Examples
 /// 
 /// ```no_run
 /// use bevy::app::AppExit;

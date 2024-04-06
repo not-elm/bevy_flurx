@@ -11,6 +11,8 @@ use crate::prelude::seed::{ActionSeed, SeedMark};
 /// Waits until the audio associated with the passed [`Entity`](bevy::prelude::Entity)
 /// has finished playing.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;

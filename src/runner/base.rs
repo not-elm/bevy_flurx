@@ -43,6 +43,7 @@ impl<I1, I2, O1, O2> BaseTwoRunner<I1, I2, O1, O2>
         }
     }
 
+    #[inline]
     pub fn cancel_if_need(&mut self, token: &CancellationToken) -> bool {
         if token.requested_cancel() {
             self.t1.cancel();

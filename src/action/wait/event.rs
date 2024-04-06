@@ -11,6 +11,8 @@ use crate::prelude::wait;
 
 /// Waits until the specified event is sent
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -34,6 +36,8 @@ pub fn comes<E>() -> impl ActionSeed + SeedMark
 ///
 /// This is similar to [`wait::event::comes`], except that it returns the event itself.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;

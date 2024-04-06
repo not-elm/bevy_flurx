@@ -6,8 +6,8 @@ use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, EventReader, EventWriter, Local, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
-use bevy_flurx::{FlurxPlugin, sequence};
-use bevy_flurx::prelude::{Reactor, once, wait};
+use bevy_flurx::FlurxPlugin;
+use bevy_flurx::prelude::{once, Reactor, Then, wait};
 
 #[derive(Resource, Default)]
 struct Exit(bool);
@@ -52,44 +52,15 @@ fn flurx_version(c: &mut Criterion) {
                 .init_resource::<Exit>()
                 .add_systems(Startup, |mut commands: Commands| {
                     commands.spawn(Reactor::schedule(|task| async move {
-                        task.will(Update, wait::until(|mut count: Local<usize>| {
-                            *count += 1;
-                            *count == LIMIT
-                        })).await;
-                        task.will(Update, once::run(|mut exit: ResMut<Exit>| {
-                            exit.0 = true;
-                        })).await;
-                    }));
-                });
-
-            while !app.world.resource::<Exit>().0 {
-                app.update();
-            }
-        });
-    });
-}
-
-fn flurx_sequence_version(c: &mut Criterion) {
-    c.bench_function("flurx_sequence_version", |b| {
-        b.iter(|| {
-            let mut app = App::new();
-            app
-                .add_plugins((
-                    TaskPoolPlugin::default(),
-                    FlurxPlugin
-                ))
-                .init_resource::<Exit>()
-                .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Reactor::schedule(|task| async move {
-                        task.will(Update, sequence!(
+                        task.will(Update, {
                             wait::until(|mut count: Local<usize>| {
                                 *count += 1;
                                 *count == LIMIT
-                            }),
-                            once::run(|mut exit: ResMut<Exit>| {
-                                exit.0 = true;
                             })
-                        )).await;
+                                .then(once::run(|mut exit: ResMut<Exit>| {
+                                    exit.0 = true;
+                                }))
+                        }).await;
                     }));
                 });
 
@@ -100,5 +71,5 @@ fn flurx_sequence_version(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, default_version, flurx_version, flurx_sequence_version);
+criterion_group!(benches, default_version, flurx_version);
 criterion_main!(benches);

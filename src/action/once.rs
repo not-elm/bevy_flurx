@@ -26,6 +26,8 @@ pub mod audio;
 ///
 /// The return value will be the system return value.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::{World, Update, EventWriter};
@@ -53,6 +55,8 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + SeedMark
 ///
 /// The return value will be the system return value.
 ///
+/// ## Examples
+/// 
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::{World, Update, EventWriter, In};

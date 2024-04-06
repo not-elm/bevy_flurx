@@ -48,6 +48,7 @@ pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
 /// This is to solve the problem that systems created from `Reactors`
 /// cannot run except on the main thread.
 ///
+/// ## Examples
 ///
 /// ```no_run
 /// use bevy::prelude::*;

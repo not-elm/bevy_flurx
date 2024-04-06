@@ -2,6 +2,8 @@
 ///
 /// The return value type is tuple, its length is equal to the number of as passed tasks.
 ///
+/// ## Examples
+/// 
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
