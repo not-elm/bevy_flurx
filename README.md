@@ -7,7 +7,7 @@
 > [!CAUTION]
 > `bevy_flurx` is currently in the early stages of development and is subject to breaking changes.
 
-Significant changes have occurred in version `0.3.2-beta.0`.
+Significant changes have occurred in version `0.3.2`.
 Please check [CHANGELOG](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md) and
 [here](https://github.com/not-elm/bevy_flurx/pull/9) for more details.
 
@@ -17,9 +17,9 @@ waiting for user input, and other state waits.
 As an example, here is an example of a cut-in effect that involves waiting for user input, a slight delay, and a sprite to move.
 
 ![cut_in](examples/cut_in.gif)
-<details>
 
-<summary>Part of source code</summary>
+The full source code can be found [here](examples/cut_in.rs).
+
 
 ```rust
 fn spawn_reactor(
@@ -51,19 +51,21 @@ fn spawn_reactor(
 
 All examples are [`here`](./examples).
 
-</details>
-
 ## ChangeLog
 
 Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
+## TODO
+
+- Improved performance
+
 ## Compatible Bevy versions
 
-| bevy_flurx  | bevy   |
-|-------------|--------|
-| 0.3.0       | 0.13.0 |
-| 0.3.1       | 0.13.1 |
-| 0.3.2-beta0 | 0.13.2 |
+| bevy_flurx | bevy   |
+|------------|--------|
+| 0.3.0      | 0.13.0 |
+| 0.3.1      | 0.13.1 |
+| 0.3.2      | 0.13.2 |
 
 ## License
 

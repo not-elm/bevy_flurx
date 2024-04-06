@@ -1,3 +1,13 @@
+## v0.3.2
+
+### Features
+
+- [Added once::event::clear](https://github.com/not-elm/bevy_flurx/pull/11)
+
+### Bug fix
+
+- [Fixed an issue where the return value type of some functions such as `once::res::insert` was `impl Action`.](https://github.com/not-elm/bevy_flurx/pull/10)
+
 ## v0.3.2-beta.0
 
 ### Features

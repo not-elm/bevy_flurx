@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.3.2-beta.0"
+version = "0.3.2"
 edition = "2021"
 authors = ["elm"]
 categories = ["asynchronous", "game-development"]
@@ -18,15 +18,15 @@ name = "cmp_countup"
 path = "benches/cmp_countup.rs"
 harness = false
 
-#[[bench]]
-#name = "cmp_repeat_countup"
-#path = "benches/cmp_repeat_countup.rs"
-#harness = false
-#
-#[[bench]]
-#name = "sequence"
-#path = "benches/sequence.rs"
-#harness = false
+[[bench]]
+name = "cmp_repeat_countup"
+path = "benches/cmp_repeat_countup.rs"
+harness = false
+
+[[bench]]
+name = "sequence"
+path = "benches/sequence.rs"
+harness = false
 
 [dependencies]
 bevy = { version = "0.13.2", default-features = false }
