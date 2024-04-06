@@ -22,7 +22,7 @@ use crate::prelude::{ActionSeed, SeedMark};
 /// }
 ///
 /// Reactor::schedule(|task| async move {
-///     task.will(Update, once::state::set(Status::Second)).await;
+///     task.will(Update, once::state::set().with(Status::Second)).await;
 /// });
 /// ```
 #[inline(always)]

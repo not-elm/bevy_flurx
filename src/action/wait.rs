@@ -149,7 +149,7 @@ mod tests {
                 )
                     .await;
 
-                task.will(Update, once::non_send::insert(AppExit)).await;
+                task.will(Update, once::non_send::insert().with(AppExit)).await;
             }));
         });
 
@@ -176,7 +176,7 @@ mod tests {
                 )
                     .await;
 
-                task.will(Update, once::non_send::insert(AppExit)).await;
+                task.will(Update, once::non_send::insert().with(AppExit)).await;
             }));
         });
         app.update();
@@ -194,7 +194,7 @@ mod tests {
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
-                    task.will(Update, once::non_send::insert(event)).await;
+                    task.will(Update, once::non_send::insert().with(event)).await;
                 }));
             });
 
@@ -222,7 +222,7 @@ mod tests {
                     let (event1, event2) = task.will(Update, wait::both(t1, t2)).await;
                     assert_eq!(event1, TestEvent1);
                     assert_eq!(event2, TestEvent2);
-                    task.will(Update, once::non_send::insert(AppExit)).await;
+                    task.will(Update, once::non_send::insert().with(AppExit)).await;
                 }));
             });
 

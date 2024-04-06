@@ -27,7 +27,9 @@ use crate::action::seed::{ActionSeed, SeedMark};
 /// });
 /// ```
 #[inline(always)]
-pub fn just_pressed<T: Copy + Eq + Hash + Send + Sync + 'static>() -> impl ActionSeed<T> + SeedMark {
+pub fn just_pressed<T>() -> impl ActionSeed<T> + SeedMark
+    where T: Copy + Eq + Hash + Send + Sync + 'static
+{
     wait::until(move |In(expect): In<T>,
                       input: Res<ButtonInput<T>>| {
         input.just_pressed(expect)

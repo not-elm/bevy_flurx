@@ -3,10 +3,9 @@ use std::marker::PhantomData;
 use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{IntoSystemConfigs, Schedule, Schedules, World};
+use bevy::prelude::{Schedule, Schedules, World};
 
 use crate::action::Action;
-use crate::flurx_initialize;
 use crate::runner::runners::TaskRunners;
 
 pub(crate) mod runners;
@@ -102,32 +101,35 @@ pub(crate) fn initialize_task_runner<Label>(
     label: Label,
     runner: impl TaskRunner + 'static,
 )
-    where Label: ScheduleLabel + Clone
+    where Label: ScheduleLabel
 {
     if let Some(mut runners) = world.get_non_send_resource_mut::<TaskRunners<Label>>() {
         runners.runners.push(Box::new(runner));
     } else {
-        let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
+        let Some(mut schedules) = world.remove_resource::<Schedules>() else {
             return;
         };
 
         let schedule = initialize_schedule(&mut schedules, label);
-        schedule.add_systems(run_task_runners::<Label>.after(flurx_initialize));
+        schedule.add_systems(run_task_runners::<Label>);
+        schedule.initialize(world).expect("failed initialize schedule");
 
         let mut runners = TaskRunners::<Label>::default();
         runners.runners.push(Box::new(runner));
         world.insert_non_send_resource(runners);
+        world.insert_resource(schedules);
     }
 }
 
 pub(crate) fn initialize_schedule<Label>(schedules: &mut Schedules, schedule_label: Label) -> &mut Schedule
-    where Label: ScheduleLabel + Clone
+    where Label: ScheduleLabel
 {
-    if !schedules.contains(schedule_label.clone()) {
-        schedules.insert(Schedule::new(schedule_label.clone()));
+    let schedule_label = schedule_label.intern();
+    if schedules.get(schedule_label).is_none() {
+        schedules.insert(Schedule::new(schedule_label));
     }
 
-    schedules.get_mut(schedule_label.intern()).unwrap()
+    schedules.get_mut(schedule_label).unwrap()
 }
 
 fn run_task_runners<Label: ScheduleLabel>(world: &mut World) {

@@ -21,7 +21,8 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Plugin, PostStartup, PostUpdate};
+use bevy::app::{App, MainScheduleOrder, Plugin, PostStartup, PostUpdate};
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Added, Commands, Entity, Query, With, Without, World};
 
 use crate::reactor::{Initialized, Reactor};
@@ -43,7 +44,7 @@ pub mod prelude {
         extension::ScheduleReactor,
         FlurxPlugin,
         reactor::Reactor,
-        task::ReactiveTask
+        task::ReactiveTask,
     };
 }
 
@@ -65,16 +66,24 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
+            .init_schedule(RunReactor)
             .add_systems(PostStartup, (
                 flurx_initialize,
                 insert_initialized
             ))
-            .add_systems(PostUpdate, (
-                run_scheduler,
+            .add_systems(RunReactor, (
+                run_reactors,
                 insert_initialized
             ));
+        app
+            .world
+            .resource_mut::<MainScheduleOrder>()
+            .insert_after(PostUpdate, RunReactor);
     }
 }
+
+#[derive(ScheduleLabel, Eq, PartialEq, Debug, Copy, Clone, Hash)]
+struct RunReactor;
 
 fn flurx_initialize(
     world: &mut World
@@ -89,23 +98,23 @@ fn flurx_initialize(
 
 fn insert_initialized(
     mut commands: Commands,
-    flurx: Query<Entity, (With<Reactor>, Without<Initialized>)>,
+    reactors: Query<Entity, (With<Reactor>, Without<Initialized>)>,
 ) {
-    for entity in flurx.iter() {
+    for entity in reactors.iter() {
         commands.entity(entity).insert(Initialized);
     }
 }
 
-fn run_scheduler(
+fn run_reactors(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
-    for (mut flurx, initialized) in world
+    for (mut reactor, initialized) in world
         .query::<(&mut Reactor, Option<&Initialized>)>()
         .iter_mut(world) {
-        flurx.scheduler.run_sync(world_ptr);
+        reactor.scheduler.run_sync(world_ptr);
         if initialized.is_none() {
-            flurx.scheduler.run_sync(world_ptr);
+            reactor.scheduler.run_sync(world_ptr);
         }
     }
 }

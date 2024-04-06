@@ -19,7 +19,7 @@ pub(crate) struct WorldSelector<Label, Action, In, Out> {
 
 impl<Label, Act, In, Out> WorldSelector<Label, Act, In, Out>
     where
-        Label: ScheduleLabel + Clone,
+        Label: ScheduleLabel,
         Act: Action<In, Out>,
         In: 'static,
         Out: 'static,
@@ -38,7 +38,7 @@ impl<Label, Act, In, Out> WorldSelector<Label, Act, In, Out>
 
 impl<Label, Act, In, Out> Selector<WorldPtr> for WorldSelector<Label, Act, In, Out>
     where
-        Label: ScheduleLabel + Clone,
+        Label: ScheduleLabel,
         Act: Action<In, Out> + 'static,
         In: 'static,
         Out: 'static
@@ -50,7 +50,7 @@ impl<Label, Act, In, Out> Selector<WorldPtr> for WorldSelector<Label, Act, In, O
         let world: &mut World = world.as_mut();
         if let Some(action) = self.action.take() {
             let runner = action.to_runner(self.token.clone(), self.output.clone());
-            initialize_task_runner(world, self.label.clone(), runner);
+            initialize_task_runner(world, self.label.intern(), runner);
             None
         } else {
             self.output.take()

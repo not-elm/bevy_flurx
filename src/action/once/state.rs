@@ -5,7 +5,8 @@
 
 use bevy::prelude::{In, NextState, ResMut, States};
 
-use crate::action::{once, Action};
+use crate::action::{once};
+use crate::prelude::{ActionSeed, SeedMark};
 
 /// Once set a next state.
 ///
@@ -21,13 +22,13 @@ use crate::action::{once, Action};
 /// };
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::state::set(S::S2)).await;
+///     task.will(Update, once::state::set().with(S::S2)).await;
 /// });
 /// ```
-pub fn set<S>(state: S) -> impl Action< S, ()>
+pub fn set<S>() -> impl ActionSeed<S> + SeedMark
     where S: States + 'static
 {
-    once::run_with(state, |input: In<S>, mut state: ResMut<NextState<S>>| {
+    once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {
         state.set(input.0);
     })
 }

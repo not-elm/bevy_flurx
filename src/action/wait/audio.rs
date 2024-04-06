@@ -17,7 +17,7 @@ use crate::prelude::seed::{ActionSeed, SeedMark};
 ///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
-///         once::audio::play("<audio_path>", PlaybackSettings::ONCE)
+///         once::audio::play().with(("<audio_path>", PlaybackSettings::ONCE))
 ///             .pipe(wait::audio::finished())
 ///     }).await;
 /// });

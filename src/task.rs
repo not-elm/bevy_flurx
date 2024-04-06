@@ -56,7 +56,7 @@ impl ReactiveTask {
         action: impl Action<In, Out> + 'static,
     ) -> impl Future<Output=Out>
         where
-            Label: ScheduleLabel + Clone,
+            Label: ScheduleLabel,
             In: 'static,
             Out: 'static
 
@@ -78,7 +78,7 @@ impl ReactiveTask {
     /// app.add_systems(Startup, |mut commands: Commands|{
     ///     commands.spawn(Reactor::schedule(|task|async move{
     ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
-    ///         task.will(Update, once::event::send(AppExit)).await;
+    ///         task.will(Update, once::event::send().with(AppExit)).await;
     ///         wait_event.await;
     ///     }));
     /// });
@@ -93,7 +93,7 @@ impl ReactiveTask {
         action: impl Action<In, Out> + 'static,
     ) -> impl Future<Output=Out>
         where
-            Label: ScheduleLabel + Clone,
+            Label: ScheduleLabel,
             In: 'static,
             Out: 'static
     {
@@ -109,24 +109,22 @@ mod tests {
     use bevy::prelude::Commands;
 
     use crate::action::once;
-    use crate::prelude::wait;
+    use crate::prelude::{wait, ActionSeed};
     use crate::reactor::Reactor;
     use crate::tests::test_app;
-
+    
     #[test]
     fn run() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 let event_task = task.run(First, wait::event::read::<AppExit>()).await;
-                task.will(Update, once::event::send(AppExit)).await;
+                task.will(Update, once::event::send().with(AppExit)).await;
                 event_task.await;
-                task.will(Update, once::non_send::insert(AppExit)).await;
+                task.will(Update, once::non_send::insert().with(AppExit)).await;
             }));
         });
 
-        app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
         app.update();
