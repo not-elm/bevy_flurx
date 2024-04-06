@@ -71,18 +71,18 @@ impl<O: Clone> TaskOutput<O> {
 
 /// Structure for canceling a task
 #[derive(Default, Clone)]
-pub struct CancellationToken(Arc<Mutex<Option<()>>>);
+pub struct CancellationToken(Rc<RefCell<Option<()>>>);
 
 impl CancellationToken {
     #[inline(always)]
     pub fn requested_cancel(&self) -> bool {
-        self.0.lock().unwrap().is_some()
+        self.0.borrow().is_some()
     }
 
 
     #[inline(always)]
     pub fn cancel(&self) {
-        self.0.lock().unwrap().replace(());
+        self.0.borrow_mut().replace(());
     }
 }
 

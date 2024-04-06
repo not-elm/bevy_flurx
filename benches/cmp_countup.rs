@@ -2,11 +2,10 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, AppExit, Startup};
-use bevy::prelude::{Commands, EventReader, EventWriter, Local, ResMut, Resource, Update, World};
+use bevy::prelude::{Commands, EventReader, EventWriter, Local, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::{FlurxPlugin, sequence};
-use bevy_flurx::extension::ScheduleReactor;
 use bevy_flurx::prelude::{Flurx, once, wait};
 
 #[derive(Resource, Default)]

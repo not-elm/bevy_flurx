@@ -21,7 +21,7 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, First, Last, MainScheduleOrder, Plugin, PostStartup};
+use bevy::app::{App, Last, Plugin, PostStartup, PostUpdate};
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Added, Entity, Without, World};
 
@@ -38,10 +38,10 @@ pub mod prelude {
     pub use crate::{
         action::*,
         action::pipe::Pipe,
+        action::seed::{ActionSeed, Seed},
         action::sequence::Then,
         action::switch::*,
         action::wait::either::Either,
-        action::seed::{ActionSeed, Seed},
         FlurxPlugin,
         scheduler::Flurx,
         task::ReactiveTask,
@@ -66,15 +66,9 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
-            .init_schedule(AfterLast)
-            .add_systems(AfterLast, run_scheduler)
             .add_systems(PostStartup, flurx_initialize)
-            .add_systems(First, flurx_initialize);
-
-        app
-            .world
-            .resource_mut::<MainScheduleOrder>()
-            .insert_after(Last, AfterLast);
+            .add_systems(PostUpdate, flurx_initialize)
+            .add_systems(Last, run_scheduler);
     }
 }
 

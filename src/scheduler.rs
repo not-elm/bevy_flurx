@@ -49,20 +49,38 @@ unsafe impl Sync for Flurx {}
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::Update;
-    use bevy::prelude::Commands;
+    use bevy::app::{Startup, Update};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::once;
     use crate::prelude::Flurx;
     use crate::tests::test_app;
 
+    #[derive(Resource, Debug, Default, Eq, PartialEq)]
+    struct Count(usize);
+
     #[test]
-    fn it() {
+    fn cancel_if_flurx_removed() {
         let mut app = test_app();
-        app.add_systems(Update, |mut commands: Commands| {
+        app.init_resource::<Count>();
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Flurx::schedule(|task| async move {
-                task.will(Update, once::run(|| {})).await;
+                task.will(Update, once::run(|mut count: ResMut<Count>| {
+                    count.0 += 1;
+                })).await;
             }));
         });
+        app.update();
+        app.assert_resource_eq(Count(1));
+
+        app.world.run_system_once(|mut cmd: Commands, flurx: Query<Entity, With<Flurx>>| {
+            cmd.entity(flurx.single()).remove::<Flurx>();
+        });
+        for _ in 0..10{
+            app.update();
+            app.assert_resource_eq(Count(1));
+        }
     }
 }
