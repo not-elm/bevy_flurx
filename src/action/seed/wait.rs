@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use bevy::prelude::System;
 
 use crate::action::{Action};
-use crate::action::seed::{ActionSeed, Seed};
+use crate::action::seed::{ActionSeed, SeedMark};
 use crate::private::RunnerIntoAction;
 use crate::runner::multi_times::MultiTimesRunner;
 
@@ -26,7 +26,7 @@ impl<In, Out, Sys> WaitSeed<In, Out, Sys>
 }
 
 
-impl<In, Out, Sys> Seed for WaitSeed<In, Out, Sys>{}
+impl<In, Out, Sys> SeedMark for WaitSeed<In, Out, Sys>{}
 
 
 impl<In, Out, Sys> ActionSeed<In, Out> for WaitSeed<In, Out, Sys>

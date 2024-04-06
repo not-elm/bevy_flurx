@@ -8,11 +8,11 @@ use bevy::prelude::Res;
 
 use crate::action::switch::Switch;
 use crate::action::wait;
-use crate::prelude::{ActionSeed, Seed};
+use crate::prelude::{ActionSeed, SeedMark};
 
 /// Waits until the switch turned on.
 #[inline]
-pub fn on<M>() -> impl ActionSeed + Seed
+pub fn on<M>() -> impl ActionSeed + SeedMark
     where M: Send + Sync + 'static
 {
     wait::until(|switch: Option<Res<Switch<M>>>| {
@@ -22,7 +22,7 @@ pub fn on<M>() -> impl ActionSeed + Seed
 
 /// Waits until the switch turned off.
 #[inline]
-pub fn off<M>() -> impl ActionSeed + Seed
+pub fn off<M>() -> impl ActionSeed + SeedMark
     where M: Send + Sync + 'static
 {
     wait::until(|switch: Option<Res<Switch<M>>>| {

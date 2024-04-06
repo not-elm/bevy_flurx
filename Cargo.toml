@@ -20,16 +20,16 @@ exclude = ["benches"]
 name = "cmp_countup"
 path = "benches/cmp_countup.rs"
 harness = false
-
-[[bench]]
-name = "cmp_repeat_countup"
-path = "benches/cmp_repeat_countup.rs"
-harness = false
-
-[[bench]]
-name = "sequence"
-path = "benches/sequence.rs"
-harness = false
+#
+#[[bench]]
+#name = "cmp_repeat_countup"
+#path = "benches/cmp_repeat_countup.rs"
+#harness = false
+#
+#[[bench]]
+#name = "sequence"
+#path = "benches/sequence.rs"
+#harness = false
 
 [dependencies]
 bevy = { version = "0.13.1", default-features = false }

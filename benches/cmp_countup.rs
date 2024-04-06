@@ -2,11 +2,12 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, AppExit, Startup};
+use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, EventReader, EventWriter, Local, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::{FlurxPlugin, sequence};
-use bevy_flurx::prelude::{Flurx, once, wait};
+use bevy_flurx::prelude::{Reactor, once, wait};
 
 #[derive(Resource, Default)]
 struct Exit(bool);
@@ -18,6 +19,7 @@ fn default_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
+                .add_plugins(TaskPoolPlugin::default())
                 .init_resource::<Exit>()
                 .add_systems(Update, |mut ew: EventWriter<AppExit>, mut count: Local<usize>| {
                     *count += 1;
@@ -43,10 +45,13 @@ fn flurx_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
-                .add_plugins(FlurxPlugin)
+                .add_plugins((
+                    TaskPoolPlugin::default(),
+                    FlurxPlugin
+                ))
                 .init_resource::<Exit>()
                 .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Flurx::schedule(|task| async move {
+                    commands.spawn(Reactor::schedule(|task| async move {
                         task.will(Update, wait::until(|mut count: Local<usize>| {
                             *count += 1;
                             *count == LIMIT
@@ -69,10 +74,13 @@ fn flurx_sequence_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
-                .add_plugins(FlurxPlugin)
+                .add_plugins((
+                    TaskPoolPlugin::default(),
+                    FlurxPlugin
+                ))
                 .init_resource::<Exit>()
                 .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Flurx::schedule(|task| async move {
+                    commands.spawn(Reactor::schedule(|task| async move {
                         task.will(Update, sequence!(
                             wait::until(|mut count: Local<usize>| {
                                 *count += 1;

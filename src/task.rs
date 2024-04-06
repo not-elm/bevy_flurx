@@ -13,7 +13,7 @@ use crate::world_ptr::WorldPtr;
 
 /// Create a task that runs the system until certain conditions are met.
 
-pub struct ReactiveTask  {
+pub struct ReactiveTask {
     pub(crate) task: flurx::task::ReactiveTask<'static, WorldPtr>,
     pub(crate) token: CancellationToken,
 }
@@ -38,7 +38,7 @@ impl ReactiveTask {
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
-    ///     commands.spawn(Flurx::schedule(|task| async move{
+    ///     commands.spawn(Reactor::schedule(|task| async move{
     ///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
     ///             *count += 1;
     ///             (*count == 2).then_some(*count)
@@ -76,7 +76,7 @@ impl ReactiveTask {
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
-    ///     commands.spawn(Flurx::schedule(|task|async move{
+    ///     commands.spawn(Reactor::schedule(|task|async move{
     ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
     ///         task.will(Update, once::event::send(AppExit)).await;
     ///         wait_event.await;
@@ -105,27 +105,25 @@ impl ReactiveTask {
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, First, Startup, Update};
+    use bevy::app::{AppExit, First, Startup, Update};
     use bevy::prelude::Commands;
 
     use crate::action::once;
-    use crate::FlurxPlugin;
     use crate::prelude::wait;
-    use crate::scheduler::Flurx;
+    use crate::reactor::Reactor;
+    use crate::tests::test_app;
 
     #[test]
     fn run() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
-                    let event_task = task.run(First, wait::event::read::<AppExit>()).await;
-                    task.will(Update, once::event::send(AppExit)).await;
-                    event_task.await;
-                    task.will(Update, once::non_send::insert(AppExit)).await;
-                }));
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let event_task = task.run(First, wait::event::read::<AppExit>()).await;
+                task.will(Update, once::event::send(AppExit)).await;
+                event_task.await;
+                task.will(Update, once::non_send::insert(AppExit)).await;
+            }));
+        });
 
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());

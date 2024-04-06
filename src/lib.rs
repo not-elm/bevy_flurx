@@ -21,12 +21,10 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, Last, Plugin, PostStartup, PostUpdate};
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Added, Entity, Without, World};
+use bevy::app::{App, Plugin, PostStartup, PostUpdate};
+use bevy::prelude::{Added, Commands, Entity, Query, With, Without, World};
 
-use crate::prelude::Flurx;
-use crate::scheduler::Initialized;
+use crate::reactor::{Initialized, Reactor};
 use crate::world_ptr::WorldPtr;
 
 pub mod extension;
@@ -38,13 +36,14 @@ pub mod prelude {
     pub use crate::{
         action::*,
         action::pipe::Pipe,
-        action::seed::{ActionSeed, Seed},
+        action::seed::{ActionSeed, SeedMark},
         action::sequence::Then,
         action::switch::*,
-        action::wait::either::Either,
+        action::wait::Either,
+        extension::ScheduleReactor,
         FlurxPlugin,
-        scheduler::Flurx,
-        task::ReactiveTask,
+        reactor::Reactor,
+        task::ReactiveTask
     };
 }
 
@@ -54,7 +53,7 @@ pub mod private {
 }
 
 mod world_ptr;
-mod scheduler;
+mod reactor;
 #[allow(missing_docs)]
 mod runner;
 mod selector;
@@ -66,29 +65,34 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
-            .add_systems(PostStartup, flurx_initialize)
-            .add_systems(PostUpdate, flurx_initialize)
-            .add_systems(Last, run_scheduler);
+            .add_systems(PostStartup, (
+                flurx_initialize,
+                insert_initialized
+            ))
+            .add_systems(PostUpdate, (
+                run_scheduler,
+                insert_initialized
+            ));
     }
 }
-
-#[derive(ScheduleLabel, Debug, Copy, Clone, Eq, PartialEq, Hash)]
-struct AfterLast;
 
 fn flurx_initialize(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
-    let mut entities = vec![];
-    for (entity, mut flurx) in world
-        .query_filtered::<(Entity, &mut Flurx), (Added<Flurx>, Without<Initialized>)>()
+    for mut flurx in world
+        .query_filtered::<&mut Reactor, (Added<Reactor>, Without<Initialized>)>()
         .iter_mut(world) {
         flurx.scheduler.run_sync(world_ptr);
-        entities.push(entity);
     }
+}
 
-    for entity in entities {
-        world.entity_mut(entity).insert(Initialized);
+fn insert_initialized(
+    mut commands: Commands,
+    flurx: Query<Entity, (With<Reactor>, Without<Initialized>)>,
+) {
+    for entity in flurx.iter() {
+        commands.entity(entity).insert(Initialized);
     }
 }
 
@@ -96,10 +100,13 @@ fn run_scheduler(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
-    for mut flurx in world
-        .query::<&mut Flurx>()
+    for (mut flurx, initialized) in world
+        .query::<(&mut Reactor, Option<&Initialized>)>()
         .iter_mut(world) {
         flurx.scheduler.run_sync(world_ptr);
+        if initialized.is_none() {
+            flurx.scheduler.run_sync(world_ptr);
+        }
     }
 }
 
@@ -109,7 +116,6 @@ mod tests {
     use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
-    use bevy::log::LogPlugin;
     use bevy::prelude::{Event, EventReader, Resource};
     use bevy_test_helper::BevyTestHelperPlugin;
 
@@ -119,7 +125,6 @@ mod tests {
         let mut app = App::new();
         app.add_plugins((
             BevyTestHelperPlugin,
-            LogPlugin::default(),
             FlurxPlugin,
             InputPlugin
         ));

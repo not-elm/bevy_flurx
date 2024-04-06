@@ -2,11 +2,12 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, Startup};
+use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::{FlurxPlugin, sequence};
-use bevy_flurx::prelude::{Flurx, once};
+use bevy_flurx::prelude::{Reactor, once};
 
 #[derive(Resource, Default)]
 struct Exit(bool);
@@ -16,10 +17,13 @@ fn default_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
-                .add_plugins(FlurxPlugin)
+                .add_plugins((
+                    TaskPoolPlugin::default(),
+                    FlurxPlugin
+                ))
                 .init_resource::<Exit>()
                 .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Flurx::schedule(|task| async move {
+                    commands.spawn(Reactor::schedule(|task| async move {
                         task.will(Update, once::run(|| {})).await;
                         task.will(Update, once::run(|mut exit: ResMut<Exit>| {
                             exit.0 = true;
@@ -39,10 +43,13 @@ fn flurx_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
-                .add_plugins(FlurxPlugin)
+                .add_plugins((
+                    TaskPoolPlugin::default(),
+                    FlurxPlugin
+                ))
                 .init_resource::<Exit>()
                 .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Flurx::schedule(|task| async move {
+                    commands.spawn(Reactor::schedule(|task| async move {
                         task.will(Update, sequence! {
                             once::run(|| {}),
                             once::run(|mut exit: ResMut<Exit>| {

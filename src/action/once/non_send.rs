@@ -7,9 +7,9 @@
 
 use bevy::prelude::{In, World};
 
-use crate::action::{once, Action};
+use crate::action::{Action, once};
 use crate::action::seed::ActionSeed;
-use crate::prelude::seed::Seed;
+use crate::prelude::seed::SeedMark;
 
 /// Once init a non-send resource.
 ///
@@ -20,12 +20,12 @@ use crate::prelude::seed::Seed;
 /// #[derive(Default)]
 /// struct Res;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::non_send::init::<Res>()).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn init<R>() -> impl ActionSeed + Seed
+pub fn init<R>() -> impl ActionSeed + SeedMark
     where R: Default + 'static
 {
     once::run(|world: &mut World| {
@@ -41,7 +41,7 @@ pub fn init<R>() -> impl ActionSeed + Seed
 ///
 /// struct Res;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::non_send::insert(Res)).await;
 /// });
 /// ```
@@ -62,12 +62,12 @@ pub fn insert<R>(resource: R) -> impl Action<R, ()>
 ///
 /// struct Res;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::non_send::remove::<Res>()).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn remove<R>() -> impl ActionSeed + Seed
+pub fn remove<R>() -> impl ActionSeed + SeedMark
     where R: 'static
 {
     once::run(|world: &mut World| {
@@ -78,25 +78,21 @@ pub fn remove<R>() -> impl ActionSeed + Seed
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, First, Startup};
+    use bevy::app::{AppExit, First, Startup};
     use bevy::prelude::Commands;
 
     use crate::action::once::non_send;
-    use crate::FlurxPlugin;
-    use crate::scheduler::Flurx;
-    use crate::tests::TestResource;
-
+    use crate::reactor::Reactor;
+    use crate::tests::{test_app, TestResource};
 
     #[test]
     fn init_non_send_resource() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
-                    task.will(First, non_send::init::<TestResource>()).await;
-                }));
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(First, non_send::init::<TestResource>()).await;
+            }));
+        });
 
         app.update();
         assert!(app.world.get_non_send_resource::<TestResource>().is_some());
@@ -104,14 +100,12 @@ mod tests {
 
     #[test]
     fn insert_non_send_resource() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
-                    task.will(First, non_send::insert(TestResource)).await;
-                }));
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(First, non_send::insert(TestResource)).await;
+            }));
+        });
 
         app.update();
         assert!(app.world.get_non_send_resource::<TestResource>().is_some());
@@ -119,12 +113,10 @@ mod tests {
 
     #[test]
     fn remove_non_send_resource() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .init_resource::<TestResource>()
+        let mut app = test_app();
+        app.init_resource::<TestResource>()
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, non_send::remove::<TestResource>()).await;
                 }));
             });
@@ -135,23 +127,21 @@ mod tests {
 
     #[test]
     fn success_run_all_schedule_labels() {
-        let mut app = App::new();
-        app
-            .add_plugins(FlurxPlugin)
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
-                    task.will(First, non_send::insert(AppExit)).await;
-                    println!("First finished");
-                    task.will(First, non_send::insert(AppExit)).await;
-                    println!("PreUpdate finished");
-                    task.will(First, non_send::insert(AppExit)).await;
-                    println!("Update finished");
-                    task.will(First, non_send::insert(AppExit)).await;
-                    println!("PostUpdate finished");
-                    task.will(First, non_send::insert(AppExit)).await;
-                    println!("Last finished");
-                }));
-            });
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(First, non_send::insert(AppExit)).await;
+                println!("First finished");
+                task.will(First, non_send::insert(AppExit)).await;
+                println!("PreUpdate finished");
+                task.will(First, non_send::insert(AppExit)).await;
+                println!("Update finished");
+                task.will(First, non_send::insert(AppExit)).await;
+                println!("PostUpdate finished");
+                task.will(First, non_send::insert(AppExit)).await;
+                println!("Last finished");
+            }));
+        });
 
         println!("First");
         app.update();

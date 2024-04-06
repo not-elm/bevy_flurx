@@ -1,4 +1,3 @@
-use bevy::log::debug;
 use bevy::prelude::{System, World};
 
 use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput};
@@ -33,7 +32,6 @@ impl<Sys, In, Out> RunWithTaskOutput<Out> for OnceRunner<Sys, In>
 
     fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<Out>, world: &mut World) -> bool {
         if token.requested_cancel() {
-            debug!(name: "once runner", "cancel");
             return true;
         }
 

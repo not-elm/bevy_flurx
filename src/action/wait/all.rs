@@ -17,7 +17,7 @@
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event4;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     let (event1, event2, event3, event4) = task.will(Update, wait_all!(
 ///         wait::event::read::<Event1>(),
 ///         wait::event::read::<Event2>(),
@@ -142,7 +142,7 @@ mod tests {
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
     use crate::prelude::{once, wait};
-    use crate::scheduler::Flurx;
+    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
@@ -150,7 +150,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let (event1, event2, ()) = task.will(Update, wait_all!(
                         wait::event::read::<TestEvent1>(),
                         wait::event::read::<TestEvent2>(),
@@ -184,7 +184,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let (event1, ..) = task.will(Update, wait_all!(
                         wait::event::read::<TestEvent1>(),
                         once::run(||{

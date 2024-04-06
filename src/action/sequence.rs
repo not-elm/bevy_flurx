@@ -62,7 +62,7 @@ impl<I1, O1, A> Then<I1, O1> for A
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::sequence;
 ///
-/// Flurx::schedule(|task|async move{
+/// Reactor::schedule(|task|async move{
 ///     let o = task.will(Update, sequence!{
 ///         once::run(||{}),
 ///         once::run(||{}),
@@ -95,7 +95,7 @@ mod tests {
 
     use crate::action::once;
     use crate::action::sequence::Then;
-    use crate::scheduler::Flurx;
+    use crate::reactor::Reactor;
 
     use crate::tests::test_app;
 
@@ -112,9 +112,8 @@ mod tests {
     #[test]
     fn two() {
         let mut app = test_app();
-
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert(Mark1)),
                 ).await;
@@ -127,9 +126,8 @@ mod tests {
     #[test]
     fn three() {
         let mut app = test_app();
-
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert(Mark1))
                     .then(once::res::insert(Mark2)),
@@ -147,7 +145,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let output = task.will(Update, once::run(|| {})
                     .then(once::res::insert(Mark1))
                     .then(once::res::insert(Mark2))
@@ -166,7 +164,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let output = task.will(Update, sequence! {
                     once::run(||{}),
                     once::res::insert(Mark1),

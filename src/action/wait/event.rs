@@ -6,7 +6,7 @@
 
 use bevy::prelude::{Event, EventReader};
 
-use crate::prelude::seed::{ActionSeed, Seed};
+use crate::prelude::seed::{ActionSeed, SeedMark};
 use crate::prelude::wait;
 
 /// Waits until the specified event is sent
@@ -16,12 +16,12 @@ use crate::prelude::wait;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::event::comes::<AppExit>()).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn comes<E>() -> impl ActionSeed + Seed
+pub fn comes<E>() -> impl ActionSeed + SeedMark
     where E: Event
 {
     wait::until(|er: EventReader<E>| {
@@ -39,12 +39,12 @@ pub fn comes<E>() -> impl ActionSeed + Seed
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::event::read::<AppExit>()).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn read<E>() -> impl ActionSeed<(), E> + Seed
+pub fn read<E>() -> impl ActionSeed<(), E> + SeedMark
     where E: Event + Clone
 {
     wait::output(|mut er: EventReader<E>| {

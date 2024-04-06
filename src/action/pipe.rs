@@ -1,9 +1,15 @@
-use crate::action::seed::ActionSeed;
+//! Provides the mechanism to pipe the actions. 
+//! 
+
+
 use crate::action::Action;
+use crate::action::seed::ActionSeed;
 use crate::private::RunnerIntoAction;
 use crate::runner::pipe::PipeRunner;
 
+/// Provides the mechanism to pipe the actions. 
 pub trait Pipe<I1, O1> {
+    /// Combine this action and the passed [`ActionSeed`]. 
     fn pipe<O2>(self, action: impl ActionSeed<O1, O2> + 'static) -> impl Action<I1, O2>
         where
             O2: 'static;
@@ -34,7 +40,7 @@ mod tests {
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, wait};
-    use crate::prelude::{Flurx, Pipe, Then};
+    use crate::prelude::{Pipe, Reactor, Then};
     use crate::tests::test_app;
 
     #[derive(Resource, Debug, Eq, PartialEq)]
@@ -44,7 +50,7 @@ mod tests {
     fn one_pipe() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     once::run(|| { 1 + 1 })
                         .pipe(once::run(|In(input): In<usize>, mut cmd: Commands| {
@@ -62,7 +68,7 @@ mod tests {
     fn pipe_3() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::run(|| { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>| { num * num }))
                     .pipe(wait::until(|In(num): In<usize>| {

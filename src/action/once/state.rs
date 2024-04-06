@@ -20,7 +20,7 @@ use crate::action::{once, Action};
 ///     S2
 /// };
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::state::set(S::S2)).await;
 /// });
 /// ```

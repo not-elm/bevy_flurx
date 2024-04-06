@@ -9,11 +9,11 @@ use bevy::prelude::World;
 use crate::action::once;
 use crate::action::seed::ActionSeed;
 use crate::action::switch::Switch;
-use crate::prelude::seed::Seed;
+use crate::prelude::seed::SeedMark;
 
 /// Turns [`Switch`](crate::prelude::Switch) on.
 #[inline]
-pub fn on<M>() -> impl ActionSeed + Seed
+pub fn on<M>() -> impl ActionSeed + SeedMark
     where M: Send + Sync + 'static
 {
     once::run(|world: &mut World| {
@@ -23,7 +23,7 @@ pub fn on<M>() -> impl ActionSeed + Seed
 
 /// Turns [`Switch`](crate::prelude::Switch) off.
 #[inline]
-pub fn off<M>() -> impl ActionSeed + Seed
+pub fn off<M>() -> impl ActionSeed + SeedMark
     where M: Send + Sync + 'static
 {
     once::run(|world: &mut World| {
@@ -40,7 +40,7 @@ mod tests {
 
     use crate::action::once;
     use crate::prelude::{switch_just_turned_off, switch_just_turned_on};
-    use crate::scheduler::Flurx;
+    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     struct T;
@@ -50,7 +50,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, once::switch::on::<T>()).await;
                 }));
             })
@@ -67,7 +67,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, once::run(|| {})).await;
                     task.will(Update, once::switch::on::<T>()).await;
                 }));
@@ -87,7 +87,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, once::switch::off::<T>()).await;
                 }));
             })
@@ -104,7 +104,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, once::run(|| {})).await;
                     task.will(Update, once::switch::off::<T>()).await;
                 }));

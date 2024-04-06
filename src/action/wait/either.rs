@@ -37,13 +37,13 @@ impl<L, R> Either<L, R> {
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     let either = task.will(Update, wait::either(
 ///         wait::until(||false),
 ///         wait::event::read::<AppExit>()
 ///     )).await;
 ///     match either {
-///         Either::Left(_) => {},
+///         Either::Left(_) => {}
 ///         Either::Right(_) => {}
 ///     }
 /// });
@@ -67,27 +67,25 @@ pub fn either<
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::App;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::ButtonInput;
     use bevy::prelude::{Commands, KeyCode, Local, ResMut, Resource, Update};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::{FlurxPlugin, wait_all};
     use crate::action::{once, wait};
-    use crate::prelude::ActionSeed;
     use crate::action::wait::{Either, output, until};
-    use crate::scheduler::Flurx;
+    use crate::prelude::ActionSeed;
+    use crate::reactor::Reactor;
     use crate::tests::test_app;
+    use crate::wait_all;
 
     #[test]
     fn wait_either() {
-        let mut app = App::new();
-        app.add_plugins(FlurxPlugin);
+        let mut app = test_app();
         #[derive(Clone)]
         struct Count(usize);
         app.world.run_system_once(|mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let u1 = until(|mut count: Local<u32>| {
                     *count += 1;
                     *count == 3
@@ -122,7 +120,7 @@ mod tests {
         app.init_resource::<Count>();
 
         app.world.run_system_once(|mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, wait::either(
                     wait_all! {
                         wait::until(|mut count:ResMut<Count>| {

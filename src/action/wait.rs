@@ -13,7 +13,7 @@ use bevy::prelude::{In, IntoSystem};
 
 pub use either::*;
 
-use crate::action::seed::{ActionSeed, Seed};
+use crate::action::seed::{ActionSeed, SeedMark};
 use crate::action::seed::wait::WaitSeed;
 use crate::prelude::Action;
 use crate::runner::base::BaseTwoRunner;
@@ -28,7 +28,7 @@ pub mod switch;
 pub mod all;
 #[cfg(feature = "audio")]
 pub mod audio;
-pub mod either;
+mod either;
 
 
 /// Run until it returns [`Option::Some`].
@@ -41,14 +41,14 @@ pub mod either;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::output(||{
 ///         Some(())
 ///     })).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Out> + Seed
+pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Out> + SeedMark
     where
         Sys: IntoSystem<Input, Option<Out>, Marker>,
         Input: Clone + 'static,
@@ -66,7 +66,7 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Ou
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::until(|mut count: Local<usize>|{
 ///         *count += 1;
 ///         *count == 4
@@ -74,7 +74,7 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Ou
 /// });
 ///```
 #[inline(always)]
-pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + Seed
+pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + SeedMark
     where
         Sys: IntoSystem<Input, bool, M> + 'static,
         Input: Clone + 'static,
@@ -100,7 +100,7 @@ pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + Seed
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task|async move{
+/// Reactor::schedule(|task|async move{
 ///     task.will(Update, wait::both(
 ///         wait::input::just_pressed(),
 ///         wait::event::read::<AppExit>()
@@ -132,14 +132,14 @@ mod tests {
     use crate::action::{once, wait};
     use crate::action::wait::until;
     use crate::prelude::ActionSeed;
-    use crate::scheduler::Flurx;
+    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
     fn count_up() {
         let mut app = test_app();
         app.world.run_system_once(|mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     until(|mut count: Local<u32>| {
@@ -166,7 +166,7 @@ mod tests {
         let mut app = test_app();
 
         app.world.run_system_once(|mut commands: Commands| {
-            commands.spawn(Flurx::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     until(|input: In<u32>, mut count: Local<u32>| {
@@ -192,7 +192,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
                     task.will(Update, once::non_send::insert(event)).await;
                 }));
@@ -215,7 +215,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let t1 = wait::event::read::<TestEvent1>();
                     let t2 = wait::event::read::<TestEvent2>();
 

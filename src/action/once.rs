@@ -7,7 +7,7 @@
 
 
 use bevy::prelude::{In, IntoSystem};
-use crate::action::seed::{ActionSeed, Seed};
+use crate::action::seed::{ActionSeed, SeedMark};
 use crate::action::seed::once::OnceSeed;
 use crate::prelude::Action;
 use crate::runner::once::OnceRunner;
@@ -31,14 +31,14 @@ pub mod audio;
 /// use bevy::prelude::{World, Update, EventWriter};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
 ///         ew.send(AppExit);
 ///     })).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + Seed
+pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + SeedMark
     where
         Sys: IntoSystem<I, Out, M>,
         I: 'static,
@@ -58,7 +58,7 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> impl ActionSeed<I, Out> + Seed
 /// use bevy::prelude::{World, Update, EventWriter, In};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::run_with(1, |In(num): In<usize>|{
 ///         num + 1
 ///     })).await;

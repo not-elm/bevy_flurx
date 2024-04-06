@@ -9,7 +9,7 @@ use bevy::prelude::{In, Local, Res, TimerMode};
 use bevy::time::{Time, Timer};
 
 use crate::action::wait;
-use crate::prelude::{ActionSeed, Seed};
+use crate::prelude::{ActionSeed, SeedMark};
 
 /// Delays by the specified amount of time.
 ///
@@ -18,12 +18,12 @@ use crate::prelude::{ActionSeed, Seed};
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, delay::time().with(Duration::from_secs(1))).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn time() -> impl ActionSeed<Duration> + Seed {
+pub fn time() -> impl ActionSeed<Duration> + SeedMark {
     wait::until(move |In(duration): In<Duration>,
                       mut timer: Local<Option<Timer>>,
                       time: Res<Time>,
@@ -46,12 +46,12 @@ pub fn time() -> impl ActionSeed<Duration> + Seed {
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flurx::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, delay::frames().with(30)).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn frames() -> impl ActionSeed<usize> + Seed {
+pub fn frames() -> impl ActionSeed<usize> + SeedMark {
     wait::until(move |In(frames): In<usize>,
                       mut frame_now: Local<usize>| {
         *frame_now += 1;
@@ -62,25 +62,22 @@ pub fn frames() -> impl ActionSeed<usize> + Seed {
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{App, AppExit, First, Startup, Update};
+    use bevy::app::{AppExit, First, Startup, Update};
     use bevy::prelude::Commands;
     use bevy::time::TimePlugin;
 
     use crate::action::{delay, once};
-    use crate::FlurxPlugin;
     use crate::prelude::ActionSeed;
-    use crate::scheduler::Flurx;
+    use crate::reactor::Reactor;
+    use crate::tests::test_app;
 
     #[test]
     fn delay_2frames() {
-        let mut app = App::new();
+        let mut app = test_app();
         app
-            .add_plugins((
-                TimePlugin,
-                FlurxPlugin
-            ))
+            .add_plugins(TimePlugin)
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flurx::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, delay::frames().with(2)).await;
                     task.will(Update, once::non_send::init::<AppExit>()).await;
                 }));

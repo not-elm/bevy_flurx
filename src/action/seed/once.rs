@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::prelude::System;
 
-use crate::action::seed::{ActionSeed, Seed};
+use crate::action::seed::{ActionSeed, SeedMark};
 use crate::action::Action;
 use crate::private::RunnerIntoAction;
 use crate::runner::once::OnceRunner;
@@ -12,7 +12,7 @@ pub struct OnceSeed<In, Out, Sys> {
     _m: PhantomData<(In, Out)>,
 }
 
-impl<In, Out, Sys> Seed for OnceSeed<In, Out, Sys>{
+impl<In, Out, Sys> SeedMark for OnceSeed<In, Out, Sys>{
 
 }
 

@@ -2,11 +2,12 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, AppExit, Startup};
+use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, Event, EventReader, EventWriter, Local, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::FlurxPlugin;
-use bevy_flurx::prelude::{Flurx, once, wait};
+use bevy_flurx::prelude::{Reactor, once, wait};
 
 #[derive(Resource, Default)]
 struct Exit(bool);
@@ -23,6 +24,7 @@ fn default_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
+                .add_plugins(TaskPoolPlugin::default())
                 .init_resource::<Exit>()
                 .add_event::<ResetCount>()
                 .add_systems(Update, |mut reset: EventReader<ResetCount>,
@@ -62,10 +64,13 @@ fn flurx_version(c: &mut Criterion) {
         b.iter(|| {
             let mut app = App::new();
             app
-                .add_plugins(FlurxPlugin)
+                .add_plugins((
+                    TaskPoolPlugin::default(),
+                    FlurxPlugin
+                ))
                 .init_resource::<Exit>()
                 .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Flurx::schedule(|task| async move {
+                    commands.spawn(Reactor::schedule(|task| async move {
                         for _ in 0..REPEAT {
                             task.will(Update, wait::until(|mut count: Local<usize>| {
                                 *count += 1;

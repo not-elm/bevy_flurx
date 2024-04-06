@@ -1,14 +1,14 @@
 //! A switch is a structure that represents two states: `on` and `off`.
-//! 
+//!
 //! This is to solve the problem that systems created from `Reactors`
 //! cannot run except on the main thread.
 
 
 use std::marker::PhantomData;
 
+use bevy::app::Last;
 use bevy::prelude::{FromWorld, Mut, Res, ResMut, Resource, Schedules, World};
 
-use crate::AfterLast;
 use crate::runner::initialize_schedule;
 
 /// A Condition-satisfying system that returns true if the switch has been turned on. 
@@ -44,17 +44,17 @@ pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
 }
 
 /// A switch is a structure that represents two states: `on` and `off`.
-/// 
+///
 /// This is to solve the problem that systems created from `Reactors`
 /// cannot run except on the main thread.
-/// 
-/// 
+///
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// struct HeavyTask;
-/// 
+///
 /// App::new()
 ///     .add_systems(Update, (|mut switch: ResMut<Switch<HeavyTask>>|{
 ///         // heavy task
@@ -63,7 +63,7 @@ pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
 ///         switch.off();
 ///     }).run_if(switch_turned_on::<HeavyTask>))
 ///     .add_systems(Update, |mut commands: Commands|{
-///         commands.spawn(Flurx::schedule(|task| async move{
+///         commands.spawn(Reactor::schedule(|task| async move{
 ///             task.will(Update, once::switch::on::<HeavyTask>()).await;
 ///             task.will(Update, wait::switch::off::<HeavyTask>()).await;
 ///         })); 
@@ -163,7 +163,7 @@ impl<M> FromWorld for Switch<M>
 {
     fn from_world(world: &mut World) -> Self {
         world.resource_scope(|_, mut schedules: Mut<Schedules>| {
-            let schedule = initialize_schedule(&mut schedules, AfterLast);
+            let schedule = initialize_schedule(&mut schedules, Last);
             schedule.add_systems(|mut switch: ResMut<Switch<M>>| {
                 switch.just_change = false;
             });

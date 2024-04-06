@@ -1,12 +1,11 @@
 use std::cell::RefCell;
 use std::marker::PhantomData;
 use std::rc::Rc;
-use std::sync::{Arc, Mutex};
 
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{IntoSystemConfigs, Schedule, Schedules, World};
 
-use crate::action::{Action};
+use crate::action::Action;
 use crate::flurx_initialize;
 use crate::runner::runners::TaskRunners;
 
