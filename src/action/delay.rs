@@ -9,12 +9,12 @@ use bevy::prelude::{In, Local, Res, TimerMode};
 use bevy::time::{Time, Timer};
 
 use crate::action::wait;
-use crate::prelude::{ActionSeed, SeedMark};
+use crate::prelude::ActionSeed;
 
 /// Delays by the specified amount of time.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use std::time::Duration;
 /// use bevy::prelude::{World, Update};
@@ -25,7 +25,7 @@ use crate::prelude::{ActionSeed, SeedMark};
 /// });
 /// ```
 #[inline(always)]
-pub fn time() -> impl ActionSeed<Duration> + SeedMark {
+pub fn time() -> ActionSeed<Duration>  {
     wait::until(move |In(duration): In<Duration>,
                       mut timer: Local<Option<Timer>>,
                       time: Res<Time>,
@@ -45,7 +45,7 @@ pub fn time() -> impl ActionSeed<Duration> + SeedMark {
 /// Delays the specified number of frames.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
@@ -55,7 +55,7 @@ pub fn time() -> impl ActionSeed<Duration> + SeedMark {
 /// });
 /// ```
 #[inline(always)]
-pub fn frames() -> impl ActionSeed<usize> + SeedMark {
+pub fn frames() -> ActionSeed<usize>  {
     wait::until(move |In(frames): In<usize>,
                       mut frame_now: Local<usize>| {
         *frame_now += 1;
@@ -71,7 +71,6 @@ mod tests {
     use bevy::time::TimePlugin;
 
     use crate::action::{delay, once};
-    use crate::prelude::ActionSeed;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
 

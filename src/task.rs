@@ -53,15 +53,14 @@ impl ReactiveTask {
     pub fn will<Label, In, Out>(
         &self,
         label: Label,
-        action: impl Action<In, Out> + 'static,
+        action: impl Into<Action<In, Out>> + 'static,
     ) -> impl Future<Output=Out>
         where
             Label: ScheduleLabel,
             In: 'static,
-            Out: 'static
-
+            Out: 'static,
     {
-        self.task.will(WorldSelector::new(label, action, self.token.clone()))
+        self.task.will(WorldSelector::new(label, action.into(), self.token.clone()))
     }
 
     /// Create a new initialized task.
@@ -90,12 +89,12 @@ impl ReactiveTask {
     pub async fn run<Label, In, Out>(
         &self,
         label: Label,
-        action: impl Action<In, Out> + 'static,
+        action: impl Into<Action<In, Out>> + 'static,
     ) -> impl Future<Output=Out>
         where
             Label: ScheduleLabel,
             In: 'static,
-            Out: 'static
+            Out: 'static,
     {
         let mut future = self.will(label, action).polling();
         let _ = future.poll_once().await;
@@ -109,10 +108,10 @@ mod tests {
     use bevy::prelude::Commands;
 
     use crate::action::once;
-    use crate::prelude::{wait, ActionSeed};
+    use crate::prelude::wait;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
-    
+
     #[test]
     fn run() {
         let mut app = test_app();

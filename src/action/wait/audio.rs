@@ -6,7 +6,7 @@ use bevy::audio::{AudioSink, AudioSinkPlayback};
 use bevy::prelude::{Commands, Entity, In, Query};
 
 use crate::action::wait;
-use crate::prelude::seed::{ActionSeed, SeedMark};
+use crate::prelude::seed::{ActionSeed, };
 
 /// Waits until the audio associated with the passed [`Entity`](bevy::prelude::Entity)
 /// has finished playing.
@@ -24,7 +24,7 @@ use crate::prelude::seed::{ActionSeed, SeedMark};
 ///     }).await;
 /// });
 /// ```
-pub fn finished() -> impl ActionSeed<Entity, ()> + SeedMark {
+pub fn finished() -> ActionSeed<Entity, ()> {
     wait::until(|In(entity): In<Entity>,
                  mut commands: Commands,
                  audio: Query<(Entity, &AudioSink)>| {

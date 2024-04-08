@@ -6,7 +6,8 @@
 
 use std::marker::PhantomData;
 
-use bevy::app::Last;
+use bevy::app::PostUpdate;
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{FromWorld, Mut, Res, ResMut, Resource, Schedules, World};
 
 use crate::runner::initialize_schedule;
@@ -164,7 +165,7 @@ impl<M> FromWorld for Switch<M>
 {
     fn from_world(world: &mut World) -> Self {
         world.resource_scope(|_, mut schedules: Mut<Schedules>| {
-            let schedule = initialize_schedule(&mut schedules, Last);
+            let schedule = initialize_schedule(&mut schedules, PostUpdate.intern());
             schedule.add_systems(|mut switch: ResMut<Switch<M>>| {
                 switch.just_change = false;
             });

@@ -31,4 +31,4 @@ jobs:
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
       - name: Clippy
-        run: cargo clippy --all --all-features
+        run: cargo clippy --all-targets --all-features -- -D warnings

@@ -9,12 +9,11 @@ use bevy::prelude::{In, World};
 
 use crate::action::once;
 use crate::action::seed::ActionSeed;
-use crate::prelude::seed::SeedMark;
 
 /// Once init a non-send resource.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -27,7 +26,7 @@ use crate::prelude::seed::SeedMark;
 /// });
 /// ```
 #[inline(always)]
-pub fn init<R>() -> impl ActionSeed + SeedMark
+pub fn init<R>() -> ActionSeed
     where R: Default + 'static
 {
     once::run(|world: &mut World| {
@@ -38,7 +37,7 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 /// Once insert a non-send resource.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -50,7 +49,7 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
+pub fn insert<R>() -> ActionSeed<R>
     where R: 'static
 {
     once::run(|In(resource): In<R>, world: &mut World| {
@@ -61,7 +60,7 @@ pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
 /// Once remove a non-send resource.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -73,7 +72,7 @@ pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn remove<R>() -> impl ActionSeed + SeedMark
+pub fn remove<R>() -> ActionSeed
     where R: 'static
 {
     once::run(|world: &mut World| {
@@ -84,11 +83,10 @@ pub fn remove<R>() -> impl ActionSeed + SeedMark
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, First, Last, PreUpdate, Startup, Update};
+    use bevy::app::{AppExit, First, Last, PostUpdate, PreUpdate, Startup, Update};
     use bevy::prelude::Commands;
 
     use crate::action::once::non_send;
-    use crate::prelude::ActionSeed;
     use crate::reactor::Reactor;
     use crate::tests::{test_app, TestResource};
 
@@ -143,7 +141,7 @@ mod tests {
                 println!("PreUpdate finished");
                 task.will(Update, non_send::insert().with(AppExit)).await;
                 println!("Update finished");
-                task.will(Update, non_send::insert().with(AppExit)).await;
+                task.will(PostUpdate, non_send::insert().with(AppExit)).await;
                 println!("PostUpdate finished");
                 task.will(Last, non_send::insert().with(AppExit)).await;
                 println!("Last finished");
