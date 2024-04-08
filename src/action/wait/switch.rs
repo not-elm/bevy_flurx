@@ -8,24 +8,24 @@ use bevy::prelude::Res;
 
 use crate::action::switch::Switch;
 use crate::action::wait;
-use crate::prelude::{ActionSeed, SeedMark};
+use crate::prelude::ActionSeed;
 
 /// Waits until the switch turned on.
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// struct Animation;
-/// 
+///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::switch::on::<Animation>()).await;
 /// });
 /// ```
 #[inline]
-pub fn on<M>() -> impl ActionSeed + SeedMark
+pub fn on<M>() -> ActionSeed
     where M: Send + Sync + 'static
 {
     wait::until(|switch: Option<Res<Switch<M>>>| {
@@ -34,15 +34,15 @@ pub fn on<M>() -> impl ActionSeed + SeedMark
 }
 
 /// Waits until the switch turned off.
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// struct Animation;
-/// 
+///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::switch::on::<Animation>()
@@ -51,7 +51,7 @@ pub fn on<M>() -> impl ActionSeed + SeedMark
 /// });
 /// ```
 #[inline]
-pub fn off<M>() -> impl ActionSeed + SeedMark
+pub fn off<M>() -> ActionSeed
     where M: Send + Sync + 'static
 {
     wait::until(|switch: Option<Res<Switch<M>>>| {

@@ -4,64 +4,55 @@
 //! - [`wait`]
 //! - [`delay`]
 
-use std::marker::PhantomData;
+pub use through::through;
 
-use bevy::prelude::World;
-
-use crate::runner::{CancellationToken, RunnerIntoAction, RunWithTaskOutput, TaskOutput, TaskRunner};
+use crate::prelude::ActionSeed;
+use crate::runner::{BoxedActionRunner, CancellationToken, Output};
 
 pub mod once;
 pub mod wait;
 pub mod delay;
-pub mod sequence;
-pub mod switch;
-pub mod pipe;
-pub mod seed;
 
+pub mod switch;
+pub mod seed;
+pub mod through;
+pub mod pipe;
+pub mod sequence;
+mod repeat;
+mod tuple;
+pub use tuple::tuple;
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
-pub trait Action<In, Out> {
-    /// Convert itself to [`TaskRunner`](crate::runner::TaskRunner).
-    fn to_runner(self, token: CancellationToken, output: TaskOutput<Out>) -> impl TaskRunner + 'static;
-}
+pub struct Action<I=(), O=()>(pub(crate) I, pub(crate) ActionSeed<I, O>);
 
-
-/// Convert to the output of action to tuple. 
-pub fn to_tuple<I, O>(action: impl Action<I, O> + 'static) -> impl Action<I, (O, )>
+impl<I1, O1> Action<I1, O1>
     where
-        I: 'static,
-        O: 'static
+        I1: 'static,
+        O1: 'static
 {
-    struct Runner<I, O> {
-        r: Box<dyn TaskRunner>,
-        o: TaskOutput<O>,
-        token: CancellationToken,
-        _m: PhantomData<I>,
+    #[inline]
+    pub(crate) fn into_runner(self, token: CancellationToken, output: Output<O1>) -> BoxedActionRunner {
+        self.1.create_runner(self.0, token, output)
     }
-    impl<I, O> RunWithTaskOutput<(O, )> for Runner<I, O> {
-        type In = I;
-
-        fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<(O, )>, world: &mut World) -> bool {
-            if token.requested_cancel() {
-                self.token.cancel();
-                return true;
-            }
-            self.r.run(world);
-            if let Some(o) = self.o.take() {
-                output.replace((o, ));
-                true
-            } else {
-                false
-            }
-        }
-    }
-    let token = CancellationToken::default();
-    let o = TaskOutput::default();
-    let r = action.to_runner(token.clone(), o.clone());
-    RunnerIntoAction::new(Runner {
-        r: Box::new(r),
-        o,
-        token,
-        _m: PhantomData,
-    })
 }
+
+impl<Out> From<ActionSeed<(), Out>> for Action<(), Out>
+    where
+        Out: 'static
+{
+    #[inline]
+    fn from(value: ActionSeed<(), Out>) -> Self {
+        value.with(())
+    }
+}
+
+// impl<I, O> Clone for Action<I, O>
+//     where
+//         I: Clone
+// {
+//     fn clone(&self) -> Self {
+//         Self(self.0.clone(), self.1.clone())
+//     }
+// }
+
+

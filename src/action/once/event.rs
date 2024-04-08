@@ -9,12 +9,12 @@ use bevy::app::AppExit;
 use bevy::prelude::{Event, EventReader, EventWriter, In};
 
 use crate::action::{Action, once};
-use crate::action::seed::{ActionSeed, SeedMark};
+use crate::action::seed::ActionSeed;
 
 /// Once send an event.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -24,7 +24,7 @@ use crate::action::seed::{ActionSeed, SeedMark};
 /// });
 /// ```
 #[inline(always)]
-pub fn send<E>() -> impl ActionSeed<E> + SeedMark
+pub fn send<E>() -> ActionSeed<E, ()>
     where E: Event
 {
     once::run(|In(event): In<E>, mut w: EventWriter<E>| {
@@ -35,7 +35,7 @@ pub fn send<E>() -> impl ActionSeed<E> + SeedMark
 /// Once send an event using [`Default`] trait.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -45,7 +45,7 @@ pub fn send<E>() -> impl ActionSeed<E> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn send_default<E>() -> impl ActionSeed + SeedMark
+pub fn send_default<E>() -> ActionSeed
     where E: Event + Default
 {
     once::run(|mut w: EventWriter<E>| {
@@ -56,7 +56,7 @@ pub fn send_default<E>() -> impl ActionSeed + SeedMark
 /// Once send [`AppExit`](bevy::app::AppExit).
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -66,14 +66,14 @@ pub fn send_default<E>() -> impl ActionSeed + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn app_exit() -> impl Action<AppExit, ()> {
+pub fn app_exit() -> Action<AppExit, ()> {
     send().with(AppExit)
 }
 
 /// Call [`EventReader::clear`](bevy::prelude::EventReader::clear).
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -83,7 +83,7 @@ pub fn app_exit() -> impl Action<AppExit, ()> {
 /// });
 /// ```
 #[inline(always)]
-pub fn clear<E: Event>() -> impl ActionSeed + SeedMark {
+pub fn clear<E: Event>() -> ActionSeed {
     once::run(|mut er: EventReader<E>| {
         er.clear();
     })
@@ -98,7 +98,6 @@ mod tests {
     use crate::action::once;
     use crate::reactor::Reactor;
     use crate::tests::{came_event, test_app};
-    use crate::prelude::ActionSeed;
 
     #[test]
     fn send_event() {

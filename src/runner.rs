@@ -1,43 +1,38 @@
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
 use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Schedule, Schedules, World};
+use bevy::prelude::{Component, Deref, DerefMut, Entity, Resource, Schedule, Schedules, World};
+use bevy::utils::intern::Interned;
 
-use crate::action::Action;
-use crate::runner::runners::TaskRunners;
+use crate::world_ptr::WorldPtr;
 
 pub(crate) mod runners;
-pub(crate) mod multi_times;
-pub(crate) mod once;
-pub(crate) mod sequence;
-pub(crate) mod both;
-pub(crate) mod either;
-pub(crate) mod base;
-pub(crate) mod pipe;
+
+
+mod tuple;
 
 
 /// Represents the output of the task.
-/// See details [`TaskRunner`].
-pub struct TaskOutput<O>(Rc<RefCell<Option<O>>>);
+/// See details [`Runner`].
+pub struct Output<O>(Rc<RefCell<Option<O>>>);
 
-
-impl<O> Clone for TaskOutput<O> {
+impl<O> Clone for Output<O> {
     #[inline]
     fn clone(&self) -> Self {
-        Self(self.0.clone())
+        Self(Rc::clone(&self.0))
     }
 }
 
-impl<O> Default for TaskOutput<O> {
+impl<O> Default for Output<O> {
     #[inline]
     fn default() -> Self {
-        Self(Rc::new(RefCell::new(Option::None)))
+        Self(Rc::new(RefCell::new(None)))
     }
 }
 
-impl<O> TaskOutput<O> {
+impl<O> Output<O> {
     #[inline(always)]
     pub fn replace(&self, o: O) {
         self.0.borrow_mut().replace(o);
@@ -59,72 +54,84 @@ impl<O> TaskOutput<O> {
     }
 }
 
-impl<O: Clone> TaskOutput<O> {
+impl<O: Clone> Output<O> {
     #[inline(always)]
     pub fn cloned(&self) -> Option<O> {
-        self.0.borrow_mut().clone()
+        self.0.borrow().clone()
     }
 }
 
-
 /// Structure for canceling a task
-#[derive(Default, Clone)]
-pub struct CancellationToken(Rc<RefCell<Option<()>>>);
+#[derive(Default)]
+pub struct CancellationToken(Rc<Cell<bool>>);
+
+impl Clone for CancellationToken {
+    #[inline(always)]
+    fn clone(&self) -> Self {
+        Self(Rc::clone(&self.0))
+    }
+}
 
 impl CancellationToken {
     #[inline(always)]
     pub fn requested_cancel(&self) -> bool {
-        self.0.borrow().is_some()
+        self.0.get()
     }
-
 
     #[inline(always)]
     pub fn cancel(&self) {
-        self.0.borrow_mut().replace(());
+        self.0.set(true);
     }
 }
 
 
 ///
-pub trait TaskRunner {
+pub trait Runner {
     /// Run the system. 
     ///
-    /// The structure that implements [`TaskRunner`] is given [`TaskOutput`],
+    /// The structure that implements [`Runner`] is given [`Output`],
     /// if the system termination condition is met, return `true` and
-    /// pass the system output to [`TaskOutput`].
+    /// pass the system output to [`Output`].
     ///
     fn run(&mut self, world: &mut World) -> bool;
 }
 
+
+#[repr(transparent)]
+#[derive(Component, Deref, DerefMut)]
+pub struct BoxedActionRunner(pub(crate) Box<dyn Runner>);
+
+/// SAFETY: This structure must be used only with [`run_task_runners`].
+unsafe impl Send for BoxedActionRunner {}
+
+/// SAFETY: This structure must be used only with [`run_task_runners`].
+unsafe impl Sync for BoxedActionRunner {}
+
+#[repr(transparent)]
+#[derive(Resource)]
+struct TaskRunnerActionInitialized<L: Send + Sync>(PhantomData<L>);
+
 pub(crate) fn initialize_task_runner<Label>(
     world: &mut World,
-    label: Label,
-    runner: impl TaskRunner + 'static,
+    label: &Label,
+    runner: BoxedActionRunner,
 )
     where Label: ScheduleLabel
 {
-    if let Some(mut runners) = world.get_non_send_resource_mut::<TaskRunners<Label>>() {
-        runners.runners.push(Box::new(runner));
-    } else {
-        let Some(mut schedules) = world.remove_resource::<Schedules>() else {
+    world.spawn(runner);
+    if !world.contains_resource::<TaskRunnerActionInitialized<Label>>() {
+        world.insert_resource(TaskRunnerActionInitialized::<Label>(PhantomData));
+        let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
 
-        let schedule = initialize_schedule(&mut schedules, label);
-        schedule.add_systems(run_task_runners::<Label>);
-        schedule.initialize(world).expect("failed initialize schedule");
-
-        let mut runners = TaskRunners::<Label>::default();
-        runners.runners.push(Box::new(runner));
-        world.insert_non_send_resource(runners);
-        world.insert_resource(schedules);
+        let schedule = initialize_schedule(&mut schedules, label.intern());
+        schedule.add_systems(run_task_runners);
     }
 }
 
-pub(crate) fn initialize_schedule<Label>(schedules: &mut Schedules, schedule_label: Label) -> &mut Schedule
-    where Label: ScheduleLabel
-{
-    let schedule_label = schedule_label.intern();
+#[inline]
+pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Interned<dyn ScheduleLabel>) -> &mut Schedule {
     if schedules.get(schedule_label).is_none() {
         schedules.insert(Schedule::new(schedule_label));
     }
@@ -132,50 +139,16 @@ pub(crate) fn initialize_schedule<Label>(schedules: &mut Schedules, schedule_lab
     schedules.get_mut(schedule_label).unwrap()
 }
 
-fn run_task_runners<Label: ScheduleLabel>(world: &mut World) {
-    let Some(mut runner) = world.remove_non_send_resource::<TaskRunners<Label>>() else {
-        return;
-    };
-    runner.run(world);
-    world.insert_non_send_resource(runner);
-}
-
-pub trait RunWithTaskOutput<O> {
-    type In;
-
-    fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<O>, world: &mut World) -> bool;
-}
-
-impl<O, R: RunWithTaskOutput<O>> TaskRunner for (CancellationToken, TaskOutput<O>, R) {
-    #[inline(always)]
-    fn run(&mut self, world: &mut World) -> bool {
-        self.2.run_with_task_output(&mut self.0, &mut self.1, world)
+#[inline]
+fn run_task_runners(world: &mut World) {
+    let world_ptr = WorldPtr::new(world);
+    for (entity, mut runner) in world.query::<(Entity, &mut BoxedActionRunner)>().iter_mut(world) {
+        let world = world_ptr.as_mut();
+        if runner.0.run(world) {
+            world.despawn(entity);
+        }
     }
 }
-
-pub struct RunnerIntoAction<O, R>(pub R, PhantomData<O>);
-
-impl<O, R> RunnerIntoAction<O, R>
-    where
-        R: RunWithTaskOutput<O>
-{
-    #[inline]
-    pub const fn new(runner: R) -> RunnerIntoAction<O, R> {
-        RunnerIntoAction(runner, PhantomData)
-    }
-}
-
-impl<O, R> Action<R::In, O> for RunnerIntoAction<O, R>
-    where
-        O: 'static,
-        R: RunWithTaskOutput<O> + 'static
-{
-    #[inline(always)]
-    fn to_runner(self, token: CancellationToken, output: TaskOutput<O>) -> impl TaskRunner {
-        (token, output, self.0)
-    }
-}
-
 
 pub(crate) mod macros {
     macro_rules! output_combine {

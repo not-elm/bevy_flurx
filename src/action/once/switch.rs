@@ -9,7 +9,7 @@ use bevy::prelude::World;
 use crate::action::once;
 use crate::action::seed::ActionSeed;
 use crate::action::switch::Switch;
-use crate::prelude::seed::SeedMark;
+
 
 /// Turns [`Switch`](crate::prelude::Switch) on.
 /// 
@@ -26,7 +26,7 @@ use crate::prelude::seed::SeedMark;
 /// });
 /// ```
 #[inline]
-pub fn on<M>() -> impl ActionSeed + SeedMark
+pub fn on<M>() -> ActionSeed
     where M: Send + Sync + 'static
 {
     once::run(|world: &mut World| {
@@ -49,7 +49,7 @@ pub fn on<M>() -> impl ActionSeed + SeedMark
 /// });
 /// ```
 #[inline]
-pub fn off<M>() -> impl ActionSeed + SeedMark
+pub fn off<M>() -> ActionSeed
     where M: Send + Sync + 'static
 {
     once::run(|world: &mut World| {

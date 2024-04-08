@@ -3,7 +3,7 @@
 
 use bevy::app::{App, AppExit, Startup};
 use bevy::core::TaskPoolPlugin;
-use bevy::prelude::{Commands, EventReader, EventWriter, Local, ResMut, Resource, Update};
+use bevy::prelude::{Commands, EventReader, EventWriter, Local, Res, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::FlurxPlugin;
@@ -12,18 +12,20 @@ use bevy_flurx::prelude::{once, Reactor, Then, wait};
 #[derive(Resource, Default)]
 struct Exit(bool);
 
-const LIMIT: usize = 1000;
+#[derive(Resource, Default)]
+struct Limit(usize);
 
-fn default_version(c: &mut Criterion) {
-    c.bench_function("default_version", |b| {
+fn without_flurx(count: usize, c: &mut Criterion) {
+    c.bench_function(&format!("without_flurx count: {count}"), |b| {
         b.iter(|| {
             let mut app = App::new();
             app
                 .add_plugins(TaskPoolPlugin::default())
                 .init_resource::<Exit>()
-                .add_systems(Update, |mut ew: EventWriter<AppExit>, mut count: Local<usize>| {
-                    *count += 1;
-                    if *count == LIMIT {
+                .insert_resource(Limit(count))
+                .add_systems(Update, move |mut ew: EventWriter<AppExit>, mut local: Local<usize>, limit: Res<Limit>| {
+                    *local += 1;
+                    if *local == limit.0 {
                         ew.send(AppExit);
                     }
                 })
@@ -40,9 +42,9 @@ fn default_version(c: &mut Criterion) {
     });
 }
 
-fn flurx_version(c: &mut Criterion) {
-    c.bench_function("flurx_version", |b| {
-        b.iter(|| {
+fn with_flurx(count: usize, c: &mut Criterion) {
+    c.bench_function(&format!("with_flurx count: {count}"), move |b| {
+        b.iter(move || {
             let mut app = App::new();
             app
                 .add_plugins((
@@ -50,12 +52,13 @@ fn flurx_version(c: &mut Criterion) {
                     FlurxPlugin
                 ))
                 .init_resource::<Exit>()
+                .insert_resource(Limit(count))
                 .add_systems(Startup, |mut commands: Commands| {
                     commands.spawn(Reactor::schedule(|task| async move {
                         task.will(Update, {
-                            wait::until(|mut count: Local<usize>| {
-                                *count += 1;
-                                *count == LIMIT
+                            wait::until(|mut local: Local<usize>, limit: Res<Limit>| {
+                                *local += 1;
+                                *local == limit.0
                             })
                                 .then(once::run(|mut exit: ResMut<Exit>| {
                                     exit.0 = true;
@@ -71,5 +74,23 @@ fn flurx_version(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, default_version, flurx_version);
-criterion_main!(benches);
+fn cmp_count_100(c: &mut Criterion){
+    const COUNT: usize = 100;
+    without_flurx(COUNT, c);
+    with_flurx(COUNT, c);
+}
+
+fn cmp_count_500(c: &mut Criterion){
+    const COUNT: usize = 500;
+    without_flurx(COUNT, c);
+    with_flurx(COUNT, c);
+}
+
+fn cmp_count_1000(c: &mut Criterion){
+    const COUNT: usize = 1000;
+    without_flurx(COUNT, c);
+    with_flurx(COUNT, c);
+}
+
+criterion_group!(cmp_countup, cmp_count_100, cmp_count_500, cmp_count_1000);
+criterion_main!(cmp_countup);

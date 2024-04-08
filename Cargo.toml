@@ -39,7 +39,7 @@ bevy = { version = "0.13.2" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
 reqwest = "0.12.2"
 futures = "0.3.30"
-criterion = "0.5.1"
+criterion = { version = "0.5.1", features = ["plotters", "html_reports"] }
 
 [features]
 default = ["audio"]

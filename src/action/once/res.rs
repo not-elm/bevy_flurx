@@ -6,14 +6,13 @@
 
 use bevy::prelude::{Commands, In, Resource};
 
-use crate::action::{once};
+use crate::action::once;
 use crate::action::seed::ActionSeed;
-use crate::prelude::seed::SeedMark;
 
 /// Once init a resource.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -25,7 +24,7 @@ use crate::prelude::seed::SeedMark;
 /// });
 /// ```
 #[inline(always)]
-pub fn init<R>() -> impl ActionSeed + SeedMark
+pub fn init<R>() -> ActionSeed
     where R: Resource + Default + 'static
 {
     once::run(|mut commands: Commands| {
@@ -36,7 +35,7 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 /// Once insert a resource.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -48,7 +47,7 @@ pub fn init<R>() -> impl ActionSeed + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
+pub fn insert<R>() -> ActionSeed<R>
     where R: Resource + 'static
 {
     once::run(|input: In<R>, mut commands: Commands| {
@@ -59,7 +58,7 @@ pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
 /// Once remove a resource.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -71,7 +70,7 @@ pub fn insert<R>() -> impl ActionSeed<R> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn remove<R>() -> impl ActionSeed + SeedMark
+pub fn remove<R>() -> ActionSeed
     where R: Resource + 'static
 {
     once::run(|mut commands: Commands| {
@@ -88,7 +87,6 @@ mod tests {
     use crate::action::once::res;
     use crate::reactor::Reactor;
     use crate::tests::{test_app, TestResource};
-    use crate::prelude::ActionSeed;
 
     #[test]
     fn init_resource() {
