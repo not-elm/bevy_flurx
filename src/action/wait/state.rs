@@ -6,12 +6,12 @@
 use bevy::prelude::{In, Res, State, States};
 
 use crate::action::wait;
-use crate::prelude::{ActionSeed, SeedMark};
+use crate::prelude::ActionSeed;
 
 /// Waits until the state becomes the specified.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{States, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -28,7 +28,7 @@ use crate::prelude::{ActionSeed, SeedMark};
 /// });
 /// ```
 #[inline(always)]
-pub fn becomes<S>() -> impl ActionSeed<S> + SeedMark
+pub fn becomes<S>() -> ActionSeed<S>
     where S: States + 'static
 {
     wait::until(move |In(expect): In<S>,
@@ -42,6 +42,7 @@ pub fn becomes<S>() -> impl ActionSeed<S> + SeedMark
 mod tests {
     use bevy::app::{AppExit, First, Startup, Update};
     use bevy::prelude::{Commands, States};
+
     use crate::prelude::*;
     use crate::tests::test_app;
 

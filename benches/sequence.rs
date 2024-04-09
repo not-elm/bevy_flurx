@@ -12,8 +12,8 @@ use bevy_flurx::prelude::{Reactor, once};
 #[derive(Resource, Default)]
 struct Exit(bool);
 
-fn default_version(c: &mut Criterion) {
-    c.bench_function("default", |b| {
+fn without_sequence(c: &mut Criterion) {
+    c.bench_function("without_sequence", |b| {
         b.iter(|| {
             let mut app = App::new();
             app
@@ -38,8 +38,8 @@ fn default_version(c: &mut Criterion) {
     });
 }
 
-fn flurx_version(c: &mut Criterion) {
-    c.bench_function("sequence", |b| {
+fn with_sequence(c: &mut Criterion) {
+    c.bench_function("with_sequence", |b| {
         b.iter(|| {
             let mut app = App::new();
             app
@@ -66,5 +66,5 @@ fn flurx_version(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, default_version, flurx_version);
-criterion_main!(benches);
+criterion_group!(sequence, without_sequence, with_sequence);
+criterion_main!(sequence);

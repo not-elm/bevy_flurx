@@ -1,5 +1,7 @@
 //! [`wait`] creates a task that run the until the condition is met.
 //!
+//! actions
+//! 
 //! - [`wait::output`](crate::prelude::wait::output)
 //! - [`wait::both`](crate::prelude::wait::both)
 //! - [`wait::until`](crate::prelude::wait::until)
@@ -7,18 +9,19 @@
 //! - [`wait::either`](crate::prelude::wait::either::either)
 //! - [`wait::event`](crate::prelude::wait::event)
 //! - [`wait::state`](crate::prelude::wait::state)
+//! - [`wait::switch`](crate::prelude::wait::switch)
+//! - [`wait::input`](crate::prelude::wait::input)
+//! - [`wait::audio`](crate::prelude::wait::audio) (require feature flag `audio`)
 
 
-use bevy::prelude::{In, IntoSystem};
+use bevy::prelude::{In, IntoSystem, System, World};
 
+pub use both::both;
 pub use either::*;
 
-use crate::action::seed::{ActionSeed, SeedMark};
-use crate::action::seed::wait::WaitSeed;
-use crate::prelude::Action;
-use crate::runner::base::BaseTwoRunner;
-use crate::runner::both::BothRunner;
-use crate::runner::RunnerIntoAction;
+use crate::action::seed::ActionSeed;
+use crate::prelude::wait;
+use crate::runner::{CancellationToken, Output, Runner};
 
 pub mod event;
 pub mod input;
@@ -29,7 +32,7 @@ pub mod all;
 #[cfg(feature = "audio")]
 pub mod audio;
 mod either;
-
+mod both;
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
@@ -48,13 +51,15 @@ mod either;
 /// });
 /// ```
 #[inline(always)]
-pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Out> + SeedMark
+pub fn output<Sys, Input, Out, Marker>(system: Sys) -> ActionSeed<Input, Out>
     where
-        Sys: IntoSystem<Input, Option<Out>, Marker>,
+        Sys: IntoSystem<Input, Option<Out>, Marker> + 'static,
         Input: Clone + 'static,
         Out: 'static,
 {
-    WaitSeed::new(IntoSystem::into_system(system))
+    ActionSeed::new(move |input, token, output| {
+        WaitRunner::new(input, token, output, IntoSystem::into_system(system))
+    })
 }
 
 /// Run until it returns true.
@@ -74,52 +79,72 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> impl ActionSeed<Input, Ou
 /// });
 ///```
 #[inline(always)]
-pub fn until<Input, Sys, M>(system: Sys) -> impl ActionSeed<Input> + SeedMark
+pub fn until<Input, Sys, M>(system: Sys) -> ActionSeed<Input>
     where
         Sys: IntoSystem<Input, bool, M> + 'static,
         Input: Clone + 'static,
 {
-    WaitSeed::new(IntoSystem::into_system(system.pipe(
+    wait::output(system.pipe(
         |In(finish): In<bool>| {
             if finish {
                 Some(())
             } else {
                 None
             }
-        },
-    )))
+        }))
 }
 
-/// Run until both tasks done.
-///
-/// ## Examples
-///
-/// ```
-/// use bevy::app::AppExit;
-/// use bevy::prelude::*;
-/// use bevy_flurx::prelude::*;
-///
-/// Reactor::schedule(|task|async move{
-///     task.will(Update, wait::both(
-///         wait::input::just_pressed(),
-///         wait::event::read::<AppExit>()
-///     )).await;
-/// });
-/// ```
-pub fn both<LI, LO, RI, RO>(
-    lhs: impl Action<LI, LO> + 'static,
-    rhs: impl Action<RI, RO> + 'static,
-) -> impl Action<(LI, RI), (LO, RO)>
+struct WaitRunner<Sys, I, O> {
+    system: Sys,
+    input: I,
+    token: CancellationToken,
+    output: Output<O>,
+    init: bool,
+}
+
+impl<Sys, I, O> WaitRunner<Sys, I, O> {
+    #[inline]
+    const fn new(
+        input: I,
+        token: CancellationToken,
+        output: Output<O>,
+        system: Sys,
+    ) -> WaitRunner<Sys, I, O> {
+        Self {
+            system,
+            input,
+            token,
+            output,
+            init: false,
+        }
+    }
+}
+
+impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
     where
-        RI: Clone + 'static,
-        LI: Clone + 'static,
-        LO: Send + 'static,
-        RO: Send + 'static,
-
+        Sys: System<In=In, Out=Option<Out>>,
+        In: Clone + 'static,
+        Out: 'static
 {
-    RunnerIntoAction::new(BothRunner(BaseTwoRunner::new(lhs, rhs)))
-}
+    fn run(&mut self, world: &mut World) -> bool {
+        if self.token.requested_cancel() {
+            return true;
+        }
+        if !self.init {
+            self.system.initialize(world);
+            self.init = true;
+        }
 
+        let out = self.system.run(self.input.clone(), world);
+        self.system.apply_deferred(world);
+        if let Some(o) = out {
+            self.output.replace(o);
+            true
+        } else {
+            false
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -130,7 +155,6 @@ mod tests {
 
     use crate::action::{once, wait};
     use crate::action::wait::until;
-    use crate::prelude::ActionSeed;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
 

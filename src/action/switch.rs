@@ -2,11 +2,30 @@
 //!
 //! This is to solve the problem that systems created from `Reactors`
 //! cannot run except on the main thread.
+//! 
+//! Resource
+//! 
+//! - [`Switch`]
+//! 
+//! run conditions
+//! 
+//! - [`switch_turned_on`]
+//! - [`switch_turned_off`]
+//! - [`switch_just_turned_on`]
+//! - [`switch_just_turned_off`]
+//! 
+//! actions 
+//! 
+//! - [`once::switch::on`](crate::prelude::once::switch::on)
+//! - [`once::switch::on`](crate::prelude::once::switch::off)
+//! - [`wait::switch::on`](crate::prelude::wait::switch::on)
+//! - [`wait::switch::off`](crate::prelude::wait::switch::off)
 
 
 use std::marker::PhantomData;
 
-use bevy::app::Last;
+use bevy::app::PostUpdate;
+use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{FromWorld, Mut, Res, ResMut, Resource, Schedules, World};
 
 use crate::runner::initialize_schedule;
@@ -164,7 +183,7 @@ impl<M> FromWorld for Switch<M>
 {
     fn from_world(world: &mut World) -> Self {
         world.resource_scope(|_, mut schedules: Mut<Schedules>| {
-            let schedule = initialize_schedule(&mut schedules, Last);
+            let schedule = initialize_schedule(&mut schedules, PostUpdate.intern());
             schedule.add_systems(|mut switch: ResMut<Switch<M>>| {
                 switch.just_change = false;
             });

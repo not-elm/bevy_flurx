@@ -21,9 +21,9 @@
 
 #![allow(clippy::type_complexity)]
 
-use bevy::app::{App, MainScheduleOrder, Plugin, PostStartup, PostUpdate};
+use bevy::app::{App, Last, MainScheduleOrder, Plugin, PostStartup};
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Added, Commands, Entity, Query, With, Without, World};
+use bevy::prelude::{Added, Entity, Without, World};
 
 use crate::reactor::{Initialized, Reactor};
 use crate::world_ptr::WorldPtr;
@@ -37,21 +37,20 @@ pub mod prelude {
     pub use crate::{
         action::*,
         action::pipe::Pipe,
-        action::seed::{ActionSeed, SeedMark},
+        action::seed::ActionSeed,
         action::sequence::Then,
         action::switch::*,
+        action::through::{through, Through},
         action::wait::Either,
+        action::{Omit, OmitInput, OmitOutput},
         extension::ScheduleReactor,
         FlurxPlugin,
         reactor::Reactor,
+        runner::{Output, Runner},
         task::ReactiveTask,
     };
 }
 
-#[doc(hidden)]
-pub mod private {
-    pub use crate::runner::RunnerIntoAction;
-}
 
 mod world_ptr;
 mod reactor;
@@ -67,42 +66,28 @@ impl Plugin for FlurxPlugin {
     fn build(&self, app: &mut App) {
         app
             .init_schedule(RunReactor)
-            .add_systems(PostStartup, (
-                flurx_initialize,
-                insert_initialized
-            ))
-            .add_systems(PostUpdate, (
-                run_reactors,
-                insert_initialized
-            ));
+            .add_systems(PostStartup, initialize_reactors)
+            .add_systems(RunReactor, run_reactors);
         app
             .world
             .resource_mut::<MainScheduleOrder>()
-            .insert_after(PostUpdate, RunReactor);
+            .insert_after(Last, RunReactor);
     }
 }
 
-/// Runs after the [`PostUpdate`](bevy::prelude::PostUpdate). 
+/// Runs after the [`Last`](bevy::prelude::Last).
 #[derive(ScheduleLabel, Eq, PartialEq, Debug, Copy, Clone, Hash)]
 struct RunReactor;
 
-fn flurx_initialize(
+fn initialize_reactors(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
-    for mut reactor in world
-        .query_filtered::<&mut Reactor, (Added<Reactor>, Without<Initialized>)>()
+    for (entity, mut reactor) in world
+        .query_filtered::<(Entity, &mut Reactor), (Added<Reactor>, Without<Initialized>)>()
         .iter_mut(world) {
+        world_ptr.as_mut().entity_mut(entity).insert(Initialized);
         reactor.scheduler.run_sync(world_ptr);
-    }
-}
-
-fn insert_initialized(
-    mut commands: Commands,
-    reactors: Query<Entity, (With<Reactor>, Without<Initialized>)>,
-) {
-    for entity in reactors.iter() {
-        commands.entity(entity).insert(Initialized);
     }
 }
 
@@ -110,11 +95,12 @@ fn run_reactors(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
-    for (mut reactor, initialized) in world
-        .query::<(&mut Reactor, Option<&Initialized>)>()
+    for (entity, mut reactor, initialized) in world
+        .query::<(Entity, &mut Reactor, Option<&Initialized>)>()
         .iter_mut(world) {
         reactor.scheduler.run_sync(world_ptr);
         if initialized.is_none() {
+            world_ptr.as_mut().entity_mut(entity).insert(Initialized);
             reactor.scheduler.run_sync(world_ptr);
         }
     }

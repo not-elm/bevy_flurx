@@ -6,7 +6,7 @@
 
 use bevy::prelude::{Event, EventReader};
 
-use crate::prelude::seed::{ActionSeed, SeedMark};
+use crate::prelude::seed::{ActionSeed };
 use crate::prelude::wait;
 
 /// Waits until the specified event is sent
@@ -23,7 +23,7 @@ use crate::prelude::wait;
 /// });
 /// ```
 #[inline(always)]
-pub fn comes<E>() -> impl ActionSeed + SeedMark
+pub fn comes<E>() -> ActionSeed
     where E: Event
 {
     wait::until(|er: EventReader<E>| {
@@ -48,7 +48,7 @@ pub fn comes<E>() -> impl ActionSeed + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn read<E>() -> impl ActionSeed<(), E> + SeedMark
+pub fn read<E>() -> ActionSeed<(), E>
     where E: Event + Clone
 {
     wait::output(|mut er: EventReader<E>| {

@@ -1,7 +1,8 @@
+use bevy::prelude::World;
 use crate::action::Action;
-use crate::runner::base::BaseTwoRunner;
-use crate::runner::either::EitherRunner;
-use crate::runner::RunnerIntoAction;
+
+use crate::prelude::ActionSeed;
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -33,7 +34,7 @@ impl<L, R> Either<L, R> {
 /// The first thing passed is lhs, the second is rhs.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -51,19 +52,65 @@ impl<L, R> Either<L, R> {
 /// });
 /// ```
 #[inline(always)]
-pub fn either<
-    LS, LI, LO,
-    RS, RI, RO,
->(lhs: LS, rhs: RS) -> impl Action<(LI, RI), Either<LO, RO>>
+pub fn either<LI, LO, RI, RO, >(
+    lhs: impl Into<Action<LI, LO>> + 'static,
+    rhs: impl Into<Action<RI, RO>> + 'static,
+) -> Action<(LI, RI), Either<LO, RO>>
     where
-        LS: Action<LI, LO> + 'static,
-        RS: Action<RI, RO> + 'static,
         LI: 'static,
         LO: 'static,
         RI: 'static,
         RO: 'static,
 {
-    RunnerIntoAction::new(EitherRunner(BaseTwoRunner::new(lhs, rhs)))
+    let Action(li, ls) = lhs.into();
+    let Action(ri, rs) = rhs.into();
+    ActionSeed::new(move |input: (LI, RI), token, output| {
+        let o1 = Output::default();
+        let o2 = Output::default();
+        EitherRunner {
+            r1: ls.with(input.0).into_runner(token.clone(), o1.clone()),
+            r2: rs.with(input.1).into_runner(token.clone(), o2.clone()),
+            o1,
+            o2,
+            output,
+            token,
+        }
+    })
+        .with((li, ri))
+}
+
+struct EitherRunner<O1, O2> {
+    r1: BoxedRunner,
+    r2: BoxedRunner,
+    o1: Output<O1>,
+    o2: Output<O2>,
+    token: CancellationToken,
+    output: Output<Either<O1, O2>>,
+}
+
+impl<O1, O2> Runner for EitherRunner<O1, O2>
+    where
+        O1: 'static,
+        O2: 'static,
+{
+    fn run(&mut self, world: &mut World) -> bool {
+        if self.token.requested_cancel() {
+            return true;
+        }
+
+        self.r1.run(world);
+        if let Some(lhs) = self.o1.take() {
+            self.output.replace(Either::Left(lhs));
+            return true;
+        }
+        self.r2.run(world);
+        if let Some(rhs) = self.o2.take() {
+            self.output.replace(Either::Right(rhs));
+            true
+        } else {
+            false
+        }
+    }
 }
 
 
@@ -76,7 +123,6 @@ mod tests {
 
     use crate::action::{once, wait};
     use crate::action::wait::{Either, output, until};
-    use crate::prelude::ActionSeed;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
     use crate::wait_all;

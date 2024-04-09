@@ -13,13 +13,13 @@ use std::hash::Hash;
 use bevy::input::ButtonInput;
 use bevy::prelude::{In, Res};
 
+use crate::action::seed::ActionSeed;
 use crate::action::wait;
-use crate::action::seed::{ActionSeed, SeedMark};
 
 /// Waits until item has just been pressed.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -29,7 +29,7 @@ use crate::action::seed::{ActionSeed, SeedMark};
 /// });
 /// ```
 #[inline(always)]
-pub fn just_pressed<T>() -> impl ActionSeed<T> + SeedMark
+pub fn just_pressed<T>() -> ActionSeed<T>
     where T: Copy + Eq + Hash + Send + Sync + 'static
 {
     wait::until(move |In(expect): In<T>,
@@ -41,7 +41,7 @@ pub fn just_pressed<T>() -> impl ActionSeed<T> + SeedMark
 /// Waits until keycode has been pressed.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -51,7 +51,7 @@ pub fn just_pressed<T>() -> impl ActionSeed<T> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn pressed<T>() -> impl ActionSeed<T> + SeedMark
+pub fn pressed<T>() -> ActionSeed<T>
     where T: Copy + Eq + Hash + Send + Sync + 'static
 {
     wait::until(move |In(expect): In<T>,
@@ -63,7 +63,7 @@ pub fn pressed<T>() -> impl ActionSeed<T> + SeedMark
 /// Waits until any keycode in inputs has been pressed.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -73,7 +73,7 @@ pub fn pressed<T>() -> impl ActionSeed<T> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn any_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
+pub fn any_pressed<T>() -> ActionSeed<Vec<T>>
     where
         T: Copy + Eq + Hash + Send + Sync + 'static
 {
@@ -86,7 +86,7 @@ pub fn any_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
 /// Waits until all keycodes in inputs have been pressed.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -96,7 +96,7 @@ pub fn any_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn all_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
+pub fn all_pressed<T>() -> ActionSeed<Vec<T>>
     where T: Copy + Eq + Hash + Send + Sync + 'static
 {
     wait::until(|In(items): In<Vec<T>>,
@@ -108,7 +108,7 @@ pub fn all_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
 /// Waits keycode has just been released.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -118,7 +118,7 @@ pub fn all_pressed<T>() -> impl ActionSeed<Vec<T>> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn just_released<T>() -> impl ActionSeed<T> + SeedMark
+pub fn just_released<T>() -> ActionSeed<T>
     where T: Copy + Eq + Hash + Send + Sync + 'static
 {
     wait::until(move |In(expect): In<T>,
@@ -130,7 +130,7 @@ pub fn just_released<T>() -> impl ActionSeed<T> + SeedMark
 /// Waits any keycode in inputs have just been released.
 ///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
@@ -140,7 +140,7 @@ pub fn just_released<T>() -> impl ActionSeed<T> + SeedMark
 /// });
 /// ```
 #[inline(always)]
-pub fn any_just_released<T>() -> impl ActionSeed<Vec<T>> + SeedMark
+pub fn any_just_released<T>() -> ActionSeed<Vec<T>>
     where T: Copy + Eq + Hash + Send + Sync + 'static
 {
     wait::until(|In(items): In<Vec<T>>,
@@ -159,7 +159,7 @@ mod tests {
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, wait};
-    use crate::prelude::{Then, ActionSeed};
+    use crate::action::sequence::Then;
     use crate::reactor::Reactor;
     use crate::sequence;
     use crate::tests::test_app;

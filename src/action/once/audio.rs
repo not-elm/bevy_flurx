@@ -7,7 +7,7 @@ use bevy::audio::{AudioBundle, PlaybackSettings};
 use bevy::prelude::{Commands, Entity, In, Res};
 
 use crate::action::once;
-use crate::prelude::{ActionSeed, SeedMark};
+use crate::prelude::{ActionSeed};
 
 /// Spawns [`AudioBundle`].
 ///
@@ -25,7 +25,7 @@ use crate::prelude::{ActionSeed, SeedMark};
 ///     task.will(Update, once::audio::play().with(("<audio_path>", PlaybackSettings::ONCE))).await;
 /// });
 /// ```
-pub fn play<Path>() -> impl ActionSeed<(Path, PlaybackSettings), Entity> + SeedMark 
+pub fn play<Path>() -> ActionSeed<(Path, PlaybackSettings), Entity>
     where Path: Into<AssetPath<'static>> + 'static
 {
     once::run(|In((path, settings)): In<(Path, PlaybackSettings)>, mut commands: Commands, asset_server: Res<AssetServer>| {

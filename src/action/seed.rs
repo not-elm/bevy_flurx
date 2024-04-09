@@ -1,36 +1,69 @@
 //! Provides the trait for converting into an action. 
 
 
-use crate::action::Action;
-use crate::runner::{CancellationToken, TaskOutput, TaskRunner};
+use std::marker::PhantomData;
 
-pub(crate) mod once;
-pub(crate) mod wait;
+use crate::action::Action;
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 ///
 /// If [`In`] type of the struct implements this is `()`, 
-/// its struct also implements [`Action`] automatically.
+/// its struct also implements Into<[`Action`]> automatically.
 ///
 /// Otherwise, to convert to the action,
 /// you need call [`ActionSeed::with`] or passed itself as an argument to [`Pipe::pipe`].  
 ///
 /// [`Action`]: crate::prelude::Action
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
-pub trait ActionSeed<In = (), Out = ()> {
+pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner>, PhantomData<I>);
+
+impl<I, O> ActionSeed<I, O>
+    where
+        I: 'static,
+        O: 'static
+{
+    /// Create the [`ActionSeed`].
+    #[inline]
+    pub fn new<R>(f: impl FnOnce(I, CancellationToken, Output<O>) -> R + 'static) -> ActionSeed<I, O>
+        where
+            R: Runner + 'static
+    {
+        ActionSeed(Box::new(move |input, token, output| {
+            BoxedRunner(Box::new(f(input, token, output)))
+        }), PhantomData)
+    }
+
+
     /// Into [`Action`] with `input`.
     ///
     /// [`Action`]: crate::prelude::Action
-    fn with(self, input: In) -> impl Action<In, Out>;
-}
+    #[inline]
+    pub const fn with(self, input: I) -> Action<I, O> {
+        Action(input, self)
+    }
 
-/// This is a dummy marker
-pub trait SeedMark {}
-
-impl<Out, A> Action<(), Out> for A
-    where A: ActionSeed<(), Out> + SeedMark
-{
-    #[inline(always)]
-    fn to_runner(self, token: CancellationToken, output: TaskOutput<Out>) -> impl TaskRunner + 'static {
-        self.with(()).to_runner(token, output)
+    #[inline]
+    pub(crate) fn create_runner(self, input: I, token: CancellationToken, output: Output<O>) -> BoxedRunner {
+        (self.0)(input, token, output)
     }
 }
+
+impl<I, O, F> From<F> for ActionSeed<I, O>
+    where 
+        F: FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner + 'static
+{
+    #[inline]
+    fn from(value: F) -> Self {
+        Self(Box::new(value), PhantomData)
+    }
+}
+
+// impl<I, O> Clone for ActionSeed<I, O> {
+//     #[inline]
+//     fn clone(&self) -> Self {
+//         Self(self.0.clone(), PhantomData)
+//     }
+// }
+//
+
+

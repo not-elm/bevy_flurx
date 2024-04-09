@@ -5,13 +5,13 @@
 
 use bevy::prelude::{In, NextState, ResMut, States};
 
-use crate::action::{once};
-use crate::prelude::{ActionSeed, SeedMark};
+use crate::action::once;
+use crate::prelude::ActionSeed;
 
 /// Once set a next state.
 ///
 /// ## Examples
-/// 
+///
 /// ```
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -27,7 +27,7 @@ use crate::prelude::{ActionSeed, SeedMark};
 ///     task.will(Update, once::state::set().with(S::S2)).await;
 /// });
 /// ```
-pub fn set<S>() -> impl ActionSeed<S> + SeedMark
+pub fn set<S>() -> ActionSeed<S>
     where S: States + 'static
 {
     once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {

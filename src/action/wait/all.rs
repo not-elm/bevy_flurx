@@ -3,7 +3,7 @@
 /// The return value type is tuple, its length is equal to the number of as passed tasks.
 ///
 /// ## Examples
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -37,9 +37,11 @@ macro_rules! wait_all {
     ($action: expr $(,)?) => {$action};
     ($action1: expr, $action2: expr $(,$action: expr)*$(,)?)  => {
         {
+            #[allow(unused)]
+            use $crate::prelude::wait::all::private::CreateBothAction;
             let a = $crate::action::wait::both($action1, $action2);
             $(
-            let a = $crate::prelude::wait::all::private::FlatBothRunner::new(a, $action);
+            let a = $crate::prelude::wait::all::private::FlatBothRunner::action(a, $action.into());
             )*
             a
         }
@@ -49,66 +51,69 @@ macro_rules! wait_all {
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub mod private {
-    use bevy::prelude::{Deref, DerefMut};
-
+    use std::marker::PhantomData;
     use crate::action::Action;
-    use crate::runner::{CancellationToken, RunWithTaskOutput, TaskOutput, TaskRunner};
-    use crate::runner::base::BaseTwoRunner;
+    use crate::prelude::ActionSeed;
+    use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
     use crate::runner::macros::impl_tuple_runner;
 
-    #[derive(Deref, DerefMut)]
-    pub struct FlatBothRunner<I1, I2, O1, O2>(BaseTwoRunner<I1, I2, O1, O2>);
-
-
-    impl<I1, I2, O1, O2> FlatBothRunner<I1, I2, O1, O2>
-        where
-            I1: 'static,
-            I2: 'static,
-            O1: 'static,
-            O2: 'static,
-    {
-        #[inline]
-        pub fn new(
-            a1: impl Action<I1, O1> + 'static,
-            a2: impl Action<I2, O2> + 'static,
-        ) -> FlatBothRunner<I1, I2, O1, O2> {
-            Self(BaseTwoRunner::new(a1, a2))
-        }
+    pub struct FlatBothRunner<I1, I2, O1, O2, O> {
+        token: CancellationToken,
+        o1: Output<O1>,
+        o2: Output<O2>,
+        r1: BoxedRunner,
+        r2: BoxedRunner,
+        output: Output<O>,
+        _m: PhantomData<(I1, I2)>
     }
+    
+    pub trait CreateBothAction<I1, O1, I2, O2, O>{
+        fn action(a1: Action<I1, O1>, a2: Action<I2, O2>) -> Action<(I1, I2), O>;
+    }
+    
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
-            impl<I1, I2, $($lhs_out,)* O2> Action< (I1, I2), ($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2>
+             impl<I1, I2, $($lhs_out,)* O2> CreateBothAction<I1, ($($lhs_out,)*), I2, O2, ($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, ($($lhs_out,)* O2)>
                 where
+                    $($lhs_out: 'static,)*
                     I1: 'static,
                     I2: 'static,
-                    $($lhs_out: 'static,)*
                     O2: 'static,
-
-
             {
-
-                #[inline(always)]
-                fn to_runner(self, token: CancellationToken, output: TaskOutput<($($lhs_out,)* O2)>) -> impl TaskRunner {
-                    (token, output, self)
+                fn action(
+                    a1: Action<I1, ($($lhs_out,)*)>,
+                    a2: Action<I2, O2>,
+                ) -> Action<(I1, I2), ($($lhs_out,)* O2)> {
+                    let Action(i1, s1) = a1.into();
+                    let Action(i2, s2) = a2.into();
+                    ActionSeed::new(|input: (I1, I2), token, output|{
+                        let o1 = Output::default();
+                        let o2 = Output::default();
+                        Self {
+                            output,
+                            r1: s1.with(input.0).into_runner(token.clone(), o1.clone()),
+                            r2: s2.with(input.1).into_runner(token.clone(), o2.clone()),
+                            o1,
+                            o2,
+                            token,
+                            _m: PhantomData
+                        }
+                    })
+                        .with((i1, i2))
                 }
             }
 
-
-            impl<I1, I2, $($lhs_out,)* O2> RunWithTaskOutput<($($lhs_out,)* O2)> for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2>
+            impl<I1, I2, $($lhs_out,)* O2> Runner for FlatBothRunner<I1, I2, ($($lhs_out,)*), O2, ($($lhs_out,)* O2)>
                 where
+                    $($lhs_out: 'static,)*
                     I1: 'static,
                     I2: 'static,
-                    $($lhs_out: 'static,)*
                     O2: 'static,
-
-
             {
-                type In = (I1, I2);
-
                 #[allow(non_snake_case)]
-                  fn run_with_task_output(&mut self, token: &mut CancellationToken, output: &mut TaskOutput<($($lhs_out,)* O2)>, world: &mut bevy::prelude::World) -> bool {
-                    if self.cancel_if_need(token){
+                  fn run(&mut self, world: &mut bevy::prelude::World) -> bool {
+                    if self.token.requested_cancel(){
                         return true;
                     }
                     if self.o1.is_none(){
@@ -119,7 +124,7 @@ pub mod private {
                     }
                     if let Some(($($lhs_out,)*)) = self.o1.take(){
                         if let Some(out2) = self.o2.take(){
-                            output.replace(($($lhs_out,)* out2));
+                            self.output.replace(($($lhs_out,)* out2));
                             true
                         }else{
                             self.o1.replace(($($lhs_out,)*));
@@ -143,7 +148,7 @@ mod tests {
     use bevy::prelude::{Commands, EventWriter, Local};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
-    use crate::prelude::{once, wait, ActionSeed};
+    use crate::prelude::{once, wait};
     use crate::reactor::Reactor;
     use crate::tests::test_app;
 
