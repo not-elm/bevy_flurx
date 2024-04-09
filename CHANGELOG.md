@@ -1,3 +1,19 @@
+## v0.3.3-beta
+
+### Update
+
+- [improved performance](https://github.com/not-elm/bevy_flurx/pull/13)
+
+### Features
+
+- [add omit traits](https://github.com/not-elm/bevy_flurx/pull/14)
+- [add through action and trait](https://github.com/not-elm/bevy_flurx/pull/12)
+- [add once::event::clear](https://github.com/not-elm/bevy_flurx/pull/11)
+
+### Breaking changes
+
+- [Changed Action and ActionSeed from trait to struct](https://github.com/not-elm/bevy_flurx/pull/12)
+
 ## v0.3.2
 
 ### Features
