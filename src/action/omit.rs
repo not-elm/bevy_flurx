@@ -4,10 +4,29 @@ use crate::action::Action;
 use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
-
-/// [`Omit`] provides a mechanism to omit inputs, outputs, or both types from an action. 
+/// [`Omit`] provides a mechanism to omit both input and output types from an action.
 pub trait Omit<I, O> {
-    /// Create an action that converts the output 
+    /// This method allows actions to omit generics from their return types,
+    /// which is useful for defining groups of actions.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use bevy::prelude::*;
+    /// use bevy_flurx::prelude::*;
+    ///
+    /// fn play_audio() -> ActionSeed{
+    ///     once::audio::play().with(("example.ogg", PlaybackSettings::default()))
+    ///         .pipe(wait::audio::finished())
+    ///         .omit()
+    /// }
+    /// ```
+    fn omit(self) -> ActionSeed;
+}
+
+/// [`OmitOutput`] provides a mechanism to omit output type from an action.
+pub trait OmitOutput<I, O, A> {
+    /// Create an action that converts the output
     /// the action from `O` to `()`.
     ///
     /// This method is useful for defining groups of actions.
@@ -17,7 +36,7 @@ pub trait Omit<I, O> {
     /// ```no_run
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
-    /// 
+    ///
     /// fn print_num() -> ActionSeed<usize>{
     ///     once::run(|In(num): In<usize>|{
     ///         format!("{num:}")
@@ -25,8 +44,11 @@ pub trait Omit<I, O> {
     ///         .omit_output()
     /// }
     /// ```
-    fn omit_output(self) -> Action<I, ()>;
+    fn omit_output(self) -> A;
+}
 
+/// [`OmitInput`] provides a mechanism to omit input type from an action.
+pub trait OmitInput<I, O> {
     /// This method allows actions to omit generics from their return types,
     /// which is useful for defining groups of actions.
     ///
@@ -44,31 +66,6 @@ pub trait Omit<I, O> {
     /// }
     /// ```
     fn omit_input(self) -> ActionSeed<(), O>;
-
-    /// This method allows actions to omit generics from their return types,
-    /// which is useful for defining groups of actions.
-    ///
-    /// # Examples
-    ///
-    /// ```no_run
-    /// use bevy::prelude::*;
-    /// use bevy_flurx::prelude::*;
-    ///
-    /// Reactor::schedule(|task|async move{
-    ///     task.will(Update, play_audio()
-    ///         .then(once::run(||{
-    ///             println!("the audio has been finished!");
-    ///         }))
-    ///     ).await;
-    /// });
-    ///
-    /// fn play_audio() -> ActionSeed{
-    ///     once::audio::play().with(("example.ogg", PlaybackSettings::default()))
-    ///         .pipe(wait::audio::finished())
-    ///         .omit()
-    /// }
-    /// ```
-    fn omit(self) -> ActionSeed;
 }
 
 impl<I, O, A> Omit<I, O> for A
@@ -77,9 +74,33 @@ impl<I, O, A> Omit<I, O> for A
         I: 'static,
         O: 'static
 {
+    fn omit(self) -> ActionSeed {
+        self.into().omit_output().omit_input()
+    }
+}
+
+impl<I, O, A> OmitInput<I, O> for A
+    where
+        A: Into<Action<I, O>> + 'static,
+        I: 'static,
+        O: 'static
+{
+    #[inline]
+    fn omit_input(self) -> ActionSeed<(), O> {
+        ActionSeed::from(|_, token, output| {
+            self.into().into_runner(token, output)
+        })
+    }
+}
+
+impl<I, O> OmitOutput<I, O, Action<I, ()>> for Action<I, O>
+    where
+        I: 'static,
+        O: 'static
+{
     #[inline]
     fn omit_output(self) -> Action<I, ()> {
-        let Action(input, seed) = self.into();
+        let Action(input, seed) = self;
         ActionSeed::new(|input, token, output| {
             let o1 = Output::default();
             let r1 = seed.create_runner(input, token.clone(), o1.clone());
@@ -92,17 +113,25 @@ impl<I, O, A> Omit<I, O> for A
         })
             .with(input)
     }
+}
 
+impl<I, O> OmitOutput<I, O, ActionSeed<I, ()>> for ActionSeed<I, O>
+    where
+        I: 'static,
+        O: 'static
+{
     #[inline]
-    fn omit_input(self) -> ActionSeed<(), O> {
-        ActionSeed::from(|_, token, output| {
-            self.into().into_runner(token, output)
+    fn omit_output(self) -> ActionSeed<I, ()> {
+        ActionSeed::new(|input, token, output| {
+            let o1 = Output::default();
+            let r1 = self.create_runner(input, token.clone(), o1.clone());
+            OmitRunner {
+                token,
+                output,
+                o1,
+                r1,
+            }
         })
-    }
-
-    #[inline]
-    fn omit(self) -> ActionSeed {
-        self.omit_output().omit_input()
     }
 }
 
@@ -137,7 +166,8 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{Omit, once, wait};
+    use crate::action::{Omit, OmitOutput, once, wait};
+    use crate::action::omit::OmitInput;
     use crate::prelude::{ActionSeed, Pipe, Reactor};
     use crate::tests::test_app;
 

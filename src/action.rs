@@ -31,9 +31,9 @@
 //! - [`switch`]
 //! - [`through`]
 //! - [`tuple`] 
-//! - [`omit::Omit`]
+//! - [`omit`]
 
-pub use omit::Omit;
+pub use omit::{Omit, OmitInput, OmitOutput};
 pub use through::through;
 pub use tuple::tuple;
 
