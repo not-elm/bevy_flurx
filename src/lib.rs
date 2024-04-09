@@ -42,7 +42,6 @@ pub mod prelude {
         action::switch::*,
         action::through::{through, Through},
         action::wait::Either,
-        action::Omit,
         extension::ScheduleReactor,
         FlurxPlugin,
         reactor::Reactor,

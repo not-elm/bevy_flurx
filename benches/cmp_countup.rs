@@ -74,18 +74,6 @@ fn with_flurx(count: usize, c: &mut Criterion) {
     });
 }
 
-fn cmp_count_100(c: &mut Criterion){
-    const COUNT: usize = 100;
-    without_flurx(COUNT, c);
-    with_flurx(COUNT, c);
-}
-
-fn cmp_count_500(c: &mut Criterion){
-    const COUNT: usize = 500;
-    without_flurx(COUNT, c);
-    with_flurx(COUNT, c);
-}
-
 fn cmp_count_1000(c: &mut Criterion) {
     const COUNT: usize = 1000;
     without_flurx(COUNT, c);
