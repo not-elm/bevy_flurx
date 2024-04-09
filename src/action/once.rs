@@ -45,12 +45,12 @@ pub mod audio;
 #[inline(always)]
 pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I, Out>
     where
-        Sys: IntoSystem<I, Out, M> + Clone + 'static,
+        Sys: IntoSystem<I, Out, M> + 'static,
         I: 'static,
         Out: 'static
 {
     ActionSeed::new(move |input, token, output| {
-        OnceRunner::new(input, token, output, IntoSystem::into_system(system.clone().pipe(|input: In<Out>| {
+        OnceRunner::new(input, token, output, IntoSystem::into_system(system.pipe(|input: In<Out>| {
             Some(input.0)
         })))
     })
