@@ -1,16 +1,16 @@
 //! An `action` is a system to be run on the [`Reactor`](crate::prelude::Reactor).
 //!
 //! It is scheduled by [`Reactor`](crate::prelude::Reactor) and is run once per frame(twice if uninitialized).
-//! 
+//!
 //! Every action has an end condition, and if the condition is met, the next action proceeds.
-//! 
+//!
 //! For example, in the following code, the exit condition is to wait until the count reaches 2,
 //! and when it reaches 2, proceed to `process: 2`.
 //!
 //! ```no_run
 //! use bevy::prelude::*;
 //! use bevy_flurx::prelude::*;
-//! 
+//!
 //! Reactor::schedule(|task| async move{
 //!     // `process: 1`
 //!     task.will(Update, wait::until(|mut count: Local<usize>|{
@@ -20,9 +20,9 @@
 //!     // `process: 2`
 //! });
 //! ```
-//! 
+//!
 //! actions
-//! 
+//!
 //! - [`once`]
 //! - [`wait`]
 //! - [`delay`]
@@ -31,8 +31,11 @@
 //! - [`switch`]
 //! - [`through`]
 //! - [`tuple`] 
+//! - [`omit`]
 
+pub use omit::{Omit, OmitInput, OmitOutput};
 pub use through::through;
+pub use tuple::tuple;
 
 use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output};
@@ -48,12 +51,12 @@ pub mod pipe;
 pub mod sequence;
 mod repeat;
 mod tuple;
-pub use tuple::tuple;
+mod omit;
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
-/// 
+///
 /// Please check [here](crate::action) for more details.
-pub struct Action<I=(), O=()>(pub(crate) I, pub(crate) ActionSeed<I, O>);
+pub struct Action<I = (), O = ()>(pub(crate) I, pub(crate) ActionSeed<I, O>);
 
 impl<I1, O1> Action<I1, O1>
     where

@@ -33,6 +33,7 @@ impl<I, O> ActionSeed<I, O>
         }), PhantomData)
     }
 
+
     /// Into [`Action`] with `input`.
     ///
     /// [`Action`]: crate::prelude::Action
@@ -44,6 +45,16 @@ impl<I, O> ActionSeed<I, O>
     #[inline]
     pub(crate) fn create_runner(self, input: I, token: CancellationToken, output: Output<O>) -> BoxedRunner {
         (self.0)(input, token, output)
+    }
+}
+
+impl<I, O, F> From<F> for ActionSeed<I, O>
+    where 
+        F: FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner + 'static
+{
+    #[inline]
+    fn from(value: F) -> Self {
+        Self(Box::new(value), PhantomData)
     }
 }
 
