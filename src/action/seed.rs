@@ -4,7 +4,7 @@
 use std::marker::PhantomData;
 
 use crate::action::Action;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 ///
 /// If [`In`] type of the struct implements this is `()`, 
@@ -15,7 +15,7 @@ use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
 ///
 /// [`Action`]: crate::prelude::Action
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
-pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, CancellationToken, Output<O>) -> BoxedActionRunner>, PhantomData<I>);
+pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner>, PhantomData<I>);
 
 impl<I, O> ActionSeed<I, O>
     where
@@ -29,7 +29,7 @@ impl<I, O> ActionSeed<I, O>
             R: Runner + 'static
     {
         ActionSeed(Box::new(move |input, token, output| {
-            BoxedActionRunner(Box::new(f(input, token, output)))
+            BoxedRunner(Box::new(f(input, token, output)))
         }), PhantomData)
     }
 
@@ -42,7 +42,7 @@ impl<I, O> ActionSeed<I, O>
     }
 
     #[inline]
-    pub(crate) fn create_runner(self, input: I, token: CancellationToken, output: Output<O>) -> BoxedActionRunner {
+    pub(crate) fn create_runner(self, input: I, token: CancellationToken, output: Output<O>) -> BoxedRunner {
         (self.0)(input, token, output)
     }
 }

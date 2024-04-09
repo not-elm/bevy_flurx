@@ -54,15 +54,15 @@ pub mod private {
     use std::marker::PhantomData;
     use crate::action::Action;
     use crate::prelude::ActionSeed;
-    use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+    use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
     use crate::runner::macros::impl_tuple_runner;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
         token: CancellationToken,
         o1: Output<O1>,
         o2: Output<O2>,
-        r1: BoxedActionRunner,
-        r2: BoxedActionRunner,
+        r1: BoxedRunner,
+        r2: BoxedRunner,
         output: Output<O>,
         _m: PhantomData<(I1, I2)>
     }

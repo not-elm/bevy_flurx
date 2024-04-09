@@ -10,7 +10,7 @@ use bevy::prelude::World;
 
 use crate::action::Action;
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// Create the action combined with the subsequent action.
 ///
@@ -108,8 +108,8 @@ macro_rules! sequence {
 }
 
 struct SequenceRunner<O1> {
-    pub r1: BoxedActionRunner,
-    pub r2: BoxedActionRunner,
+    pub r1: BoxedRunner,
+    pub r2: BoxedRunner,
     pub o1: Output<O1>,
     pub token: CancellationToken,
 }

@@ -93,34 +93,34 @@ pub trait Runner {
 
 #[repr(transparent)]
 #[derive(Component, Deref, DerefMut)]
-pub struct BoxedActionRunner(pub(crate) Box<dyn Runner>);
+pub struct BoxedRunner(pub(crate) Box<dyn Runner>);
 
-/// SAFETY: This structure must be used only with [`run_task_runners`].
-unsafe impl Send for BoxedActionRunner {}
+/// SAFETY: This structure must be used only with [`run_runners`].
+unsafe impl Send for BoxedRunner {}
 
-/// SAFETY: This structure must be used only with [`run_task_runners`].
-unsafe impl Sync for BoxedActionRunner {}
+/// SAFETY: This structure must be used only with [`run_runners`].
+unsafe impl Sync for BoxedRunner {}
 
 #[repr(transparent)]
 #[derive(Resource)]
-struct TaskRunnerActionInitialized<L: Send + Sync>(PhantomData<L>);
+struct RunRunnersSystemInitialized<L: Send + Sync>(PhantomData<L>);
 
 pub(crate) fn initialize_task_runner<Label>(
     world: &mut World,
     label: &Label,
-    runner: BoxedActionRunner,
+    runner: BoxedRunner,
 )
     where Label: ScheduleLabel
 {
     world.spawn(runner);
-    if !world.contains_resource::<TaskRunnerActionInitialized<Label>>() {
-        world.insert_resource(TaskRunnerActionInitialized::<Label>(PhantomData));
+    if !world.contains_resource::<RunRunnersSystemInitialized<Label>>() {
+        world.insert_resource(RunRunnersSystemInitialized::<Label>(PhantomData));
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
 
         let schedule = initialize_schedule(&mut schedules, label.intern());
-        schedule.add_systems(run_task_runners);
+        schedule.add_systems(run_runners);
     }
 }
 
@@ -134,9 +134,9 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 }
 
 #[inline]
-fn run_task_runners(world: &mut World) {
+fn run_runners(world: &mut World) {
     let world_ptr = WorldPtr::new(world);
-    for (entity, mut runner) in world.query::<(Entity, &mut BoxedActionRunner)>().iter_mut(world) {
+    for (entity, mut runner) in world.query::<(Entity, &mut BoxedRunner)>().iter_mut(world) {
         let world = world_ptr.as_mut();
         if runner.0.run(world) {
             world.despawn(entity);

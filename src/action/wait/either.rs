@@ -2,7 +2,7 @@ use bevy::prelude::World;
 use crate::action::Action;
 
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// This enum represents the result of [`wait::either`].
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -80,8 +80,8 @@ pub fn either<LI, LO, RI, RO, >(
 }
 
 struct EitherRunner<O1, O2> {
-    r1: BoxedActionRunner,
-    r2: BoxedActionRunner,
+    r1: BoxedRunner,
+    r2: BoxedRunner,
     o1: Output<O1>,
     o2: Output<O2>,
     token: CancellationToken,

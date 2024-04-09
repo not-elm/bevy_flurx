@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// Convert to the output of action to tuple.
 pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
@@ -22,7 +22,7 @@ pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
 }
 
 struct TupleRunner<O> {
-    runner: BoxedActionRunner,
+    runner: BoxedRunner,
     tmp: Output<O>,
     output: Output<(O, )>,
     token: CancellationToken,

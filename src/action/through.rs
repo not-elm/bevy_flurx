@@ -7,7 +7,7 @@ use bevy::prelude::World;
 use crate::action::pipe::Pipe;
 use crate::action::seed::ActionSeed;
 use crate::prelude::Action;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// This function is used when you want to insert some kind of action,
 /// such as a delay, between the action that sends output and the action that receives it.
@@ -98,7 +98,7 @@ impl<I1, O1, Seed> Through<I1, O1> for Seed
 struct ThroughRunner<V> {
     value: Option<V>,
     output: Output<V>,
-    inner: BoxedActionRunner,
+    inner: BoxedRunner,
     token: CancellationToken,
 }
 

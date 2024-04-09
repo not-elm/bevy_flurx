@@ -7,7 +7,7 @@
 pub use through::through;
 
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output};
+use crate::runner::{BoxedRunner, CancellationToken, Output};
 
 pub mod once;
 pub mod wait;
@@ -31,7 +31,7 @@ impl<I1, O1> Action<I1, O1>
         O1: 'static
 {
     #[inline]
-    pub(crate) fn into_runner(self, token: CancellationToken, output: Output<O1>) -> BoxedActionRunner {
+    pub(crate) fn into_runner(self, token: CancellationToken, output: Output<O1>) -> BoxedRunner {
         self.1.create_runner(self.0, token, output)
     }
 }

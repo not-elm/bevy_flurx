@@ -4,7 +4,7 @@ use bevy::prelude::World;
 
 use crate::action::Action;
 use crate::prelude::seed::ActionSeed;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// Provides the mechanism to pipe the actions. 
 pub trait Pipe<I1, O1> {
@@ -59,8 +59,8 @@ impl<I1, O1, Act> Pipe<I1, O1> for Act
 
 struct PipeRunner<O1, O2> {
     o1: Output<O1>,
-    r1: BoxedActionRunner,
-    r2: Option<BoxedActionRunner>,
+    r1: BoxedRunner,
+    r2: Option<BoxedRunner>,
     seed: Option<ActionSeed<O1, O2>>,
     token: CancellationToken,
     output: Output<O2>,
@@ -72,7 +72,7 @@ impl<O1, O2> PipeRunner<O1, O2>
         O2: 'static
 {
     pub fn new(
-        r1: BoxedActionRunner,
+        r1: BoxedRunner,
         o1: Output<O1>,
         seed: ActionSeed<O1, O2>,
         token: CancellationToken,

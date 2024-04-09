@@ -2,7 +2,7 @@ use bevy::prelude::World;
 
 use crate::action::Action;
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedActionRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 use crate::runner::macros::output_combine;
 
 /// Run until both tasks done.
@@ -50,8 +50,8 @@ pub fn both<LI, LO, RI, RO>(
 }
 
 struct BothRunner<O1, O2> {
-    r1: BoxedActionRunner,
-    r2: BoxedActionRunner,
+    r1: BoxedRunner,
+    r2: BoxedRunner,
     o1: Output<O1>,
     o2: Output<O2>,
     output: Output<(O1, O2)>,
