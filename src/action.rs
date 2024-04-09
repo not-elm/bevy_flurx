@@ -15,7 +15,7 @@
 //!     // `process: 1`
 //!     task.will(Update, wait::until(|mut count: Local<usize>|{
 //!         *count += 1;
-//!         *count == 2;
+//!         *count == 2
 //!     })).await;
 //!     // `process: 2`
 //! });
