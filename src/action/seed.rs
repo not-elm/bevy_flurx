@@ -8,7 +8,7 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 ///
 /// If [`In`] type of the struct implements this is `()`, 
-/// its struct also implements [`Action`] automatically.
+/// its struct also implements Into<[`Action`]> automatically.
 ///
 /// Otherwise, to convert to the action,
 /// you need call [`ActionSeed::with`] or passed itself as an argument to [`Pipe::pipe`].  
