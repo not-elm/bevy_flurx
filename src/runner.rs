@@ -1,83 +1,16 @@
-use std::cell::{Cell, RefCell};
 use std::marker::PhantomData;
-use std::rc::Rc;
 
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Component, Deref, DerefMut, Entity, Resource, Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
+pub use cancellation_token::CancellationToken;
+pub use output::Output;
+
 use crate::world_ptr::WorldPtr;
 
-/// Represents the output of the task.
-/// See details [`Runner`].
-pub struct Output<O>(Rc<RefCell<Option<O>>>);
-
-impl<O> Clone for Output<O> {
-    #[inline]
-    fn clone(&self) -> Self {
-        Self(Rc::clone(&self.0))
-    }
-}
-
-impl<O> Default for Output<O> {
-    #[inline]
-    fn default() -> Self {
-        Self(Rc::new(RefCell::new(None)))
-    }
-}
-
-impl<O> Output<O> {
-    #[inline(always)]
-    pub fn replace(&self, o: O) {
-        self.0.borrow_mut().replace(o);
-    }
-
-    #[inline(always)]
-    pub fn take(&self) -> Option<O> {
-        self.0.borrow_mut().take()
-    }
-
-    #[inline(always)]
-    pub fn is_some(&self) -> bool {
-        self.0.borrow().is_some()
-    }
-
-    #[inline(always)]
-    pub fn is_none(&self) -> bool {
-        self.0.borrow().is_none()
-    }
-}
-
-impl<O: Clone> Output<O> {
-    #[inline(always)]
-    pub fn cloned(&self) -> Option<O> {
-        self.0.borrow().clone()
-    }
-}
-
-/// Structure for canceling a task
-#[derive(Default)]
-pub struct CancellationToken(Rc<Cell<bool>>);
-
-impl Clone for CancellationToken {
-    #[inline(always)]
-    fn clone(&self) -> Self {
-        Self(Rc::clone(&self.0))
-    }
-}
-
-impl CancellationToken {
-    #[inline(always)]
-    pub fn requested_cancel(&self) -> bool {
-        self.0.get()
-    }
-
-    #[inline(always)]
-    pub fn cancel(&self) {
-        self.0.set(true);
-    }
-}
-
+mod output;
+mod cancellation_token;
 
 ///
 pub trait Runner {
@@ -105,7 +38,7 @@ unsafe impl Sync for BoxedRunner {}
 #[derive(Resource)]
 struct RunRunnersSystemInitialized<L: Send + Sync>(PhantomData<L>);
 
-pub(crate) fn initialize_task_runner<Label>(
+pub(crate) fn initialize_runner<Label>(
     world: &mut World,
     label: &Label,
     runner: BoxedRunner,

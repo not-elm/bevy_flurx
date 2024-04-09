@@ -6,7 +6,7 @@ use bevy::prelude::World;
 use flurx::selector::Selector;
 
 use crate::action::Action;
-use crate::runner::{CancellationToken, initialize_task_runner, Output};
+use crate::runner::{CancellationToken, initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 
 pub(crate) struct WorldSelector<Label, In, Out> {
@@ -48,7 +48,7 @@ impl<Label, In, Out> Selector<WorldPtr> for WorldSelector<Label, In, Out>
         let world: &mut World = world.as_mut();
         if let Some(action) = self.action.take() {
             let runner = action.into_runner(self.token.clone(), self.output.clone());
-            initialize_task_runner(world, &self.label, runner);
+            initialize_runner(world, &self.label, runner);
             None
         } else {
             self.output.take()
