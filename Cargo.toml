@@ -30,7 +30,7 @@ harness = false
 
 [dependencies]
 bevy = { version = "0.13.2", default-features = false }
-flurx = { version = "0.1.3", features = ["sync"] }
+flurx = { git = "https://github.com/not-elm/flurx", features = ["sync"], branch = "feature/bevy" }
 futures-lite = "2.2.0"
 futures-polling = "0.1.1"
 
