@@ -23,11 +23,7 @@ impl ReactiveTask {
     ///
     /// The argument label indicates which scheduler it will be executed on.
     ///
-    /// See below for configs.
-    ///
-    /// - [`once`](crate::prelude::once_action)
-    /// - [`wait`](crate::prelude::wait)
-    /// - [`delay`](crate::prelude::delay)
+    /// For `action`, please see [`here`](crate::action). 
     ///
     /// ## Example
     ///

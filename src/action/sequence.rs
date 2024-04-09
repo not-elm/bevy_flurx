@@ -4,6 +4,14 @@
 //! in method chains like `once::run(||{}).then(once::run(||{}))` 
 //!
 //! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
+//! 
+//! trait 
+//! 
+//! [`Then`]
+//! 
+//! macro
+//! 
+//! [`sequence!`](crate::sequence)
 
 
 use bevy::prelude::World;

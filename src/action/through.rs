@@ -1,4 +1,10 @@
+//! 
+//! trait
+//! 
 //! - [`Through`]
+//! 
+//! actions
+//! 
 //! - [`through`]
 
 
