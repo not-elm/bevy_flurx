@@ -66,7 +66,7 @@ impl Plugin for FlurxPlugin {
         app
             .init_schedule(RunReactor)
             .add_systems(PostStartup, (
-                flurx_initialize,
+                initialize_reactors,
                 insert_initialized
             ))
             .add_systems(RunReactor, (
@@ -84,7 +84,7 @@ impl Plugin for FlurxPlugin {
 #[derive(ScheduleLabel, Eq, PartialEq, Debug, Copy, Clone, Hash)]
 struct RunReactor;
 
-fn flurx_initialize(
+fn initialize_reactors(
     world: &mut World
 ) {
     let world_ptr = WorldPtr::new(world);
@@ -92,15 +92,6 @@ fn flurx_initialize(
         .query_filtered::<&mut Reactor, (Added<Reactor>, Without<Initialized>)>()
         .iter_mut(world) {
         reactor.scheduler.run_sync(world_ptr);
-    }
-}
-
-fn insert_initialized(
-    mut commands: Commands,
-    reactors: Query<Entity, (With<Reactor>, Without<Initialized>)>,
-) {
-    for entity in reactors.iter() {
-        commands.entity(entity).insert(Initialized);
     }
 }
 
@@ -115,6 +106,15 @@ fn run_reactors(
         if initialized.is_none() {
             reactor.scheduler.run_sync(world_ptr);
         }
+    }
+}
+
+fn insert_initialized(
+    mut commands: Commands,
+    reactors: Query<Entity, (With<Reactor>, Without<Initialized>)>,
+) {
+    for entity in reactors.iter() {
+        commands.entity(entity).insert(Initialized);
     }
 }
 
