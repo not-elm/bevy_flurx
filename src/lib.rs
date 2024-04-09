@@ -44,7 +44,7 @@ pub mod prelude {
         action::through::{through, Through},
         extension::ScheduleReactor,
         FlurxPlugin,
-        runner::Output,
+        runner::{Output, Runner},
         reactor::Reactor,
         task::ReactiveTask,
     };
