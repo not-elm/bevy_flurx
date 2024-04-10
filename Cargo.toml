@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.3.3-beta"
+version = "0.3.3-beta.2"
 edition = "2021"
 authors = ["elm"]
 categories = ["asynchronous", "game-development"]
@@ -9,7 +9,6 @@ keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
-documentation = "https://docs.rs/bevy_flurx/0.3.3-beta/bevy_flurx/index.html"
 
 [workspace]
 exclude = ["benches"]

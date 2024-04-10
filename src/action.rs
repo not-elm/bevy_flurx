@@ -32,6 +32,8 @@
 //! - [`through`]
 //! - [`tuple`] 
 //! - [`omit`]
+//! - [`map::Map`]
+//! - [`remake::Remake`]
 
 pub use map::Map;
 pub use omit::{Omit, OmitInput, OmitOutput};

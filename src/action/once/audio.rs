@@ -11,7 +11,7 @@ use crate::prelude::{ActionSeed};
 
 /// Spawns [`AudioBundle`].
 ///
-/// The output value is [`Entity`](bevy::prelude::Entity) associated with the [`AudioBundle`].
+/// The output value is [`Entity`](bevy::prelude::Entity) tha [`AudioBundle`] is attached to.
 ///
 /// [`AudioBundle`]: bevy::audio::AudioBundle
 ///
