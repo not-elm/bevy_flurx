@@ -7,6 +7,12 @@
 > [!CAUTION]
 > `bevy_flurx` is currently in the early stages of development and is subject to breaking changes.
 
+> [!IMPORTANT]
+> The version will be updated from beta to v0.3.3 in the near future 
+if there seem to be no problems.
+
+I believe there will be very few disruptive changes after v0.3.3.
+
 This library provides a mechanism for more sequential description of delays, character movement,
 waiting for user input, and other state waits.
 
