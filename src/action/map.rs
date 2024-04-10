@@ -3,7 +3,27 @@ use bevy::prelude::World;
 use crate::action::remake::Remake;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
+/// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
+/// applying function.
 pub trait Map<I1, O1, O2, ActionOrSeed> {
+    /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
+    /// applying function.
+    /// 
+    /// # Examples
+    /// 
+    /// ```no_run
+    /// use bevy::prelude::*;
+    /// use bevy_flurx::prelude::*;
+    /// 
+    /// Reactor::schedule(|task| async move{
+    ///     task.will(Update, once::run(|| 3)
+    ///         .map(|num| num + 5)
+    ///         .pipe(once::run(|In(num): In<usize>|{
+    ///             assert_eq!(num, 8);
+    ///         }))
+    ///     ).await;
+    /// });
+    /// ```
     fn map(self, f: impl FnOnce(O1) -> O2 + 'static) -> ActionOrSeed;
 }
 
