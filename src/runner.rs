@@ -12,14 +12,14 @@ use crate::world_ptr::WorldPtr;
 mod output;
 mod cancellation_token;
 
-///
+/// The structure that implements [`Runner`] is given [`Output`],
+/// if the system termination condition is met, return `true` and
+/// pass the system output to [`Output`].
 pub trait Runner {
-    /// Run the system. 
-    ///
-    /// The structure that implements [`Runner`] is given [`Output`],
-    /// if the system termination condition is met, return `true` and
-    /// pass the system output to [`Output`].
-    ///
+    /// Run the system.
+    /// 
+    /// If this runner finishes, it must return `true`.
+    /// If it returns `true`, an entity attached this runner will be removed.
     fn run(&mut self, world: &mut World) -> bool;
 }
 

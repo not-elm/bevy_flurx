@@ -4,20 +4,19 @@
 //! in method chains like `once::run(||{}).then(once::run(||{}))` 
 //!
 //! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
-//! 
+//!
 //! trait 
-//! 
+//!
 //! [`Then`]
-//! 
+//!
 //! macro
-//! 
+//!
 //! [`sequence!`](crate::sequence)
 
 
 use bevy::prelude::World;
 
-use crate::action::Action;
-use crate::prelude::ActionSeed;
+use crate::action::{Action, Remake};
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// Create the action combined with the subsequent action.
@@ -26,7 +25,7 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 /// by connecting them with a method chain.
 ///
 /// You can also use [`sequence!`](crate::sequence) instead of this trait.
-pub trait Then<I1, O1> {
+pub trait Then<I1, O1, O2, ActionOrSeed> {
     /// Returns the action combined with the subsequent action.
     ///
     /// The action's output will be that of the subsequent action.
@@ -44,24 +43,24 @@ pub trait Then<I1, O1> {
     ///     }).await;
     /// });
     /// ```
-    fn then<I2, O2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O2>
+    fn then<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
         where
-            I2: 'static,
-            O2: 'static;
+            I2: 'static;
 }
 
 
-impl<I1, O1, A> Then<I1, O1> for A
+impl<I1, O1, O2, ActionOrSeed, A> Then<I1, O1, O2, ActionOrSeed> for A
     where
         I1: 'static,
         O1: 'static,
-        A: Into<Action<I1, O1>> + 'static
+        O2: 'static,
+        A: Remake<I1, O1, O2, ActionOrSeed> + 'static
 {
-    fn then<I2, O2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O2> where I2: 'static, O2: 'static {
-        let Action(i1, s1) = self.into();
-        ActionSeed::new(|input, token, output| {
-            let o1 = Output::default();
-            let r1 = s1.create_runner(input, token.clone(), o1.clone());
+    fn then<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
+        where
+            I2: 'static
+    {
+        self.remake(|r1, o1, token, output| {
             SequenceRunner {
                 r1,
                 r2: action.into().into_runner(token.clone(), output),
@@ -69,7 +68,6 @@ impl<I1, O1, A> Then<I1, O1> for A
                 token,
             }
         })
-            .with(i1)
     }
 }
 

@@ -2,7 +2,9 @@ use crate::action::Action;
 use crate::prelude::{ActionSeed, Output, Runner};
 use crate::runner::{BoxedRunner, CancellationToken};
 
+/// Remake a new action base on itself [`Runner`] and [`Output`].
 pub trait Remake<I1, O1, O2, ActionOrSeed> {
+    /// Remake a new action base on itself [`Runner`] and [`Output`].
     fn remake<F, R>(self, f: F) -> ActionOrSeed
         where
             F: FnOnce(BoxedRunner, Output<O1>, CancellationToken, Output<O2>) -> R + 'static,

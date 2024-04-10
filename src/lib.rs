@@ -42,7 +42,7 @@ pub mod prelude {
         action::switch::*,
         action::through::{through, Through},
         action::wait::Either,
-        action::map::Map,
+        action::Map,
         action::{Omit, OmitInput, OmitOutput},
         action::Remake,
         extension::ScheduleReactor,

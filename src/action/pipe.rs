@@ -39,12 +39,12 @@ pub trait Pipe<I1, O1, O2, A> {
     fn pipe(self, seed: ActionSeed<O1, O2>) -> A;
 }
 
-impl<I1, O1, O2, A, ActonOrSeed> Pipe<I1, O1, O2, A> for ActonOrSeed
+impl<I1, O1, O2, A, ActionOrSeed> Pipe<I1, O1, O2, A> for ActionOrSeed
     where
         I1: 'static,
         O1: 'static,
         O2: 'static,
-        ActonOrSeed: Remake<I1, O1, O2, A>
+        ActionOrSeed: Remake<I1, O1, O2, A>
 {
     #[inline(always)]
     fn pipe(self, seed: ActionSeed<O1, O2>) -> A {
