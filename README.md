@@ -50,17 +50,13 @@ All examples are [`here`](./examples).
 
 Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
-## TODO
-
-- Improved performance
-
 ## Compatible Bevy versions
 
-| bevy_flurx        | bevy   |
-|-------------------|--------|
-| 0.3.0             | 0.13.0 |
-| 0.3.1             | 0.13.1 |
-| 0.3.2, 0.3.3-beta | 0.13.2 | 
+| bevy_flurx           | bevy   |
+|----------------------|--------|
+| 0.3.0                | 0.13.0 |
+| 0.3.1                | 0.13.1 |
+| 0.3.2 ~ 0.3.3-beta.2 | 0.13.2 | 
 
 ## License
 

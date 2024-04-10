@@ -32,8 +32,12 @@
 //! - [`through`]
 //! - [`tuple`] 
 //! - [`omit`]
+//! - [`map::Map`]
+//! - [`remake::Remake`]
 
+pub use map::Map;
 pub use omit::{Omit, OmitInput, OmitOutput};
+pub use remake::Remake;
 pub use through::through;
 pub use tuple::tuple;
 
@@ -52,6 +56,8 @@ pub mod sequence;
 mod repeat;
 mod tuple;
 mod omit;
+mod map;
+mod remake;
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
 ///

@@ -1,3 +1,9 @@
+//! Provides the mechanisms  to omit input and/or output types from an action.
+//!
+//! - [`Omit`]
+//! - [`OmitInput`] 
+//! - [`OmitOutput`]
+
 use bevy::prelude::World;
 
 use crate::action::Action;
