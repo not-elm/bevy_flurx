@@ -1,10 +1,10 @@
-//! 
+//!
 //! trait
-//! 
+//!
 //! - [`Through`]
-//! 
+//!
 //! actions
-//! 
+//!
 //! - [`through`]
 
 
@@ -55,7 +55,7 @@ pub fn through<V, I, O>(action: impl Into<Action<I, O>> + 'static) -> ActionSeed
 }
 
 /// Provides a method version of [`through`].
-pub trait Through<I1, O1> {
+pub trait Through<I1, O1, O2, ActionOrSeed> {
     ///
     /// This method is syntax sugar for [`through`].
     ///
@@ -79,23 +79,36 @@ pub trait Through<I1, O1> {
     ///     ).await;
     /// });
     /// ```
-    fn through<I2, O2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O1>
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
         where
-            I2: 'static,
-            O2: 'static;
+            I2: 'static;
 }
 
-impl<I1, O1, Seed> Through<I1, O1> for Seed
+impl<I1, O1, O2> Through<I1, O1, O2, ActionSeed<I1, O1>> for ActionSeed<I1, O1>
     where
-        Seed: Into<Action<I1, O1>> + 'static,
         I1: 'static,
-        O1: Clone + 'static
+        O1: 'static,
+        O2: 'static,
 {
     #[inline]
-    fn through<I2, O2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O1>
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionSeed<I1, O1>
         where
-            I2: 'static,
-            O2: 'static
+            I2: 'static
+    {
+        self.pipe(through(action))
+    }
+}
+
+impl<I1, O1, O2> Through<I1, O1, O2, Action<I1, O1>> for Action<I1, O1>
+    where
+        I1: 'static,
+        O1: 'static,
+        O2: 'static,
+{
+    #[inline]
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O1>
+        where
+            I2: 'static
     {
         self.pipe(through(action))
     }
