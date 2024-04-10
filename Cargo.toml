@@ -9,6 +9,7 @@ keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
+documentation = "https://docs.rs/bevy_flurx/0.3.3-beta/bevy_flurx/index.html"
 
 [workspace]
 exclude = ["benches"]
@@ -30,8 +31,7 @@ harness = false
 
 [dependencies]
 bevy = { version = "0.13.2", default-features = false }
-flurx = { git = "https://github.com/not-elm/flurx", features = ["sync"], branch = "feature/bevy" }
-futures-lite = "2.2.0"
+flurx = { version = "0.1.4", features = ["sync"] }
 futures-polling = "0.1.1"
 
 [dev-dependencies]
