@@ -57,7 +57,7 @@ pub fn through<V, I, O>(action: impl Into<Action<I, O>> + 'static) -> ActionSeed
 /// Provides a method version of [`through`].
 pub trait Through<I1, O1, O2, ActionOrSeed> {
     ///
-    /// This method is syntax sugar for [`through`].
+    /// This method is syntax sugar for `self.pipe(through(action))`.
     ///
     ///
     /// # Examples

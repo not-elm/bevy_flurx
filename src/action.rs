@@ -47,7 +47,6 @@ use crate::runner::{BoxedRunner, CancellationToken, Output};
 pub mod once;
 pub mod wait;
 pub mod delay;
-
 pub mod switch;
 pub mod seed;
 pub mod through;
@@ -85,13 +84,67 @@ impl<Out> From<ActionSeed<(), Out>> for Action<(), Out>
     }
 }
 
-// impl<I, O> Clone for Action<I, O>
-//     where
-//         I: Clone
-// {
-//     fn clone(&self) -> Self {
-//         Self(self.0.clone(), self.1.clone())
-//     }
-// }
+/// Creates a \[[`ActionSeed`]; N\] containing the omitted actions.
+#[macro_export]
+macro_rules! actions {
+    () => (
+        {
+            let actions: [$crate::prelude::ActionSeed; 0] = [];
+            actions
+        }
+    );
+    ($action: expr $(,$others: expr)* $(,)?) => (
+        {
+            use $crate::prelude::Omit;
+            [
+                $action.omit(),
+                $($others.omit(),)*
+            ]
+        }
+    );
+}
 
 
+#[cfg(test)]
+mod tests {
+    use std::time::Duration;
+
+    use crate::action::{delay, once, wait};
+
+    #[test]
+    fn length_is_0() {
+        assert_eq!(actions![].len(), 0);
+    }
+
+    #[test]
+    fn length_is_1() {
+        assert_eq!(actions![once::run(||{})].len(), 1);
+        assert_eq!(actions![once::run(||{}),].len(), 1);
+    }
+
+    #[test]
+    fn length_is_2() {
+        assert_eq!(actions![
+            once::run(||{}),
+            wait::until(||false)
+        ].len(), 2);
+    }
+
+    #[test]
+    fn length_is_3() {
+        assert_eq!(actions![
+            once::run(||{}),
+            wait::until(||false),
+            delay::time().with(Duration::from_secs(1))
+        ].len(), 3);
+    }
+
+    #[test]
+    fn last_action_with_comma() {
+        assert_eq!(actions![
+            once::run(||{}),
+            wait::until(||false),
+            delay::time().with(Duration::from_secs(1)),
+        ].len(), 3);
+    }
+}

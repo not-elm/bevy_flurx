@@ -27,11 +27,11 @@ impl<'w, Fun, Fut> ScheduleReactor<'w, Fun, Fut, EntityWorldMut<'w>> for World
         Fut: Future + 'static
 {
     fn spawn_initialized_reactor(&'w mut self, f: Fun) -> EntityWorldMut<'w> {
-        let mut flurx = Reactor::schedule(f);
-        flurx.scheduler.run_sync(WorldPtr::new(self));
+        let mut reactor = Reactor::schedule(f);
+        reactor.scheduler.run_sync(WorldPtr::new(self));
         self.spawn((
             Initialized,
-            flurx
+            reactor
         ))
     }
 }
