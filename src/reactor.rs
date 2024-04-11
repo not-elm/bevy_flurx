@@ -94,7 +94,7 @@ mod tests {
     struct Count(usize);
 
     #[test]
-    fn cancel_if_flurx_removed() {
+    fn cancel_if_reactor_removed() {
         let mut app = test_app();
         app.init_resource::<Count>();
         app.add_systems(Startup, |mut commands: Commands| {
@@ -107,8 +107,8 @@ mod tests {
         app.update();
         app.assert_resource_eq(Count(1));
 
-        app.world.run_system_once(|mut cmd: Commands, flurx: Query<Entity, With<Reactor>>| {
-            cmd.entity(flurx.single()).remove::<Reactor>();
+        app.world.run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
+            cmd.entity(reactor.single()).remove::<Reactor>();
         });
         for _ in 0..10 {
             app.update();

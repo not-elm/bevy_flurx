@@ -36,7 +36,7 @@ futures-polling = "0.1.1"
 [dev-dependencies]
 bevy = { version = "0.13.2" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
-reqwest = "0.12.2"
+reqwest = "0.12.3"
 futures = "0.3.30"
 criterion = { version = "0.5.1", features = ["plotters", "html_reports"] }
 

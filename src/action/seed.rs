@@ -60,12 +60,5 @@ impl<I, O, F> From<F> for ActionSeed<I, O>
     }
 }
 
-// impl<I, O> Clone for ActionSeed<I, O> {
-//     #[inline]
-//     fn clone(&self) -> Self {
-//         Self(self.0.clone(), PhantomData)
-//     }
-// }
-//
 
 

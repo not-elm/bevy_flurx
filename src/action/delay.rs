@@ -65,7 +65,6 @@ pub fn frames() -> ActionSeed<usize>  {
     })
 }
 
-
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, First, Startup, Update};

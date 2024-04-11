@@ -1,7 +1,7 @@
 //! [`wait`] creates a task that run the until the condition is met.
 //!
 //! actions
-//! 
+//!
 //! - [`wait::output`](crate::prelude::wait::output)
 //! - [`wait::both`](crate::prelude::wait::both)
 //! - [`wait::until`](crate::prelude::wait::until)
@@ -12,10 +12,12 @@
 //! - [`wait::switch`](crate::prelude::wait::switch)
 //! - [`wait::input`](crate::prelude::wait::input)
 //! - [`wait::audio`](crate::prelude::wait::audio) (require feature flag `audio`)
+//! - [`wait::any`]
 
 
 use bevy::prelude::{In, IntoSystem, System, World};
 
+pub use any::any;
 pub use both::both;
 pub use either::*;
 
@@ -33,6 +35,8 @@ pub mod all;
 pub mod audio;
 mod either;
 mod both;
+mod any;
+
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.

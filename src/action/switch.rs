@@ -17,7 +17,7 @@
 //! actions 
 //! 
 //! - [`once::switch::on`](crate::prelude::once::switch::on)
-//! - [`once::switch::on`](crate::prelude::once::switch::off)
+//! - [`once::switch::off`](crate::prelude::once::switch::off)
 //! - [`wait::switch::on`](crate::prelude::wait::switch::on)
 //! - [`wait::switch::off`](crate::prelude::wait::switch::off)
 

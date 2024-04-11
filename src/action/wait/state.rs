@@ -24,7 +24,7 @@ use crate::prelude::ActionSeed;
 /// }
 ///
 /// Reactor::schedule(|task| async move {
-///     task.will(Update, once::state::set().with(Status::Second)).await;
+///     task.will(Update, wait::state::becomes().with(Status::Second)).await;
 /// });
 /// ```
 #[inline(always)]
