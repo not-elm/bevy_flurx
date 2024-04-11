@@ -89,7 +89,7 @@ fn initialize_reactors(
         .query_filtered::<(Entity, &mut Reactor), (Added<Reactor>, Without<Initialized>)>()
         .iter_mut(world) {
         world_ptr.as_mut().entity_mut(entity).insert(Initialized);
-        reactor.scheduler.run_sync(world_ptr);
+        reactor.run_sync(world_ptr);
     }
 }
 
@@ -100,10 +100,10 @@ fn run_reactors(
     for (entity, mut reactor, initialized) in world
         .query::<(Entity, &mut Reactor, Option<&Initialized>)>()
         .iter_mut(world) {
-        reactor.scheduler.run_sync(world_ptr);
+        reactor.run_sync(world_ptr);
         if initialized.is_none() {
             world_ptr.as_mut().entity_mut(entity).insert(Initialized);
-            reactor.scheduler.run_sync(world_ptr);
+            reactor.run_sync(world_ptr);
         }
     }
 }
