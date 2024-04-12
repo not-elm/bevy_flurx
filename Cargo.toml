@@ -30,8 +30,12 @@ harness = false
 
 [dependencies]
 bevy = { version = "0.13.2", default-features = false }
-flurx = { version = "0.1.4", features = ["sync"] }
+flurx = { version = "0.1.4" }
 futures-polling = "0.1.1"
+pollster = "0.3.0"
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+async-compat = "0.2.3"
 
 [dev-dependencies]
 bevy = { version = "0.13.2" }

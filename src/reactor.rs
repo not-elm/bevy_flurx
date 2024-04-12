@@ -24,17 +24,17 @@ pub struct Reactor {
 
 impl Reactor {
     /// Create new [`Reactor`].
-    /// 
+    ///
     /// The scheduled [`Reactor`] will be run and initialized at [`RunReactor`](crate::RunReactor)(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
-    /// 
+    ///
     /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
     /// to reduce the delay until initialization.
-    /// 
+    ///
     /// If you spawn on another [`ScheduleLabel`], 
     /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor). 
-    /// 
+    ///
     /// ## Examples
-    /// 
+    ///
     /// ```no_run
     /// use bevy::app::AppExit;
     /// use bevy::prelude::*;
@@ -61,6 +61,19 @@ impl Reactor {
         Self {
             scheduler,
             token,
+        }
+    }
+
+    #[inline(always)]
+    pub(crate) fn run_sync(&mut self, world: WorldPtr) {
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            use async_compat::CompatExt;
+            pollster::block_on(self.scheduler.run(world).compat());
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            pollster::block_on(self.scheduler.run(world));
         }
     }
 }
