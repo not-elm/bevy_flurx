@@ -151,6 +151,7 @@ mod tests {
         app.update();
         app.update();
         app.update();
+        app.update();
         let mut er = ManualEventReader::<AppExit>::default();
         assert!(app.read_last_event(&mut er).is_some());
     }
