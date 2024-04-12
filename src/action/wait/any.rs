@@ -120,6 +120,7 @@ mod tests {
         app.assert_event_not_comes(&mut er);
         
         app.update();
+        app.update();
         app.assert_event_comes(&mut er);
     }
 }
