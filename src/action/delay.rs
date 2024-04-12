@@ -1,7 +1,7 @@
 //! [`delay`] creates a task that delay the application.
 //!
 //! actions
-//! 
+//!
 //! - [`delay::time`](crate::prelude::delay::time)
 //! - [`delay::frames`](crate::prelude::delay::frames)
 
@@ -27,7 +27,7 @@ use crate::prelude::ActionSeed;
 /// });
 /// ```
 #[inline(always)]
-pub fn time() -> ActionSeed<Duration>  {
+pub fn time() -> ActionSeed<Duration> {
     wait::until(move |In(duration): In<Duration>,
                       mut timer: Local<Option<Timer>>,
                       time: Res<Time>,
@@ -57,23 +57,46 @@ pub fn time() -> ActionSeed<Duration>  {
 /// });
 /// ```
 #[inline(always)]
-pub fn frames() -> ActionSeed<usize>  {
+pub fn frames() -> ActionSeed<usize> {
     wait::until(move |In(frames): In<usize>,
                       mut frame_now: Local<usize>| {
         *frame_now += 1;
-        frames <= *frame_now
+        frames <= (*frame_now - 1)
     })
 }
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, First, Startup, Update};
+    use bevy::app::{AppExit, First, Startup};
+    use bevy::ecs::event::ManualEventReader;
     use bevy::prelude::Commands;
     use bevy::time::TimePlugin;
+    use bevy_test_helper::event::DirectEvents;
 
     use crate::action::{delay, once};
+    use crate::prelude::Then;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
+
+    #[test]
+    fn delay_1frame() {
+        let mut app = test_app();
+        app
+            .add_plugins(TimePlugin)
+            .add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(First, delay::frames().with(1)
+                        .then(once::event::app_exit()),
+                    ).await;
+                }));
+            });
+        let mut er = ManualEventReader::<AppExit>::default();
+        app.update();
+        app.assert_event_not_comes(&mut er);
+        
+        app.update();
+        app.assert_event_comes(&mut er);
+    }
 
     #[test]
     fn delay_2frames() {
@@ -82,8 +105,9 @@ mod tests {
             .add_plugins(TimePlugin)
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(First, delay::frames().with(2)).await;
-                    task.will(Update, once::non_send::init::<AppExit>()).await;
+                    task.will(First, delay::frames().with(2)
+                        .then(once::non_send::init::<AppExit>()),
+                    ).await;
                 }));
             });
 
