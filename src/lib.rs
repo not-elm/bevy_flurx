@@ -23,7 +23,7 @@
 
 use bevy::app::{App, Last, MainScheduleOrder, Plugin, PostStartup};
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Added, Entity, Without, World};
+use bevy::prelude::{Entity, QueryState, Without, World};
 
 use crate::reactor::{Initialized, Reactor};
 use crate::world_ptr::WorldPtr;
@@ -82,28 +82,26 @@ impl Plugin for FlurxPlugin {
 struct RunReactor;
 
 fn initialize_reactors(
-    world: &mut World
+    world: &mut World,
+    reactors: &mut QueryState<(Entity, &mut Reactor), Without<Initialized>>
 ) {
     let world_ptr = WorldPtr::new(world);
-    for (entity, mut reactor) in world
-        .query_filtered::<(Entity, &mut Reactor), (Added<Reactor>, Without<Initialized>)>()
-        .iter_mut(world) {
+    for (entity, mut reactor) in reactors.iter_mut(world) {
         world_ptr.as_mut().entity_mut(entity).insert(Initialized);
-        reactor.scheduler.run_sync(world_ptr);
+        reactor.run_sync(world_ptr);
     }
 }
 
 fn run_reactors(
-    world: &mut World
+    world: &mut World,
+    reactors: &mut QueryState<(Entity, &mut Reactor, Option<&Initialized>)>
 ) {
     let world_ptr = WorldPtr::new(world);
-    for (entity, mut reactor, initialized) in world
-        .query::<(Entity, &mut Reactor, Option<&Initialized>)>()
-        .iter_mut(world) {
-        reactor.scheduler.run_sync(world_ptr);
+    for (entity, mut reactor, initialized) in reactors.iter_mut(world) {
+        reactor.run_sync(world_ptr);
         if initialized.is_none() {
             world_ptr.as_mut().entity_mut(entity).insert(Initialized);
-            reactor.scheduler.run_sync(world_ptr);
+            reactor.run_sync(world_ptr);
         }
     }
 }
