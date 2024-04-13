@@ -1,3 +1,7 @@
+## V0.3.3
+
+- [Feature/v0.3.3](https://github.com/not-elm/bevy_flurx/pull/23)
+
 ## v0.3.3-beta.2
 
 - [Feature/v0.3.3-beta2](https://github.com/not-elm/bevy_flurx/pull/18)

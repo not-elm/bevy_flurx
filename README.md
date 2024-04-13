@@ -4,15 +4,6 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
 
-> [!CAUTION]
-> `bevy_flurx` is currently in the early stages of development and is subject to breaking changes.
-
-> [!IMPORTANT]
-> The version will be updated from beta to v0.3.3 in the near future 
-if there seem to be no problems.
->
-> I believe there will be very few disruptive changes after v0.3.3.
-
 This library provides a mechanism for more sequential description of delays, character movement,
 waiting for user input, and other state waits.
 
@@ -58,11 +49,11 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
 ## Compatible Bevy versions
 
-| bevy_flurx           | bevy   |
-|----------------------|--------|
-| 0.3.0                | 0.13.0 |
-| 0.3.1                | 0.13.1 |
-| 0.3.2 ~ 0.3.3-beta.2 | 0.13.2 | 
+| bevy_flurx    | bevy   |
+|---------------|--------|
+| 0.3.0         | 0.13.0 |
+| 0.3.1         | 0.13.1 |
+| 0.3.2 ~ 0.3.3 | 0.13.2 | 
 
 ## License
 
