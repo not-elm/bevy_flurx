@@ -1,13 +1,11 @@
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Component, Deref, DerefMut, Entity, Resource, Schedule, Schedules, World};
+use bevy::prelude::{Deref, DerefMut, Resource, Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
 pub use cancellation_token::CancellationToken;
 pub use output::Output;
-
-use crate::world_ptr::WorldPtr;
 
 mod output;
 mod cancellation_token;
@@ -17,26 +15,19 @@ mod cancellation_token;
 /// pass the system output to [`Output`].
 pub trait Runner {
     /// Run the system.
-    /// 
+    ///
     /// If this runner finishes, it must return `true`.
     /// If it returns `true`, an entity attached this runner will be removed.
     fn run(&mut self, world: &mut World) -> bool;
 }
 
-
 #[repr(transparent)]
-#[derive(Component, Deref, DerefMut)]
+#[derive(Deref, DerefMut)]
 pub struct BoxedRunner(pub(crate) Box<dyn Runner>);
-
-/// SAFETY: This structure must be used only with [`run_runners`].
-unsafe impl Send for BoxedRunner {}
-
-/// SAFETY: This structure must be used only with [`run_runners`].
-unsafe impl Sync for BoxedRunner {}
 
 #[repr(transparent)]
 #[derive(Resource)]
-struct RunRunnersSystemInitialized<L: Send + Sync>(PhantomData<L>);
+struct BoxedRunners<L: Send + Sync>(Vec<BoxedRunner>, PhantomData<L>);
 
 pub(crate) fn initialize_runner<Label>(
     world: &mut World,
@@ -45,15 +36,16 @@ pub(crate) fn initialize_runner<Label>(
 )
     where Label: ScheduleLabel
 {
-    world.spawn(runner);
-    if !world.contains_resource::<RunRunnersSystemInitialized<Label>>() {
-        world.insert_resource(RunRunnersSystemInitialized::<Label>(PhantomData));
+    if let Some(mut runners) = world.get_non_send_resource_mut::<BoxedRunners<Label>>() {
+        runners.0.push(runner);
+    } else {
+        world.insert_non_send_resource(BoxedRunners::<Label>(vec![runner], PhantomData));
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
 
         let schedule = initialize_schedule(&mut schedules, label.intern());
-        schedule.add_systems(run_runners);
+        schedule.add_systems(run_runners::<Label>);
     }
 }
 
@@ -67,13 +59,10 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 }
 
 #[inline]
-fn run_runners(world: &mut World) {
-    let world_ptr = WorldPtr::new(world);
-    for (entity, mut runner) in world.query::<(Entity, &mut BoxedRunner)>().iter_mut(world) {
-        let world = world_ptr.as_mut();
-        if runner.0.run(world) {
-            world.despawn(entity);
-        }
+fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
+    if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
+        runners.0.retain_mut(|r| !r.0.run(world));
+        world.insert_non_send_resource(runners);
     }
 }
 
