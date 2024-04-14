@@ -1,0 +1,3 @@
+[submodule "examples/demo"]
+	path = examples/demo
+	url = https://github.com/not-elm/make_the_hero_easy_type
