@@ -109,13 +109,18 @@ fn run_reactors(
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::App;
+    use bevy::app::{App, AppExit};
+    use bevy::ecs::event::ManualEventReader;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
     use bevy::prelude::{Event, EventReader, Resource};
     use bevy_test_helper::BevyTestHelperPlugin;
 
     use crate::FlurxPlugin;
+    
+    pub fn exit_reader() -> ManualEventReader<AppExit>{
+        ManualEventReader::<AppExit>::default()
+    }
 
     pub fn test_app() -> App {
         let mut app = App::new();

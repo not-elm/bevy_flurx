@@ -40,6 +40,7 @@ pub use omit::{Omit, OmitInput, OmitOutput};
 pub use remake::Remake;
 pub use through::through;
 pub use tuple::tuple;
+pub use history::{undo, redo, history_store::HistoryStore};
 
 use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output};
@@ -57,6 +58,7 @@ mod tuple;
 mod omit;
 mod map;
 mod remake;
+mod history;
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
 ///
