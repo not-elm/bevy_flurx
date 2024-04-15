@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use bevy::prelude::World;
 
-use crate::action::history::history_store::HistoryStore;
+use crate::action::history::{CreateUndoAction, HistoryStore, push_undo};
 use crate::prelude::{ActionSeed, Output};
 use crate::runner::{BoxedRunner, CancellationToken, Runner};
 
@@ -12,16 +12,17 @@ pub fn execute<M: 'static>() -> ActionSeed {
             token,
             output,
             redo_runner: None,
+            create_undo: None,
             _m: PhantomData::<M>,
         }
     })
 }
 
-
 struct RedoRunner<M> {
     token: CancellationToken,
     output: Output<()>,
     redo_runner: Option<BoxedRunner>,
+    create_undo: Option<CreateUndoAction>,
     _m: PhantomData<M>,
 }
 
@@ -35,21 +36,29 @@ impl<M> Runner for RedoRunner<M>
         }
 
         if self.redo_runner.is_none() {
-            if let Some(action) = world
+            if let Some((create_undo, action)) = world
                 .get_non_send_resource_mut::<HistoryStore<M>>()
                 .and_then(|mut store| store.redo.pop())
-                .map(|seed| seed.with(()))
             {
-                let runner = action.into_runner(self.token.clone(), self.output.clone());
+                let runner = action.with(()).into_runner(self.token.clone(), self.output.clone());
                 self.redo_runner.replace(runner);
+                self.create_undo.replace(create_undo);
             } else {
+                self.output.replace(());
                 return true;
             }
         }
-        self.redo_runner
+        if self.redo_runner
             .as_mut()
             .unwrap()
-            .run(world)
+            .run(world) {
+            let create_undo_action = self.create_undo.take().unwrap();
+            let undo_action = create_undo_action();
+            push_undo::<M>((create_undo_action, undo_action), world, false);
+            true
+        } else {
+            false
+        }
     }
 }
 
@@ -75,12 +84,15 @@ mod tests {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, undo::push(
                     M,
-                    once::run(|mut count: ResMut<Count>| {
-                        count.increment();
+                    |_| {
                         once::run(|mut count: ResMut<Count>| {
-                            count.decrement();
+                            count.increment();
+                            Some(once::run(|mut count: ResMut<Count>| {
+                                count.decrement();
+                            }))
                         })
-                    })
+                            .with(())
+                    },
                 )).await;
                 task.will(Update, undo::execute::<M>()).await;
                 task.will(Update, redo::execute::<M>()).await;

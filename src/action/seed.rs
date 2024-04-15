@@ -33,12 +33,6 @@ impl<I, O> ActionSeed<I, O>
         }), PhantomData)
     }
 
-    pub fn from_boxed_runner<F>(f: F) -> Self
-        where F: FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner + 'static
-    {
-        Self(Box::new(f), PhantomData)
-    }
-
     /// Into [`Action`] with `input`.
     ///
     /// [`Action`]: crate::prelude::Action

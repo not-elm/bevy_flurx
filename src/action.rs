@@ -40,7 +40,7 @@ pub use omit::{Omit, OmitInput, OmitOutput};
 pub use remake::Remake;
 pub use through::through;
 pub use tuple::tuple;
-pub use history::{undo, redo, history_store::HistoryStore};
+pub use history::{undo, redo};
 
 use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output};

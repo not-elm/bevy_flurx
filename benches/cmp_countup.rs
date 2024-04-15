@@ -23,14 +23,9 @@ fn without_flurx(count: usize, c: &mut Criterion) {
                 .add_plugins(TaskPoolPlugin::default())
                 .init_resource::<Exit>()
                 .insert_resource(Limit(count))
-                .add_systems(Update, move |mut ew: EventWriter<AppExit>, mut local: Local<usize>, limit: Res<Limit>| {
+                .add_systems(Update, move |mut exit: ResMut<Exit>, mut local: Local<usize>, limit: Res<Limit>| {
                     *local += 1;
                     if *local == limit.0 {
-                        ew.send(AppExit);
-                    }
-                })
-                .add_systems(Update, |mut exit: ResMut<Exit>, mut er: EventReader<AppExit>| {
-                    if er.read().last().is_some() {
                         exit.0 = true;
                     }
                 });

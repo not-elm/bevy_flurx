@@ -4,8 +4,8 @@
 use bevy::app::{App, Startup, Update};
 use bevy::DefaultPlugins;
 use bevy::hierarchy::{BuildChildren, DespawnRecursiveExt};
-use bevy::prelude::{Camera2dBundle, Commands, Component, Entity, In, KeyCode, NodeBundle, Query, Style, TextBundle, Val, With};
-use bevy::text::{Text, Text2dBundle, TextStyle};
+use bevy::prelude::{Camera2dBundle, Children, Commands, Component, Entity, In, KeyCode, NodeBundle, Query, Style, TextBundle, Val, With};
+use bevy::text::{Text, TextStyle};
 use bevy::ui::{Display, FlexDirection, JustifyContent};
 use bevy::utils::default;
 
@@ -58,7 +58,9 @@ fn setup_add_item_reactor(
         loop {
             task.will(Update, wait_inputs()
                 .pipe(once::run(spawn_item))
-                .pipe(undo::push(ListItem, once::run(undo))),
+                .pipe(undo::push(ListItem, |input| {
+                    once::run(undo).with(input)
+                })),
             ).await;
         }
     }));
@@ -107,14 +109,14 @@ fn spawn_item(
 ) -> (&'static str, Entity) {
     let entity = commands
         .spawn(TextBundle {
-            text: Text::from_section(key, TextStyle{
+            text: Text::from_section(key, TextStyle {
                 font_size: 32.,
                 ..default()
             }),
             ..default()
         })
         .id();
-   commands
+    commands
         .entity(list.single())
         .add_child(entity);
     (key, entity)
@@ -123,8 +125,10 @@ fn spawn_item(
 fn undo(
     In((key, item_entity)): In<(&'static str, Entity)>,
     mut commands: Commands,
-) -> ActionSeed {
-    commands.entity(item_entity).despawn_recursive();
-
-    once::run(spawn_item).with(key).omit()
+    list: Query<&Children, With<ListUi>>
+) -> Option<ActionSeed> {
+    if let Some(entity) = list.single().last(){
+        commands.entity(*entity).despawn_recursive();
+    }
+    Some(once::run(spawn_item).with(key).omit())
 }
