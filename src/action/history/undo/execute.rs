@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use bevy::prelude::World;
 
 use crate::action::history::{CreateUndoAction, HistoryStore};
+use crate::action::redo::Redo;
 use crate::prelude::{ActionSeed, Output, Runner};
 use crate::runner::{BoxedRunner, CancellationToken};
 
@@ -25,7 +26,7 @@ pub fn execute<M>() -> ActionSeed
 struct UndoRunner<M> {
     token: CancellationToken,
     output: Output<()>,
-    undo_output: Output<Option<ActionSeed>>,
+    undo_output: Output<Option<Redo>>,
     undo_runner: Option<BoxedRunner>,
     create_undo: Option<CreateUndoAction>,
     _m: PhantomData<M>,
@@ -62,8 +63,8 @@ impl<M> Runner for UndoRunner<M>
         if let Some(redo) = redo {
             let create_undo = self.create_undo.take().unwrap();
             world.non_send_resource_mut::<HistoryStore<M>>().redo.push((create_undo, redo));
-            self.output.replace(());
         }
+        self.output.replace(());
         true
     }
 }

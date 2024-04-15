@@ -1,22 +1,52 @@
 use std::marker::PhantomData;
 
-use bevy::prelude::World;
+use bevy::prelude::{NonSendMut, World};
 
-use crate::action::Action;
-use crate::prelude::{ActionSeed, Map, Omit};
+use crate::action::{Action, once};
+use crate::action::redo::Redo;
+use crate::prelude::ActionSeed;
+
 
 pub mod undo;
 pub mod redo;
 
-type UndoAction = Action<(), Option<ActionSeed>>;
+
+pub fn clear<M: 'static>() -> ActionSeed{
+    once::run(|mut store: NonSendMut<HistoryStore<M>>|{
+        store.clear();
+    })
+}
+
+type UndoAction = Action<(), Option<Redo>>;
 type CreateUndoAction = Box<dyn Fn() -> UndoAction>;
 type UndoTuple = (CreateUndoAction, UndoAction);
-type Redo = (CreateUndoAction, ActionSeed);
 
+/// Manage the history of `undo` and `redo`.
+///
+/// This struct has one marker type.
+/// This allows you can define different the histories for each type of marker.
 pub struct HistoryStore<M> {
     pub(crate) undo: Vec<UndoTuple>,
-    pub(crate) redo: Vec<Redo>,
+    pub(crate) redo: Vec<(CreateUndoAction, Redo)>,
     _m: PhantomData<M>,
+}
+
+impl<M> HistoryStore<M>
+    where
+        M: 'static
+{
+    /// Clear all history of `undo` and `redo`.
+    pub fn clear(&mut self) {
+        self.undo.clear();
+        self.redo.clear();
+    }
+
+    /// Push the function that creates `undo`.
+    pub fn push_undo(&mut self, create_undo_action: CreateUndoAction) {
+        let action = create_undo_action();
+        self.redo.clear();
+        self.undo.push((create_undo_action, action));
+    }
 }
 
 impl<M> Default for HistoryStore<M> {
@@ -26,58 +56,6 @@ impl<M> Default for HistoryStore<M> {
             redo: Vec::new(),
             _m: PhantomData,
         }
-    }
-}
-
-pub trait IntoUndoActionSeed<I> {
-    type ActionInput;
-
-    fn into_undo_action_seed(self, input: Self::ActionInput) -> Action<I, Option<ActionSeed>>;
-}
-
-impl<I> IntoUndoActionSeed<I> for Action<I, ()>
-    where
-        I: 'static
-{
-    type ActionInput = ();
-
-    fn into_undo_action_seed(self, _: Self::ActionInput) -> Action<I, Option<ActionSeed>> {
-        self.map(|_| None)
-    }
-}
-
-impl<I> IntoUndoActionSeed<I> for ActionSeed<I, ()>
-    where
-        I: 'static
-{
-    type ActionInput = I;
-
-    fn into_undo_action_seed(self, input: Self::ActionInput) -> Action<I, Option<ActionSeed>> {
-        self.map(|_| None).with(input)
-    }
-}
-
-impl<I, Om> IntoUndoActionSeed<I> for Action<I, Om>
-    where
-        I: 'static,
-        Om: Omit + 'static
-{
-    type ActionInput = ();
-
-    fn into_undo_action_seed(self, _: Self::ActionInput) -> Action<I, Option<ActionSeed>> {
-        self.map(|omit| Some(omit.omit()))
-    }
-}
-
-impl<I, Om> IntoUndoActionSeed<I> for ActionSeed<I, Om>
-    where
-        I: 'static,
-        Om: Omit + 'static
-{
-    type ActionInput = I;
-
-    fn into_undo_action_seed(self, input: Self::ActionInput) -> Action<I, Option<ActionSeed>> {
-        self.map(|omit| Some(omit.omit())).with(input)
     }
 }
 

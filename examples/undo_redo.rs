@@ -11,12 +11,14 @@ use bevy::utils::default;
 
 use bevy_flurx::{actions, FlurxPlugin};
 use bevy_flurx::action::{Omit, OmitInput, once, redo, undo, wait};
+use bevy_flurx::action::redo::Redo;
+use bevy_flurx::action::undo::Undo;
 use bevy_flurx::prelude::{ActionSeed, Map, Pipe, Reactor};
 
 #[derive(Component)]
 struct ListUi;
 
-struct ListItem;
+struct ListHistory;
 
 fn main() {
     App::new()
@@ -58,9 +60,9 @@ fn setup_add_item_reactor(
         loop {
             task.will(Update, wait_inputs()
                 .pipe(once::run(spawn_item))
-                .pipe(undo::push(ListItem, |input| {
+                .pipe(undo::push(Undo::<ListHistory>::with_redo(|input| {
                     once::run(undo).with(input)
-                })),
+                }))),
             ).await;
         }
     }));
@@ -78,9 +80,9 @@ fn setup_undo_redo_reactor(
                 .await;
 
             if either.is_left() {
-                task.will(Update, undo::execute::<ListItem>()).await;
+                task.will(Update, undo::execute::<ListHistory>()).await;
             } else {
-                task.will(Update, redo::execute::<ListItem>()).await;
+                task.will(Update, redo::execute::<ListHistory>()).await;
             }
         }
     }));
@@ -106,7 +108,7 @@ fn spawn_item(
     In(key): In<&'static str>,
     mut commands: Commands,
     list: Query<Entity, With<ListUi>>,
-) -> (&'static str, Entity) {
+) -> &'static str {
     let entity = commands
         .spawn(TextBundle {
             text: Text::from_section(key, TextStyle {
@@ -119,16 +121,17 @@ fn spawn_item(
     commands
         .entity(list.single())
         .add_child(entity);
-    (key, entity)
+    key
 }
 
 fn undo(
-    In((key, item_entity)): In<(&'static str, Entity)>,
+    In(key): In<&'static str>,
     mut commands: Commands,
     list: Query<&Children, With<ListUi>>
-) -> Option<ActionSeed> {
+) -> Redo {
     if let Some(entity) = list.single().last(){
         commands.entity(*entity).despawn_recursive();
     }
-    Some(once::run(spawn_item).with(key).omit())
+    
+    Redo(once::run(spawn_item).with(key).omit())
 }

@@ -6,6 +6,10 @@ use crate::action::history::{CreateUndoAction, HistoryStore, push_undo};
 use crate::prelude::{ActionSeed, Output};
 use crate::runner::{BoxedRunner, CancellationToken, Runner};
 
+#[repr(transparent)]
+pub struct Redo(pub ActionSeed);
+
+
 pub fn execute<M: 'static>() -> ActionSeed {
     ActionSeed::new(|_, token, output| {
         RedoRunner {
@@ -36,11 +40,11 @@ impl<M> Runner for RedoRunner<M>
         }
 
         if self.redo_runner.is_none() {
-            if let Some((create_undo, action)) = world
+            if let Some((create_undo, redo)) = world
                 .get_non_send_resource_mut::<HistoryStore<M>>()
                 .and_then(|mut store| store.redo.pop())
             {
-                let runner = action.with(()).into_runner(self.token.clone(), self.output.clone());
+                let runner = redo.0.with(()).into_runner(self.token.clone(), self.output.clone());
                 self.redo_runner.replace(runner);
                 self.create_undo.replace(create_undo);
             } else {
@@ -48,6 +52,7 @@ impl<M> Runner for RedoRunner<M>
                 return true;
             }
         }
+        
         if self.redo_runner
             .as_mut()
             .unwrap()
@@ -72,6 +77,8 @@ mod tests {
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, redo, undo};
+    use crate::action::redo::Redo;
+    use crate::action::undo::Undo;
     use crate::reactor::Reactor;
     use crate::tests::{exit_reader, test_app};
 
@@ -83,16 +90,15 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, undo::push(
-                    M,
-                    |_| {
+                    Undo::<M>::with_redo(|_| {
                         once::run(|mut count: ResMut<Count>| {
                             count.increment();
-                            Some(once::run(|mut count: ResMut<Count>| {
+                            
+                            Redo(once::run(|mut count: ResMut<Count>| {
                                 count.decrement();
                             }))
                         })
-                            .with(())
-                    },
+                    })
                 )).await;
                 task.will(Update, undo::execute::<M>()).await;
                 task.will(Update, redo::execute::<M>()).await;

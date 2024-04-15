@@ -6,7 +6,6 @@ use std::marker::PhantomData;
 use crate::action::Action;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
-///
 /// If [`In`] type of the struct implements this is `()`, 
 /// its struct also implements Into<[`Action`]> automatically.
 ///
@@ -48,7 +47,7 @@ impl<I, O> ActionSeed<I, O>
 }
 
 impl<I, O, F> From<F> for ActionSeed<I, O>
-    where 
+    where
         F: FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner + 'static
 {
     #[inline]
@@ -56,6 +55,5 @@ impl<I, O, F> From<F> for ActionSeed<I, O>
         Self(Box::new(value), PhantomData)
     }
 }
-
 
 

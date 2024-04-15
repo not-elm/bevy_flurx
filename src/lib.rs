@@ -36,15 +36,17 @@ pub mod action;
 pub mod prelude {
     pub use crate::{
         action::*,
+        action::{Omit, OmitInput, OmitOutput},
+        action::Map,
         action::pipe::Pipe,
+        action::Remake,
         action::seed::ActionSeed,
         action::sequence::Then,
         action::switch::*,
         action::through::{through, Through},
         action::wait::Either,
-        action::Map,
-        action::{Omit, OmitInput, OmitOutput},
-        action::Remake,
+        action::undo::Undo,
+        action::history::HistoryStore,
         extension::ScheduleReactor,
         FlurxPlugin,
         reactor::Reactor,
@@ -83,7 +85,7 @@ struct RunReactor;
 
 fn initialize_reactors(
     world: &mut World,
-    reactors: &mut QueryState<(Entity, &mut Reactor), Without<Initialized>>
+    reactors: &mut QueryState<(Entity, &mut Reactor), Without<Initialized>>,
 ) {
     let world_ptr = WorldPtr::new(world);
     for (entity, mut reactor) in reactors.iter_mut(world) {
@@ -94,7 +96,7 @@ fn initialize_reactors(
 
 fn run_reactors(
     world: &mut World,
-    reactors: &mut QueryState<(Entity, &mut Reactor, Option<&Initialized>)>
+    reactors: &mut QueryState<(Entity, &mut Reactor, Option<&Initialized>)>,
 ) {
     let world_ptr = WorldPtr::new(world);
     for (entity, mut reactor, initialized) in reactors.iter_mut(world) {
@@ -113,13 +115,28 @@ mod tests {
     use bevy::ecs::event::ManualEventReader;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
-    use bevy::prelude::{Event, EventReader, Resource};
+    use bevy::prelude::{Event, EventReader, ResMut, Resource};
     use bevy_test_helper::BevyTestHelperPlugin;
+    use bevy_test_helper::resource::count::Count;
 
+    use crate::action::once;
     use crate::FlurxPlugin;
-    
-    pub fn exit_reader() -> ManualEventReader<AppExit>{
+    use crate::prelude::ActionSeed;
+
+    pub fn exit_reader() -> ManualEventReader<AppExit> {
         ManualEventReader::<AppExit>::default()
+    }
+
+    pub fn increment_count() -> ActionSeed {
+        once::run(|mut count: ResMut<Count>| {
+            count.increment();
+        })
+    }
+
+    pub fn decrement_count() -> ActionSeed {
+        once::run(|mut count: ResMut<Count>| {
+            count.decrement();
+        })
     }
 
     pub fn test_app() -> App {
