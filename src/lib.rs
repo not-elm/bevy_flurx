@@ -46,6 +46,7 @@ pub mod prelude {
         action::through::{through, Through},
         action::wait::Either,
         action::undo::Undo,
+        action::redo::Redo,
         action::history::HistoryStore,
         extension::ScheduleReactor,
         FlurxPlugin,
@@ -133,6 +134,7 @@ mod tests {
         })
     }
 
+    #[allow(unused)]
     pub fn decrement_count() -> ActionSeed {
         once::run(|mut count: ResMut<Count>| {
             count.decrement();

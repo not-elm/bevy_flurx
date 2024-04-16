@@ -11,6 +11,7 @@ pub mod undo;
 pub mod redo;
 
 
+/// Clear the [`HistoryStore`].
 pub fn clear<M: 'static>() -> ActionSeed{
     once::run(|mut store: NonSendMut<HistoryStore<M>>|{
         store.clear();

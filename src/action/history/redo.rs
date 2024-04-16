@@ -1,3 +1,7 @@
+//! actions
+//! - [`redo::Redo`]
+//! - [`redo::execute`]
+
 use std::marker::PhantomData;
 
 use bevy::prelude::World;
@@ -6,13 +10,32 @@ use crate::action::history::{CreateUndoAction, HistoryStore, push_undo};
 use crate::prelude::{ActionSeed, Output};
 use crate::runner::{BoxedRunner, CancellationToken, Runner};
 
+/// This action is executed when [`redo::execute`](crate::prelude::redo::execute) is called. 
 #[repr(transparent)]
 pub struct Redo(pub ActionSeed);
 
 
+/// Pop the last pushed `redo` action and execute it.
+/// After the `redo` action is executed, then the `undo` action that created it
+/// is pushed into [`HistoryStore`] again.
+///
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+///
+/// struct History;
+///
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, undo::push(Undo::<History>::with_redo(|_|once::run(||{
+///         Redo(once::run(||{}))
+///     })))).await;
+///     task.will(Update, undo::execute::<History>()).await;
+///     task.will(Update, redo::execute::<History>()).await;
+/// });
+/// ```
 pub fn execute<M: 'static>() -> ActionSeed {
     ActionSeed::new(|_, token, output| {
-        RedoRunner {
+        RedoExecuteRunner {
             token,
             output,
             redo_runner: None,
@@ -22,7 +45,7 @@ pub fn execute<M: 'static>() -> ActionSeed {
     })
 }
 
-struct RedoRunner<M> {
+struct RedoExecuteRunner<M> {
     token: CancellationToken,
     output: Output<()>,
     redo_runner: Option<BoxedRunner>,
@@ -30,7 +53,7 @@ struct RedoRunner<M> {
     _m: PhantomData<M>,
 }
 
-impl<M> Runner for RedoRunner<M>
+impl<M> Runner for RedoExecuteRunner<M>
     where
         M: 'static
 {
@@ -52,7 +75,7 @@ impl<M> Runner for RedoRunner<M>
                 return true;
             }
         }
-        
+
         if self.redo_runner
             .as_mut()
             .unwrap()
@@ -93,7 +116,7 @@ mod tests {
                     Undo::<M>::with_redo(|_| {
                         once::run(|mut count: ResMut<Count>| {
                             count.increment();
-                            
+
                             Redo(once::run(|mut count: ResMut<Count>| {
                                 count.decrement();
                             }))

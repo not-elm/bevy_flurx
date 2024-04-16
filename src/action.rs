@@ -53,12 +53,13 @@ pub mod seed;
 pub mod through;
 pub mod pipe;
 pub mod sequence;
+pub mod history;
 mod repeat;
 mod tuple;
 mod omit;
 mod map;
 mod remake;
-pub mod history;
+
 
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
 ///

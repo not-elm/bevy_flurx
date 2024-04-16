@@ -1,3 +1,10 @@
+//! `undo` is 
+//!
+//! actions
+//!
+//! - [`undo::push`](crate::prelude::undo::push::push)
+//! - [`undo::execute`](crate::prelude::undo::execute::execute)
+
 use std::marker::PhantomData;
 
 pub use execute::execute;
@@ -19,9 +26,9 @@ impl<History> Undo<History>
         History: 'static
 {
     /// Create the function that creates the `undo action`.
-    /// 
+    ///
     /// Another value of the outputs is used by [`undo::push`] to determine which [`HistoryStore`](crate::prelude::HistoryStore) to use. 
-    /// 
+    ///
     /// The action that created by this method do not created the [`Redo`] action.
     /// If you want it, use [`Undo::with_redo`] instead. 
     #[inline]
@@ -42,9 +49,9 @@ impl<History> Undo<History>
 
 
     /// Create a new [`Undo`] with [`Redo`].
-    /// 
+    ///
     /// Another value of the outputs is used by [`undo::push`] to determine which [`HistoryStore`](crate::prelude::HistoryStore) to use. 
-    /// 
+    ///
     #[inline]
     pub const fn with_redo<I1, I2, A, F>(f: F) -> (PhantomData<History>, impl FnOnce(I1) -> CreateUndoAction + 'static)
         where

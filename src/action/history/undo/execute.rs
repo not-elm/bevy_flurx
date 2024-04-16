@@ -7,6 +7,20 @@ use crate::action::redo::Redo;
 use crate::prelude::{ActionSeed, Output, Runner};
 use crate::runner::{BoxedRunner, CancellationToken};
 
+
+/// Pop the last pushed `undo` action, and then execute it.
+/// 
+/// ```no_run
+/// use bevy::prelude::*;
+/// use bevy_flurx::prelude::*;
+/// 
+/// struct History;
+/// 
+/// Reactor::schedule(|task| async move{
+///     task.will(Update, undo::push(Undo::<History>::new(|_|once::run(||{})))).await;
+///     task.will(Update, undo::execute::<History>()).await;
+/// });
+/// ```
 pub fn execute<M>() -> ActionSeed
     where
         M: 'static
