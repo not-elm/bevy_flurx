@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Deref, DerefMut, Resource, Schedule, Schedules, World};
+use bevy::prelude::{Resource, Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
 pub use cancellation_token::CancellationToken;
@@ -14,6 +14,12 @@ mod cancellation_token;
 /// if the system termination condition is met, return `true` and
 /// pass the system output to [`Output`].
 pub trait Runner {
+    /// Initialize this runner.
+    #[allow(unused_variables)]
+    fn initialize(&mut self, world: &mut World) -> bool {
+        false
+    }
+
     /// Run the system.
     ///
     /// If this runner finishes, it must return `true`.
@@ -21,9 +27,30 @@ pub trait Runner {
     fn run(&mut self, world: &mut World) -> bool;
 }
 
-#[repr(transparent)]
-#[derive(Deref, DerefMut)]
-pub struct BoxedRunner(pub(crate) Box<dyn Runner>);
+pub struct BoxedRunner {
+    initialized: bool,
+    inner: Box<dyn Runner>,
+}
+
+impl BoxedRunner {
+    #[inline]
+    pub(crate) fn new(runner: impl Runner + 'static) -> Self {
+        Self {
+            initialized: false,
+            inner: Box::new(runner),
+        }
+    }
+
+    pub(crate) fn run(&mut self, world: &mut World) -> bool {
+        if !self.initialized {
+            if self.inner.initialize(world) {
+                return true;
+            }
+            self.initialized = true;
+        }
+        self.inner.run(world)
+    }
+}
 
 #[repr(transparent)]
 #[derive(Resource)]
@@ -61,7 +88,7 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 #[inline]
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
-        runners.0.retain_mut(|r| !r.0.run(world));
+        runners.0.retain_mut(|r| !r.run(world));
         world.insert_non_send_resource(runners);
     }
 }

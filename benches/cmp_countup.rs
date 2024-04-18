@@ -1,9 +1,9 @@
 //! Testing the difference between not using Flurx and using Flurx in a simple countdown.
 #![allow(missing_docs)]
 
-use bevy::app::{App, AppExit, Startup};
+use bevy::app::{App, Startup};
 use bevy::core::TaskPoolPlugin;
-use bevy::prelude::{Commands, EventReader, EventWriter, Local, Res, ResMut, Resource, Update};
+use bevy::prelude::{Commands, Local, Res, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::FlurxPlugin;

@@ -35,9 +35,9 @@
 //! - [`map::Map`]
 //! - [`remake::Remake`]
 
-pub use history::{redo, undo};
 pub use map::Map;
 pub use omit::{Omit, OmitInput, OmitOutput};
+pub use record::redo;
 pub use remake::Remake;
 pub use through::through;
 pub use tuple::tuple;
@@ -53,8 +53,7 @@ pub mod seed;
 pub mod through;
 pub mod pipe;
 pub mod sequence;
-pub mod history;
-mod repeat;
+pub mod record;
 mod tuple;
 mod omit;
 mod map;
