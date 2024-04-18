@@ -5,7 +5,10 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
 /// applying function.
-pub trait Map<I1, O1, O2, ActionOrSeed> {
+pub trait Map<I1, O1, O2, ActionOrSeed>: Sized
+    where
+        O2: 'static
+{
     /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
     /// applying function.
     ///
@@ -25,6 +28,26 @@ pub trait Map<I1, O1, O2, ActionOrSeed> {
     /// });
     /// ```
     fn map(self, f: impl FnOnce(O1) -> O2 + 'static) -> ActionOrSeed;
+
+    /// Overwrite the output of [`Action`](crate::prelude::Action) or [`ActionSeed`](crate::prelude::ActionSeed).
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// use bevy::prelude::*;
+    /// use bevy_flurx::prelude::*;
+    ///
+    /// Reactor::schedule(|task| async move{
+    ///     task.will(Update, once::run(|| 3)
+    ///         .overwrite("hello")
+    ///         .pipe(once::run(|In(word): In<&'static str>|{
+    ///             assert_eq!(word, "hello");
+    ///         }))
+    ///     ).await;
+    /// });
+    fn overwrite(self, output: O2) -> ActionOrSeed {
+        self.map(|_| output)
+    }
 }
 
 impl<I, O, O2, A, Re> Map<I, O, O2, A> for Re
@@ -77,10 +100,10 @@ impl<O1, O2, F> Runner for MapRunner<O1, O2, F>
 #[cfg(test)]
 mod tests {
     use bevy::app::{Startup, Update};
-    use bevy::prelude::Commands;
+    use bevy::prelude::{Commands, In};
 
     use crate::action::once;
-    use crate::prelude::{Map, Reactor};
+    use crate::prelude::{Map, Pipe, Reactor};
     use crate::tests::test_app;
 
     #[test]
@@ -91,6 +114,31 @@ mod tests {
                 task.will(Update, once::run(|| 3).map(|num| format!("{num}"))).await;
             }));
         });
+    }
+
+    #[test]
+    fn overwrite() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, once::run(|| 3)
+                    .overwrite(5)
+                    .pipe(once::run(|In(num): In<usize>| {
+                        assert_eq!(num, 5);
+                    })),
+                ).await;
+
+                task.will(Update, once::run(|| 3)
+                    .overwrite("string")
+                    .pipe(once::run(|In(str): In<&'static str>| {
+                        assert_eq!(str, "string");
+                    })),
+                ).await;
+            }));
+        });
+
+        app.update();
+        app.update();
     }
 }
 

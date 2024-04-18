@@ -1,9 +1,9 @@
 //! Testing the difference between not using Flurx and using Flurx in a simple countdown.
 #![allow(missing_docs)]
 
-use bevy::app::{App, AppExit, Startup};
+use bevy::app::{App, Startup};
 use bevy::core::TaskPoolPlugin;
-use bevy::prelude::{Commands, EventReader, EventWriter, Local, Res, ResMut, Resource, Update};
+use bevy::prelude::{Commands, Local, Res, ResMut, Resource, Update};
 use criterion::{Criterion, criterion_group, criterion_main};
 
 use bevy_flurx::FlurxPlugin;
@@ -23,14 +23,9 @@ fn without_flurx(count: usize, c: &mut Criterion) {
                 .add_plugins(TaskPoolPlugin::default())
                 .init_resource::<Exit>()
                 .insert_resource(Limit(count))
-                .add_systems(Update, move |mut ew: EventWriter<AppExit>, mut local: Local<usize>, limit: Res<Limit>| {
+                .add_systems(Update, move |mut exit: ResMut<Exit>, mut local: Local<usize>, limit: Res<Limit>| {
                     *local += 1;
                     if *local == limit.0 {
-                        ew.send(AppExit);
-                    }
-                })
-                .add_systems(Update, |mut exit: ResMut<Exit>, mut er: EventReader<AppExit>| {
-                    if er.read().last().is_some() {
                         exit.0 = true;
                     }
                 });
