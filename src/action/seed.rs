@@ -6,7 +6,6 @@ use std::marker::PhantomData;
 use crate::action::Action;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
-///
 /// If [`In`] type of the struct implements this is `()`, 
 /// its struct also implements Into<[`Action`]> automatically.
 ///
@@ -29,15 +28,15 @@ impl<I, O> ActionSeed<I, O>
             R: Runner + 'static
     {
         ActionSeed(Box::new(move |input, token, output| {
-            BoxedRunner(Box::new(f(input, token, output)))
+            BoxedRunner::new(f(input, token, output))
         }), PhantomData)
     }
-    
+
     /// Define [`ActionSeed`] based on the function that returns an action from the input.
-    /// 
-    /// 
+    ///
+    ///
     /// # Examples
-    /// 
+    ///
     /// ```no_run
     /// use bevy::prelude::In;
     /// use bevy_flurx::prelude::*;
@@ -50,15 +49,15 @@ impl<I, O> ActionSeed<I, O>
     /// });
     /// ```
     #[inline]
-    pub fn define<A>(f: impl FnOnce(I) -> A + 'static) -> ActionSeed<I, O>
-        where 
-            A: Into<Action<I, O>>
+    pub fn define<I2, A>(f: impl FnOnce(I) -> A + 'static) -> ActionSeed<I, O>
+        where
+            I2: 'static,
+            A: Into<Action<I2, O>>
     {
         ActionSeed::from(|input, token, output|{
             f(input).into().into_runner(token, output)
         })
     }
-    
 
     /// Into [`Action`] with `input`.
     ///
@@ -75,7 +74,7 @@ impl<I, O> ActionSeed<I, O>
 }
 
 impl<I, O, F> From<F> for ActionSeed<I, O>
-    where 
+    where
         F: FnOnce(I, CancellationToken, Output<O>) -> BoxedRunner + 'static
 {
     #[inline]

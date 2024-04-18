@@ -11,7 +11,7 @@ use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
 /// [`Omit`] provides a mechanism to omit both input and output types from an action.
-pub trait Omit<I, O> {
+pub trait Omit {
     /// This method allows actions to omit generics from their return types,
     /// which is useful for defining groups of actions.
     ///
@@ -74,14 +74,23 @@ pub trait OmitInput<I, O> {
     fn omit_input(self) -> ActionSeed<(), O>;
 }
 
-impl<I, O, A> Omit<I, O> for A
+impl<O> Omit for ActionSeed<(), O>
     where
-        A: Into<Action<I, O>> + 'static,
+        O: 'static
+{
+    fn omit(self) -> ActionSeed {
+        let action: Action<(), O> = self.into();
+        action.omit()
+    }
+}
+
+impl<I, O> Omit for Action<I, O>
+    where
         I: 'static,
         O: 'static
 {
     fn omit(self) -> ActionSeed {
-        self.into().omit_output().omit_input()
+        self.omit_output().omit_input()
     }
 }
 
