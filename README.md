@@ -38,6 +38,11 @@ fn spawn_reactor(
     }));
 }
 ```
+## Highlights of the latest version
+
+As a highlight feature, we have added a record that allows for easy undo and redo.
+
+![examples/undo_redo.gif](examples/undo_redo.gif)
 
 ## Example
 
@@ -49,11 +54,11 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
 ## Compatible Bevy versions
 
-| bevy_flurx    | bevy   |
-|---------------|--------|
-| 0.3.0         | 0.13.0 |
-| 0.3.1         | 0.13.1 |
-| 0.3.2 ~ 0.3.3 | 0.13.2 | 
+| bevy_flurx           | bevy   |
+|----------------------|--------|
+| 0.3.0                | 0.13.0 |
+| 0.3.1                | 0.13.1 |
+| 0.3.2 ~ 0.3.4-beta.0 | 0.13.2 | 
 
 ## License
 
