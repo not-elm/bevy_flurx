@@ -32,7 +32,33 @@ impl<I, O> ActionSeed<I, O>
             BoxedRunner(Box::new(f(input, token, output)))
         }), PhantomData)
     }
-
+    
+    /// Define [`ActionSeed`] based on the function that returns an action from the input.
+    /// 
+    /// 
+    /// # Examples
+    /// 
+    /// ```no_run
+    /// use bevy::prelude::In;
+    /// use bevy_flurx::prelude::*;
+    ///
+    /// ActionSeed::define(|input: usize|{
+    ///     once::run(|In(num): In<usize>|{
+    ///         assert_eq!(num, 3);
+    ///     })
+    ///         .with(input)
+    /// });
+    /// ```
+    #[inline]
+    pub fn define<A>(f: impl FnOnce(I) -> A + 'static) -> ActionSeed<I, O>
+        where 
+            A: Into<Action<I, O>>
+    {
+        ActionSeed::from(|input, token, output|{
+            f(input).into().into_runner(token, output)
+        })
+    }
+    
 
     /// Into [`Action`] with `input`.
     ///
@@ -46,8 +72,6 @@ impl<I, O> ActionSeed<I, O>
     pub(crate) fn create_runner(self, input: I, token: CancellationToken, output: Output<O>) -> BoxedRunner {
         (self.0)(input, token, output)
     }
-    
-
 }
 
 impl<I, O, F> From<F> for ActionSeed<I, O>
