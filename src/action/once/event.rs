@@ -6,7 +6,7 @@
 
 
 use bevy::app::AppExit;
-use bevy::prelude::{Event, EventReader, EventWriter, In};
+use bevy::prelude::{Event, EventWriter, In};
 
 use crate::action::{Action, once};
 use crate::action::seed::ActionSeed;
