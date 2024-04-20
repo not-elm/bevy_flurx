@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Resource, Schedule, Schedules, World};
+use bevy::prelude::{Deref, DerefMut, Resource, Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
 pub use cancellation_token::CancellationToken;
@@ -14,12 +14,6 @@ mod cancellation_token;
 /// if the system termination condition is met, return `true` and
 /// pass the system output to [`Output`].
 pub trait Runner {
-    /// Initialize this runner.
-    #[allow(unused_variables)]
-    fn initialize(&mut self, world: &mut World) -> bool {
-        false
-    }
-
     /// Run the system.
     ///
     /// If this runner finishes, it must return `true`.
@@ -27,28 +21,14 @@ pub trait Runner {
     fn run(&mut self, world: &mut World) -> bool;
 }
 
-pub struct BoxedRunner {
-    initialized: bool,
-    inner: Box<dyn Runner>,
-}
+#[repr(transparent)]
+#[derive(Deref, DerefMut)]
+pub struct BoxedRunner(Box<dyn Runner>);
 
 impl BoxedRunner {
     #[inline]
     pub(crate) fn new(runner: impl Runner + 'static) -> Self {
-        Self {
-            initialized: false,
-            inner: Box::new(runner),
-        }
-    }
-
-    pub(crate) fn run(&mut self, world: &mut World) -> bool {
-        if !self.initialized {
-            if self.inner.initialize(world) {
-                return true;
-            }
-            self.initialized = true;
-        }
-        self.inner.run(world)
+        Self(Box::new(runner))
     }
 }
 

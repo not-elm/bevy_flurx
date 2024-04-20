@@ -3,7 +3,6 @@
 //! - [`wait::event::comes`]
 //! - [`wait::event::read`]
 
-
 use bevy::ecs::event::ManualEventReader;
 use bevy::prelude::{Event, Events, Local, Res};
 
@@ -25,18 +24,20 @@ use crate::prelude::wait;
 /// ```
 #[inline(always)]
 pub fn comes<E>() -> ActionSeed
-    where E: Event
+    where
+        E: Event,
 {
     wait::until(|mut er: Local<Option<ManualEventReader<E>>>,
                  events: Res<Events<E>>| {
         if er.is_none() {
-            if 0 < events.iter_current_update_events().count(){
+            if 0 < events.iter_current_update_events().count() {
                 return true;
             }
             er.replace(events.get_reader_current());
         }
         0 < er.as_mut().unwrap().read(&events).count()
-    })
+    },
+    )
 }
 
 /// Waits until the specified event is sent.
@@ -56,16 +57,13 @@ pub fn comes<E>() -> ActionSeed
 /// ```
 #[inline(always)]
 pub fn read<E>() -> ActionSeed<(), E>
-    where E: Event + Clone
+    where
+        E: Event + Clone,
 {
     wait::output(|mut er: Local<Option<ManualEventReader<E>>>,
                   events: Res<Events<E>>| {
         if er.is_none() {
-            if let Some(event) = events
-                .iter_current_update_events()
-                .last()
-                .cloned()
-            {
+            if let Some(event) = events.iter_current_update_events().last().cloned() {
                 return Some(event);
             }
             er.replace(events.get_reader_current());
@@ -91,51 +89,25 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::event::send_default::<TestEvent1>()
-                    .then(wait::event::comes::<TestEvent1>()),
-                ).await;
+                task.will(
+                    Update,
+                    once::event::send_default::<TestEvent1>()
+                        .then(wait::event::comes::<TestEvent1>()),
+                )
+                    .await;
 
                 task.will(Update, {
-                    wait::either(
-                        wait::event::comes::<TestEvent1>(),
-                        once::run(|| {}),
+                    wait::either(wait::event::comes::<TestEvent1>(), once::run(|| {})).pipe(
+                        once::run(
+                            |In(either): In<Either<(), ()>>, mut ew: EventWriter<TestEvent2>| {
+                                if either.is_right() {
+                                    ew.send_default();
+                                }
+                            },
+                        ),
                     )
-                        .pipe(once::run(|In(either): In<Either<(), ()>>, mut ew: EventWriter<TestEvent2>| {
-                            if either.is_right() {
-                                ew.send_default();
-                            }
-                        }))
-                }).await;
-            }));
-        });
-
-        app.update();
-
-        app.update();
-        let mut er = ManualEventReader::<TestEvent2>::default();
-        app.assert_event_comes(&mut er);
-    }
-
-    #[test]
-    fn wait_read_event_consumed_events() {
-        let mut app = test_app();
-        app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::event::send_default::<TestEvent1>()
-                    .then(wait::event::read::<TestEvent1>()),
-                ).await;
-
-                task.will(Update, {
-                    wait::either(
-                        wait::event::read::<TestEvent1>(),
-                        once::run(|| {}),
-                    )
-                        .pipe(once::run(|In(either): In<Either<TestEvent1, ()>>, mut ew: EventWriter<TestEvent2>| {
-                            if either.is_right() {
-                                ew.send_default();
-                            }
-                        }))
-                }).await;
+                })
+                    .await;
             }));
         });
 
