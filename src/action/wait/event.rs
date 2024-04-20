@@ -4,7 +4,8 @@
 //! - [`wait::event::read`]
 
 
-use bevy::prelude::{Event, Events, Res};
+use bevy::ecs::event::ManualEventReader;
+use bevy::prelude::{Event, Events, Local, Res};
 
 use crate::prelude::seed::ActionSeed;
 use crate::prelude::wait;
@@ -26,11 +27,17 @@ use crate::prelude::wait;
 pub fn comes<E>() -> ActionSeed
     where E: Event
 {
-    wait::until(|events: Res<Events<E>>| {
-        0 < events.iter_current_update_events().count()
+    wait::until(|mut er: Local<Option<ManualEventReader<E>>>,
+                 events: Res<Events<E>>| {
+        if er.is_none() {
+            if 0 < events.iter_current_update_events().count(){
+                return true;
+            }
+            er.replace(events.get_reader_current());
+        }
+        0 < er.as_mut().unwrap().read(&events).count()
     })
 }
-
 
 /// Waits until the specified event is sent.
 ///
@@ -51,8 +58,19 @@ pub fn comes<E>() -> ActionSeed
 pub fn read<E>() -> ActionSeed<(), E>
     where E: Event + Clone
 {
-    wait::output(|events: Res<Events<E>>| {
-        events.iter_current_update_events().next().cloned()
+    wait::output(|mut er: Local<Option<ManualEventReader<E>>>,
+                  events: Res<Events<E>>| {
+        if er.is_none() {
+            if let Some(event) = events
+                .iter_current_update_events()
+                .last()
+                .cloned()
+            {
+                return Some(event);
+            }
+            er.replace(events.get_reader_current());
+        }
+        er.as_mut().unwrap().read(&events).last().cloned()
     })
 }
 
