@@ -98,6 +98,7 @@ fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I,
             track: None,
             tracks: Vec::new(),
             predicate: predicate(input),
+            initialized: false
         }
     })
 }
@@ -111,6 +112,7 @@ struct UndoExecuteRunner<P, Act> {
     redo: Vec<(Track<Act>, ActionSeed)>,
     predicate: P,
     tracks: Vec<Track<Act>>,
+    initialized: bool
 }
 
 impl<P, Act> Runner for UndoExecuteRunner<P, Act>
@@ -119,20 +121,20 @@ impl<P, Act> Runner for UndoExecuteRunner<P, Act>
         P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static
 {
     //noinspection DuplicatedCode
-    fn initialize(&mut self, world: &mut World) -> bool {
-        if let Err(progressing) = lock_record::<Act>(world) {
-            self.output.replace(Err(progressing));
-            return true;
-        }
-        self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
-        false
-    }
-
     fn run(&mut self, world: &mut World) -> bool {
         if self.token.requested_cancel() {
             world.resource_mut::<Record<Act>>().redo.extend(std::mem::take(&mut self.redo));
             unlock_record::<Act>(world);
             return true;
+        }
+
+        if !self.initialized {
+            if let Err(progressing) = lock_record::<Act>(world) {
+                self.output.replace(Err(progressing));
+                return true;
+            }
+            self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
+            self.initialized = true;
         }
 
         loop {
@@ -141,7 +143,7 @@ impl<P, Act> Runner for UndoExecuteRunner<P, Act>
                     let runner = track.create_runner(self.token.clone(), self.undo_output.clone());
                     self.undo_runner.replace(runner);
                     self.track.replace(track);
-                } 
+                }
             }
             let Some(undo_runner) = self.undo_runner.as_mut() else {
                 self.output.replace(Ok(()));

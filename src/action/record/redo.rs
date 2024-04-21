@@ -115,6 +115,7 @@ fn do_redo<In, Act, F>(
             tracks: Vec::new(),
             cache: Vec::new(),
             predicate: predicate(input),
+            initialized: false
         }
     })
 }
@@ -127,6 +128,7 @@ struct RedoExecuteRunner<P, Act> {
     tracks: Vec<(Track<Act>, ActionSeed)>,
     cache: Vec<Track<Act>>,
     predicate: P,
+    initialized: bool,
 }
 
 impl<P, Act> Runner for RedoExecuteRunner<P, Act>
@@ -135,20 +137,20 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
         Act: Send + Sync + 'static
 {
     //noinspection DuplicatedCode
-    fn initialize(&mut self, world: &mut World) -> bool {
-        if let Err(e) = lock_record::<Act>(world) {
-            self.output.replace(Err(e));
-            return true;
-        }
-        self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
-        false
-    }
-
     fn run(&mut self, world: &mut World) -> bool {
         if self.token.requested_cancel() {
             let _ = push_tracks(std::mem::take(&mut self.cache).into_iter(), world, false);
             unlock_record::<Act>(world);
             return true;
+        }
+
+        if !self.initialized {
+            if let Err(e) = lock_record::<Act>(world) {
+                self.output.replace(Err(e));
+                return true;
+            }
+            self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
+            self.initialized = true;
         }
 
         loop {
