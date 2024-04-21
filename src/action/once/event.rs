@@ -6,7 +6,7 @@
 
 
 use bevy::app::AppExit;
-use bevy::prelude::{Event, EventReader, EventWriter, In};
+use bevy::prelude::{Event, EventWriter, In};
 
 use crate::action::{Action, once};
 use crate::action::seed::ActionSeed;
@@ -70,24 +70,6 @@ pub fn app_exit() -> Action<AppExit, ()> {
     send().with(AppExit)
 }
 
-/// Call [`EventReader::clear`](bevy::prelude::EventReader::clear).
-///
-/// ## Examples
-///
-/// ```no_run
-/// use bevy::app::AppExit;
-/// use bevy::prelude::*;
-/// use bevy_flurx::prelude::*;
-/// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::clear::<AppExit>()).await;
-/// });
-/// ```
-#[inline(always)]
-pub fn clear<E: Event>() -> ActionSeed {
-    once::run(|mut er: EventReader<E>| {
-        er.clear();
-    })
-}
 
 #[cfg(test)]
 mod tests {

@@ -52,6 +52,7 @@ macro_rules! wait_all {
 #[allow(non_snake_case)]
 pub mod private {
     use std::marker::PhantomData;
+
     use crate::action::Action;
     use crate::prelude::ActionSeed;
     use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
@@ -64,13 +65,13 @@ pub mod private {
         r1: BoxedRunner,
         r2: BoxedRunner,
         output: Output<O>,
-        _m: PhantomData<(I1, I2)>
+        _m: PhantomData<(I1, I2)>,
     }
-    
-    pub trait CreateBothAction<I1, O1, I2, O2, O>{
+
+    pub trait CreateBothAction<I1, O1, I2, O2, O> {
         fn action(a1: Action<I1, O1>, a2: Action<I2, O2>) -> Action<(I1, I2), O>;
     }
-    
+
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
@@ -148,7 +149,7 @@ mod tests {
     use bevy::prelude::{Commands, EventWriter, Local};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
-    use crate::prelude::{once, wait};
+    use crate::prelude::{once, Then, wait};
     use crate::reactor::Reactor;
     use crate::tests::test_app;
 
@@ -192,17 +193,18 @@ mod tests {
         app
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
-                    let (event1, ..) = task.will(Update, wait_all!(
-                        wait::event::read::<TestEvent1>(),
-                        once::run(||{
-
-                        })
-                    )).await;
+                    let (event1, ..) = task.will(Update, once::event::send_default::<TestEvent1>()
+                        .then(wait_all!(
+                            wait::event::read::<TestEvent1>(),
+                            once::run(||{
+    
+                            })
+                        )),
+                    ).await;
                     assert_eq!(event1, TestEvent1);
                     task.will(Update, once::non_send::insert().with(AppExit)).await;
                 }));
             });
-        app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 
