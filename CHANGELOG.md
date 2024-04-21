@@ -1,3 +1,9 @@
+## v0.3.4-beta.1
+
+In this version, fixed actions related to events.
+
+- [v0.3.4-beta.1 ](https://github.com/not-elm/bevy_flurx/pull/29)
+
 ## v0.3.4-beta.0
 
 - [Feature/0.3.4-beta.0](https://github.com/not-elm/bevy_flurx/pull/27)
