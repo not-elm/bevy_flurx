@@ -27,9 +27,9 @@ pub mod prelude {
         action::*,
         action::{Omit, OmitInput, OmitOutput},
         action::Map,
+        action::pipe::Pipe,
         action::record::*,
         action::record::extension::*,
-        action::pipe::Pipe,
         action::Remake,
         action::seed::ActionSeed,
         action::sequence::Then,
@@ -131,6 +131,9 @@ mod tests {
     #[derive(Default, Eq, PartialEq, Copy, Clone)]
     pub struct TestAct;
 
+    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+    pub struct NumAct(pub usize);
+
     pub fn test_app() -> App {
         let mut app = App::new();
         app.add_plugins((
@@ -138,6 +141,7 @@ mod tests {
             FlurxPlugin,
             InputPlugin
         ));
+        app.add_record_events::<NumAct>();
         app.add_record_events::<TestAct>();
         app.init_resource::<Record<TestAct>>();
         app

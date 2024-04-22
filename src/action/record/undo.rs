@@ -98,7 +98,7 @@ fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I,
             track: None,
             tracks: Vec::new(),
             predicate: predicate(input),
-            initialized: false
+            initialized: false,
         }
     })
 }
@@ -112,7 +112,7 @@ struct UndoExecuteRunner<P, Act> {
     redo: Vec<(Track<Act>, ActionSeed)>,
     predicate: P,
     tracks: Vec<Track<Act>>,
-    initialized: bool
+    initialized: bool,
 }
 
 impl<P, Act> Runner for UndoExecuteRunner<P, Act>
