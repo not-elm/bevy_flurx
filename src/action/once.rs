@@ -1,4 +1,4 @@
-//! [`once`] creates a task that only once run system.
+//! `once` creates a task that only once run system.
 //!
 //! actions
 //! 

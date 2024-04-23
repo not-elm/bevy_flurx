@@ -82,9 +82,9 @@ mod tests {
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{Omit, once, record};
+    use crate::action::{once, record};
     use crate::action::record::{Record, Track};
-    use crate::prelude::{ActionSeed, Reactor, Rollback};
+    use crate::prelude::{ActionSeed, Reactor, Rollback, Omit};
     use crate::tests::{test_app};
 
 

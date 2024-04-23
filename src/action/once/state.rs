@@ -1,4 +1,4 @@
-//! [`once::state`] creates a task that only once run system related to [`States`](bevy::prelude::States).
+//! [`once::state`] creates a task that only once run system related to [`States`].
 //!
 //! - [`once::state::set`]
 

@@ -181,8 +181,8 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{Omit, OmitOutput, once, wait};
-    use crate::action::omit::OmitInput;
+    use crate::action::{once, wait};
+    use crate::action::omit::{Omit, OmitOutput, OmitInput};
     use crate::prelude::{ActionSeed, Pipe, Reactor};
     use crate::tests::test_app;
 

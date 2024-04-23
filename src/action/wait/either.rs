@@ -4,13 +4,13 @@ use crate::action::Action;
 use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
-/// This enum represents the result of [`wait::either`].
+/// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Either<L, R> {
-    /// The result of the first task which passed to [`wait::either`].
+    /// The result of the first task which passed to [`wait::either`](crate::prelude::wait::either).
     Left(L),
 
-    /// The result of the second task which passed to [`wait::either`].
+    /// The result of the second task which passed to [`wait::either`](crate::prelude::wait::either).
     Right(R),
 }
 

@@ -1,4 +1,4 @@
-//! [`delay`] creates a task that delay the application.
+//! `delay` creates a task that delay the application.
 //!
 //! actions
 //!

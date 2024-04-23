@@ -1,7 +1,9 @@
+//! `Runner` defines what does the actual processing of the action.
+
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Deref, DerefMut, Resource, Schedule, Schedules, World};
+use bevy::prelude::{Resource, Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
 pub use cancellation_token::CancellationToken;
@@ -21,14 +23,23 @@ pub trait Runner {
     fn run(&mut self, world: &mut World) -> bool;
 }
 
+/// The boxed runner.
+///
+/// It is created by [`Action`](crate::prelude::Action).
 #[repr(transparent)]
-#[derive(Deref, DerefMut)]
 pub struct BoxedRunner(Box<dyn Runner>);
 
 impl BoxedRunner {
     #[inline]
     pub(crate) fn new(runner: impl Runner + 'static) -> Self {
         Self(Box::new(runner))
+    }
+}
+
+impl Runner for BoxedRunner{
+    #[inline(always)]
+    fn run(&mut self, world: &mut World) -> bool {
+        self.0.run(world)
     }
 }
 
@@ -65,10 +76,9 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
     schedules.get_mut(schedule_label).unwrap()
 }
 
-#[inline]
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
-        runners.0.retain_mut(|r| !r.run(world));
+        runners.0.retain_mut(|r| !r.0.run(world));
         world.insert_non_send_resource(runners);
     }
 }

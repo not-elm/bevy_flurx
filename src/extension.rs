@@ -13,11 +13,10 @@ use crate::world_ptr::WorldPtr;
 ///
 /// This trait is implemented in [`World`] and [`Commands`].
 ///
-/// [`Reactor`]: crate::prelude::Reactor
 /// [`World`]: bevy::prelude::World
 /// [`Commands`]: bevy::prelude::Commands
 pub trait ScheduleReactor<'w, Fun, Fut, Out> {
-    /// Create and initialize [`Reactor`](crate::reactor::Reactor).
+    /// Create and initialize [`Reactor`].
     fn spawn_initialized_reactor(&'w mut self, f: Fun) -> Out;
 }
 

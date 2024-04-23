@@ -6,7 +6,7 @@ use std::marker::PhantomData;
 use crate::action::Action;
 use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 
-/// If [`In`] type of the struct implements this is `()`, 
+/// If [`In`](bevy::prelude::In) type of the struct implements this is `()`, 
 /// its struct also implements Into<[`Action`]> automatically.
 ///
 /// Otherwise, to convert to the action,

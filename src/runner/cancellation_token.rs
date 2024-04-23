@@ -14,12 +14,12 @@ impl Clone for CancellationToken {
 
 impl CancellationToken {
     #[inline(always)]
-    pub fn requested_cancel(&self) -> bool {
+    pub(crate) fn requested_cancel(&self) -> bool {
         self.0.get()
     }
 
     #[inline(always)]
-    pub fn cancel(&self) {
+    pub(crate) fn cancel(&self) {
         self.0.set(true);
     }
 }

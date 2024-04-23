@@ -12,8 +12,8 @@
 use bevy::app::{App, PostUpdate, Update};
 use bevy::prelude::{Commands, Event, EventReader};
 
-use crate::action::{Omit, record};
-use crate::prelude::{Reactor, Then};
+use crate::action::record;
+use crate::prelude::{Omit, Reactor, Then};
 
 /// Represents a request `undo` operations.
 ///
@@ -255,7 +255,7 @@ mod tests {
         app.update();
         app.assert_resource_eq(Count(1));
     }
-    
+
     #[test]
     fn test_request_redo_to() {
         let mut app = test_app();
@@ -278,8 +278,8 @@ mod tests {
         app.update();
         app.assert_resource_eq(Count(1));
     }
-    
-     #[test]
+
+    #[test]
     fn test_request_redo_all() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {

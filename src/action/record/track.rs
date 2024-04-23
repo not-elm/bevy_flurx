@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
-use crate::action::{Action, Map, Omit, OmitInput};
-use crate::prelude::ActionSeed;
+use crate::action::{Action, Map};
+use crate::prelude::{ActionSeed, Omit, OmitInput};
 use crate::runner::{BoxedRunner, CancellationToken, Output};
 
 /// Represents the track of act.

@@ -2,24 +2,24 @@
 //!
 //! actions
 //!
-//! - [`wait::output`](crate::prelude::wait::output)
-//! - [`wait::both`](crate::prelude::wait::both)
-//! - [`wait::until`](crate::prelude::wait::until)
+//! - [`wait::output`]
+//! - [`wait::both`]
+//! - [`wait::until`]
 //! - [`wait_all!`](crate::wait_all)
-//! - [`wait::either`](crate::prelude::wait::either::either)
-//! - [`wait::event`](crate::prelude::wait::event)
-//! - [`wait::state`](crate::prelude::wait::state)
-//! - [`wait::switch`](crate::prelude::wait::switch)
-//! - [`wait::input`](crate::prelude::wait::input)
-//! - [`wait::audio`](crate::prelude::wait::audio) (require feature flag `audio`)
+//! - [`wait::either`]
+//! - [`wait::event`]
+//! - [`wait::state`]
+//! - [`wait::switch`]
+//! - [`wait::input`]
+//! - [`wait::audio`] (require feature flag `audio`)
 //! - [`wait::any`]
 
 
 use bevy::prelude::{In, IntoSystem, System, World};
 
-pub use any::any;
-pub use both::both;
-pub use either::*;
+pub use _any::any;
+pub use _both::both;
+pub use _either::*;
 
 use crate::action::seed::ActionSeed;
 use crate::prelude::wait;
@@ -33,9 +33,12 @@ pub mod switch;
 pub mod all;
 #[cfg(feature = "audio")]
 pub mod audio;
-mod either;
-mod both;
-mod any;
+#[path = "wait/either.rs"]
+mod _either;
+#[path = "wait/both.rs"]
+mod _both;
+#[path = "wait/any.rs"]
+mod _any;
 
 
 /// Run until it returns [`Option::Some`].

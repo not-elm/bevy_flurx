@@ -189,9 +189,9 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{delay, Omit, once, record};
+    use crate::action::{delay, once, record};
     use crate::action::record::track::{Redo, Undo};
-    use crate::prelude::{ActionSeed, Rollback, Then, Track};
+    use crate::prelude::{ActionSeed, Rollback, Then, Track, Omit};
     use crate::reactor::Reactor;
     use crate::sequence;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};

@@ -1,4 +1,4 @@
-//! [`once::res`] creates a task that only once run system related to [`Resource`](bevy::prelude::Resource).
+//! [`once::res`] creates a task that only once run system related to [`Resource`].
 //!
 //! - [`once::res::init`]
 //! - [`once::res::insert`]

@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 /// Represents the output of the task.
-/// See details [`Runner`].
+/// See details [`Runner`](crate::prelude::Runner).
 pub struct Output<O>(Rc<RefCell<Option<O>>>);
 
 impl<O> Clone for Output<O> {
@@ -21,29 +21,23 @@ impl<O> Default for Output<O> {
 
 impl<O> Output<O> {
     #[inline(always)]
-    pub fn replace(&self, o: O) {
+    pub(crate) fn replace(&self, o: O) {
         self.0.borrow_mut().replace(o);
     }
 
     #[inline(always)]
-    pub fn take(&self) -> Option<O> {
+    pub(crate) fn take(&self) -> Option<O> {
         self.0.borrow_mut().take()
     }
 
     #[inline(always)]
-    pub fn is_some(&self) -> bool {
+    pub(crate) fn is_some(&self) -> bool {
         self.0.borrow().is_some()
     }
 
     #[inline(always)]
-    pub fn is_none(&self) -> bool {
+    pub(crate) fn is_none(&self) -> bool {
         self.0.borrow().is_none()
     }
 }
 
-impl<O: Clone> Output<O> {
-    #[inline(always)]
-    pub fn cloned(&self) -> Option<O> {
-        self.0.borrow().clone()
-    }
-}

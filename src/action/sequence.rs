@@ -3,7 +3,7 @@
 //! [`Then`] trait is implemented on all actions and can be combined
 //! in method chains like `once::run(||{}).then(once::run(||{}))` 
 //!
-//! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
+//! It also provides the [`sequence!`](crate::sequence) macro. The behavior itself is the same as [`Then`].
 //!
 //! trait 
 //!

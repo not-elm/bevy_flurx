@@ -30,17 +30,15 @@
 //! - [`sequence`]
 //! - [`switch`]
 //! - [`through`]
-//! - [`tuple`] 
+//! - [`tuple()`]
 //! - [`omit`]
 //! - [`map::Map`]
 //! - [`remake::Remake`]
 
+pub use _tuple::tuple;
 pub use map::Map;
-pub use omit::{Omit, OmitInput, OmitOutput};
 pub use record::redo;
 pub use remake::Remake;
-pub use through::through;
-pub use tuple::tuple;
 
 use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, CancellationToken, Output};
@@ -54,8 +52,9 @@ pub mod through;
 pub mod pipe;
 pub mod sequence;
 pub mod record;
-mod tuple;
-mod omit;
+pub mod omit;
+#[path = "action/tuple.rs"]
+mod _tuple;
 mod map;
 mod remake;
 

@@ -131,13 +131,13 @@ impl<Op> Resource for Record<Op>
         Op: Send + Sync + 'static
 {}
 
-/// # Safety: [`Track::create_runner`] must be called only on the main thread.
+/// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Send for Record<Op>
     where
         Op: Send + Sync + 'static
 {}
 
-/// # Safety: [`Track::create_runner`] must be called only on the main thread.
+/// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Sync for Record<Op>
     where
         Op: Send + Sync + 'static
@@ -189,9 +189,9 @@ mod tests {
     use bevy::prelude::Commands;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{Action, Omit, record, wait};
+    use crate::action::{Action, record, wait};
     use crate::action::record::track::Track;
-    use crate::prelude::{ActionSeed, EditRecordResult, Reactor, Record, Redo, Rollback, Then, Undo};
+    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
     use crate::tests::{decrement_count, increment_count, NumAct, test_app, TestAct};
 
     pub fn push_num_act(num: usize) -> ActionSeed {

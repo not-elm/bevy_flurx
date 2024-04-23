@@ -20,12 +20,13 @@ use crate::world_ptr::WorldPtr;
 pub mod extension;
 pub mod task;
 pub mod action;
+pub mod runner;
 
 #[allow(missing_docs)]
 pub mod prelude {
     pub use crate::{
         action::*,
-        action::{Omit, OmitInput, OmitOutput},
+        action::omit::*,
         action::Map,
         action::pipe::Pipe,
         action::record::*,
@@ -46,8 +47,6 @@ pub mod prelude {
 
 mod world_ptr;
 mod reactor;
-#[allow(missing_docs)]
-mod runner;
 mod selector;
 
 /// Provides the async systems.

@@ -25,12 +25,12 @@ pub struct Reactor {
 impl Reactor {
     /// Create new [`Reactor`].
     ///
-    /// The scheduled [`Reactor`] will be run and initialized at [`RunReactor`](crate::RunReactor)(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
+    /// The scheduled [`Reactor`] will be run and initialized at `RunReactor` scuhedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
     ///
     /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
     /// to reduce the delay until initialization.
     ///
-    /// If you spawn on another [`ScheduleLabel`], 
+    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel), 
     /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor). 
     ///
     /// ## Examples

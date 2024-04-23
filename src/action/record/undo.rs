@@ -175,10 +175,10 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{delay, Omit, record};
+    use crate::action::{delay, record};
     use crate::action::record::EditRecordResult;
     use crate::action::record::tests::push_undo_increment;
-    use crate::prelude::{ActionSeed, once, Pipe, Reactor, Record, Rollback, Then, Track};
+    use crate::prelude::{ActionSeed, once, Pipe, Reactor, Record, Rollback, Then, Omit, Track};
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
     #[test]
