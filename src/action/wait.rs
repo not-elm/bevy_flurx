@@ -5,6 +5,7 @@
 //! - [`wait::output`]
 //! - [`wait::both`]
 //! - [`wait::until`]
+//! - [`wait::all`](crate::prelude::wait::all())
 //! - [`wait_all!`](crate::wait_all)
 //! - [`wait::either`]
 //! - [`wait::event`]
@@ -29,8 +30,7 @@ pub mod event;
 pub mod input;
 pub mod state;
 pub mod switch;
-#[allow(missing_docs)]
-pub mod all;
+pub use all::{all, private};
 #[cfg(feature = "audio")]
 pub mod audio;
 #[path = "wait/either.rs"]
@@ -39,7 +39,7 @@ mod _either;
 mod _both;
 #[path = "wait/any.rs"]
 mod _any;
-
+mod all;
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
