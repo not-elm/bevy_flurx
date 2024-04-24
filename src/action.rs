@@ -86,6 +86,20 @@ impl<Out> From<ActionSeed<(), Out>> for Action<(), Out>
 }
 
 /// Creates a \[[`ActionSeed`]; N\] containing the omitted actions.
+/// 
+/// # Examples
+/// 
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy_flurx::actions;
+/// use bevy_flurx::prelude::*;
+///
+/// let actions: [ActionSeed; 3] = actions![
+///     once::run(||{}),
+///     delay::frames().with(3),
+///     wait::event::comes::<AppExit>()
+/// ];
+/// ```
 #[macro_export]
 macro_rules! actions {
     () => (
