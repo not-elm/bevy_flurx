@@ -64,16 +64,15 @@ pub fn either<LI, LO, RI, RO, >(
 {
     let Action(li, ls) = lhs.into();
     let Action(ri, rs) = rhs.into();
-    ActionSeed::new(move |input: (LI, RI), token, output| {
+    ActionSeed::new(move |input: (LI, RI), output| {
         let o1 = Output::default();
         let o2 = Output::default();
         EitherRunner {
-            r1: ls.with(input.0).into_runner(token.clone(), o1.clone()),
-            r2: rs.with(input.1).into_runner(token.clone(), o2.clone()),
+            r1: ls.with(input.0).into_runner(o1.clone()),
+            r2: rs.with(input.1).into_runner(o2.clone()),
             o1,
             o2,
-            output,
-            token,
+            output
         }
     })
         .with((li, ri))
@@ -84,7 +83,6 @@ struct EitherRunner<O1, O2> {
     r2: BoxedRunner,
     o1: Output<O1>,
     o2: Output<O2>,
-    token: CancellationToken,
     output: Output<Either<O1, O2>>,
 }
 
@@ -93,23 +91,24 @@ impl<O1, O2> Runner for EitherRunner<O1, O2>
         O1: 'static,
         O2: 'static,
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
-        self.r1.run(world);
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        self.r1.run(world, token);
         if let Some(lhs) = self.o1.take() {
-            self.output.replace(Either::Left(lhs));
+            self.output.set(Either::Left(lhs));
             return true;
         }
-        self.r2.run(world);
+        self.r2.run(world, token);
         if let Some(rhs) = self.o2.take() {
-            self.output.replace(Either::Right(rhs));
+            self.output.set(Either::Right(rhs));
             true
         } else {
             false
         }
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        self.r1.on_cancelled(world);
+        self.r2.on_cancelled(world);
     }
 }
 

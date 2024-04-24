@@ -40,8 +40,8 @@ pub use map::Map;
 pub use record::redo;
 pub use remake::Remake;
 
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output};
+use crate::prelude::{ActionSeed};
+use crate::runner::{BoxedRunner, Output};
 
 pub mod once;
 pub mod wait;
@@ -69,9 +69,9 @@ impl<I1, O1> Action<I1, O1>
         I1: 'static,
         O1: 'static
 {
-    #[inline]
-    pub(crate) fn into_runner(self, token: CancellationToken, output: Output<O1>) -> BoxedRunner {
-        self.1.create_runner(self.0, token, output)
+    #[inline(always)]
+    pub(crate) fn into_runner(self, output: Output<O1>) -> BoxedRunner {
+        self.1.create_runner(self.0, output)
     }
 }
 
@@ -86,9 +86,9 @@ impl<Out> From<ActionSeed<(), Out>> for Action<(), Out>
 }
 
 /// Creates a \[[`ActionSeed`]; N\] containing the omitted actions.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```no_run
 /// use bevy::app::AppExit;
 /// use bevy_flurx::actions;

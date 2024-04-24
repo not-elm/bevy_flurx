@@ -88,9 +88,8 @@ fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I,
         Act: Send + Sync + 'static,
         F: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static
 {
-    ActionSeed::new(|input: I, token, output| {
-        UndoExecuteRunner {
-            token,
+    ActionSeed::new(|input: I, output| {
+        UndoRunner {
             output,
             undo_output: Output::default(),
             undo_runner: None,
@@ -103,8 +102,7 @@ fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I,
     })
 }
 
-struct UndoExecuteRunner<P, Act> {
-    token: CancellationToken,
+struct UndoRunner<P, Act> {
     output: Output<EditRecordResult>,
     undo_output: Output<Option<ActionSeed>>,
     undo_runner: Option<BoxedRunner>,
@@ -115,22 +113,16 @@ struct UndoExecuteRunner<P, Act> {
     initialized: bool,
 }
 
-impl<P, Act> Runner for UndoExecuteRunner<P, Act>
+impl<P, Act> Runner for UndoRunner<P, Act>
     where
         Act: Send + Sync + 'static,
         P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            world.resource_mut::<Record<Act>>().redo.extend(std::mem::take(&mut self.redo));
-            unlock_record::<Act>(world);
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if !self.initialized {
             if let Err(progressing) = lock_record::<Act>(world) {
-                self.output.replace(Err(progressing));
+                self.output.set(Err(progressing));
                 return true;
             }
             self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
@@ -140,19 +132,19 @@ impl<P, Act> Runner for UndoExecuteRunner<P, Act>
         loop {
             if self.undo_runner.is_none() {
                 if let Some(track) = self.tracks.pop() {
-                    let runner = track.create_runner(self.token.clone(), self.undo_output.clone());
+                    let runner = track.create_runner(self.undo_output.clone());
                     self.undo_runner.replace(runner);
                     self.track.replace(track);
                 }
             }
             let Some(undo_runner) = self.undo_runner.as_mut() else {
-                self.output.replace(Ok(()));
+                self.output.set(Ok(()));
                 world.resource_mut::<Record<Act>>().redo.extend(std::mem::take(&mut self.redo));
                 unlock_record::<Act>(world);
                 return true;
             };
 
-            undo_runner.run(world);
+            undo_runner.run(world, token);
             let Some(redo) = self.undo_output.take() else {
                 return false;
             };
@@ -164,13 +156,22 @@ impl<P, Act> Runner for UndoExecuteRunner<P, Act>
             self.undo_runner.take();
         }
     }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        if let Some(runner) = self.undo_runner.as_mut() {
+            runner.on_cancelled(world);
+            world.resource_mut::<Record<Act>>().redo.extend(std::mem::take(&mut self.redo));
+            unlock_record::<Act>(world);
+        }
+    }
 }
 
 
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, Startup, Update};
-    use bevy::prelude::{Commands, EventWriter, In};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::{Commands, Entity, EventWriter, In, Query, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -178,7 +179,8 @@ mod tests {
     use crate::action::{delay, record};
     use crate::action::record::EditRecordResult;
     use crate::action::record::tests::push_undo_increment;
-    use crate::prelude::{ActionSeed, once, Pipe, Reactor, Record, Rollback, Then, Omit, Track};
+    use crate::prelude::{ActionSeed, Omit, once, Pipe, Reactor, Record, Rollback, Then, Track};
+    use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
     #[test]
@@ -339,5 +341,28 @@ mod tests {
 
         app.update();
         app.assert_event_not_comes(&mut er);
+    }
+
+    #[test]
+    fn unlock_after_cancel() {
+        let mut app = test_app();
+        app.spawn_reactor(|task| async move {
+            task.will(Update, {
+                record::push().with(Track {
+                    act: TestAct,
+                    rollback: Rollback::undo(|| delay::frames().with(100)),
+                })
+                    .then(record::undo::once::<TestAct>())
+            })
+                .await
+                .unwrap();
+        });
+        app.update();
+        app.update();
+        app.world.run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
+            commands.entity(reactor.single()).despawn();
+        });
+        app.update();
+        app.assert_resource(true, |record: &Record<TestAct>| record.can_edit());
     }
 }

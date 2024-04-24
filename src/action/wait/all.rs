@@ -28,35 +28,36 @@ pub fn all<Actions>() -> ActionSeed<Actions>
     where
         Actions: IntoIterator<Item=ActionSeed> + 'static
 {
-    ActionSeed::new(|actions: Actions, token, output| {
+    ActionSeed::new(|actions: Actions, output| {
         AllRunner {
             runners: actions
                 .into_iter()
-                .map(|seed| seed.with(()).into_runner(token.clone(), Output::default()))
+                .map(|seed| seed.with(()).into_runner(Output::default()))
                 .collect(),
-            token,
             output,
         }
     })
 }
 
 struct AllRunner {
-    token: CancellationToken,
     output: Output<()>,
     runners: Vec<BoxedRunner>,
 }
 
 impl Runner for AllRunner {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-        self.runners.retain_mut(|r| !r.run(world));
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        self.runners.retain_mut(|r| !r.run(world, token));
         if self.runners.is_empty() {
-            self.output.replace(());
+            self.output.set(());
             true
         } else {
             false
+        }
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        for runner in self.runners.iter_mut() {
+            runner.on_cancelled(world);
         }
     }
 }
@@ -121,11 +122,10 @@ pub mod private {
 
     use crate::action::Action;
     use crate::prelude::ActionSeed;
-    use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+    use crate::runner::{BoxedRunner, Output, Runner};
     use crate::runner::macros::impl_tuple_runner;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
-        token: CancellationToken,
         o1: Output<O1>,
         o2: Output<O2>,
         r1: BoxedRunner,
@@ -154,16 +154,15 @@ pub mod private {
                 ) -> Action<(I1, I2), ($($lhs_out,)* O2)> {
                     let Action(i1, s1) = a1.into();
                     let Action(i2, s2) = a2.into();
-                    ActionSeed::new(|input: (I1, I2), token, output|{
+                    ActionSeed::new(|input: (I1, I2), output|{
                         let o1 = Output::default();
                         let o2 = Output::default();
                         Self {
                             output,
-                            r1: s1.with(input.0).into_runner(token.clone(), o1.clone()),
-                            r2: s2.with(input.1).into_runner(token.clone(), o2.clone()),
+                            r1: s1.with(input.0).into_runner(o1.clone()),
+                            r2: s2.with(input.1).into_runner(o2.clone()),
                             o1,
                             o2,
-                            token,
                             _m: PhantomData
                         }
                     })
@@ -179,27 +178,29 @@ pub mod private {
                     O2: 'static,
             {
                 #[allow(non_snake_case)]
-                  fn run(&mut self, world: &mut bevy::prelude::World) -> bool {
-                    if self.token.requested_cancel(){
-                        return true;
-                    }
+                  fn run(&mut self, world: &mut bevy::prelude::World, token: &$crate::prelude::CancellationToken) -> bool {
                     if self.o1.is_none(){
-                        self.r1.run(world);
+                        self.r1.run(world, token);
                     }
                     if self.o2.is_none(){
-                        self.r2.run(world);
+                        self.r2.run(world, token);
                     }
                     if let Some(($($lhs_out,)*)) = self.o1.take(){
                         if let Some(out2) = self.o2.take(){
-                            self.output.replace(($($lhs_out,)* out2));
+                            self.output.set(($($lhs_out,)* out2));
                             true
                         }else{
-                            self.o1.replace(($($lhs_out,)*));
+                            self.o1.set(($($lhs_out,)*));
                             false
                         }
                     }else{
                         false
                     }
+                }
+
+                fn on_cancelled(&mut self, world: &mut bevy::ecs::world::World){
+                    self.r1.on_cancelled(world);
+                    self.r2.on_cancelled(world);
                 }
             }
         };
@@ -216,6 +217,7 @@ mod tests {
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
+
     use crate::action::delay;
     use crate::actions;
 
@@ -240,7 +242,7 @@ mod tests {
         app.update();
         app.assert_resource_eq(Count(1));
     }
-    
+
     #[test]
     fn with_delay_1frame() {
         let mut app = test_app();
@@ -259,7 +261,7 @@ mod tests {
         app.update();
         app.assert_resource_eq(Count(2));
         app.assert_event_not_comes(&mut er);
-        
+
         app.update();
         app.assert_resource_eq(Count(2));
         app.assert_event_comes(&mut er);

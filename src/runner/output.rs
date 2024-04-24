@@ -20,23 +20,29 @@ impl<O> Default for Output<O> {
 }
 
 impl<O> Output<O> {
+    /// Set the output value.
+    ///
+    /// If the output already exists, it is replaced.
     #[inline(always)]
-    pub(crate) fn replace(&self, o: O) {
+    pub fn set(&self, o: O) {
         self.0.borrow_mut().replace(o);
     }
 
+    /// Takes the value out of the [`Output`].
     #[inline(always)]
-    pub(crate) fn take(&self) -> Option<O> {
+    pub fn take(&self) -> Option<O> {
         self.0.borrow_mut().take()
     }
 
+    /// Returns true if output value is exists.
     #[inline(always)]
-    pub(crate) fn is_some(&self) -> bool {
+    pub fn is_some(&self) -> bool {
         self.0.borrow().is_some()
     }
 
+    /// Returns true if output value is not exists.
     #[inline(always)]
-    pub(crate) fn is_none(&self) -> bool {
+    pub fn is_none(&self) -> bool {
         self.0.borrow().is_none()
     }
 }

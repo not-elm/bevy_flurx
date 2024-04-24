@@ -47,8 +47,8 @@ impl<Label, In, Out> Selector<WorldPtr> for WorldSelector<Label, In, Out>
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
         let world: &mut World = world.as_mut();
         if let Some(action) = self.action.take() {
-            let runner = action.into_runner(self.token.clone(), self.output.clone());
-            initialize_runner(world, &self.label, runner);
+            let runner = action.into_runner(self.output.clone());
+            initialize_runner(world, &self.label, self.token.clone(), runner);
             None
         } else {
             self.output.take()

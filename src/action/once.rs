@@ -1,7 +1,7 @@
 //! `once` creates a task that only once run system.
 //!
 //! actions
-//! 
+//!
 //! - [`once::res`](crate::prelude::once::res)
 //! - [`once::non_send`](crate::prelude::once::res)
 //! - [`once::event`](crate::prelude::once::res)
@@ -49,8 +49,8 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I, Out>
         I: 'static,
         Out: 'static
 {
-    ActionSeed::new(move |input, token, output| {
-        OnceRunner::new(input, token, output, IntoSystem::into_system(system.pipe(|input: In<Out>| {
+    ActionSeed::new(move |input, output| {
+        OnceRunner::new(input, output, IntoSystem::into_system(system.pipe(|input: In<Out>| {
             Some(input.0)
         })))
     })
@@ -87,17 +87,15 @@ struct OnceRunner<Sys, I, O> {
     system: Sys,
     input: Option<I>,
     init: bool,
-    token: CancellationToken,
     output: Output<O>,
 }
 
 impl<Sys, I, O> OnceRunner<Sys, I, O> {
     #[inline]
-    const fn new(input: I, token: CancellationToken, output: Output<O>, system: Sys) -> Self {
+    const fn new(input: I, output: Output<O>, system: Sys) -> Self {
         Self {
             system,
             input: Some(input),
-            token,
             output,
             init: false,
         }
@@ -110,11 +108,7 @@ impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
         I: 'static,
         O: 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
@@ -126,11 +120,13 @@ impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
         let out = self.system.run(input, world);
         self.system.apply_deferred(world);
         if let Some(out) = out {
-            self.output.replace(out);
+            self.output.set(out);
             true
         } else {
             false
         }
     }
+
+    fn on_cancelled(&mut self, _: &mut World) {}
 }
 

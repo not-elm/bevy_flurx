@@ -1,10 +1,9 @@
 use bevy::prelude::World;
 
 use crate::action::record::push_track;
-use crate::prelude::{ActionSeed, Output, Runner};
-use crate::prelude::record::{Track};
+use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 use crate::prelude::record::EditRecordResult;
-use crate::runner::CancellationToken;
+use crate::prelude::record::Track;
 
 /// Push the [`Track`](crate::prelude::Track) onto the [`Record`](crate::prelude::Record).
 ///
@@ -41,40 +40,37 @@ pub fn push<Act>() -> ActionSeed<Track<Act>, EditRecordResult>
     where
         Act: Send + Sync + 'static,
 {
-    ActionSeed::new(|track: Track<Act>, token, output| {
+    ActionSeed::new(|track: Track<Act>, output| {
         PushRunner {
             output,
             operation: Some(track),
-            token,
         }
     })
 }
 
 struct PushRunner<Act> {
-    token: CancellationToken,
     operation: Option<Track<Act>>,
     output: Output<EditRecordResult>,
 }
 
-impl<Opr> Runner for PushRunner<Opr>
+impl<Act> Runner for PushRunner<Act>
     where
-        Opr: Send + Sync + 'static
+        Act: Send + Sync + 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         if let Some(operation) = self.operation.take() {
-            if let Err(error) = push_track::<Opr>(operation, world, true) {
-                self.output.replace(Err(error));
+            if let Err(error) = push_track::<Act>(operation, world, true) {
+                self.output.set(Err(error));
                 return true;
             }
         }
-        self.output.replace(Ok(()));
+        self.output.set(Ok(()));
         true
     }
+
+    fn on_cancelled(&mut self, _: &mut World) {}
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -84,9 +80,9 @@ mod tests {
 
     use crate::action::{once, record};
     use crate::action::record::{Record, Track};
-    use crate::prelude::{ActionSeed, Reactor, Rollback, Omit};
-    use crate::tests::{test_app};
+    use crate::prelude::{ActionSeed, Omit, Reactor, Rollback};
 
+    use crate::tests::{test_app};
 
     #[derive(Default)]
     struct H1;

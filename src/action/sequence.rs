@@ -17,7 +17,8 @@
 use bevy::prelude::World;
 
 use crate::action::{Action, Remake};
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::prelude::CancellationToken;
+use crate::runner::{BoxedRunner, Output, Runner};
 
 /// Create the action combined with the subsequent action.
 ///
@@ -60,12 +61,11 @@ impl<I1, O1, O2, ActionOrSeed, A> Then<I1, O1, O2, ActionOrSeed> for A
         where
             I2: 'static
     {
-        self.remake(|r1, o1, token, output| {
+        self.remake(|r1, o1, output| {
             SequenceRunner {
                 r1,
-                r2: action.into().into_runner(token.clone(), output),
+                r2: action.into().into_runner(output),
                 o1,
-                token,
             }
         })
     }
@@ -117,26 +117,28 @@ struct SequenceRunner<O1> {
     pub r1: BoxedRunner,
     pub r2: BoxedRunner,
     pub o1: Output<O1>,
-    pub token: CancellationToken,
 }
 
 impl<O1> Runner for SequenceRunner<O1>
     where
         O1: 'static,
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if self.o1.is_none() {
-            self.r1.run(world);
+            self.r1.run(world, token);
         }
         if self.o1.is_some() {
-            self.r2.run(world)
+            self.r2.run(world, token)
         } else {
             false
         }
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        if self.o1.is_none(){
+            self.r1.on_cancelled(world);
+        }
+        self.r2.on_cancelled(world);
     }
 }
 
