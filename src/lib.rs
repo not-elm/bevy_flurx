@@ -49,6 +49,9 @@ mod world_ptr;
 mod reactor;
 mod selector;
 
+#[cfg(test)]
+mod test_util;
+
 /// Provides the async systems.
 pub struct FlurxPlugin;
 
