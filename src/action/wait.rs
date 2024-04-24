@@ -21,18 +21,16 @@ use bevy::prelude::{In, IntoSystem, System, World};
 pub use _any::any;
 pub use _both::both;
 pub use _either::*;
+pub use all::{all, private};
 
 use crate::action::seed::ActionSeed;
 use crate::prelude::wait;
 use crate::runner::{CancellationToken, Output, Runner};
 
-
 pub mod event;
 pub mod input;
 pub mod state;
 pub mod switch;
-
-pub use all::{all, private};
 
 #[cfg(feature = "audio")]
 pub mod audio;

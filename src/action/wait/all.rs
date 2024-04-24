@@ -220,6 +220,7 @@ mod tests {
 
     use crate::action::delay;
     use crate::actions;
+
     use crate::prelude::{once, Pipe, Then, wait};
     use crate::reactor::Reactor;
     use crate::test_util::SpawnReactor;
