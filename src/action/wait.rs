@@ -26,11 +26,14 @@ use crate::action::seed::ActionSeed;
 use crate::prelude::wait;
 use crate::runner::{CancellationToken, Output, Runner};
 
+
 pub mod event;
 pub mod input;
 pub mod state;
 pub mod switch;
+
 pub use all::{all, private};
+
 #[cfg(feature = "audio")]
 pub mod audio;
 #[path = "wait/either.rs"]
@@ -64,8 +67,13 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> ActionSeed<Input, Out>
         Input: Clone + 'static,
         Out: 'static,
 {
-    ActionSeed::new(move |input, token, output| {
-        WaitRunner::new(input, token, output, IntoSystem::into_system(system))
+    ActionSeed::new(move |input, output| {
+        WaitRunner{
+            system: IntoSystem::into_system(system),
+            input,
+            output,
+            init: false,
+        }
     })
 }
 
@@ -104,27 +112,8 @@ pub fn until<Input, Sys, M>(system: Sys) -> ActionSeed<Input>
 struct WaitRunner<Sys, I, O> {
     system: Sys,
     input: I,
-    token: CancellationToken,
     output: Output<O>,
     init: bool,
-}
-
-impl<Sys, I, O> WaitRunner<Sys, I, O> {
-    #[inline]
-    const fn new(
-        input: I,
-        token: CancellationToken,
-        output: Output<O>,
-        system: Sys,
-    ) -> WaitRunner<Sys, I, O> {
-        Self {
-            system,
-            input,
-            token,
-            output,
-            init: false,
-        }
-    }
 }
 
 impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
@@ -133,10 +122,7 @@ impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
         In: Clone + 'static,
         Out: 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
+    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
@@ -145,11 +131,14 @@ impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(o) = out {
-            self.output.replace(o);
+            self.output.set(o);
             true
         } else {
             false
         }
+    }
+
+    fn on_cancelled(&mut self, _: &mut World) {
     }
 }
 

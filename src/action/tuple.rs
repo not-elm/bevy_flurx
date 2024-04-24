@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationToken};
+use crate::runner::{BoxedRunner, Output, Runner};
 
 /// Convert to the output of action to tuple.
 pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
@@ -9,14 +9,13 @@ pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
         I: 'static,
         O: 'static
 {
-    ActionSeed::new(|input, token, output| {
+    ActionSeed::new(|input, output| {
         let tmp = Output::default();
-        let runner = action.create_runner(input, token.clone(), tmp.clone());
+        let runner = action.create_runner(input, tmp.clone());
         TupleRunner {
             runner,
             tmp,
-            output,
-            token,
+            output
         }
     })
 }
@@ -24,22 +23,21 @@ pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
 struct TupleRunner<O> {
     runner: BoxedRunner,
     tmp: Output<O>,
-    output: Output<(O, )>,
-    token: CancellationToken,
+    output: Output<(O, )>
 }
 
 impl<O> Runner for TupleRunner<O> {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
-        self.runner.run(world);
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        self.runner.run(world, token);
         if let Some(o) = self.tmp.take() {
-            self.output.replace((o, ));
+            self.output.set((o, ));
             true
         } else {
             false
         }
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        self.runner.on_cancelled(world);
     }
 }

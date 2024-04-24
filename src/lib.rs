@@ -40,7 +40,7 @@ pub mod prelude {
         extension::ScheduleReactor,
         FlurxPlugin,
         reactor::Reactor,
-        runner::{Output, Runner},
+        runner::*,
         task::ReactiveTask,
     };
 }

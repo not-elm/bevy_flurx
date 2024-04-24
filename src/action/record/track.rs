@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::action::{Action, Map};
 use crate::prelude::{ActionSeed, Omit, OmitInput};
-use crate::runner::{BoxedRunner, CancellationToken, Output};
+use crate::runner::{BoxedRunner, Output};
 
 /// Represents the track of act.
 pub struct Track<Act> {
@@ -19,8 +19,8 @@ impl<Act> Track<Act>
         Act: Send + Sync + 'static
 {
     #[inline]
-    pub(crate) fn create_runner(&self, token: CancellationToken, output: Output<Option<ActionSeed>>) -> BoxedRunner {
-        (self.rollback.0)().into_runner(token, output)
+    pub(crate) fn create_runner(&self, output: Output<Option<ActionSeed>>) -> BoxedRunner {
+        (self.rollback.0)().into_runner(output)
     }
 }
 

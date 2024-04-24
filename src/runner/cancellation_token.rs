@@ -13,13 +13,15 @@ impl Clone for CancellationToken {
 }
 
 impl CancellationToken {
+    /// Requests to cancel a runner's action.
+    #[inline(always)]
+    pub fn cancel(&self) {
+        self.0.set(true);
+    }
+
+    /// Returns `true` if a runner's action has been requested to cancel.
     #[inline(always)]
     pub(crate) fn requested_cancel(&self) -> bool {
         self.0.get()
-    }
-
-    #[inline(always)]
-    pub(crate) fn cancel(&self) {
-        self.0.set(true);
     }
 }

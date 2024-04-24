@@ -48,8 +48,15 @@ impl<I1, O1, O2, A, ActionOrSeed> Pipe<I1, O1, O2, A> for ActionOrSeed
 {
     #[inline(always)]
     fn pipe(self, seed: ActionSeed<O1, O2>) -> A {
-        self.remake(|r1, o1, token, output| {
-            PipeRunner::new(r1, o1, seed, token, output)
+        self.remake(|r1, o1, output| {
+            PipeRunner {
+                r1,
+                r2: None,
+                o1,
+                output,
+                seed: Some(seed),
+                finished_r1: false,
+            }
         })
     }
 }
@@ -60,8 +67,7 @@ struct PipeRunner<O1, O2> {
     r2: Option<BoxedRunner>,
     finished_r1: bool,
     seed: Option<ActionSeed<O1, O2>>,
-    token: CancellationToken,
-    output: Output<O2>,
+    output: Output<O2>
 }
 
 impl<O1, O2> PipeRunner<O1, O2>
@@ -69,33 +75,15 @@ impl<O1, O2> PipeRunner<O1, O2>
         O1: 'static,
         O2: 'static
 {
-    pub fn new(
-        r1: BoxedRunner,
-        o1: Output<O1>,
-        seed: ActionSeed<O1, O2>,
-        token: CancellationToken,
-        output: Output<O2>,
-    ) -> PipeRunner<O1, O2> {
-        Self {
-            r1,
-            r2: None,
-            o1,
-            token,
-            output,
-            finished_r1: false,
-            seed: Some(seed),
-        }
-    }
-
     fn setup_second_runner(&mut self) {
         if let Some(o1) = self.o1.take() {
             self.finished_r1 = true;
             let Some(seed) = self.seed.take() else {
-                self.o1.replace(o1);
+                self.o1.set(o1);
                 return;
             };
             let action = seed.with(o1);
-            self.r2.replace(action.into_runner(self.token.clone(), self.output.clone()));
+            self.r2.replace(action.into_runner(self.output.clone()));
         }
     }
 }
@@ -105,19 +93,29 @@ impl<O1, O2> Runner for PipeRunner<O1, O2>
         O1: 'static,
         O2: 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if !self.finished_r1 {
-            self.r1.run(world);
+            self.r1.run(world, token);
         }
         self.setup_second_runner();
         if let Some(r2) = self.r2.as_mut() {
-            r2.run(world);
+            r2.run(world, token);
         }
         self.output.is_some()
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        if self.output.is_some() {
+            return;
+        }
+        if !self.finished_r1 {
+            self.r1.on_cancelled(world);
+            return;
+        }
+
+        if let Some(r2) = self.r2.as_mut() {
+            r2.on_cancelled(world);
+        }
     }
 }
 

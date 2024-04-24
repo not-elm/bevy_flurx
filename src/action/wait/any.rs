@@ -28,17 +28,16 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 /// });
 /// ```
 pub fn any(actions: impl IntoIterator<Item=ActionSeed> + 'static) -> ActionSeed<(), usize> {
-    ActionSeed::new(move |_, token, output| {
+    ActionSeed::new(move |_, output| {
         let runners = actions
             .into_iter()
-            .map(|action| action.with(()).into_runner(token.clone(), Output::default()))
+            .map(|action| action.with(()).into_runner(Output::default()))
             .collect::<Vec<_>>();
         if runners.is_empty() {
             panic!("The length of actions passed to `wait::any` must be greater than 0.")
         }
 
         AnyRunner {
-            token,
             output,
             runners,
         }
@@ -46,24 +45,25 @@ pub fn any(actions: impl IntoIterator<Item=ActionSeed> + 'static) -> ActionSeed<
 }
 
 struct AnyRunner {
-    token: CancellationToken,
     output: Output<usize>,
     runners: Vec<BoxedRunner>,
 }
 
 impl Runner for AnyRunner {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         for (i, runner) in self.runners.iter_mut().enumerate() {
-            if runner.run(world) {
-                self.output.replace(i);
+            if runner.run(world, token) {
+                self.output.set(i);
                 return true;
             }
         }
         false
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        for runner in self.runners.iter_mut(){
+            runner.on_cancelled(world);
+        }
     }
 }
 

@@ -7,8 +7,8 @@
 use bevy::prelude::World;
 
 use crate::action::Action;
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationToken};
+use crate::runner::{BoxedRunner, Output, Runner};
 
 /// [`Omit`] provides a mechanism to omit both input and output types from an action.
 pub trait Omit {
@@ -102,8 +102,8 @@ impl<I, O, A> OmitInput<I, O> for A
 {
     #[inline]
     fn omit_input(self) -> ActionSeed<(), O> {
-        ActionSeed::from(|_, token, output| {
-            self.into().into_runner(token, output)
+        ActionSeed::from(|_, output| {
+            self.into().into_runner(output)
         })
     }
 }
@@ -116,11 +116,10 @@ impl<I, O> OmitOutput<I, O, Action<I, ()>> for Action<I, O>
     #[inline]
     fn omit_output(self) -> Action<I, ()> {
         let Action(input, seed) = self;
-        ActionSeed::new(|input, token, output| {
+        ActionSeed::new(|input, output| {
             let o1 = Output::default();
-            let r1 = seed.create_runner(input, token.clone(), o1.clone());
+            let r1 = seed.create_runner(input, o1.clone());
             OmitRunner {
-                token,
                 output,
                 o1,
                 r1,
@@ -137,11 +136,10 @@ impl<I, O> OmitOutput<I, O, ActionSeed<I, ()>> for ActionSeed<I, O>
 {
     #[inline]
     fn omit_output(self) -> ActionSeed<I, ()> {
-        ActionSeed::new(|input, token, output| {
+        ActionSeed::new(|input, output| {
             let o1 = Output::default();
-            let r1 = self.create_runner(input, token.clone(), o1.clone());
+            let r1 = self.create_runner(input, o1.clone());
             OmitRunner {
-                token,
                 output,
                 o1,
                 r1,
@@ -151,24 +149,24 @@ impl<I, O> OmitOutput<I, O, ActionSeed<I, ()>> for ActionSeed<I, O>
 }
 
 struct OmitRunner<O> {
-    token: CancellationToken,
     output: Output<()>,
     r1: BoxedRunner,
     o1: Output<O>,
 }
 
 impl<O> Runner for OmitRunner<O> {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-        self.r1.run(world);
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        self.r1.run(world, token);
         if self.o1.is_some() {
-            self.output.replace(());
+            self.output.set(());
             true
         } else {
             false
         }
+    }
+
+    fn on_cancelled(&mut self, world: &mut World) {
+        self.r1.on_cancelled(world);
     }
 }
 
