@@ -18,17 +18,20 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 /// use bevy_flurx::actions;
 /// use bevy_flurx::prelude::*;
 /// use bevy::app::AppExit;
-/// 
+///
 /// Reactor::schedule(|task| async move{
 ///     // The output value is the index of the completed action.
-///     let index: usize = task.will(Update, wait::any(actions![
+///     let index: usize = task.will(Update, wait::any().with(actions![
 ///         wait::input::just_pressed().with(KeyCode::KeyB),
 ///         wait::event::comes::<AppExit>()
 ///     ])).await;
 /// });
 /// ```
-pub fn any(actions: impl IntoIterator<Item=ActionSeed> + 'static) -> ActionSeed<(), usize> {
-    ActionSeed::new(move |_, output| {
+pub fn any<Actions>() -> ActionSeed<Actions, usize>
+    where
+        Actions: IntoIterator<Item=ActionSeed> + 'static
+{
+    ActionSeed::new(move |actions: Actions, output| {
         let runners = actions
             .into_iter()
             .map(|action| action.with(()).into_runner(Output::default()))
@@ -61,7 +64,7 @@ impl Runner for AnyRunner {
     }
 
     fn on_cancelled(&mut self, world: &mut World) {
-        for runner in self.runners.iter_mut(){
+        for runner in self.runners.iter_mut() {
             runner.on_cancelled(world);
         }
     }
@@ -85,7 +88,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let index = task.will(Update, wait::any(actions![
+                let index = task.will(Update, wait::any().with(actions![
                     wait::until(|| false),
                     once::run(|| {})
                 ])).await;
@@ -105,7 +108,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let index = task.will(Update, wait::any(actions![
+                let index = task.will(Update, wait::any().with(actions![
                     delay::frames().with(1),
                     delay::frames().with(3),
                     wait::until(||false)
@@ -118,7 +121,7 @@ mod tests {
         let mut er = ManualEventReader::<AppExit>::default();
         app.update();
         app.assert_event_not_comes(&mut er);
-        
+
         app.update();
         app.update();
         app.assert_event_comes(&mut er);

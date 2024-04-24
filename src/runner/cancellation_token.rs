@@ -13,7 +13,7 @@ impl Clone for CancellationToken {
 }
 
 impl CancellationToken {
-    /// Requests to cancel a runner's action.
+    /// Requests to cancel a [`Reactor`](crate::prelude::Reactor).
     #[inline(always)]
     pub fn cancel(&self) {
         self.0.set(true);

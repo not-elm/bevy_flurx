@@ -129,7 +129,7 @@ fn spawn_move_reactor(
 ) {
     commands.spawn(Reactor::schedule(|task| async move {
         loop {
-            task.will(Update, wait::any(actions![
+            task.will(Update, wait::any().with(actions![
                     wait::input::any_just_released().with(vec![KeyCode::KeyA, KeyCode::ArrowLeft]),
                     wait::input::any_just_released().with(vec![KeyCode::KeyW, KeyCode::ArrowUp]),
                     wait::input::any_just_released().with(vec![KeyCode::KeyS, KeyCode::ArrowDown]),
