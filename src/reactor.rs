@@ -13,9 +13,11 @@ pub(crate) struct Initialized;
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
 /// This structure is created by [`Reactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
-/// 
+///
 /// Remove this component if you want to interrupt the processing flow.
-/// 
+///
+/// After all scheduled processes have completed, the entity attached to this component
+/// and it's children will be despawn.
 #[derive(Component)]
 pub struct Reactor {
     pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
@@ -65,7 +67,11 @@ impl Reactor {
     }
 
     #[inline(always)]
-    pub(crate) fn run_sync(&mut self, world: WorldPtr) {
+    pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool{
+        if self.token.status().cancelled{
+            return true;
+        }
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             use async_compat::CompatExt;
@@ -75,6 +81,11 @@ impl Reactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
+
+        let mut status = self.token.status();
+        status.reactor_finished = self.scheduler.not_exists_reactor();
+        self.token.set(status);
+        status.cancelled || status.reactor_finished
     }
 }
 
@@ -99,7 +110,7 @@ mod tests {
     use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::once;
+    use crate::action::wait;
     use crate::prelude::Reactor;
     use crate::tests::test_app;
 
@@ -112,8 +123,9 @@ mod tests {
         app.init_resource::<Count>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|mut count: ResMut<Count>| {
+                task.will(Update, wait::until(|mut count: ResMut<Count>| {
                     count.0 += 1;
+                    false
                 })).await;
             }));
         });

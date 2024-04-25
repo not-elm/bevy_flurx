@@ -160,26 +160,26 @@ pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(world: &mut World) {
 }
 
 fn push_tracks<Act: Send + Sync + 'static>(track: impl Iterator<Item=Track<Act>>, world: &mut World, in_undo: bool) -> EditRecordResult {
-    let mut store = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
-    if in_undo && store.progressing {
+    let mut record = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
+    if in_undo && record.progressing {
         return Err(UndoRedoInProgress);
     }
     if in_undo {
-        store.redo.clear();
+        record.redo.clear();
     }
-    store.tracks.extend(track);
+    record.tracks.extend(track);
     Ok(())
 }
 
 fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, in_undo: bool) -> EditRecordResult {
-    let mut store = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
-    if in_undo && store.progressing {
+    let mut record = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
+    if in_undo && record.progressing {
         return Err(UndoRedoInProgress);
     }
     if in_undo {
-        store.redo.clear();
+        record.redo.clear();
     }
-    store.tracks.push(track);
+    record.tracks.push(track);
     Ok(())
 }
 

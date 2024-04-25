@@ -43,11 +43,7 @@ impl BoxedRunner {
 impl Runner for BoxedRunner {
     #[inline(always)]
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if token.requested_cancel() {
-            true
-        } else {
-            self.0.run(world, token)
-        }
+        self.0.run(world, token)
     }
 
     #[inline(always)]
@@ -93,7 +89,10 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
         runners.0.retain_mut(|(runner, token)| {
-            if token.requested_cancel() {
+            let status = token.status();
+            if status.reactor_finished {
+                false
+            } else if status.cancelled{
                 runner.on_cancelled(world);
                 false
             } else {
@@ -154,4 +153,87 @@ pub(crate) mod macros {
 
     pub(crate) use output_combine;
     pub(crate) use impl_tuple_runner;
+}
+
+
+#[cfg(test)]
+mod tests {
+    use bevy::app::Startup;
+    use bevy::prelude::{Commands, Update, World};
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
+
+    use crate::prelude::{ActionSeed, CancellationToken, Reactor};
+    use crate::runner::Runner;
+    use crate::tests::test_app;
+
+    struct TestCancelRunner {
+        limit: usize,
+    }
+
+    impl Runner for TestCancelRunner {
+        fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+            let mut count = world.resource_mut::<Count>();
+            count.increment();
+            if self.limit == count.0 {
+                token.cancel();
+                true
+            } else {
+                false
+            }
+        }
+
+        fn on_cancelled(&mut self, _: &mut World) {}
+    }
+
+    fn test_action(limit: usize) -> ActionSeed {
+        ActionSeed::new(move |_, _| {
+            TestCancelRunner {
+                limit
+            }
+        })
+    }
+
+    #[test]
+    fn remove_reactor_after_cancel() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, test_action(3)).await;
+            }));
+        });
+        app.update();
+        app.assert_resource_eq(Count(1));
+        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 1);
+
+        app.update();
+        app.assert_resource_eq(Count(2));
+        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 1);
+
+        app.update();
+        app.assert_resource_eq(Count(3));
+        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+    }
+
+    // #[test]
+    // fn test_cancel_reactor() {
+    //     let mut app = test_app();
+    //     app.spawn_reactor(|task| async move {
+    //         task.will(Update, wait::both(
+    //             test_action(),
+    //             wait::until(|mut count: ResMut<Count>| {
+    //                 count.increment();
+    //                 println!("until");
+    //                 false
+    //             }),
+    //         )).await;
+    //     });
+    //     app.update();
+    //     for _ in 0..50 {
+    //         println!("UPDATE");
+    //         app.update();
+    //         assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+    //         app.assert_resource_eq(Count(0));
+    //     }
+    // }
 }
