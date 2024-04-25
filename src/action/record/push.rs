@@ -43,13 +43,13 @@ pub fn push<Act>() -> ActionSeed<Track<Act>, EditRecordResult>
     ActionSeed::new(|track: Track<Act>, output| {
         PushRunner {
             output,
-            operation: Some(track),
+            track: Some(track),
         }
     })
 }
 
 struct PushRunner<Act> {
-    operation: Option<Track<Act>>,
+    track: Option<Track<Act>>,
     output: Output<EditRecordResult>,
 }
 
@@ -58,8 +58,8 @@ impl<Act> Runner for PushRunner<Act>
         Act: Send + Sync + 'static
 {
     fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
-        if let Some(operation) = self.operation.take() {
-            if let Err(error) = push_track::<Act>(operation, world, true) {
+        if let Some(track) = self.track.take() {
+            if let Err(error) = push_track::<Act>(track, world, true) {
                 self.output.set(Err(error));
                 return true;
             }
