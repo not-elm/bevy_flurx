@@ -10,7 +10,7 @@
 //! - [`once::audio`](crate::prelude::once::audio) (require feature flag `audio`)
 
 
-use bevy::prelude::{In, IntoSystem, System, World};
+use bevy::prelude::{IntoSystem, System, World};
 
 use crate::action::seed::ActionSeed;
 use crate::prelude::Action;
@@ -50,9 +50,7 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I, Out>
         Out: 'static
 {
     ActionSeed::new(move |input, output| {
-        OnceRunner::new(input, output, IntoSystem::into_system(system.pipe(|input: In<Out>| {
-            Some(input.0)
-        })))
+        OnceRunner::new(input, output, IntoSystem::into_system(system))
     })
 }
 
@@ -104,7 +102,7 @@ impl<Sys, I, O> OnceRunner<Sys, I, O> {
 
 impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
     where
-        Sys: System<In=I, Out=Option<O>>,
+        Sys: System<In=I, Out=O>,
         I: 'static,
         O: 'static
 {
@@ -119,12 +117,8 @@ impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
         };
         let out = self.system.run(input, world);
         self.system.apply_deferred(world);
-        if let Some(out) = out {
-            self.output.set(out);
-            true
-        } else {
-            false
-        }
+        self.output.set(out);
+        true
     }
 }
 

@@ -117,11 +117,9 @@ impl<I, O> OmitOutput<I, O, Action<I, ()>> for Action<I, O>
     fn omit_output(self) -> Action<I, ()> {
         let Action(input, seed) = self;
         ActionSeed::new(|input, output| {
-            let o1 = Output::default();
-            let r1 = seed.create_runner(input, o1.clone());
+            let r1 = seed.create_runner(input, Output::default());
             OmitRunner {
                 output,
-                o1,
                 r1,
             }
         })
@@ -137,27 +135,23 @@ impl<I, O> OmitOutput<I, O, ActionSeed<I, ()>> for ActionSeed<I, O>
     #[inline]
     fn omit_output(self) -> ActionSeed<I, ()> {
         ActionSeed::new(|input, output| {
-            let o1 = Output::default();
-            let r1 = self.create_runner(input, o1.clone());
+            let r1 = self.create_runner(input, Output::default());
             OmitRunner {
                 output,
-                o1,
                 r1,
             }
         })
     }
 }
 
-struct OmitRunner<O> {
+struct OmitRunner {
     output: Output<()>,
     r1: BoxedRunner,
-    o1: Output<O>,
 }
 
-impl<O> Runner for OmitRunner<O> {
+impl Runner for OmitRunner {
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.r1.run(world, token);
-        if self.o1.is_some() {
+        if self.r1.run(world, token) {
             self.output.set(());
             true
         } else {
@@ -176,7 +170,7 @@ mod tests {
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, wait};
-    use crate::action::omit::{Omit, OmitOutput, OmitInput};
+    use crate::action::omit::{Omit, OmitInput, OmitOutput};
     use crate::prelude::{ActionSeed, Pipe, Reactor};
     use crate::tests::test_app;
 
