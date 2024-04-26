@@ -70,9 +70,4 @@ impl<O1, O2> Runner for BothRunner<O1, O2>
         }
         output_combine!(&self.o1, &self.o2, self.output)
     }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.r1.on_cancelled(world);
-        self.r2.on_cancelled(world);
-    }
 }

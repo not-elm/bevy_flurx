@@ -22,9 +22,6 @@ pub trait Runner {
     /// If this runner finishes, it must return `true`.
     /// If it returns `true`, an entity attached this runner will be removed.
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool;
-
-    /// It called when [`Reactor`](crate::prelude::Reactor) processing is cancelled by [`CancellationToken::cancel`].
-    fn on_cancelled(&mut self, world: &mut World);
 }
 
 /// The boxed runner.
@@ -45,11 +42,6 @@ impl Runner for BoxedRunner {
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         self.0.run(world, token)
     }
-
-    #[inline(always)]
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.0.on_cancelled(world);
-    }
 }
 
 #[repr(transparent)]
@@ -60,7 +52,7 @@ pub(crate) fn initialize_runner<Label>(
     world: &mut World,
     label: &Label,
     token: CancellationToken,
-    runner: BoxedRunner
+    runner: BoxedRunner,
 )
     where Label: ScheduleLabel
 {
@@ -89,11 +81,10 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
         runners.0.retain_mut(|(runner, token)| {
-            let status = token.status();
-            if status.reactor_finished {
+            if token.finished_reactor() {
                 false
-            } else if status.cancelled{
-                runner.on_cancelled(world);
+            } else if token.is_cancellation_requested() {
+                token.call_cancel_handles(world);
                 false
             } else {
                 !runner.run(world, token)
@@ -159,12 +150,14 @@ pub(crate) mod macros {
 #[cfg(test)]
 mod tests {
     use bevy::app::Startup;
-    use bevy::prelude::{Commands, Update, World};
+    use bevy::prelude::{Commands, ResMut, Update, World};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
+    use crate::action::wait;
     use crate::prelude::{ActionSeed, CancellationToken, Reactor};
     use crate::runner::Runner;
+    use crate::test_util::test;
     use crate::tests::test_app;
 
     struct TestCancelRunner {
@@ -182,8 +175,6 @@ mod tests {
                 false
             }
         }
-
-        fn on_cancelled(&mut self, _: &mut World) {}
     }
 
     fn test_action(limit: usize) -> ActionSeed {
@@ -215,25 +206,25 @@ mod tests {
         assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
     }
 
-    // #[test]
-    // fn test_cancel_reactor() {
-    //     let mut app = test_app();
-    //     app.spawn_reactor(|task| async move {
-    //         task.will(Update, wait::both(
-    //             test_action(),
-    //             wait::until(|mut count: ResMut<Count>| {
-    //                 count.increment();
-    //                 println!("until");
-    //                 false
-    //             }),
-    //         )).await;
-    //     });
-    //     app.update();
-    //     for _ in 0..50 {
-    //         println!("UPDATE");
-    //         app.update();
-    //         assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
-    //         app.assert_resource_eq(Count(0));
-    //     }
-    // }
+    #[test]
+    fn test_cancel_reactor() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, wait::both(
+                    test::cancel(),
+                    wait::until(|mut count: ResMut<Count>| {
+                        count.increment();
+                        false
+                    }),
+                )).await;
+            }));
+        });
+        app.update();
+        for _ in 0..50 {
+            app.update();
+            assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+            app.assert_resource_eq(Count(1));
+        }
+    }
 }

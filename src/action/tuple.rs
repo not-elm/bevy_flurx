@@ -36,8 +36,4 @@ impl<O> Runner for TupleRunner<O> {
             false
         }
     }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.runner.on_cancelled(world);
-    }
 }

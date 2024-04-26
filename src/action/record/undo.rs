@@ -93,7 +93,6 @@ fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I,
             output,
             undo_output: Output::default(),
             undo_runner: None,
-            redo: Vec::new(),
             track: None,
             tracks: Vec::new(),
             predicate: predicate(input),
@@ -107,11 +106,12 @@ struct UndoRunner<P, Act> {
     undo_output: Output<Option<ActionSeed>>,
     undo_runner: Option<BoxedRunner>,
     track: Option<Track<Act>>,
-    redo: Vec<(Track<Act>, ActionSeed)>,
     predicate: P,
     tracks: Vec<Track<Act>>,
     initialized: bool,
 }
+
+struct RedoStore<Act>(Vec<(Track<Act>, ActionSeed)>);
 
 impl<P, Act> Runner for UndoRunner<P, Act>
     where
@@ -125,6 +125,8 @@ impl<P, Act> Runner for UndoRunner<P, Act>
                 self.output.set(Err(progressing));
                 return true;
             }
+            world.insert_non_send_resource(RedoStore::<Act>(Vec::new()));
+            token.register(cleanup::<Act>);
             self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
             self.initialized = true;
         }
@@ -139,8 +141,7 @@ impl<P, Act> Runner for UndoRunner<P, Act>
             }
             let Some(undo_runner) = self.undo_runner.as_mut() else {
                 self.output.set(Ok(()));
-                world.resource_mut::<Record<Act>>().redo.extend(std::mem::take(&mut self.redo));
-                unlock_record::<Act>(world);
+                cleanup::<Act>(world);
                 return true;
             };
 
@@ -150,20 +151,20 @@ impl<P, Act> Runner for UndoRunner<P, Act>
             };
             if let Some(redo) = redo {
                 let undo = self.track.take().unwrap();
-                self.redo.push((undo, redo));
+                world.non_send_resource_mut::<RedoStore<Act>>().0.push((undo, redo));
             }
             self.undo_output.take();
             self.undo_runner.take();
         }
     }
+}
 
-    fn on_cancelled(&mut self, world: &mut World) {
-        if let Some(runner) = self.undo_runner.as_mut() {
-            runner.on_cancelled(world);
-            world.resource_mut::<Record<Act>>().redo.extend(std::mem::take(&mut self.redo));
-            unlock_record::<Act>(world);
-        }
+fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
+    if let Some(store) = world.remove_non_send_resource::<RedoStore<Act>>() {
+        world.resource_mut::<Record<Act>>().redo.extend(store.0);
     }
+
+    unlock_record::<Act>(world);
 }
 
 

@@ -90,11 +90,6 @@ impl<O1, O2, F> Runner for MapRunner<O1, O2, F>
             false
         }
     }
-
-    #[inline]
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.r1.on_cancelled(world);
-    }
 }
 
 

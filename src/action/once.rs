@@ -126,7 +126,5 @@ impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
             false
         }
     }
-
-    fn on_cancelled(&mut self, _: &mut World) {}
 }
 

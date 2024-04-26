@@ -67,8 +67,8 @@ impl Reactor {
     }
 
     #[inline(always)]
-    pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool{
-        if self.token.status().cancelled{
+    pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool {
+        if self.token.is_cancellation_requested() {
             return true;
         }
 
@@ -81,11 +81,8 @@ impl Reactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
-
-        let mut status = self.token.status();
-        status.reactor_finished = self.scheduler.not_exists_reactor();
-        self.token.set(status);
-        status.cancelled || status.reactor_finished
+        
+        self.token.is_cancellation_requested() || self.token.is_cancellation_requested()
     }
 }
 

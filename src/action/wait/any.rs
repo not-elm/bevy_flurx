@@ -62,12 +62,6 @@ impl Runner for AnyRunner {
         }
         false
     }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        for runner in self.runners.iter_mut() {
-            runner.on_cancelled(world);
-        }
-    }
 }
 
 #[cfg(test)]

@@ -105,11 +105,6 @@ impl<O1, O2> Runner for EitherRunner<O1, O2>
             false
         }
     }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.r1.on_cancelled(world);
-        self.r2.on_cancelled(world);
-    }
 }
 
 

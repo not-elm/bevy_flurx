@@ -67,7 +67,7 @@ struct PipeRunner<O1, O2> {
     r2: Option<BoxedRunner>,
     finished_r1: bool,
     seed: Option<ActionSeed<O1, O2>>,
-    output: Output<O2>
+    output: Output<O2>,
 }
 
 impl<O1, O2> PipeRunner<O1, O2>
@@ -97,25 +97,15 @@ impl<O1, O2> Runner for PipeRunner<O1, O2>
         if !self.finished_r1 {
             self.r1.run(world, token);
         }
+        if token.is_cancellation_requested() {
+            return true;
+        }
+
         self.setup_second_runner();
         if let Some(r2) = self.r2.as_mut() {
             r2.run(world, token);
         }
         self.output.is_some()
-    }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        if self.output.is_some() {
-            return;
-        }
-        if !self.finished_r1 {
-            self.r1.on_cancelled(world);
-            return;
-        }
-
-        if let Some(r2) = self.r2.as_mut() {
-            r2.on_cancelled(world);
-        }
     }
 }
 
@@ -126,10 +116,13 @@ mod tests {
     use bevy::ecs::event::ManualEventReader;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::event::DirectEvents;
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{delay, once};
-    use crate::prelude::{Map, Reactor, Then, Through};
-    use crate::tests::test_app;
+    use crate::prelude::{Map, Pipe, Reactor, Then, Through};
+    use crate::test_util::test;
+    use crate::tests::{increment_count, test_app};
 
     /// Make sure `Option::unwrap() on a None` does not occur.
     #[test]
@@ -152,5 +145,19 @@ mod tests {
         app.update();
         let mut er = ManualEventReader::<AppExit>::default();
         assert!(app.read_last_event(&mut er).is_some());
+    }
+
+    #[test]
+    fn r2_no_run_after_r1_cancelled() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, test::cancel()
+                    .pipe(increment_count()),
+                ).await;
+            }));
+        });
+        app.update();
+        app.assert_resource_eq(Count(0));
     }
 }
