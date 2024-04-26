@@ -82,7 +82,7 @@ impl Reactor {
             pollster::block_on(self.scheduler.run(world));
         }
         
-        self.token.is_cancellation_requested() || self.token.is_cancellation_requested()
+        self.token.is_cancellation_requested() || self.token.finished_reactor()
     }
 }
 
