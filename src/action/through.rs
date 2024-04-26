@@ -130,11 +130,6 @@ impl<V> Runner for ThroughRunner<V>
             false
         }
     }
-
-    #[inline]
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.inner.on_cancelled(world);
-    }
 }
 
 

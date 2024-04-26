@@ -135,9 +135,6 @@ impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
             false
         }
     }
-
-    fn on_cancelled(&mut self, _: &mut World) {
-    }
 }
 
 #[cfg(test)]

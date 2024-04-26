@@ -67,8 +67,6 @@ impl<Act> Runner for PushRunner<Act>
         self.output.set(Ok(()));
         true
     }
-
-    fn on_cancelled(&mut self, _: &mut World) {}
 }
 
 

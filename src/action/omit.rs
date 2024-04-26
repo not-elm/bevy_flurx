@@ -164,10 +164,6 @@ impl<O> Runner for OmitRunner<O> {
             false
         }
     }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        self.r1.on_cancelled(world);
-    }
 }
 
 

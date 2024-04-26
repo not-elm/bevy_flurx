@@ -50,6 +50,7 @@ mod world_ptr;
 mod reactor;
 mod selector;
 
+/// Define utilities for testing. 
 #[cfg(test)]
 mod test_util;
 

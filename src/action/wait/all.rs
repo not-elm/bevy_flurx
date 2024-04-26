@@ -54,12 +54,6 @@ impl Runner for AllRunner {
             false
         }
     }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        for runner in self.runners.iter_mut() {
-            runner.on_cancelled(world);
-        }
-    }
 }
 
 /// Wait until all tasks done.
@@ -196,11 +190,6 @@ pub mod private {
                     }else{
                         false
                     }
-                }
-
-                fn on_cancelled(&mut self, world: &mut bevy::ecs::world::World){
-                    self.r1.on_cancelled(world);
-                    self.r2.on_cancelled(world);
                 }
             }
         };

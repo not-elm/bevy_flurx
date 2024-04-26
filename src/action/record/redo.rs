@@ -112,7 +112,6 @@ fn do_redo<In, Act, F>(
             redo_output: Output::default(),
             redo_runner: None,
             tracks: Vec::new(),
-            cache: Vec::new(),
             predicate: predicate(input),
             initialized: false,
         }
@@ -124,10 +123,12 @@ struct RedoExecuteRunner<P, Act> {
     redo_output: Output<()>,
     redo_runner: Option<BoxedRunner>,
     tracks: Vec<(Track<Act>, ActionSeed)>,
-    cache: Vec<Track<Act>>,
     predicate: P,
     initialized: bool,
 }
+
+#[repr(transparent)]
+struct TracksStore<Act>(Vec<Track<Act>>);
 
 impl<P, Act> Runner for RedoExecuteRunner<P, Act>
     where
@@ -141,6 +142,8 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
                 self.output.set(Err(e));
                 return true;
             }
+            world.insert_non_send_resource(TracksStore::<Act>(Vec::new()));
+            token.register(cleanup::<Act>);
             self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
             self.initialized = true;
         }
@@ -150,11 +153,10 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
                 if let Some((track, redo)) = self.tracks.pop() {
                     let runner = redo.with(()).into_runner(self.redo_output.clone());
                     self.redo_runner.replace(runner);
-                    self.cache.push(track);
+                    world.non_send_resource_mut::<TracksStore<Act>>().0.push(track);
                 } else {
-                    unlock_record::<Act>(world);
                     self.output.set(Ok(()));
-                    let _ = push_tracks(std::mem::take(&mut self.cache).into_iter(), world, false);
+                    cleanup::<Act>(world);
                     return true;
                 }
             }
@@ -170,14 +172,14 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
             }
         }
     }
+}
 
-    fn on_cancelled(&mut self, world: &mut World) {
-        if let Some(runner) = self.redo_runner.as_mut() {
-            runner.on_cancelled(world);
-            let _ = push_tracks(std::mem::take(&mut self.cache).into_iter(), world, false);
-            unlock_record::<Act>(world);
-        }
+fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
+    if let Some(store) = world.remove_non_send_resource::<TracksStore<Act>>(){
+        let _ = push_tracks(store.0.into_iter(), world, false);
     }
+
+    unlock_record::<Act>(world);
 }
 
 //noinspection DuplicatedCode

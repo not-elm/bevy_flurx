@@ -23,3 +23,24 @@ impl SpawnReactor for App {
         self.world.spawn_reactor(f);
     }
 }
+
+pub mod test {
+    use bevy::prelude::World;
+
+    use crate::prelude::{ActionSeed, CancellationToken, Runner};
+
+    pub fn cancel() -> ActionSeed {
+        ActionSeed::new(|_, _| {
+            TestCancelRunner
+        })
+    }
+
+    struct TestCancelRunner;
+
+    impl Runner for TestCancelRunner {
+        fn run(&mut self, _: &mut World, token: &CancellationToken) -> bool {
+            token.cancel();
+            true
+        }
+    }
+}

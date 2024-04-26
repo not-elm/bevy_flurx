@@ -127,18 +127,14 @@ impl<O1> Runner for SequenceRunner<O1>
         if self.o1.is_none() {
             self.r1.run(world, token);
         }
+        if token.is_cancellation_requested(){
+            return true;
+        }
         if self.o1.is_some() {
             self.r2.run(world, token)
         } else {
             false
         }
-    }
-
-    fn on_cancelled(&mut self, world: &mut World) {
-        if self.o1.is_none(){
-            self.r1.on_cancelled(world);
-        }
-        self.r2.on_cancelled(world);
     }
 }
 
@@ -147,12 +143,14 @@ impl<O1> Runner for SequenceRunner<O1>
 mod tests {
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Resource, Update};
+    use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::once;
     use crate::action::sequence::Then;
     use crate::reactor::Reactor;
-    use crate::tests::test_app;
+    use crate::test_util::test;
+    use crate::tests::{increment_count, test_app};
 
     #[derive(Resource, Eq, PartialEq, Debug)]
     struct Mark1;
@@ -234,5 +232,19 @@ mod tests {
         app.assert_resource_eq(Mark2);
         app.update();
         app.assert_resource_eq(OutputUSize(2));
+    }
+    
+    #[test]
+    fn r2_no_run_after_r1_cancelled() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, test::cancel()
+                    .then(increment_count()),
+                ).await;
+            }));
+        });
+        app.update();
+        app.assert_resource_eq(Count(0));
     }
 }
