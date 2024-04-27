@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.3.4-beta.1"
+version = "0.3.4"
 edition = "2021"
 authors = ["elm"]
 categories = ["asynchronous", "game-development"]
@@ -60,6 +60,3 @@ semicolon_if_nothing_returned = "warn"
 
 [workspace.lints.rust]
 missing_docs = "warn"
-
-[lints]
-workspace = true
