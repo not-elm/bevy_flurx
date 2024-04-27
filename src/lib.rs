@@ -1,10 +1,10 @@
 //! This library provides a mechanism for more sequential description of delays, character movement,
 //! waiting for user input, and other state waits.
 //!
-//! `Reactor` can be used partially. 
+//! [`Reactor`] can be used partially. 
 //! This means there is no need to rewrite existing applications to use this library.
 //! And I recommend using it partially. 
-//! This is because the system that runs `Reactor` and the systems that are run by `Reactor` run on the main thread.
+//! This is because the system that runs [`Reactor`] and the systems that are run by [`Reactor`] run on the main thread.
 //! (Please check [`Switch`](crate::prelude::Switch) for multi thread operation.)
 
 
@@ -12,6 +12,7 @@
 
 use bevy::app::{App, Last, MainScheduleOrder, Plugin, PostStartup};
 use bevy::ecs::schedule::ScheduleLabel;
+use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::prelude::{Entity, QueryState, Without, World};
 
 use crate::reactor::{Initialized, Reactor};
@@ -20,16 +21,26 @@ use crate::world_ptr::WorldPtr;
 pub mod extension;
 pub mod task;
 pub mod action;
+pub mod runner;
 
 #[allow(missing_docs)]
 pub mod prelude {
     pub use crate::{
         action::*,
-        action::{Omit, OmitInput, OmitOutput},
         action::Map,
-        action::record::*,
-        action::record::extension::*,
+        action::omit::*,
         action::pipe::Pipe,
+        action::record::{
+            EditRecordResult,
+            Record,
+            Redo,
+            RedoAction,
+            Track,
+            Rollback,
+            Undo,
+            UndoRedoInProgress,
+        },
+        action::record::extension::*,
         action::Remake,
         action::seed::ActionSeed,
         action::sequence::Then,
@@ -39,16 +50,18 @@ pub mod prelude {
         extension::ScheduleReactor,
         FlurxPlugin,
         reactor::Reactor,
-        runner::{Output, Runner},
+        runner::*,
         task::ReactiveTask,
     };
 }
 
 mod world_ptr;
 mod reactor;
-#[allow(missing_docs)]
-mod runner;
 mod selector;
+
+/// Define utilities for testing. 
+#[cfg(test)]
+mod test_util;
 
 /// Provides the async systems.
 pub struct FlurxPlugin;
@@ -86,12 +99,33 @@ fn run_reactors(
     world: &mut World,
     reactors: &mut QueryState<(Entity, &mut Reactor, Option<&Initialized>)>,
 ) {
+    enum Status {
+        Finished,
+        Initialized,
+    }
+
     let world_ptr = WorldPtr::new(world);
+    let mut entities = Vec::with_capacity(reactors.iter(world).len());
     for (entity, mut reactor, initialized) in reactors.iter_mut(world) {
-        reactor.run_sync(world_ptr);
         if initialized.is_none() {
-            world_ptr.as_mut().entity_mut(entity).insert(Initialized);
-            reactor.run_sync(world_ptr);
+            if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {
+                entities.push((entity, Status::Finished));
+            } else {
+                entities.push((entity, Status::Initialized));
+            }
+        } else if reactor.run_sync(world_ptr) {
+            entities.push((entity, Status::Finished));
+        }
+    }
+
+    for (entity, status) in entities {
+        match status {
+            Status::Finished => {
+                world.entity_mut(entity).despawn_recursive();
+            }
+            Status::Initialized => {
+                world.entity_mut(entity).insert(Initialized);
+            }
         }
     }
 }
@@ -131,6 +165,9 @@ mod tests {
     #[derive(Default, Eq, PartialEq, Copy, Clone)]
     pub struct TestAct;
 
+    #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+    pub struct NumAct(pub usize);
+
     pub fn test_app() -> App {
         let mut app = App::new();
         app.add_plugins((
@@ -138,6 +175,7 @@ mod tests {
             FlurxPlugin,
             InputPlugin
         ));
+        app.add_record_events::<NumAct>();
         app.add_record_events::<TestAct>();
         app.init_resource::<Record<TestAct>>();
         app

@@ -2,24 +2,26 @@
 //!
 //! actions
 //!
-//! - [`wait::output`](crate::prelude::wait::output)
-//! - [`wait::both`](crate::prelude::wait::both)
-//! - [`wait::until`](crate::prelude::wait::until)
+//! - [`wait::output`]
+//! - [`wait::both`]
+//! - [`wait::until`]
+//! - [`wait::all`](crate::prelude::wait::all())
 //! - [`wait_all!`](crate::wait_all)
-//! - [`wait::either`](crate::prelude::wait::either::either)
-//! - [`wait::event`](crate::prelude::wait::event)
-//! - [`wait::state`](crate::prelude::wait::state)
-//! - [`wait::switch`](crate::prelude::wait::switch)
-//! - [`wait::input`](crate::prelude::wait::input)
-//! - [`wait::audio`](crate::prelude::wait::audio) (require feature flag `audio`)
+//! - [`wait::either`]
+//! - [`wait::event`]
+//! - [`wait::state`]
+//! - [`wait::switch`]
+//! - [`wait::input`]
+//! - [`wait::audio`] (require feature flag `audio`)
 //! - [`wait::any`]
 
 
 use bevy::prelude::{In, IntoSystem, System, World};
 
-pub use any::any;
-pub use both::both;
-pub use either::*;
+pub use _any::any;
+pub use _both::both;
+pub use _either::*;
+pub use all::{all, private};
 
 use crate::action::seed::ActionSeed;
 use crate::prelude::wait;
@@ -29,14 +31,16 @@ pub mod event;
 pub mod input;
 pub mod state;
 pub mod switch;
-#[allow(missing_docs)]
-pub mod all;
+
 #[cfg(feature = "audio")]
 pub mod audio;
-mod either;
-mod both;
-mod any;
-
+#[path = "wait/either.rs"]
+mod _either;
+#[path = "wait/both.rs"]
+mod _both;
+#[path = "wait/any.rs"]
+mod _any;
+mod all;
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
@@ -61,8 +65,13 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> ActionSeed<Input, Out>
         Input: Clone + 'static,
         Out: 'static,
 {
-    ActionSeed::new(move |input, token, output| {
-        WaitRunner::new(input, token, output, IntoSystem::into_system(system))
+    ActionSeed::new(move |input, output| {
+        WaitRunner{
+            system: IntoSystem::into_system(system),
+            input,
+            output,
+            init: false,
+        }
     })
 }
 
@@ -101,27 +110,8 @@ pub fn until<Input, Sys, M>(system: Sys) -> ActionSeed<Input>
 struct WaitRunner<Sys, I, O> {
     system: Sys,
     input: I,
-    token: CancellationToken,
     output: Output<O>,
     init: bool,
-}
-
-impl<Sys, I, O> WaitRunner<Sys, I, O> {
-    #[inline]
-    const fn new(
-        input: I,
-        token: CancellationToken,
-        output: Output<O>,
-        system: Sys,
-    ) -> WaitRunner<Sys, I, O> {
-        Self {
-            system,
-            input,
-            token,
-            output,
-            init: false,
-        }
-    }
 }
 
 impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
@@ -130,10 +120,7 @@ impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
         In: Clone + 'static,
         Out: 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
+    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
@@ -142,7 +129,7 @@ impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
         if let Some(o) = out {
-            self.output.replace(o);
+            self.output.set(o);
             true
         } else {
             false

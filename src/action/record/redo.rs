@@ -106,30 +106,29 @@ fn do_redo<In, Act, F>(
         Act: Send + Sync + 'static,
         F: Fn(&mut Record<Act>) -> Vec<(Track<Act>, ActionSeed)> + 'static
 {
-    ActionSeed::new(|input: In, token, output| {
+    ActionSeed::new(|input: In, output| {
         RedoExecuteRunner {
-            token,
             output,
             redo_output: Output::default(),
             redo_runner: None,
             tracks: Vec::new(),
-            cache: Vec::new(),
             predicate: predicate(input),
-            initialized: false
+            initialized: false,
         }
     })
 }
 
 struct RedoExecuteRunner<P, Act> {
-    token: CancellationToken,
     output: Output<EditRecordResult>,
     redo_output: Output<()>,
     redo_runner: Option<BoxedRunner>,
     tracks: Vec<(Track<Act>, ActionSeed)>,
-    cache: Vec<Track<Act>>,
     predicate: P,
     initialized: bool,
 }
+
+#[repr(transparent)]
+struct TracksStore<Act>(Vec<Track<Act>>);
 
 impl<P, Act> Runner for RedoExecuteRunner<P, Act>
     where
@@ -137,18 +136,14 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
         Act: Send + Sync + 'static
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            let _ = push_tracks(std::mem::take(&mut self.cache).into_iter(), world, false);
-            unlock_record::<Act>(world);
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if !self.initialized {
             if let Err(e) = lock_record::<Act>(world) {
-                self.output.replace(Err(e));
+                self.output.set(Err(e));
                 return true;
             }
+            world.insert_non_send_resource(TracksStore::<Act>(Vec::new()));
+            token.register(cleanup::<Act>);
             self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
             self.initialized = true;
         }
@@ -156,13 +151,12 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
         loop {
             if self.redo_runner.is_none() {
                 if let Some((track, redo)) = self.tracks.pop() {
-                    let runner = redo.with(()).into_runner(self.token.clone(), self.redo_output.clone());
+                    let runner = redo.with(()).into_runner(self.redo_output.clone());
                     self.redo_runner.replace(runner);
-                    self.cache.push(track);
+                    world.non_send_resource_mut::<TracksStore<Act>>().0.push(track);
                 } else {
-                    unlock_record::<Act>(world);
-                    self.output.replace(Ok(()));
-                    let _ = push_tracks(std::mem::take(&mut self.cache).into_iter(), world, false);
+                    self.output.set(Ok(()));
+                    cleanup::<Act>(world);
                     return true;
                 }
             }
@@ -170,7 +164,7 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
             if self.redo_runner
                 .as_mut()
                 .unwrap()
-                .run(world) {
+                .run(world, token) {
                 self.redo_runner.take();
                 self.redo_output.take();
             } else {
@@ -180,23 +174,34 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
     }
 }
 
+fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
+    if let Some(store) = world.remove_non_send_resource::<TracksStore<Act>>(){
+        let _ = push_tracks(store.0.into_iter(), world, false);
+    }
+
+    unlock_record::<Act>(world);
+}
+
+//noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
     use bevy::app::{Startup, Update};
-    use bevy::prelude::{Commands, ResMut};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{delay, once, record};
     use crate::action::record::track::{Redo, Undo};
-    use crate::prelude::{Rollback, Track};
+    use crate::prelude::{ActionSeed, Omit, Record, Rollback, Then, Track};
     use crate::reactor::Reactor;
     use crate::sequence;
-    use crate::tests::{exit_reader, test_app, TestAct};
+    use crate::test_util::SpawnReactor;
+    use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
     #[test]
-    fn redo_decrement() {
+    fn test_redo_once() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
@@ -226,6 +231,164 @@ mod tests {
 
         app.update();
         app.assert_resource_eq(Count(0));
+    }
+
+    #[test]
+    fn test_redo_index_to() {
+        #[derive(Resource, Debug, Eq, PartialEq)]
+        struct Mark(Vec<&'static str>);
+
+        let mut app = test_app();
+        app.insert_resource(Mark(vec![]));
+        app.add_systems(Startup, |mut commands: Commands| {
+            fn push(word: &'static str) -> ActionSeed {
+                record::push().with(Track {
+                    act: TestAct,
+                    rollback: Rollback::parts(
+                        Undo::make(|| once::run(|| {})),
+                        Redo::make(move |_| once::run(move |mut mark: ResMut<Mark>| {
+                            mark.0.push(word);
+                        })),
+                    ),
+                })
+                    .omit()
+            }
+
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, push("1")
+                    .then(push("2"))
+                    .then(push("3")),
+                ).await;
+                task.will(Update, record::undo::all::<TestAct>()).await.unwrap();
+                task.will(Update, record::redo::index_to::<TestAct>().with(1)).await.unwrap();
+            }));
+        });
+
+        app.update();
+        app.assert_resource_eq(Mark(vec![]));
+        app.update();
+        app.assert_resource_eq(Mark(vec![]));
+        app.update();
+        app.assert_resource_eq(Mark(vec!["1", "2"]));
+    }
+
+    #[test]
+    fn redo_all_if_specified_non_exists_act() {
+        #[derive(Eq, PartialEq, Debug, Copy, Clone)]
+        struct Act(usize);
+
+        #[derive(Resource, Debug, Eq, PartialEq)]
+        struct Mark(Vec<usize>);
+
+        let mut app = test_app();
+        app.insert_resource(Mark(vec![]));
+        app.add_systems(Startup, |mut commands: Commands| {
+            fn push(num: usize) -> ActionSeed {
+                record::push().with(Track {
+                    act: Act(num),
+                    rollback: Rollback::parts(
+                        Undo::make(|| once::run(|| {})),
+                        Redo::make(move |_| once::run(move |mut mark: ResMut<Mark>| {
+                            mark.0.push(num);
+                        })),
+                    ),
+                })
+                    .omit()
+            }
+
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, push(1)
+                    .then(push(2))
+                    .then(push(3))
+                    .then(push(4)),
+                ).await;
+                task.will(Update, record::undo::all::<Act>()).await.unwrap();
+                task.will(Update, record::redo::to::<Act>().with(Act(5))).await.unwrap();
+            }));
+        });
+
+        app.update();
+        app.assert_resource_eq(Mark(vec![]));
+        app.update();
+        app.assert_resource_eq(Mark(vec![]));
+        app.update();
+        app.assert_resource_eq(Mark(vec![1, 2, 3, 4]));
+    }
+
+    #[test]
+    fn test_redo_to() {
+        #[derive(Eq, PartialEq, Debug, Copy, Clone)]
+        struct Act(usize);
+
+        #[derive(Resource, Debug, Eq, PartialEq)]
+        struct Mark(Vec<usize>);
+
+        let mut app = test_app();
+        app.insert_resource(Mark(vec![]));
+        app.add_systems(Startup, |mut commands: Commands| {
+            fn push(num: usize) -> ActionSeed {
+                record::push().with(Track {
+                    act: Act(num),
+                    rollback: Rollback::parts(
+                        Undo::make(|| once::run(|| {})),
+                        Redo::make(move |_| once::run(move |mut mark: ResMut<Mark>| {
+                            mark.0.push(num);
+                        })),
+                    ),
+                })
+                    .omit()
+            }
+
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, push(1)
+                    .then(push(2))
+                    .then(push(3))
+                    .then(push(4)),
+                ).await;
+                task.will(Update, record::undo::all::<Act>()).await.unwrap();
+                task.will(Update, record::redo::to::<Act>().with(Act(2))).await.unwrap();
+            }));
+        });
+
+        app.update();
+        app.assert_resource_eq(Mark(vec![]));
+        app.update();
+        app.assert_resource_eq(Mark(vec![]));
+        app.update();
+        app.assert_resource_eq(Mark(vec![1, 2]));
+    }
+
+    #[test]
+    fn redo_all() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            fn push() -> ActionSeed {
+                record::push().with(Track {
+                    act: TestAct,
+                    rollback: Rollback::parts(
+                        Undo::make(|| once::run(|| {})),
+                        Redo::make(|_| increment_count()),
+                    ),
+                })
+                    .omit()
+            }
+
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, push()
+                    .then(push())
+                    .then(push()),
+                ).await;
+                task.will(Update, record::undo::all::<TestAct>()).await.unwrap();
+                task.will(Update, record::redo::all::<TestAct>()).await.unwrap();
+            }));
+        });
+
+        app.update();
+        app.assert_resource_eq(Count(0));
+        app.update();
+        app.assert_resource_eq(Count(0));
+        app.update();
+        app.assert_resource_eq(Count(3));
     }
 
     #[test]
@@ -260,5 +423,33 @@ mod tests {
         app.update();
         app.update();
         app.assert_event_comes(&mut er);
+    }
+
+    #[test]
+    fn unlock_after_cancelled() {
+        let mut app = test_app();
+        app.spawn_reactor(|task| async move {
+            task.will(Update, {
+                record::push().with(Track {
+                    act: TestAct,
+                    rollback: Rollback::parts(
+                        Undo::make(|| once::run(|| {})),
+                        Redo::make(|_| delay::frames().with(1000)),
+                    ),
+                })
+                    .then(record::undo::once::<TestAct>())
+                    .then(record::redo::once::<TestAct>())
+            })
+                .await
+                .unwrap();
+        });
+        app.update();
+        app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());
+
+        app.world.run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
+            commands.entity(reactor.single()).despawn();
+        });
+        app.update();
+        app.assert_resource(true, |record: &Record<TestAct>| record.can_edit());
     }
 }

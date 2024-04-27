@@ -1,4 +1,3 @@
-//!
 //! trait
 //!
 //! - [`Through`]
@@ -12,8 +11,8 @@ use bevy::prelude::World;
 
 use crate::action::pipe::Pipe;
 use crate::action::seed::ActionSeed;
-use crate::prelude::Action;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::prelude::{Action, CancellationToken};
+use crate::runner::{BoxedRunner, Output, Runner};
 
 /// This function is used when you want to insert some kind of action,
 /// such as a delay, between the action that sends output and the action that receives it.
@@ -44,12 +43,11 @@ pub fn through<V, I, O>(action: impl Into<Action<I, O>> + 'static) -> ActionSeed
         I: 'static,
         O: 'static
 {
-    ActionSeed::new(|input, token, output| {
+    ActionSeed::new(|input, output| {
         ThroughRunner {
             value: Some(input),
             output,
-            inner: action.into().into_runner(token.clone(), Output::default()),
-            token,
+            inner: action.into().into_runner(Output::default()),
         }
     })
 }
@@ -118,20 +116,15 @@ struct ThroughRunner<V> {
     value: Option<V>,
     output: Output<V>,
     inner: BoxedRunner,
-    token: CancellationToken,
 }
 
 impl<V> Runner for ThroughRunner<V>
     where
         V: 'static,
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
-        if self.inner.run(world) {
-            self.output.replace(self.value.take().unwrap());
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        if self.inner.run(world, token) {
+            self.output.set(self.value.take().unwrap());
             true
         } else {
             false

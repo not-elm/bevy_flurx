@@ -1,4 +1,4 @@
-//! [`once::switch`] creates a task that only once run system related to [`Switch`](crate::prelude::Switch).
+//! [`once::switch`] creates a task that only once run system related to [`Switch`].
 //!
 //! - [`once::switch::on`]
 //! - [`once::switch::off`]
@@ -11,7 +11,7 @@ use crate::action::seed::ActionSeed;
 use crate::action::switch::Switch;
 
 
-/// Turns [`Switch`](crate::prelude::Switch) on.
+/// Turns [`Switch`] on.
 /// 
 /// ## Examples
 /// 
@@ -34,7 +34,7 @@ pub fn on<M>() -> ActionSeed
     })
 }
 
-/// Turns [`Switch`](crate::prelude::Switch) off.
+/// Turns [`Switch`] off.
 /// 
 /// ## Examples
 /// 

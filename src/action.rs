@@ -30,20 +30,17 @@
 //! - [`sequence`]
 //! - [`switch`]
 //! - [`through`]
-//! - [`tuple`] 
+//! - [`tuple()`]
 //! - [`omit`]
 //! - [`map::Map`]
 //! - [`remake::Remake`]
 
+pub use _tuple::tuple;
 pub use map::Map;
-pub use omit::{Omit, OmitInput, OmitOutput};
-pub use record::redo;
 pub use remake::Remake;
-pub use through::through;
-pub use tuple::tuple;
 
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output};
+use crate::prelude::{ActionSeed};
+use crate::runner::{BoxedRunner, Output};
 
 pub mod once;
 pub mod wait;
@@ -54,8 +51,9 @@ pub mod through;
 pub mod pipe;
 pub mod sequence;
 pub mod record;
-mod tuple;
-mod omit;
+pub mod omit;
+#[path = "action/tuple.rs"]
+mod _tuple;
 mod map;
 mod remake;
 
@@ -70,9 +68,9 @@ impl<I1, O1> Action<I1, O1>
         I1: 'static,
         O1: 'static
 {
-    #[inline]
-    pub(crate) fn into_runner(self, token: CancellationToken, output: Output<O1>) -> BoxedRunner {
-        self.1.create_runner(self.0, token, output)
+    #[inline(always)]
+    pub(crate) fn into_runner(self, output: Output<O1>) -> BoxedRunner {
+        self.1.create_runner(self.0, output)
     }
 }
 
@@ -87,6 +85,20 @@ impl<Out> From<ActionSeed<(), Out>> for Action<(), Out>
 }
 
 /// Creates a \[[`ActionSeed`]; N\] containing the omitted actions.
+///
+/// # Examples
+///
+/// ```no_run
+/// use bevy::app::AppExit;
+/// use bevy_flurx::actions;
+/// use bevy_flurx::prelude::*;
+///
+/// let actions: [ActionSeed; 3] = actions![
+///     once::run(||{}),
+///     delay::frames().with(3),
+///     wait::event::comes::<AppExit>()
+/// ];
+/// ```
 #[macro_export]
 macro_rules! actions {
     () => (

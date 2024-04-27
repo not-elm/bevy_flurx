@@ -1,4 +1,4 @@
-//! [`wait::switch`] creates a task related to waiting [`Switch`](crate::prelude::Switch).
+//! [`wait::switch`] creates a task related to waiting [`Switch`]
 //!
 //! - [`wait::switch::on`]
 //! - [`wait::switch::off`]

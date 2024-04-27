@@ -3,7 +3,7 @@
 //! [`Then`] trait is implemented on all actions and can be combined
 //! in method chains like `once::run(||{}).then(once::run(||{}))` 
 //!
-//! It also provides the [`sequence`]! macro. The behavior itself is the same as [`Then`].
+//! It also provides the [`sequence!`](crate::sequence) macro. The behavior itself is the same as [`Then`].
 //!
 //! trait 
 //!
@@ -17,7 +17,8 @@
 use bevy::prelude::World;
 
 use crate::action::{Action, Remake};
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::prelude::CancellationToken;
+use crate::runner::{BoxedRunner, Output, Runner};
 
 /// Create the action combined with the subsequent action.
 ///
@@ -60,12 +61,11 @@ impl<I1, O1, O2, ActionOrSeed, A> Then<I1, O1, O2, ActionOrSeed> for A
         where
             I2: 'static
     {
-        self.remake(|r1, o1, token, output| {
+        self.remake(|r1, o1, output| {
             SequenceRunner {
                 r1,
-                r2: action.into().into_runner(token.clone(), output),
+                r2: action.into().into_runner(output),
                 o1,
-                token,
             }
         })
     }
@@ -117,23 +117,21 @@ struct SequenceRunner<O1> {
     pub r1: BoxedRunner,
     pub r2: BoxedRunner,
     pub o1: Output<O1>,
-    pub token: CancellationToken,
 }
 
 impl<O1> Runner for SequenceRunner<O1>
     where
         O1: 'static,
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        if self.o1.is_none() {
+            self.r1.run(world, token);
+        }
+        if token.is_cancellation_requested(){
             return true;
         }
-
-        if self.o1.is_none() {
-            self.r1.run(world);
-        }
         if self.o1.is_some() {
-            self.r2.run(world)
+            self.r2.run(world, token)
         } else {
             false
         }
@@ -145,12 +143,14 @@ impl<O1> Runner for SequenceRunner<O1>
 mod tests {
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Resource, Update};
+    use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::once;
     use crate::action::sequence::Then;
     use crate::reactor::Reactor;
-    use crate::tests::test_app;
+    use crate::test_util::test;
+    use crate::tests::{increment_count, test_app};
 
     #[derive(Resource, Eq, PartialEq, Debug)]
     struct Mark1;
@@ -232,5 +232,19 @@ mod tests {
         app.assert_resource_eq(Mark2);
         app.update();
         app.assert_resource_eq(OutputUSize(2));
+    }
+    
+    #[test]
+    fn r2_no_run_after_r1_cancelled() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, test::cancel()
+                    .then(increment_count()),
+                ).await;
+            }));
+        });
+        app.update();
+        app.assert_resource_eq(Count(0));
     }
 }

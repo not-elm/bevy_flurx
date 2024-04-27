@@ -1,7 +1,9 @@
+//! `Runner` defines what does the actual processing of the action.
+
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Deref, DerefMut, Resource, Schedule, Schedules, World};
+use bevy::prelude::{Resource, Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
 pub use cancellation_token::CancellationToken;
@@ -9,6 +11,7 @@ pub use output::Output;
 
 mod output;
 mod cancellation_token;
+
 
 /// The structure that implements [`Runner`] is given [`Output`],
 /// if the system termination condition is met, return `true` and
@@ -18,11 +21,13 @@ pub trait Runner {
     ///
     /// If this runner finishes, it must return `true`.
     /// If it returns `true`, an entity attached this runner will be removed.
-    fn run(&mut self, world: &mut World) -> bool;
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool;
 }
 
+/// The boxed runner.
+///
+/// It is created by [`Action`](crate::prelude::Action).
 #[repr(transparent)]
-#[derive(Deref, DerefMut)]
 pub struct BoxedRunner(Box<dyn Runner>);
 
 impl BoxedRunner {
@@ -32,21 +37,29 @@ impl BoxedRunner {
     }
 }
 
+impl Runner for BoxedRunner {
+    #[inline(always)]
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        self.0.run(world, token)
+    }
+}
+
 #[repr(transparent)]
 #[derive(Resource)]
-struct BoxedRunners<L: Send + Sync>(Vec<BoxedRunner>, PhantomData<L>);
+struct BoxedRunners<L: Send + Sync>(Vec<(BoxedRunner, CancellationToken)>, PhantomData<L>);
 
 pub(crate) fn initialize_runner<Label>(
     world: &mut World,
     label: &Label,
+    token: CancellationToken,
     runner: BoxedRunner,
 )
     where Label: ScheduleLabel
 {
     if let Some(mut runners) = world.get_non_send_resource_mut::<BoxedRunners<Label>>() {
-        runners.0.push(runner);
+        runners.0.push((runner, token));
     } else {
-        world.insert_non_send_resource(BoxedRunners::<Label>(vec![runner], PhantomData));
+        world.insert_non_send_resource(BoxedRunners::<Label>(vec![(runner, token)], PhantomData));
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
@@ -65,10 +78,18 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
     schedules.get_mut(schedule_label).unwrap()
 }
 
-#[inline]
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
-        runners.0.retain_mut(|r| !r.run(world));
+        runners.0.retain_mut(|(runner, token)| {
+            if token.finished_reactor() {
+                false
+            } else if token.is_cancellation_requested() {
+                token.call_cancel_handles(world);
+                false
+            } else {
+                !runner.run(world, token)
+            }
+        });
         world.insert_non_send_resource(runners);
     }
 }
@@ -78,10 +99,10 @@ pub(crate) mod macros {
         ($o1: expr, $o2: expr, $output: expr $(,)?) => {
             if let Some(out1) = $o1.take() {
                 if let Some(out2) = $o2.take() {
-                    $output.replace((out1, out2));
+                    $output.set((out1, out2));
                     true
                 } else {
-                    $o1.replace(out1);
+                    $o1.set(out1);
                     false
                 }
             } else {
@@ -92,10 +113,10 @@ pub(crate) mod macros {
         ($o1: expr, $o2: expr, $output: expr $(,$out: ident)*) => {
             if let Some(($($out,)*)) = $o1.take() {
                 if let Some(out2) = $o2.take() {
-                    $output.replace(($($out,)* out2));
+                    $output.set(($($out,)* out2));
                     true
                 } else {
-                    $o1.replace(($($out,)*));
+                    $o1.set(($($out,)*));
                     false
                 }
             } else {
@@ -123,4 +144,87 @@ pub(crate) mod macros {
 
     pub(crate) use output_combine;
     pub(crate) use impl_tuple_runner;
+}
+
+
+#[cfg(test)]
+mod tests {
+    use bevy::app::Startup;
+    use bevy::prelude::{Commands, ResMut, Update, World};
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
+
+    use crate::action::wait;
+    use crate::prelude::{ActionSeed, CancellationToken, Reactor};
+    use crate::runner::Runner;
+    use crate::test_util::test;
+    use crate::tests::test_app;
+
+    struct TestCancelRunner {
+        limit: usize,
+    }
+
+    impl Runner for TestCancelRunner {
+        fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+            let mut count = world.resource_mut::<Count>();
+            count.increment();
+            if self.limit == count.0 {
+                token.cancel();
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    fn test_action(limit: usize) -> ActionSeed {
+        ActionSeed::new(move |_, _| {
+            TestCancelRunner {
+                limit
+            }
+        })
+    }
+
+    #[test]
+    fn remove_reactor_after_cancel() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, test_action(3)).await;
+            }));
+        });
+        app.update();
+        app.assert_resource_eq(Count(1));
+        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 1);
+
+        app.update();
+        app.assert_resource_eq(Count(2));
+        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 1);
+
+        app.update();
+        app.assert_resource_eq(Count(3));
+        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+    }
+
+    #[test]
+    fn test_cancel_reactor() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, wait::both(
+                    test::cancel(),
+                    wait::until(|mut count: ResMut<Count>| {
+                        count.increment();
+                        false
+                    }),
+                )).await;
+            }));
+        });
+        app.update();
+        for _ in 0..50 {
+            app.update();
+            assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+            app.assert_resource_eq(Count(1));
+        }
+    }
 }

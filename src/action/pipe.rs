@@ -48,8 +48,15 @@ impl<I1, O1, O2, A, ActionOrSeed> Pipe<I1, O1, O2, A> for ActionOrSeed
 {
     #[inline(always)]
     fn pipe(self, seed: ActionSeed<O1, O2>) -> A {
-        self.remake(|r1, o1, token, output| {
-            PipeRunner::new(r1, o1, seed, token, output)
+        self.remake(|r1, o1, output| {
+            PipeRunner {
+                r1,
+                r2: None,
+                o1,
+                output,
+                seed: Some(seed),
+                finished_r1: false,
+            }
         })
     }
 }
@@ -60,7 +67,6 @@ struct PipeRunner<O1, O2> {
     r2: Option<BoxedRunner>,
     finished_r1: bool,
     seed: Option<ActionSeed<O1, O2>>,
-    token: CancellationToken,
     output: Output<O2>,
 }
 
@@ -69,33 +75,15 @@ impl<O1, O2> PipeRunner<O1, O2>
         O1: 'static,
         O2: 'static
 {
-    pub fn new(
-        r1: BoxedRunner,
-        o1: Output<O1>,
-        seed: ActionSeed<O1, O2>,
-        token: CancellationToken,
-        output: Output<O2>,
-    ) -> PipeRunner<O1, O2> {
-        Self {
-            r1,
-            r2: None,
-            o1,
-            token,
-            output,
-            finished_r1: false,
-            seed: Some(seed),
-        }
-    }
-
     fn setup_second_runner(&mut self) {
         if let Some(o1) = self.o1.take() {
             self.finished_r1 = true;
             let Some(seed) = self.seed.take() else {
-                self.o1.replace(o1);
+                self.o1.set(o1);
                 return;
             };
             let action = seed.with(o1);
-            self.r2.replace(action.into_runner(self.token.clone(), self.output.clone()));
+            self.r2.replace(action.into_runner(self.output.clone()));
         }
     }
 }
@@ -105,17 +93,17 @@ impl<O1, O2> Runner for PipeRunner<O1, O2>
         O1: 'static,
         O2: 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        if !self.finished_r1 {
+            self.r1.run(world, token);
+        }
+        if token.is_cancellation_requested() {
             return true;
         }
 
-        if !self.finished_r1 {
-            self.r1.run(world);
-        }
         self.setup_second_runner();
         if let Some(r2) = self.r2.as_mut() {
-            r2.run(world);
+            r2.run(world, token);
         }
         self.output.is_some()
     }
@@ -128,10 +116,13 @@ mod tests {
     use bevy::ecs::event::ManualEventReader;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::event::DirectEvents;
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{delay, once};
-    use crate::prelude::{Map, Reactor, Then, Through};
-    use crate::tests::test_app;
+    use crate::prelude::{Map, Pipe, Reactor, Then, Through};
+    use crate::test_util::test;
+    use crate::tests::{increment_count, test_app};
 
     /// Make sure `Option::unwrap() on a None` does not occur.
     #[test]
@@ -154,5 +145,19 @@ mod tests {
         app.update();
         let mut er = ManualEventReader::<AppExit>::default();
         assert!(app.read_last_event(&mut er).is_some());
+    }
+
+    #[test]
+    fn r2_no_run_after_r1_cancelled() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, test::cancel()
+                    .pipe(increment_count()),
+                ).await;
+            }));
+        });
+        app.update();
+        app.assert_resource_eq(Count(0));
     }
 }

@@ -8,8 +8,7 @@ use bevy::prelude::{Commands, Entity, In, Query};
 use crate::action::wait;
 use crate::prelude::seed::{ActionSeed, };
 
-/// Waits until the audio associated with the passed [`Entity`](bevy::prelude::Entity)
-/// has finished playing.
+/// Waits until the audio associated with the passed [`Entity`] has finished playing.
 ///
 /// ## Examples
 /// 

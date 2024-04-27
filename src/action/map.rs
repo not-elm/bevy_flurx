@@ -1,7 +1,8 @@
 use bevy::prelude::World;
 
 use crate::action::remake::Remake;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::prelude::CancellationToken;
+use crate::runner::{BoxedRunner, Output, Runner};
 
 /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
 /// applying function.
@@ -59,11 +60,10 @@ impl<I, O, O2, A, Re> Map<I, O, O2, A> for Re
 {
     #[inline]
     fn map(self, f: impl FnOnce(O) -> O2 + 'static) -> A {
-        self.remake(|r1, o1, token, output| {
+        self.remake(|r1, o1, output| {
             MapRunner {
                 r1,
                 o1,
-                token,
                 output,
                 map: Some(f),
             }
@@ -72,7 +72,6 @@ impl<I, O, O2, A, Re> Map<I, O, O2, A> for Re
 }
 
 struct MapRunner<O1, O2, F> {
-    token: CancellationToken,
     r1: BoxedRunner,
     o1: Output<O1>,
     output: Output<O2>,
@@ -82,13 +81,10 @@ struct MapRunner<O1, O2, F> {
 impl<O1, O2, F> Runner for MapRunner<O1, O2, F>
     where F: FnOnce(O1) -> O2 + 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-        self.r1.run(world);
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        self.r1.run(world, token);
         if let Some(o) = self.o1.take() {
-            self.output.replace(self.map.take().unwrap()(o));
+            self.output.set(self.map.take().unwrap()(o));
             true
         } else {
             false

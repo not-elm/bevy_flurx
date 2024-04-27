@@ -1,7 +1,7 @@
 //! This example shows a simple cut-in implementation.
 //!
 //! Cut-in will start by pressing the R key.
-
+#![allow(clippy::type_complexity)]
 
 use std::f32::consts::PI;
 use std::time::Duration;

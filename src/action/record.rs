@@ -131,13 +131,13 @@ impl<Op> Resource for Record<Op>
         Op: Send + Sync + 'static
 {}
 
-/// # Safety: [`Track::create_runner`] must be called only on the main thread.
+/// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Send for Record<Op>
     where
         Op: Send + Sync + 'static
 {}
 
-/// # Safety: [`Track::create_runner`] must be called only on the main thread.
+/// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Sync for Record<Op>
     where
         Op: Send + Sync + 'static
@@ -160,26 +160,26 @@ pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(world: &mut World) {
 }
 
 fn push_tracks<Act: Send + Sync + 'static>(track: impl Iterator<Item=Track<Act>>, world: &mut World, in_undo: bool) -> EditRecordResult {
-    let mut store = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
-    if in_undo && store.progressing {
+    let mut record = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
+    if in_undo && record.progressing {
         return Err(UndoRedoInProgress);
     }
     if in_undo {
-        store.redo.clear();
+        record.redo.clear();
     }
-    store.tracks.extend(track);
+    record.tracks.extend(track);
     Ok(())
 }
 
 fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, in_undo: bool) -> EditRecordResult {
-    let mut store = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
-    if in_undo && store.progressing {
+    let mut record = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
+    if in_undo && record.progressing {
         return Err(UndoRedoInProgress);
     }
     if in_undo {
-        store.redo.clear();
+        record.redo.clear();
     }
-    store.tracks.push(track);
+    record.tracks.push(track);
     Ok(())
 }
 
@@ -191,15 +191,27 @@ mod tests {
 
     use crate::action::{Action, record, wait};
     use crate::action::record::track::Track;
-    use crate::prelude::{EditRecordResult, Reactor, Record, Rollback, Then};
-    use crate::tests::{increment_count, test_app, TestAct};
+    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
+    use crate::tests::{decrement_count, increment_count, NumAct, test_app, TestAct};
+
+    pub fn push_num_act(num: usize) -> ActionSeed {
+        record::push().with(Track {
+            act: NumAct(num),
+            rollback: Rollback::parts(
+                Undo::make(increment_count),
+                Redo::make(|_| decrement_count())
+            )
+        })
+            .omit()
+    }
 
     pub fn push_undo_increment() -> Action<Track<TestAct>, EditRecordResult> {
         record::push().with(Track {
             act: TestAct,
-            rollback: Rollback::undo(|| {
-                increment_count()
-            }),
+            rollback: Rollback::parts(
+                Undo::make(increment_count),
+                Redo::make(|_| decrement_count())
+            )
         })
     }
 

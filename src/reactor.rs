@@ -13,9 +13,11 @@ pub(crate) struct Initialized;
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
 /// This structure is created by [`Reactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
-/// 
+///
 /// Remove this component if you want to interrupt the processing flow.
-/// 
+///
+/// After all scheduled processes have completed, the entity attached to this component
+/// and it's children will be despawn.
 #[derive(Component)]
 pub struct Reactor {
     pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
@@ -25,12 +27,12 @@ pub struct Reactor {
 impl Reactor {
     /// Create new [`Reactor`].
     ///
-    /// The scheduled [`Reactor`] will be run and initialized at [`RunReactor`](crate::RunReactor)(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
+    /// The scheduled [`Reactor`] will be run and initialized at `RunReactor` scuhedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
     ///
     /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
     /// to reduce the delay until initialization.
     ///
-    /// If you spawn on another [`ScheduleLabel`], 
+    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel), 
     /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor). 
     ///
     /// ## Examples
@@ -65,7 +67,11 @@ impl Reactor {
     }
 
     #[inline(always)]
-    pub(crate) fn run_sync(&mut self, world: WorldPtr) {
+    pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool {
+        if self.token.is_cancellation_requested() {
+            return true;
+        }
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             use async_compat::CompatExt;
@@ -75,6 +81,8 @@ impl Reactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
+        
+        self.token.is_cancellation_requested() || self.token.finished_reactor()
     }
 }
 
@@ -99,7 +107,7 @@ mod tests {
     use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::once;
+    use crate::action::wait;
     use crate::prelude::Reactor;
     use crate::tests::test_app;
 
@@ -112,8 +120,9 @@ mod tests {
         app.init_resource::<Count>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|mut count: ResMut<Count>| {
+                task.will(Update, wait::until(|mut count: ResMut<Count>| {
                     count.0 += 1;
+                    false
                 })).await;
             }));
         });

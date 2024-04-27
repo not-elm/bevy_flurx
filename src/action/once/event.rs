@@ -1,4 +1,4 @@
-//! [`once::event`] creates a task that only once run system related to [`Event`](bevy::prelude::Event).
+//! [`once::event`] creates a task that only once run system related to [`Event`].
 //!
 //! - [`once::event::send`]
 //! - [`once::event::send_default`]
@@ -53,7 +53,7 @@ pub fn send_default<E>() -> ActionSeed
     })
 }
 
-/// Once send [`AppExit`](bevy::app::AppExit).
+/// Once send [`AppExit`].
 ///
 /// ## Examples
 ///

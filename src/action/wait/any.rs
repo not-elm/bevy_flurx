@@ -18,27 +18,29 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 /// use bevy_flurx::actions;
 /// use bevy_flurx::prelude::*;
 /// use bevy::app::AppExit;
-/// 
+///
 /// Reactor::schedule(|task| async move{
 ///     // The output value is the index of the completed action.
-///     let index: usize = task.will(Update, wait::any(actions![
+///     let index: usize = task.will(Update, wait::any().with(actions![
 ///         wait::input::just_pressed().with(KeyCode::KeyB),
 ///         wait::event::comes::<AppExit>()
 ///     ])).await;
 /// });
 /// ```
-pub fn any(actions: impl IntoIterator<Item=ActionSeed> + 'static) -> ActionSeed<(), usize> {
-    ActionSeed::new(move |_, token, output| {
+pub fn any<Actions>() -> ActionSeed<Actions, usize>
+    where
+        Actions: IntoIterator<Item=ActionSeed> + 'static
+{
+    ActionSeed::new(move |actions: Actions, output| {
         let runners = actions
             .into_iter()
-            .map(|action| action.with(()).into_runner(token.clone(), Output::default()))
+            .map(|action| action.with(()).into_runner(Output::default()))
             .collect::<Vec<_>>();
         if runners.is_empty() {
             panic!("The length of actions passed to `wait::any` must be greater than 0.")
         }
 
         AnyRunner {
-            token,
             output,
             runners,
         }
@@ -46,20 +48,15 @@ pub fn any(actions: impl IntoIterator<Item=ActionSeed> + 'static) -> ActionSeed<
 }
 
 struct AnyRunner {
-    token: CancellationToken,
     output: Output<usize>,
     runners: Vec<BoxedRunner>,
 }
 
 impl Runner for AnyRunner {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         for (i, runner) in self.runners.iter_mut().enumerate() {
-            if runner.run(world) {
-                self.output.replace(i);
+            if runner.run(world, token) {
+                self.output.set(i);
                 return true;
             }
         }
@@ -85,7 +82,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let index = task.will(Update, wait::any(actions![
+                let index = task.will(Update, wait::any().with(actions![
                     wait::until(|| false),
                     once::run(|| {})
                 ])).await;
@@ -105,7 +102,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let index = task.will(Update, wait::any(actions![
+                let index = task.will(Update, wait::any().with(actions![
                     delay::frames().with(1),
                     delay::frames().with(3),
                     wait::until(||false)
@@ -118,7 +115,7 @@ mod tests {
         let mut er = ManualEventReader::<AppExit>::default();
         app.update();
         app.assert_event_not_comes(&mut er);
-        
+
         app.update();
         app.update();
         app.assert_event_comes(&mut er);

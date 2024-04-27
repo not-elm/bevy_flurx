@@ -33,17 +33,16 @@ pub fn both<LI, LO, RI, RO>(
 {
     let Action(i1, s1) = lhs.into();
     let Action(i2, s2) = rhs.into();
-    ActionSeed::new(move |input: (LI, RI), token, output| {
+    ActionSeed::new(move |input: (LI, RI), output| {
         let o1 = Output::default();
         let o2 = Output::default();
 
         BothRunner {
-            r1: s1.with(input.0).into_runner(token.clone(), o1.clone()),
-            r2: s2.with(input.1).into_runner(token.clone(), o2.clone()),
+            r1: s1.with(input.0).into_runner(o1.clone()),
+            r2: s2.with(input.1).into_runner(o2.clone()),
             o1,
             o2,
-            output,
-            token,
+            output
         }
     })
         .with((i1, i2))
@@ -54,8 +53,7 @@ struct BothRunner<O1, O2> {
     r2: BoxedRunner,
     o1: Output<O1>,
     o2: Output<O2>,
-    output: Output<(O1, O2)>,
-    token: CancellationToken,
+    output: Output<(O1, O2)>
 }
 
 impl<O1, O2> Runner for BothRunner<O1, O2>
@@ -63,16 +61,12 @@ impl<O1, O2> Runner for BothRunner<O1, O2>
         O1: 'static,
         O2: 'static
 {
-    fn run(&mut self, world: &mut World) -> bool {
-        if self.token.requested_cancel() {
-            return true;
-        }
-
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if self.o1.is_none() {
-            self.r1.run(world);
+            self.r1.run(world, token);
         }
         if self.o2.is_none() {
-            self.r2.run(world);
+            self.r2.run(world, token);
         }
         output_combine!(&self.o1, &self.o2, self.output)
     }

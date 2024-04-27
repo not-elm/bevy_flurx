@@ -20,10 +20,8 @@ use bevy::time::Time;
 use bevy::utils::default;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_egui::egui::{Color32, RichText};
-
-use bevy_flurx::{actions, FlurxPlugin};
-use bevy_flurx::action::{OmitOutput, once, record, wait};
-use bevy_flurx::prelude::{ActionSeed, Pipe, Reactor, Record, RecordExtension, Redo, RequestRedo, RequestUndo, Rollback, Then, Track, Undo};
+use bevy_flurx::actions;
+use bevy_flurx::prelude::*;
 
 #[derive(Component)]
 struct MrShape;
@@ -129,7 +127,7 @@ fn spawn_move_reactor(
 ) {
     commands.spawn(Reactor::schedule(|task| async move {
         loop {
-            task.will(Update, wait::any(actions![
+            task.will(Update, wait::any().with(actions![
                     wait::input::any_just_released().with(vec![KeyCode::KeyA, KeyCode::ArrowLeft]),
                     wait::input::any_just_released().with(vec![KeyCode::KeyW, KeyCode::ArrowUp]),
                     wait::input::any_just_released().with(vec![KeyCode::KeyS, KeyCode::ArrowDown]),
