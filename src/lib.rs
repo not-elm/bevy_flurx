@@ -30,7 +30,16 @@ pub mod prelude {
         action::Map,
         action::omit::*,
         action::pipe::Pipe,
-        action::record::*,
+        action::record::{
+            EditRecordResult,
+            Record,
+            Redo,
+            RedoAction,
+            Track,
+            Rollback,
+            Undo,
+            UndoRedoInProgress,
+        },
         action::record::extension::*,
         action::Remake,
         action::seed::ActionSeed,
@@ -108,7 +117,7 @@ fn run_reactors(
             entities.push((entity, Status::Finished));
         }
     }
-    
+
     for (entity, status) in entities {
         match status {
             Status::Finished => {

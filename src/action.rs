@@ -37,7 +37,6 @@
 
 pub use _tuple::tuple;
 pub use map::Map;
-pub use record::redo;
 pub use remake::Remake;
 
 use crate::prelude::{ActionSeed};

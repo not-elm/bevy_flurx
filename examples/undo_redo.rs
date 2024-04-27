@@ -20,10 +20,8 @@ use bevy::time::Time;
 use bevy::utils::default;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_egui::egui::{Color32, RichText};
-
-use bevy_flurx::{actions, FlurxPlugin};
-use bevy_flurx::action::{once, record, wait};
-use bevy_flurx::prelude::{ActionSeed, OmitOutput, Pipe, Reactor, Record, RecordExtension, Redo, RequestRedo, RequestUndo, Rollback, Then, Track, Undo};
+use bevy_flurx::actions;
+use bevy_flurx::prelude::*;
 
 #[derive(Component)]
 struct MrShape;
