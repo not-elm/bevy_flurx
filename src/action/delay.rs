@@ -70,7 +70,6 @@ mod tests {
     use bevy::app::{AppExit, First, Startup};
     use bevy::ecs::event::ManualEventReader;
     use bevy::prelude::Commands;
-    use bevy::time::TimePlugin;
     use bevy_test_helper::event::DirectEvents;
 
     use crate::action::{delay, once};
@@ -82,7 +81,6 @@ mod tests {
     fn delay_1frame() {
         let mut app = test_app();
         app
-            .add_plugins(TimePlugin)
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, delay::frames().with(1)
@@ -102,7 +100,6 @@ mod tests {
     fn delay_2frames() {
         let mut app = test_app();
         app
-            .add_plugins(TimePlugin)
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, delay::frames().with(2)

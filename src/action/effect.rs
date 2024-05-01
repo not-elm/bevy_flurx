@@ -1,0 +1,61 @@
+//! Convert the operations with side effects such as asynchronous runtime or thread
+//! into the referential-transparent actions.
+
+use std::future::Future;
+
+
+#[cfg(feature = "tokio")]
+pub mod tokio;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod thread;
+pub mod bevy_task;
+
+
+/// This trait 
+///
+pub trait AsyncFunctor<I, Out, M> {
+    /// Returns a new future with input.
+    fn functor(self, input: I) -> impl Future<Output=Out> + Send;
+}
+
+impl<I, F, Fut> AsyncFunctor<I, <Fut as Future>::Output, ()> for F
+    where
+        I: Send + 'static,
+        F: FnOnce(I) -> Fut + Send + 'static,
+        Fut: Future + Send + 'static,
+        <Fut as Future>::Output: Send + 'static
+{
+    #[inline]
+    fn functor(self, input: I) -> impl Future<Output=<Fut as Future>::Output> + Send {
+        #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
+        {
+            use async_compat::CompatExt;
+            (self)(input).compat()
+        }
+        #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
+        {
+            (self)(input)
+        }
+    }
+}
+
+impl<I, Fut> AsyncFunctor<I, <Fut as Future>::Output, bool> for Fut
+    where
+        I: Send + 'static,
+        Fut: Future + Send + 'static,
+        <Fut as Future>::Output: Send + 'static
+{
+    #[inline]
+    fn functor(self, _: I) -> impl Future<Output=<Fut as Future>::Output> + Send {
+        #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
+        {
+            use async_compat::CompatExt;
+            self.compat()
+        }
+        #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
+        {
+            self
+        }
+    }
+}
+

@@ -4,7 +4,7 @@
 //! - [`wait::event::read`]
 
 use bevy::ecs::event::ManualEventReader;
-use bevy::prelude::{Event, Events, Local, Res};
+use bevy::prelude::{Event, Events, Local, ResMut};
 
 use crate::prelude::seed::ActionSeed;
 use crate::prelude::wait;
@@ -28,16 +28,22 @@ pub fn comes<E>() -> ActionSeed
         E: Event,
 {
     wait::until(|mut er: Local<Option<ManualEventReader<E>>>,
-                 events: Res<Events<E>>| {
+                 mut events: ResMut<Events<E>>| {
         if er.is_none() {
             if 0 < events.iter_current_update_events().count() {
+                events.clear();
                 return true;
             }
             er.replace(events.get_reader_current());
         }
-        0 < er.as_mut().unwrap().read(&events).count()
-    },
-    )
+
+        if 0 < er.as_mut().unwrap().read(&events).count() {
+            events.clear();
+            true
+        } else {
+            false
+        }
+    })
 }
 
 /// Waits until the specified event is sent.
@@ -61,14 +67,20 @@ pub fn read<E>() -> ActionSeed<(), E>
         E: Event + Clone,
 {
     wait::output(|mut er: Local<Option<ManualEventReader<E>>>,
-                  events: Res<Events<E>>| {
+                  mut events: ResMut<Events<E>>| {
         if er.is_none() {
             if let Some(event) = events.iter_current_update_events().last().cloned() {
+                events.clear();
                 return Some(event);
             }
             er.replace(events.get_reader_current());
         }
-        er.as_mut().unwrap().read(&events).last().cloned()
+        if let Some(event) = er.as_mut().unwrap().read(&events).last().cloned() {
+            events.clear();
+            Some(event)
+        } else {
+            None
+        }
     })
 }
 
@@ -85,7 +97,7 @@ mod tests {
     use crate::tests::test_app;
 
     #[test]
-    fn wait_event_consumed_events() {
+    fn wait_until_event_consumed_events() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
@@ -112,8 +124,42 @@ mod tests {
         });
 
         app.update();
+        app.update();
+
+        let mut er = ManualEventReader::<TestEvent2>::default();
+        app.assert_event_comes(&mut er);
+    }
+
+    #[test]
+    fn wait_read_event_consumed_events() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    Update,
+                    once::event::send_default::<TestEvent1>()
+                        .then(wait::event::read::<TestEvent1>()),
+                )
+                    .await;
+
+                task.will(Update, {
+                    wait::either(wait::event::read::<TestEvent1>(), once::run(|| {})).pipe(
+                        once::run(
+                            |In(either): In<Either<TestEvent1, ()>>, mut ew: EventWriter<TestEvent2>| {
+                                if either.is_right() {
+                                    ew.send_default();
+                                }
+                            },
+                        ),
+                    )
+                })
+                    .await;
+            }));
+        });
 
         app.update();
+        app.update();
+
         let mut er = ManualEventReader::<TestEvent2>::default();
         app.assert_event_comes(&mut er);
     }
