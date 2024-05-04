@@ -28,44 +28,27 @@ pub trait Runner {
 ///
 /// It is created by [`Action`](crate::prelude::Action).
 #[repr(transparent)]
-pub struct BoxedRunner(Box<dyn Runner>);
+pub struct BoxedRunner(Option<Box<dyn Runner>>);
 
 impl BoxedRunner {
     #[inline]
     pub(crate) fn new(runner: impl Runner + 'static) -> Self {
-        Self(Box::new(runner))
+        Self(Some(Box::new(runner)))
     }
 }
 
 impl Runner for BoxedRunner {
     #[inline(always)]
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.0.run(world, token)
-    }
-}
-
-#[repr(transparent)]
-pub(crate) struct DisposableRunner(Option<BoxedRunner>);
-
-impl DisposableRunner{
-    #[inline]
-    pub const fn new(runner: BoxedRunner) -> Self {
-        Self(Some(runner))
-    }
-}
-
-impl Runner for DisposableRunner{
-    #[inline(always)]
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if let Some(mut runner) = self.0.take(){
-            if runner.0.run(world, token){
+        if let Some(mut runner) = self.0.take() {
+            if runner.run(world, token) {
                 true
-            }else{
+            } else {
                 self.0.replace(runner);
                 false
             }
-        }else{
-            false
+        } else {
+            true
         }
     }
 }
