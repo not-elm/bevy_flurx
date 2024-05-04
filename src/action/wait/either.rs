@@ -1,8 +1,8 @@
 use bevy::prelude::World;
-use crate::action::Action;
 
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::action::Action;
+use crate::prelude::{ActionSeed, BoxedRunner};
+use crate::runner::{CancellationToken, Output, Runner};
 
 /// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -72,7 +72,7 @@ pub fn either<LI, LO, RI, RO, >(
             r2: rs.with(input.1).into_runner(o2.clone()),
             o1,
             o2,
-            output
+            output,
         }
     })
         .with((li, ri))

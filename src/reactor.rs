@@ -6,10 +6,6 @@ use crate::runner::CancellationToken;
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 
-#[derive(Component, Debug, Copy, Clone)]
-pub(crate) struct Initialized;
-
-
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
 /// This structure is created by [`Reactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
@@ -21,6 +17,7 @@ pub(crate) struct Initialized;
 #[derive(Component)]
 pub struct Reactor {
     pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
+    pub(crate) initialized: bool,
     token: CancellationToken,
 }
 
@@ -63,6 +60,7 @@ impl Reactor {
         Self {
             scheduler,
             token,
+            initialized: false,
         }
     }
 
@@ -72,12 +70,12 @@ impl Reactor {
             return true;
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
             pollster::block_on(self.scheduler.run(world).compat());
         }
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
         {
             pollster::block_on(self.scheduler.run(world));
         }

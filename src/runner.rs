@@ -28,19 +28,28 @@ pub trait Runner {
 ///
 /// It is created by [`Action`](crate::prelude::Action).
 #[repr(transparent)]
-pub struct BoxedRunner(Box<dyn Runner>);
+pub struct BoxedRunner(Option<Box<dyn Runner>>);
 
 impl BoxedRunner {
     #[inline]
     pub(crate) fn new(runner: impl Runner + 'static) -> Self {
-        Self(Box::new(runner))
+        Self(Some(Box::new(runner)))
     }
 }
 
 impl Runner for BoxedRunner {
     #[inline(always)]
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.0.run(world, token)
+        if let Some(mut runner) = self.0.take() {
+            if runner.run(world, token) {
+                true
+            } else {
+                self.0.replace(runner);
+                false
+            }
+        } else {
+            true
+        }
     }
 }
 
@@ -81,9 +90,7 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
         runners.0.retain_mut(|(runner, token)| {
-            if token.finished_reactor() {
-                false
-            } else if token.is_cancellation_requested() {
+            if token.is_cancellation_requested() {
                 token.call_cancel_handles(world);
                 false
             } else {

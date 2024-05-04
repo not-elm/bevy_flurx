@@ -13,9 +13,9 @@
 use bevy::app::{App, Last, MainScheduleOrder, Plugin, PostStartup};
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{Entity, QueryState, Without, World};
+use bevy::prelude::{Entity, QueryState, World};
 
-use crate::reactor::{Initialized, Reactor};
+use crate::reactor::Reactor;
 use crate::world_ptr::WorldPtr;
 
 pub mod extension;
@@ -27,6 +27,7 @@ pub mod runner;
 pub mod prelude {
     pub use crate::{
         action::*,
+        action::effect::AsyncFunctor,
         action::Map,
         action::omit::*,
         action::pipe::Pipe,
@@ -35,8 +36,8 @@ pub mod prelude {
             Record,
             Redo,
             RedoAction,
-            Track,
             Rollback,
+            Track,
             Undo,
             UndoRedoInProgress,
         },
@@ -86,46 +87,34 @@ struct RunReactor;
 
 fn initialize_reactors(
     world: &mut World,
-    reactors: &mut QueryState<(Entity, &mut Reactor), Without<Initialized>>,
+    reactors: &mut QueryState<&mut Reactor>,
 ) {
     let world_ptr = WorldPtr::new(world);
-    for (entity, mut reactor) in reactors.iter_mut(world) {
-        world_ptr.as_mut().entity_mut(entity).insert(Initialized);
+    for mut reactor in reactors.iter_mut(world) {
+        if reactor.initialized {
+            continue;
+        }
+        reactor.initialized = true;
         reactor.run_sync(world_ptr);
     }
 }
 
 fn run_reactors(
     world: &mut World,
-    reactors: &mut QueryState<(Entity, &mut Reactor, Option<&Initialized>)>,
+    reactors: &mut QueryState<(Entity, &mut Reactor)>,
 ) {
-    enum Status {
-        Finished,
-        Initialized,
-    }
-
     let world_ptr = WorldPtr::new(world);
-    let mut entities = Vec::with_capacity(reactors.iter(world).len());
-    for (entity, mut reactor, initialized) in reactors.iter_mut(world) {
-        if initialized.is_none() {
+    for (entity, mut reactor) in reactors.iter_mut(world) {
+        if !reactor.initialized {
             if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {
-                entities.push((entity, Status::Finished));
+                world_ptr.as_mut().entity_mut(entity).despawn_recursive();
+                // entities.push((entity, Status::Finished));
             } else {
-                entities.push((entity, Status::Initialized));
+                reactor.initialized = true;
             }
         } else if reactor.run_sync(world_ptr) {
-            entities.push((entity, Status::Finished));
-        }
-    }
-
-    for (entity, status) in entities {
-        match status {
-            Status::Finished => {
-                world.entity_mut(entity).despawn_recursive();
-            }
-            Status::Initialized => {
-                world.entity_mut(entity).insert(Initialized);
-            }
+            world_ptr.as_mut().entity_mut(entity).despawn_recursive();
+            // entities.push((entity, Status::Finished));
         }
     }
 }
@@ -137,7 +126,8 @@ mod tests {
     use bevy::ecs::event::ManualEventReader;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
-    use bevy::prelude::{Event, EventReader, ResMut, Resource};
+    use bevy::prelude::{Event, EventReader, FrameCountPlugin, ResMut, Resource};
+    use bevy::time::TimePlugin;
     use bevy_test_helper::BevyTestHelperPlugin;
     use bevy_test_helper::resource::count::Count;
 
@@ -173,7 +163,9 @@ mod tests {
         app.add_plugins((
             BevyTestHelperPlugin,
             FlurxPlugin,
-            InputPlugin
+            InputPlugin,
+            TimePlugin,
+            FrameCountPlugin
         ));
         app.add_record_events::<NumAct>();
         app.add_record_events::<TestAct>();

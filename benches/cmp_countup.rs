@@ -69,11 +69,11 @@ fn with_flurx(count: usize, c: &mut Criterion) {
     });
 }
 
-fn cmp_count_1000(c: &mut Criterion) {
-    const COUNT: usize = 1000;
+fn cmp_count_10000(c: &mut Criterion) {
+    const COUNT: usize = 10000;
     without_flurx(COUNT, c);
     with_flurx(COUNT, c);
 }
 
-criterion_group!(cmp_countup, cmp_count_1000);
+criterion_group!(cmp_countup, cmp_count_10000);
 criterion_main!(cmp_countup);

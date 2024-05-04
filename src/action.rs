@@ -34,12 +34,13 @@
 //! - [`omit`]
 //! - [`map::Map`]
 //! - [`remake::Remake`]
+//! - [`effect`]
 
 pub use _tuple::tuple;
 pub use map::Map;
 pub use remake::Remake;
 
-use crate::prelude::{ActionSeed};
+use crate::prelude::ActionSeed;
 use crate::runner::{BoxedRunner, Output};
 
 pub mod once;
@@ -52,6 +53,7 @@ pub mod pipe;
 pub mod sequence;
 pub mod record;
 pub mod omit;
+pub mod effect;
 #[path = "action/tuple.rs"]
 mod _tuple;
 mod map;

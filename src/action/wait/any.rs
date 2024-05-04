@@ -54,13 +54,20 @@ struct AnyRunner {
 
 impl Runner for AnyRunner {
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        let mut finished = None;
         for (i, runner) in self.runners.iter_mut().enumerate() {
             if runner.run(world, token) {
-                self.output.set(i);
-                return true;
+                finished.replace(i);
+                break;
             }
         }
-        false
+        if let Some(finished_index) = finished {
+            self.runners.clear();
+            self.output.set(finished_index);
+            true
+        } else {
+            false
+        }
     }
 }
 

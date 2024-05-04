@@ -14,6 +14,8 @@ use crate::runner::{BoxedRunner, Output, Runner};
 ///
 /// [`Action`]: crate::prelude::Action
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
+/// 
+///
 pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>, PhantomData<I>);
 
 impl<I, O> ActionSeed<I, O>
