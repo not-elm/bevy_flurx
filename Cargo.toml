@@ -1,10 +1,10 @@
 [package]
 name = "bevy_flurx"
-version = "0.3.4"
+version = "0.4.0"
 edition = "2021"
 authors = ["elm"]
 categories = ["asynchronous", "game-development"]
-description = "Provides the ability to wait for game status asynchronously."
+description = "Allows you to write sequential description of processes involving delays, user input, and other waits."
 keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
 readme = "README.md"

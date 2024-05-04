@@ -1,3 +1,9 @@
+## v0.4.0
+
+added effect actions. 
+
+- [v0.4.0](https://github.com/not-elm/bevy_flurx/pull/42)
+
 ## v0.3.4
 
 - [v0.3.4](https://github.com/not-elm/bevy_flurx/pull/38)
