@@ -11,10 +11,11 @@ pub mod thread;
 pub mod bevy_task;
 
 
-/// This trait 
-///
+/// This trait is implemented for functions that return future or future.
 pub trait AsyncFunctor<I, Out, M> {
     /// Returns a new future with input.
+    /// 
+    /// If you have added the `tokio` feature flag, future will be automatically compat.
     fn functor(self, input: I) -> impl Future<Output=Out> + Send;
 }
 
