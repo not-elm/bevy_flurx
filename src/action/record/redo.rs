@@ -1,5 +1,5 @@
 //! Define the actions related to `redo` operations.
-//! To perform these the actions, you must call the one of the [`record::undo`](crate::prelude::undo) actions beforehand.
+//! To perform these the actions, you must call the one of the [`record::undo`](crate::prelude::record::undo) actions beforehand.
 //!
 //!
 //! actions

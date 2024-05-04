@@ -2,7 +2,6 @@ name: CI
 run-name: ${{ github.actor }} is testing
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -16,8 +15,10 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
-      - name: Test
+      - name: Test all features
         run: cargo test --all-features --all
+      - name: Test
+        run: cargo test --all
   clippy:
     runs-on: ubuntu-latest
     steps:
@@ -30,5 +31,7 @@ jobs:
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
-      - name: Clippy
+      - name: Clippy all features
         run: cargo clippy --all-targets --all-features -- -D warnings
+      - name: Clippy
+        run: cargo clippy -- -D warnings

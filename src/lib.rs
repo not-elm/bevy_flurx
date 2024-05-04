@@ -27,6 +27,7 @@ pub mod runner;
 pub mod prelude {
     pub use crate::{
         action::*,
+        action::effect::AsyncFunctor,
         action::Map,
         action::omit::*,
         action::pipe::Pipe,
@@ -125,7 +126,8 @@ mod tests {
     use bevy::ecs::event::ManualEventReader;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
-    use bevy::prelude::{Event, EventReader, ResMut, Resource};
+    use bevy::prelude::{Event, EventReader, FrameCountPlugin, ResMut, Resource};
+    use bevy::time::TimePlugin;
     use bevy_test_helper::BevyTestHelperPlugin;
     use bevy_test_helper::resource::count::Count;
 
@@ -161,7 +163,9 @@ mod tests {
         app.add_plugins((
             BevyTestHelperPlugin,
             FlurxPlugin,
-            InputPlugin
+            InputPlugin,
+            TimePlugin,
+            FrameCountPlugin
         ));
         app.add_record_events::<NumAct>();
         app.add_record_events::<TestAct>();

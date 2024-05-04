@@ -70,12 +70,12 @@ impl Reactor {
             return true;
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
             pollster::block_on(self.scheduler.run(world).compat());
         }
-        #[cfg(target_arch = "wasm32")]
+        #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
         {
             pollster::block_on(self.scheduler.run(world));
         }

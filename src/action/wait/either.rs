@@ -1,8 +1,8 @@
 use bevy::prelude::World;
-use crate::action::Action;
 
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::action::Action;
+use crate::prelude::{ActionSeed, DisposableRunner};
+use crate::runner::{CancellationToken, Output, Runner};
 
 /// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -68,19 +68,19 @@ pub fn either<LI, LO, RI, RO, >(
         let o1 = Output::default();
         let o2 = Output::default();
         EitherRunner {
-            r1: ls.with(input.0).into_runner(o1.clone()),
-            r2: rs.with(input.1).into_runner(o2.clone()),
+            r1: DisposableRunner::new(ls.with(input.0).into_runner(o1.clone())),
+            r2: DisposableRunner::new(rs.with(input.1).into_runner(o2.clone())),
             o1,
             o2,
-            output
+            output,
         }
     })
         .with((li, ri))
 }
 
 struct EitherRunner<O1, O2> {
-    r1: BoxedRunner,
-    r2: BoxedRunner,
+    r1: DisposableRunner,
+    r2: DisposableRunner,
     o1: Output<O1>,
     o2: Output<O2>,
     output: Output<Either<O1, O2>>,

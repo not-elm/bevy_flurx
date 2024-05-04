@@ -45,6 +45,32 @@ impl Runner for BoxedRunner {
 }
 
 #[repr(transparent)]
+pub(crate) struct DisposableRunner(Option<BoxedRunner>);
+
+impl DisposableRunner{
+    #[inline]
+    pub const fn new(runner: BoxedRunner) -> Self {
+        Self(Some(runner))
+    }
+}
+
+impl Runner for DisposableRunner{
+    #[inline(always)]
+    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        if let Some(mut runner) = self.0.take(){
+            if runner.0.run(world, token){
+                true
+            }else{
+                self.0.replace(runner);
+                false
+            }
+        }else{
+            false
+        }
+    }
+}
+
+#[repr(transparent)]
 #[derive(Resource)]
 struct BoxedRunners<L: Send + Sync>(Vec<(BoxedRunner, CancellationToken)>, PhantomData<L>);
 
