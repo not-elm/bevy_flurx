@@ -36,10 +36,10 @@ fn main() {
             setup,
         ))
         .add_systems(Update, (
-            cut_in::<CutInBackground, 200>.run_if(switch_turned_on::<CutInBackground>),
-            cut_in_ferris.run_if(switch_turned_on::<HandsomeFerris>),
-            move_left_down::<25>.run_if(switch_turned_on::<MoveSlowly>),
-            move_left_down::<10000>.run_if(switch_turned_on::<MoveFast>)
+            cut_in::<CutInBackground, 200>.run_if(switch_is_on::<CutInBackground>),
+            cut_in_ferris.run_if(switch_is_on::<HandsomeFerris>),
+            move_left_down::<25>.run_if(switch_is_on::<MoveSlowly>),
+            move_left_down::<10000>.run_if(switch_is_on::<MoveFast>)
         ))
         .run();
 }

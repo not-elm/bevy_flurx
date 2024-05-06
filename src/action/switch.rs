@@ -2,20 +2,20 @@
 //!
 //! This is to solve the problem that systems created from `Reactors`
 //! cannot run except on the main thread.
-//! 
+//!
 //! Resource
-//! 
+//!
 //! - [`Switch`]
-//! 
+//!
 //! run conditions
-//! 
-//! - [`switch_turned_on`]
-//! - [`switch_turned_off`]
+//!
+//! - [`switch_is_on`]
+//! - [`switch_is_off`]
 //! - [`switch_just_turned_on`]
 //! - [`switch_just_turned_off`]
-//! 
+//!
 //! actions 
-//! 
+//!
 //! - [`once::switch::on`](crate::prelude::once::switch::on)
 //! - [`once::switch::off`](crate::prelude::once::switch::off)
 //! - [`wait::switch::on`](crate::prelude::wait::switch::on)
@@ -24,42 +24,67 @@
 
 use std::marker::PhantomData;
 
-use bevy::app::PostUpdate;
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{FromWorld, Mut, Res, ResMut, Resource, Schedules, World};
+use bevy::prelude::{Local, Mut, Res, Resource, World};
 
-use crate::runner::initialize_schedule;
-
-/// A Condition-satisfying system that returns true if the switch has been turned on. 
+/// A Condition-satisfying system that returns true if the switch has been turned on.
 #[inline]
-pub fn switch_turned_on<M>(switch: Option<Res<Switch<M>>>) -> bool
+pub fn switch_is_on<M>(switch: Option<Res<Switch<M>>>) -> bool
     where M: Send + Sync + 'static
 {
-    switch.is_some_and(|s| s.turned_on())
+    switch.is_some_and(|s| s.is_on())
+}
+
+
+/// A Condition-satisfying system that returns true if the switch has been turned off.
+#[inline]
+pub fn switch_is_off<M>(switch: Option<Res<Switch<M>>>) -> bool
+    where M: Send + Sync + 'static
+{
+    switch.is_some_and(|s| {
+        s.is_off()
+    })
 }
 
 /// A Condition-satisfying system that returns true if the switch has just been turned on. 
 #[inline]
-pub fn switch_just_turned_on<M>(switch: Option<Res<Switch<M>>>) -> bool
+pub fn switch_just_turned_on<M>(
+    switch: Option<Res<Switch<M>>>,
+    mut is_on: Local<bool>,
+) -> bool
     where M: Send + Sync + 'static
 {
-    switch.is_some_and(|s| s.just_turned_on())
-}
-
-/// A Condition-satisfying system that returns true if the switch has been turned off. 
-#[inline]
-pub fn switch_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
-    where M: Send + Sync + 'static
-{
-    switch.is_some_and(|s| s.turned_off())
+    if switch.is_some_and(|s| s.is_on()) {
+        if *is_on {
+            false
+        } else {
+            *is_on = true;
+            true
+        }
+    } else {
+        *is_on = false;
+        false
+    }
 }
 
 /// A Condition-satisfying system that returns true if the switch has just been turned off. 
 #[inline]
-pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
+pub fn switch_just_turned_off<M>(
+    switch: Option<Res<Switch<M>>>,
+    mut is_off: Local<bool>,
+) -> bool
     where M: Send + Sync + 'static
 {
-    switch.is_some_and(|s| s.just_turned_off())
+    if switch.is_some_and(|s| s.is_off()) {
+        if *is_off {
+            false
+        } else {
+            *is_off = true;
+            true
+        }
+    } else {
+        *is_off = false;
+        false
+    }
 }
 
 /// A switch is a structure that represents two states: `on` and `off`.
@@ -81,7 +106,7 @@ pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
 ///         //..
 ///         
 ///         switch.off();
-///     }).run_if(switch_turned_on::<HeavyTask>))
+///     }).run_if(switch_is_on::<HeavyTask>))
 ///     .add_systems(Update, |mut commands: Commands|{
 ///         commands.spawn(Reactor::schedule(|task| async move{
 ///             task.will(Update, once::switch::on::<HeavyTask>()).await;
@@ -93,6 +118,7 @@ pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>) -> bool
 pub struct Switch<M> {
     just_change: bool,
     turned_on: bool,
+    checked: bool,
     _m: PhantomData<M>,
 }
 
@@ -109,31 +135,20 @@ impl<M> Switch<M>
         Self {
             just_change: true,
             turned_on: turn_on,
+            checked: false,
             _m: PhantomData,
         }
     }
 
-    /// Returns true if the switch has just been turned on.
-    #[inline(always)]
-    pub const fn just_turned_on(&self) -> bool {
-        self.just_change && self.turned_on
-    }
-
-    /// Returns true if the switch has just been turned off.
-    #[inline(always)]
-    pub const fn just_turned_off(&self) -> bool {
-        self.just_change && self.turned_off()
-    }
-
     /// Returns true if switch is on.
     #[inline(always)]
-    pub const fn turned_on(&self) -> bool {
+    pub const fn is_on(&self) -> bool {
         self.turned_on
     }
 
     /// Returns true if switch is off.
     #[inline(always)]
-    pub const fn turned_off(&self) -> bool {
+    pub const fn is_off(&self) -> bool {
         !self.turned_on
     }
 
@@ -149,7 +164,7 @@ impl<M> Switch<M>
     /// Turn on the switch.
     #[inline(always)]
     pub fn on(&mut self) {
-        if self.turned_off() {
+        if self.is_off() {
             self.just_change = true;
             self.turned_on = true;
         }
@@ -165,30 +180,15 @@ impl<M> Switch<M>
     }
 
     pub(crate) fn setup(world: &mut World, turn_on: bool) -> Mut<Switch<M>> {
-        if world.get_resource::<Switch<M>>().is_some() {
-            let mut s = world.resource_mut::<Switch<M>>();
-            s.set(turn_on);
-            s
-        } else {
-            let mut s = Self::from_world(world);
-            s.set(turn_on);
-            world.insert_resource(s);
-            world.resource_mut::<Switch<M>>()
-        }
+        world.insert_resource(Self::new(turn_on));
+        world.resource_mut::<Switch<M>>()
     }
 }
 
-impl<M> FromWorld for Switch<M>
+impl<M> Default for Switch<M>
     where M: Send + Sync + 'static
 {
-    fn from_world(world: &mut World) -> Self {
-        world.resource_scope(|_, mut schedules: Mut<Schedules>| {
-            let schedule = initialize_schedule(&mut schedules, PostUpdate.intern());
-            schedule.add_systems(|mut switch: ResMut<Switch<M>>| {
-                switch.just_change = false;
-            });
-        });
-
+    fn default() -> Self {
         Self::new(false)
     }
 }
@@ -196,12 +196,7 @@ impl<M> FromWorld for Switch<M>
 
 #[cfg(test)]
 mod tests {
-    use bevy::prelude::{Res, ResMut, Update};
-    use bevy_test_helper::resource::bool::{Bool, BoolExtension};
-    use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::prelude::Switch;
-    use crate::tests::test_app;
 
     struct T;
 
@@ -213,31 +208,17 @@ mod tests {
         s.just_change = false;
         s.off();
         assert!(s.just_change);
-        assert!(s.turned_off());
+        assert!(s.is_off());
     }
 
     #[test]
     fn on() {
         let mut s = Switch::<T>::new(false);
         assert!(s.just_change);
-        assert!(s.turned_off());
+        assert!(s.is_off());
         s.just_change = false;
         s.on();
         assert!(s.just_change);
-        assert!(s.turned_on());
-    }
-
-    #[test]
-    fn cleanup() {
-        let mut app = test_app();
-        app.init_resource::<Switch<T>>();
-        app.add_systems(Update, |mut b: ResMut<Bool>, s: Res<Switch<T>>| {
-            if s.just_turned_off() {
-                **b = true;
-            }
-        });
-        app.update();
-        assert!(app.is_bool_true());
-        assert!(!app.resource::<Switch<T>>().just_turned_off());
+        assert!(s.is_on());
     }
 }
