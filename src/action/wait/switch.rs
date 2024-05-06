@@ -29,7 +29,7 @@ pub fn on<M>() -> ActionSeed
     where M: Send + Sync + 'static
 {
     wait::until(|switch: Option<Res<Switch<M>>>| {
-        switch.is_some_and(|s| s.turned_on())
+        switch.is_some_and(|s| s.is_on())
     })
 }
 
@@ -55,6 +55,6 @@ pub fn off<M>() -> ActionSeed
     where M: Send + Sync + 'static
 {
     wait::until(|switch: Option<Res<Switch<M>>>| {
-        switch.is_some_and(|s| s.turned_off())
+        switch.is_some_and(|s| s.is_off())
     })
 }

@@ -33,6 +33,10 @@ name = "effect"
 path = "examples/effect.rs"
 required-features = ["tokio"]
 
+[[example]]
+name = "switch_just_change"
+path = "examples/bug_check/switch_just_change.rs"
+
 [dependencies]
 bevy = { version = "0.13.2", default-features = false, features = ["multi-threaded"] }
 flurx = { version = "0.1.5" }
