@@ -1,6 +1,12 @@
+## v0.5.0
+
+Fixed a bug where the execution run condition switch_just_* was not working correctly
+
+-[v0.5.0](https://github.com/not-elm/bevy_flurx/pull/44)
+
 ## v0.4.0
 
-added effect actions. 
+Added effect actions. 
 
 - [v0.4.0](https://github.com/not-elm/bevy_flurx/pull/42)
 
