@@ -3,6 +3,7 @@ use std::rc::Rc;
 
 /// Represents the output of the task.
 /// See details [`Runner`](crate::prelude::Runner).
+#[repr(transparent)]
 pub struct Output<O>(Rc<RefCell<Option<O>>>);
 
 impl<O> Clone for Output<O> {
