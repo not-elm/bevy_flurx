@@ -58,9 +58,11 @@ bevy_egui = "0.27.0"
 bevy_progress_bar = { version = "0.9.0" }
 
 [features]
-default = ["audio"]
+default = ["audio", "record", "effect"]
 audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
 tokio = ["dep:tokio", "dep:async-compat"]
+record = []
+effect = []
 
 [lints.clippy]
 type_complexity = "allow"
