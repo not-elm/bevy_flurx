@@ -51,9 +51,11 @@ pub mod seed;
 pub mod through;
 pub mod pipe;
 pub mod sequence;
-pub mod record;
 pub mod omit;
+#[cfg(feature = "effect")]
 pub mod effect;
+#[cfg(feature = "record")]
+pub mod record;
 #[path = "action/tuple.rs"]
 mod _tuple;
 mod map;
