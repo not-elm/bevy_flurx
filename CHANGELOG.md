@@ -1,3 +1,9 @@
+## v0.5.1
+
+This version has reduced the binary size.
+
+-[v0.5.1](https://github.com/not-elm/bevy_flurx/pull/47)
+
 ## v0.5.0
 
 Fixed a bug where the execution run condition switch_just_* was not working correctly
