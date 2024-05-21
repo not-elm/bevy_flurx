@@ -27,21 +27,9 @@ pub mod runner;
 pub mod prelude {
     pub use crate::{
         action::*,
-        action::effect::AsyncFunctor,
         action::Map,
         action::omit::*,
         action::pipe::Pipe,
-        action::record::{
-            EditRecordResult,
-            Record,
-            Redo,
-            RedoAction,
-            Rollback,
-            Track,
-            Undo,
-            UndoRedoInProgress,
-        },
-        action::record::extension::*,
         action::Remake,
         action::seed::ActionSeed,
         action::sequence::Then,
@@ -53,6 +41,20 @@ pub mod prelude {
         reactor::Reactor,
         runner::*,
         task::ReactiveTask,
+    };
+    #[cfg(feature = "effect")]
+    pub use crate::action::effect::AsyncFunctor;
+    #[cfg(feature = "record")]
+    pub use crate::action::record::{
+        EditRecordResult,
+        extension::{RecordExtension, RequestRedo, RequestUndo},
+        Record,
+        Redo,
+        RedoAction,
+        Rollback,
+        Track,
+        Undo,
+        UndoRedoInProgress,
     };
 }
 

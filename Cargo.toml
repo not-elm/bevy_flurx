@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.5.0"
+version = "0.5.1"
 edition = "2021"
 authors = ["elm"]
 categories = ["asynchronous", "game-development"]
@@ -39,7 +39,7 @@ path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
 bevy = { version = "0.13.2", default-features = false, features = ["multi-threaded"] }
-flurx = { version = "0.1.5" }
+flurx = { version = "0.1.6" }
 futures-polling = "0.1.1"
 pollster = "0.3.0"
 tokio = { version = "1.37.0", optional = true, features = ["sync"] }
@@ -58,9 +58,11 @@ bevy_egui = "0.27.0"
 bevy_progress_bar = { version = "0.9.0" }
 
 [features]
-default = ["audio"]
+default = ["audio", "record", "effect"]
 audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
 tokio = ["dep:tokio", "dep:async-compat"]
+record = []
+effect = []
 
 [lints.clippy]
 type_complexity = "allow"

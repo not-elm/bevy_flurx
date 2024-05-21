@@ -2,7 +2,6 @@ use std::cell::Cell;
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::World;
 use flurx::selector::Selector;
 
 use crate::action::Action;
@@ -10,10 +9,9 @@ use crate::runner::{CancellationToken, initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 
 pub(crate) struct WorldSelector<Label, In, Out> {
-    action: Cell<Option<Action<In, Out>>>,
+    action: Cell<Option<(Action<In, Out>, CancellationToken)>>,
     output: Output<Out>,
     label: Label,
-    token: CancellationToken,
     _m: PhantomData<In>,
 }
 
@@ -26,10 +24,9 @@ impl<Label, In, Out> WorldSelector<Label, In, Out>
     #[inline]
     pub(crate) fn new(label: Label, action: Action<In, Out>, token: CancellationToken) -> WorldSelector<Label, In, Out> {
         Self {
-            action: Cell::new(Some(action)),
+            action: Cell::new(Some((action, token))),
             output: Output::default(),
             label,
-            token,
             _m: PhantomData,
         }
     }
@@ -43,12 +40,11 @@ impl<Label, In, Out> Selector<WorldPtr> for WorldSelector<Label, In, Out>
 {
     type Output = Out;
 
-    #[inline]
+    #[inline(always)]
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
-        let world: &mut World = world.as_mut();
-        if let Some(action) = self.action.take() {
+        if let Some((action, token)) = self.action.take() {
             let runner = action.into_runner(self.output.clone());
-            initialize_runner(world, &self.label, self.token.clone(), runner);
+            initialize_runner(world.as_mut(), &self.label, token, runner);
             None
         } else {
             self.output.take()

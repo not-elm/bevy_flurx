@@ -13,7 +13,7 @@ impl WorldPtr {
     }
 
     #[allow(clippy::mut_from_ref)]
-    #[inline]
+    #[inline(always)]
     pub(crate) fn as_mut(&self) -> &mut World {
         // SAFETY:
         // The world is guaranteed to be alive from the time this structure is created until the reactor is executed, 

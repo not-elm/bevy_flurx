@@ -1,8 +1,6 @@
 //! Provides the trait for converting into an action. 
 
 
-use std::marker::PhantomData;
-
 use crate::action::Action;
 use crate::runner::{BoxedRunner, Output, Runner};
 
@@ -16,7 +14,8 @@ use crate::runner::{BoxedRunner, Output, Runner};
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
 /// 
 ///
-pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>, PhantomData<I>);
+#[repr(transparent)]
+pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>);
 
 impl<I, O> ActionSeed<I, O>
     where
@@ -31,7 +30,7 @@ impl<I, O> ActionSeed<I, O>
     {
         ActionSeed(Box::new(move |input, output| {
             BoxedRunner::new(f(input, output))
-        }), PhantomData)
+        }))
     }
 
     /// Define [`ActionSeed`] based on the function that returns an action from the input.
@@ -81,7 +80,7 @@ impl<I, O, F> From<F> for ActionSeed<I, O>
 {
     #[inline]
     fn from(value: F) -> Self {
-        Self(Box::new(value), PhantomData)
+        Self(Box::new(value))
     }
 }
 

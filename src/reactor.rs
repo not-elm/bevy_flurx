@@ -85,6 +85,7 @@ impl Reactor {
 }
 
 impl Drop for Reactor {
+    #[inline]
     fn drop(&mut self) {
         self.token.cancel();
     }

@@ -3,7 +3,7 @@
 use std::marker::PhantomData;
 
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Resource, Schedule, Schedules, World};
+use bevy::prelude::{Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
 pub use cancellation_token::CancellationToken;
@@ -54,7 +54,6 @@ impl Runner for BoxedRunner {
 }
 
 #[repr(transparent)]
-#[derive(Resource)]
 struct BoxedRunners<L: Send + Sync>(Vec<(BoxedRunner, CancellationToken)>, PhantomData<L>);
 
 pub(crate) fn initialize_runner<Label>(
