@@ -50,11 +50,11 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
 ## Compatible Bevy versions
 
-| bevy_flurx    | bevy   |
-|---------------|--------|
-| 0.3.0         | 0.13.0 |
-| 0.3.1         | 0.13.1 |
-| 0.3.2 ~ 0.5.0 | 0.13.2 | 
+| bevy_flurx     | bevy   |
+|----------------|--------|
+| 0.3.0          | 0.13.0 |
+| 0.3.1          | 0.13.1 |
+| 0.3.2 ~ latest | 0.13.2 | 
 
 ## Feature flags
 
