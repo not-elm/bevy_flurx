@@ -12,7 +12,7 @@ use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 
 /// Create a task that runs the system until certain conditions are met.
-
+#[derive(Clone)]
 pub struct ReactiveTask {
     pub(crate) task: flurx::task::ReactiveTask<'static, WorldPtr>,
     pub(crate) token: CancellationToken,
