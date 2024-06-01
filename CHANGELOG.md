@@ -2,7 +2,7 @@
 
 This version fixed a bug associated with cancellation handlers.
 
--[v0.5.2](https://github.com/not-elm/bevy_flurx/pull/50)
+-[v0.5.2](https://github.com/not-elm/bevy_flurx/pull/51)
 
 ## v0.5.1
 
