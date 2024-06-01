@@ -44,18 +44,6 @@ fn spawn_reactor(
 
 All examples are [`here`](./examples).
 
-## ChangeLog
-
-Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
-
-## Compatible Bevy versions
-
-| bevy_flurx     | bevy   |
-|----------------|--------|
-| 0.3.0          | 0.13.0 |
-| 0.3.1          | 0.13.1 |
-| 0.3.2 ~ latest | 0.13.2 | 
-
 ## Feature flags
 
 | flag name | short description              | default |
@@ -85,6 +73,18 @@ Allows to convert the operations with side effects such as asynchronous runtime 
 ### tokio
 
 You will be able to write processes that depend on tokio's runtime in the reactor.
+
+## ChangeLog
+
+Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
+
+## Compatible Bevy versions
+
+| bevy_flurx     | bevy   |
+|----------------|--------|
+| 0.3.0          | 0.13.0 |
+| 0.3.1          | 0.13.1 |
+| 0.3.2 ~ latest | 0.13.2 | 
 
 ## License
 
