@@ -6,7 +6,7 @@ use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules, World};
 use bevy::utils::intern::Interned;
 
-pub use cancellation_token::CancellationToken;
+pub use cancellation_token::{CancellationId, CancellationToken};
 pub use output::Output;
 
 mod output;
