@@ -50,7 +50,11 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I, Out>
         Out: 'static
 {
     ActionSeed::new(move |input, output| {
-        OnceRunner::new(input, output, IntoSystem::into_system(system))
+        OnceRunner{
+            input: Some(input),
+            output,
+            system: IntoSystem::into_system(system)      
+        }
     })
 }
 
@@ -84,20 +88,7 @@ pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> Action<In
 struct OnceRunner<Sys, I, O> {
     system: Sys,
     input: Option<I>,
-    init: bool,
     output: Output<O>,
-}
-
-impl<Sys, I, O> OnceRunner<Sys, I, O> {
-    #[inline]
-    const fn new(input: I, output: Output<O>, system: Sys) -> Self {
-        Self {
-            system,
-            input: Some(input),
-            output,
-            init: false,
-        }
-    }
 }
 
 impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
@@ -107,11 +98,7 @@ impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
         O: 'static
 {
     fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
-        if !self.init {
-            self.system.initialize(world);
-            self.init = true;
-        }
-
+        self.system.initialize(world);
         let Some(input) = self.input.take() else {
             return true;
         };
