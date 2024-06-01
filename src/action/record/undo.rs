@@ -16,7 +16,7 @@ use crate::action::record::EditRecordResult;
 use crate::action::record::Record;
 use crate::prelude::{ActionSeed, Output, Runner, Track};
 use crate::prelude::record::{lock_record, unlock_record};
-use crate::runner::{BoxedRunner, CancellationToken};
+use crate::runner::{BoxedRunner, CancellationId, CancellationToken};
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -96,7 +96,7 @@ fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I,
             track: None,
             tracks: Vec::new(),
             predicate: predicate(input),
-            initialized: false,
+            cancellation_id: None,
         }
     })
 }
@@ -108,7 +108,7 @@ struct UndoRunner<P, Act> {
     track: Option<Track<Act>>,
     predicate: P,
     tracks: Vec<Track<Act>>,
-    initialized: bool,
+    cancellation_id: Option<CancellationId>
 }
 
 struct RedoStore<Act>(Vec<(Track<Act>, ActionSeed)>);
@@ -120,15 +120,14 @@ impl<P, Act> Runner for UndoRunner<P, Act>
 {
     //noinspection DuplicatedCode
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if !self.initialized {
+        if self.cancellation_id.is_none() {
             if let Err(progressing) = lock_record::<Act>(world) {
                 self.output.set(Err(progressing));
                 return true;
             }
             world.insert_non_send_resource(RedoStore::<Act>(Vec::new()));
-            token.register(cleanup::<Act>);
+            self.cancellation_id.replace(token.register(cleanup::<Act>));
             self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
-            self.initialized = true;
         }
 
         loop {
@@ -139,9 +138,13 @@ impl<P, Act> Runner for UndoRunner<P, Act>
                     self.track.replace(track);
                 }
             }
+
             let Some(undo_runner) = self.undo_runner.as_mut() else {
                 self.output.set(Ok(()));
                 cleanup::<Act>(world);
+                if let Some(id) = self.cancellation_id.as_ref(){
+                    token.unregister(id);
+                }
                 return true;
             };
 
@@ -172,7 +175,8 @@ fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
 mod tests {
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Entity, EventWriter, In, Query, With};
+    use bevy::hierarchy::DespawnRecursiveExt;
+    use bevy::prelude::{Commands, Component, Entity, EventWriter, In, IntoSystemConfigs, on_event, Query, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -180,7 +184,7 @@ mod tests {
     use crate::action::{delay, record};
     use crate::action::record::EditRecordResult;
     use crate::action::record::tests::push_undo_increment;
-    use crate::prelude::{ActionSeed, Omit, once, Pipe, Reactor, Record, Rollback, Then, Track};
+    use crate::prelude::{ActionSeed, Omit, once, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track};
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
@@ -365,5 +369,43 @@ mod tests {
         });
         app.update();
         app.assert_resource(true, |record: &Record<TestAct>| record.can_edit());
+    }
+
+    #[test]
+    fn never_call_cleanup_after_undo_finished() {
+        let mut app = test_app();
+        #[derive(Component)]
+        struct R;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn((
+                R,
+                Reactor::schedule(|task| async move {
+                    task.will(Update, {
+                        record::push().with(Track {
+                            act: TestAct,
+                            rollback: Rollback::undo(|| delay::frames().with(1000)),
+                        })
+                            .then(record::push().with(Track {
+                                act: TestAct,
+                                rollback: Rollback::undo(|| once::run(|| {})),
+                            }))
+                            .then(record::undo::once::<TestAct>())
+                            .then(delay::frames().with(1000))
+                    })
+                        .await;
+                })
+            ));
+        });
+        app.add_systems(Update, (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
+            commands.entity(reactor.single()).despawn_recursive();
+        }).run_if(on_event::<AppExit>()));
+        app.update();
+        app.update();
+        app.send(RequestUndo::<TestAct>::Once);
+        app.update();
+        app.send_default::<AppExit>();
+        app.update();
+        app.update();
+        app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());
     }
 }

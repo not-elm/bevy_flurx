@@ -110,13 +110,11 @@ fn run_reactors(
         if !reactor.initialized {
             if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {
                 world_ptr.as_mut().entity_mut(entity).despawn_recursive();
-                // entities.push((entity, Status::Finished));
             } else {
                 reactor.initialized = true;
             }
         } else if reactor.run_sync(world_ptr) {
             world_ptr.as_mut().entity_mut(entity).despawn_recursive();
-            // entities.push((entity, Status::Finished));
         }
     }
 }
