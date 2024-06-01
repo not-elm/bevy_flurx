@@ -15,7 +15,7 @@ use crate::action::record::{push_tracks, Record};
 use crate::action::record::{EditRecordResult, unlock_record};
 use crate::prelude::{ActionSeed, Output, Track};
 use crate::prelude::record::lock_record;
-use crate::runner::{BoxedRunner, CancellationToken, Runner};
+use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner};
 
 /// Pops the last pushed `redo` action and execute it.
 /// After the `redo` action is executed, then the `undo` action that created it
@@ -113,7 +113,7 @@ fn do_redo<In, Act, F>(
             redo_runner: None,
             tracks: Vec::new(),
             predicate: predicate(input),
-            initialized: false,
+            cancellation_id: None,
         }
     })
 }
@@ -124,7 +124,7 @@ struct RedoExecuteRunner<P, Act> {
     redo_runner: Option<BoxedRunner>,
     tracks: Vec<(Track<Act>, ActionSeed)>,
     predicate: P,
-    initialized: bool,
+    cancellation_id: Option<CancellationId>,
 }
 
 #[repr(transparent)]
@@ -137,15 +137,14 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
 {
     //noinspection DuplicatedCode
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if !self.initialized {
+        if self.cancellation_id.is_none() {
             if let Err(e) = lock_record::<Act>(world) {
                 self.output.set(Err(e));
                 return true;
             }
             world.insert_non_send_resource(TracksStore::<Act>(Vec::new()));
-            token.register(cleanup::<Act>);
+            self.cancellation_id.replace(token.register(cleanup::<Act>));
             self.tracks = (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
-            self.initialized = true;
         }
 
         loop {
@@ -156,6 +155,9 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
                     world.non_send_resource_mut::<TracksStore<Act>>().0.push(track);
                 } else {
                     self.output.set(Ok(()));
+                    if let Some(id) = self.cancellation_id.as_ref(){
+                        token.unregister(id);
+                    }
                     cleanup::<Act>(world);
                     return true;
                 }
@@ -175,7 +177,7 @@ impl<P, Act> Runner for RedoExecuteRunner<P, Act>
 }
 
 fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
-    if let Some(store) = world.remove_non_send_resource::<TracksStore<Act>>(){
+    if let Some(store) = world.remove_non_send_resource::<TracksStore<Act>>() {
         let _ = push_tracks(store.0.into_iter(), world, false);
     }
 
@@ -185,16 +187,17 @@ fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
 //noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
+    use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
+    use bevy::hierarchy::DespawnRecursiveExt;
+    use bevy::prelude::{Commands, Component, Entity, IntoSystemConfigs, on_event, Query, ResMut, Resource, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{delay, once, record};
     use crate::action::record::track::{Redo, Undo};
-    use crate::prelude::{ActionSeed, Omit, Record, Rollback, Then, Track};
+    use crate::prelude::{ActionSeed, Omit, Record, RequestRedo, Rollback, Then, Track};
     use crate::reactor::Reactor;
     use crate::sequence;
     use crate::test_util::SpawnReactor;
@@ -451,5 +454,50 @@ mod tests {
         });
         app.update();
         app.assert_resource(true, |record: &Record<TestAct>| record.can_edit());
+    }
+
+    #[test]
+    fn never_call_cleanup_after_redo_finished() {
+        let mut app = test_app();
+        #[derive(Component)]
+        struct R;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn((
+                R,
+                Reactor::schedule(|task| async move {
+                    task.will(Update, {
+                        record::push().with(Track {
+                            act: TestAct,
+                            rollback: Rollback::parts(
+                                Undo::make(|| once::run(|| {})),
+                                Redo::make(|_| once::run(|| {})),
+                            ),
+                        })
+                            .then(record::undo::once::<TestAct>())
+                            .then(record::redo::once::<TestAct>())
+                            .then(record::push().with(Track {
+                                act: TestAct,
+                                rollback: Rollback::parts(
+                                    Undo::make(|| once::run(|| {})),
+                                    Redo::make(|_| delay::frames().with(1000)),
+                                ),
+                            }))
+                            .then(record::undo::once::<TestAct>())
+                            .then(delay::frames().with(1000))
+                    })
+                        .await;
+                })
+            ));
+        });
+        app.add_systems(Update, (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
+            commands.entity(reactor.single()).despawn_recursive();
+        }).run_if(on_event::<AppExit>()));
+        app.update();
+        app.send(RequestRedo::<TestAct>::Once);
+        app.update();
+        app.send_default::<AppExit>();
+        app.update();
+        app.update();
+        app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());
     }
 }
