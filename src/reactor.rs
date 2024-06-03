@@ -24,13 +24,13 @@ pub struct Reactor {
 impl Reactor {
     /// Create new [`Reactor`].
     ///
-    /// The scheduled [`Reactor`] will be run and initialized at `RunReactor` scuhedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
+    /// The scheduled [`Reactor`] will be run and initialized at `RunReactor` schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
     ///
     /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
     /// to reduce the delay until initialization.
     ///
     /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel), 
-    /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor). 
+    /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor).
     ///
     /// ## Examples
     ///
@@ -79,8 +79,12 @@ impl Reactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
-        
-        self.token.is_cancellation_requested() || self.token.finished_reactor()
+
+        let finished = self.scheduler.not_exists_reactor();
+        if finished{
+            self.token.set_finished();
+        }
+        finished || self.token.is_cancellation_requested()
     }
 }
 
@@ -106,8 +110,8 @@ mod tests {
     use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::wait;
-    use crate::prelude::Reactor;
+    use crate::action::{delay, wait};
+    use crate::prelude::{BoxedRunners, Reactor};
     use crate::tests::test_app;
 
     #[derive(Resource, Debug, Default, Eq, PartialEq)]
@@ -135,5 +139,21 @@ mod tests {
             app.update();
             app.assert_resource_eq(Count(1));
         }
+    }
+    
+    #[test]
+    fn despawn_after_finished_reactor(){
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands|{
+           commands.spawn(Reactor::schedule(|task|async move{
+                task.will(Update, delay::frames().with(1)).await; 
+           }));
+        });
+        app.update();
+        assert!(app.world.query::<&Reactor>().get_single(&app.world).is_ok());
+        assert_eq!(app.world.non_send_resource::<BoxedRunners<Update>>().0.len(), 1);
+        app.update();
+        assert!(app.world.query::<&Reactor>().get_single(&app.world).is_err());
+        assert_eq!(app.world.non_send_resource::<BoxedRunners<Update>>().0.len(), 0);
     }
 }

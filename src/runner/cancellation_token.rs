@@ -58,6 +58,11 @@ impl CancellationToken {
             (handle)(world);
         }
     }
+    
+    #[inline(always)]
+    pub(crate) fn set_finished(&self) {
+        self.0.reactor_finished.set(true);
+    }
 
     #[must_use]
     #[inline(always)]
