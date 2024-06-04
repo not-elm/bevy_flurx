@@ -1,3 +1,9 @@
+## v0.5.3
+
+Fixed `Reactor` `despawn_recursive` to be called correctly.
+
+-[v0.5.3](https://github.com/not-elm/bevy_flurx/pull/54)
+
 ## v0.5.2
 
 This version fixed a bug associated with cancellation handlers.
