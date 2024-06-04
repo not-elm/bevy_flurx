@@ -36,7 +36,7 @@ pub mod prelude {
         action::switch::*,
         action::through::{through, Through},
         action::wait::Either,
-        extension::ScheduleReactor,
+        extension::*,
         FlurxPlugin,
         reactor::Reactor,
         runner::*,
@@ -106,16 +106,20 @@ fn run_reactors(
     reactors: &mut QueryState<(Entity, &mut Reactor)>,
 ) {
     let world_ptr = WorldPtr::new(world);
+    let mut entities = Vec::with_capacity(reactors.iter(world).len());
     for (entity, mut reactor) in reactors.iter_mut(world) {
         if !reactor.initialized {
             if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {
-                world_ptr.as_mut().entity_mut(entity).despawn_recursive();
+                entities.push(entity);
             } else {
                 reactor.initialized = true;
             }
         } else if reactor.run_sync(world_ptr) {
-            world_ptr.as_mut().entity_mut(entity).despawn_recursive();
+            entities.push(entity);
         }
+    }
+    for entity in entities {
+        world.entity_mut(entity).despawn_recursive();
     }
 }
 

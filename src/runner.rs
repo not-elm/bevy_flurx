@@ -54,7 +54,7 @@ impl Runner for BoxedRunner {
 }
 
 #[repr(transparent)]
-struct BoxedRunners<L: Send + Sync>(Vec<(BoxedRunner, CancellationToken)>, PhantomData<L>);
+pub(crate) struct BoxedRunners<L: Send + Sync>(pub Vec<(BoxedRunner, CancellationToken)>, PhantomData<L>);
 
 pub(crate) fn initialize_runner<Label>(
     world: &mut World,
@@ -89,7 +89,9 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
         runners.0.retain_mut(|(runner, token)| {
-            if token.is_cancellation_requested() {
+            if token.finished_reactor(){
+                false
+            } else if token.is_cancellation_requested() {
                 token.call_cancel_handles(world);
                 false
             } else {
