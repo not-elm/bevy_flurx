@@ -6,7 +6,7 @@ use crate::runner::{BoxedRunner, CancellationToken};
 /// Wait until all the actions are completed.
 ///
 /// The output value of this function is `()`.
-/// If you need the outputs, consider using [`wait_all!`](crate::wait_all) instead. 
+/// If you need the outputs, consider using [`wait_all!`](crate::wait_all) instead.
 ///
 /// # Examples
 ///
@@ -26,16 +26,14 @@ use crate::runner::{BoxedRunner, CancellationToken};
 /// ```
 pub fn all<Actions>() -> ActionSeed<Actions>
     where
-        Actions: IntoIterator<Item=ActionSeed> + 'static
+        Actions: IntoIterator<Item=ActionSeed> + 'static,
 {
-    ActionSeed::new(|actions: Actions, output| {
-        AllRunner {
-            runners: actions
-                .into_iter()
-                .map(|seed| seed.with(()).into_runner(Output::default()))
-                .collect(),
-            output,
-        }
+    ActionSeed::new(|actions: Actions, output| AllRunner {
+        runners: actions
+            .into_iter()
+            .map(|seed| seed.with(()).into_runner(Output::default()))
+            .collect(),
+        output,
     })
 }
 
@@ -66,7 +64,6 @@ impl Runner for AllRunner {
 /// ## Examples
 ///
 /// ```
-/// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::wait_all;
@@ -81,12 +78,12 @@ impl Runner for AllRunner {
 /// struct Event4;
 ///
 /// Reactor::schedule(|task| async move{
-///     let (event1, event2, event3, event4) = task.will(Update, wait_all!(
+///     let (event1, event2, event3, event4) = task.will(Update, wait_all![
 ///         wait::event::read::<Event1>(),
 ///         wait::event::read::<Event2>(),
 ///         wait::event::read::<Event3>(),
 ///         wait::event::read::<Event4>(),
-///     )).await;
+///     ]).await;
 ///     assert_eq!(event1, Event1);
 ///     assert_eq!(event2, Event2);
 ///     assert_eq!(event3, Event3);
@@ -131,7 +128,6 @@ pub mod private {
     pub trait CreateBothAction<I1, O1, I2, O2, O> {
         fn action(a1: Action<I1, O1>, a2: Action<I2, O2>) -> Action<(I1, I2), O>;
     }
-
 
     macro_rules! impl_wait_both {
         ($($lhs_out: ident$(,)?)*) => {
@@ -209,7 +205,6 @@ mod tests {
 
     use crate::action::delay;
     use crate::actions;
-
     use crate::prelude::{once, Pipe, Then, wait};
     use crate::reactor::Reactor;
     use crate::test_util::SpawnReactor;
@@ -220,13 +215,10 @@ mod tests {
         let mut app = test_app();
         app.spawn_reactor(|task| async move {
             task.will(Update, {
-                once::run(|| [
-                    increment_count(),
-                    increment_count(),
-                    decrement_count()
-                ])
+                once::run(|| [increment_count(), increment_count(), decrement_count()])
                     .pipe(wait::all())
-            }).await;
+            })
+                .await;
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -237,14 +229,17 @@ mod tests {
         let mut app = test_app();
         app.spawn_reactor(|task| async move {
             task.will(Update, {
-                once::run(|| actions![
-                    increment_count(),
-                    delay::frames().with(1),
-                    increment_count()
-                ])
+                once::run(|| {
+                    actions![
+                        increment_count(),
+                        delay::frames().with(1),
+                        increment_count()
+                    ]
+                })
                     .pipe(wait::all())
                     .then(once::event::app_exit())
-            }).await;
+            })
+                .await;
         });
         let mut er = exit_reader();
         app.update();
@@ -259,30 +254,37 @@ mod tests {
     #[test]
     fn wait_all() {
         let mut app = test_app();
-        app
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    let (event1, event2, ()) = task.will(Update, wait_all!(
-                        wait::event::read::<TestEvent1>(),
-                        wait::event::read::<TestEvent2>(),
-                        wait::until(|mut c: Local<usize>| {
-                            *c += 1;
-                            *c == 3
-                        })
-                    )).await;
-                    assert_eq!(event1, TestEvent1);
-                    assert_eq!(event2, TestEvent2);
-                    task.will(Update, once::non_send::insert().with(AppExit)).await;
-                }));
-            });
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let (event1, event2, ()) = task
+                    .will(
+                        Update,
+                        wait_all![
+                            wait::event::read::<TestEvent1>(),
+                            wait::event::read::<TestEvent2>(),
+                            wait::until(|mut c: Local<usize>| {
+                                *c += 1;
+                                *c == 3
+                            })
+                        ],
+                    )
+                    .await;
+                assert_eq!(event1, TestEvent1);
+                assert_eq!(event2, TestEvent2);
+                task.will(Update, once::non_send::insert().with(AppExit))
+                    .await;
+            }));
+        });
 
         app.update();
 
-        app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        app.world
+            .run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 
-        app.world.run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
+        app.world
+            .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 
@@ -293,21 +295,22 @@ mod tests {
     #[test]
     fn wait_all_with_once() {
         let mut app = test_app();
-        app
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    let (event1, ..) = task.will(Update, once::event::send_default::<TestEvent1>()
-                        .then(wait_all!(
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let (event1, ..) = task
+                    .will(
+                        Update,
+                        once::event::send_default::<TestEvent1>().then(wait_all![
                             wait::event::read::<TestEvent1>(),
-                            once::run(||{
-    
-                            })
-                        )),
-                    ).await;
-                    assert_eq!(event1, TestEvent1);
-                    task.will(Update, once::non_send::insert().with(AppExit)).await;
-                }));
-            });
+                            once::run(|| {})
+                        ]),
+                    )
+                    .await;
+                assert_eq!(event1, TestEvent1);
+                task.will(Update, once::non_send::insert().with(AppExit))
+                    .await;
+            }));
+        });
         app.update();
         assert!(app.world.get_non_send_resource::<AppExit>().is_none());
 
