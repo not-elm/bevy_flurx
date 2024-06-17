@@ -1,10 +1,10 @@
 //! `Runner` defines what does the actual processing of the action.
 
 use std::marker::PhantomData;
+use bevy::ecs::intern::Interned;
 
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Schedule, Schedules, World};
-use bevy::utils::intern::Interned;
 
 pub use cancellation_token::{CancellationId, CancellationToken};
 pub use output::Output;
@@ -203,15 +203,15 @@ mod tests {
         });
         app.update();
         app.assert_resource_eq(Count(1));
-        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 1);
+        assert_eq!(app.world_mut().query::<&Reactor>().iter(app.world()).len(), 1);
 
         app.update();
         app.assert_resource_eq(Count(2));
-        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 1);
+        assert_eq!(app.world_mut().query::<&Reactor>().iter(app.world()).len(), 1);
 
         app.update();
         app.assert_resource_eq(Count(3));
-        assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+        assert_eq!(app.world_mut().query::<&Reactor>().iter(app.world()).len(), 0);
     }
 
     #[test]
@@ -231,7 +231,7 @@ mod tests {
         app.update();
         for _ in 0..50 {
             app.update();
-            assert_eq!(app.world.query::<&Reactor>().iter(&app.world).len(), 0);
+            assert_eq!(app.world_mut().query::<&Reactor>().iter(app.world()).len(), 0);
             app.assert_resource_eq(Count(1));
         }
     }

@@ -30,7 +30,7 @@ fn without_flurx(count: usize, c: &mut Criterion) {
                     }
                 });
 
-            while !app.world.resource::<Exit>().0 {
+            while !app.world().resource::<Exit>().0 {
                 app.update();
             }
         });
@@ -62,7 +62,7 @@ fn with_flurx(count: usize, c: &mut Criterion) {
                     }));
                 });
 
-            while !app.world.resource::<Exit>().0 {
+            while !app.world().resource::<Exit>().0 {
                 app.update();
             }
         });

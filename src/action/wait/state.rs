@@ -29,11 +29,12 @@ use crate::prelude::ActionSeed;
 /// ```
 #[inline(always)]
 pub fn becomes<S>() -> ActionSeed<S>
-    where S: States + 'static
+where
+    S: States + 'static,
 {
     wait::until(move |In(expect): In<S>,
                       state_now: Res<State<S>>| {
-        state_now.as_ref() == &expect
+        state_now.get() == &expect
     })
 }
 
@@ -41,7 +42,7 @@ pub fn becomes<S>() -> ActionSeed<S>
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, First, Startup, Update};
-    use bevy::prelude::{Commands, States};
+    use bevy::prelude::{AppExtStates, Commands, States};
 
     use crate::prelude::*;
     use crate::tests::test_app;
@@ -56,7 +57,8 @@ mod tests {
     #[test]
     fn wait_until_state_becomes_phase2() {
         let mut app = test_app();
-        app.init_state::<TestState>()
+        app
+            .init_state::<TestState>()
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, wait::state::becomes().with(TestState::Phase2)).await;
@@ -64,10 +66,10 @@ mod tests {
                 }));
             });
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.insert_state(TestState::Phase2);
         app.update();
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 }

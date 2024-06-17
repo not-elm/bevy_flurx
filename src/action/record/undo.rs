@@ -364,7 +364,7 @@ mod tests {
         });
         app.update();
         app.update();
-        app.world.run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
+        app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
             commands.entity(reactor.single()).despawn();
         });
         app.update();

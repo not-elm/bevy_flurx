@@ -225,7 +225,7 @@ mod tests {
             ew.send(RequestUndo::All);
         });
         app.update();
-        app.world.run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
+        app.world_mut().run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
             ew.send(RequestRedo::Once);
         });
         app.update();
@@ -248,7 +248,7 @@ mod tests {
             ew.send(RequestUndo::All);
         });
         app.update();
-        app.world.run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
+        app.world_mut().run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
             ew.send(RequestRedo::IndexTo(1));
         });
         app.update();
@@ -271,7 +271,7 @@ mod tests {
             ew.send(RequestUndo::All);
         });
         app.update();
-        app.world.run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
+        app.world_mut().run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
             ew.send(RequestRedo::To(NumAct(1)));
         });
         app.update();
@@ -294,7 +294,7 @@ mod tests {
             ew.send(RequestUndo::All);
         });
         app.update();
-        app.world.run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
+        app.world_mut().run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
             ew.send(RequestRedo::All);
         });
         app.update();

@@ -134,7 +134,7 @@ mod tests {
                     .map(|dummy| dummy)
                     .through(delay::frames().with(2))
                     .through(once::run(|| {}))
-                    .then(once::event::app_exit()),
+                    .then(once::event::app_exit_success()),
                 ).await;
             }));
         });

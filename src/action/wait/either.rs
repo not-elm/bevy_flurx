@@ -126,7 +126,7 @@ mod tests {
         let mut app = test_app();
         #[derive(Clone)]
         struct Count(usize);
-        app.world.run_system_once(|mut commands: Commands| {
+        app.world_mut().run_system_once(|mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 let u1 = until(|mut count: Local<u32>| {
                     *count += 1;
@@ -145,12 +145,12 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<Count>().is_none());
+        assert!(app.world().get_non_send_resource::<Count>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<Count>().is_none());
+        assert!(app.world().get_non_send_resource::<Count>().is_none());
 
         app.update();
-        assert_eq!(app.world.non_send_resource::<Count>().0, 1);
+        assert_eq!(app.world().non_send_resource::<Count>().0, 1);
     }
 
     #[test]
@@ -161,7 +161,7 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<Count>();
 
-        app.world.run_system_once(|mut commands: Commands| {
+        app.world_mut().run_system_once(|mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, wait::either(
                     wait_all! {

@@ -19,11 +19,11 @@ use crate::runner::{CancellationToken, Output, Runner};
 pub mod res;
 pub mod non_send;
 pub mod event;
-pub mod state;
 pub mod switch;
 #[cfg(feature = "audio")]
 pub mod audio;
-
+#[cfg(feature = "state")]
+pub mod state;
 
 /// Once run a system.
 ///
@@ -38,7 +38,7 @@ pub mod audio;
 ///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
-///         ew.send(AppExit);
+///         ew.send(AppExit::Success);
 ///     })).await;
 /// });
 /// ```

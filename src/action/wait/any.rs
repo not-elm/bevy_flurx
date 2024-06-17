@@ -94,7 +94,7 @@ mod tests {
                     once::run(|| {})
                 ])).await;
                 if index == 1 {
-                    task.will(Update, once::event::app_exit()).await;
+                    task.will(Update, once::event::app_exit_success()).await;
                 }
             }));
         });
@@ -115,7 +115,7 @@ mod tests {
                     wait::until(||false)
                 ])).await;
                 if index == 0 {
-                    task.will(Update, once::event::app_exit()).await;
+                    task.will(Update, once::event::app_exit_success()).await;
                 }
             }));
         });

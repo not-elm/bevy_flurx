@@ -3,7 +3,8 @@
 //! - [`once::state::set`]
 
 
-use bevy::prelude::{In, NextState, ResMut, States};
+use bevy::prelude::{In, NextState, ResMut};
+use bevy::state::state::FreelyMutableState;
 
 use crate::action::once;
 use crate::prelude::ActionSeed;
@@ -28,7 +29,7 @@ use crate::prelude::ActionSeed;
 /// });
 /// ```
 pub fn set<S>() -> ActionSeed<S>
-    where S: States + 'static
+    where S: FreelyMutableState + 'static
 {
     once::run(|input: In<S>, mut state: ResMut<NextState<S>>| {
         state.set(input.0);

@@ -84,7 +84,7 @@ mod tests {
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, delay::frames().with(1)
-                        .then(once::event::app_exit()),
+                        .then(once::event::app_exit_success()),
                     ).await;
                 }));
             });
@@ -109,10 +109,10 @@ mod tests {
             });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 }
