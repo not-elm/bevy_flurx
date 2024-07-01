@@ -415,7 +415,7 @@ mod tests {
 
                 let t1 = task.run(Update, record::undo::once::<TestAct>()).await;
                 if task.will(Update, record::redo::once::<TestAct>()).await.is_err() {
-                    task.will(Update, once::event::app_exit()).await;
+                    task.will(Update, once::event::app_exit_success()).await;
                 }
                 t1.await.unwrap();
             }));
@@ -449,7 +449,7 @@ mod tests {
         app.update();
         app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());
 
-        app.world.run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
+        app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
             commands.entity(reactor.single()).despawn();
         });
         app.update();

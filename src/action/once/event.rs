@@ -2,7 +2,7 @@
 //!
 //! - [`once::event::send`]
 //! - [`once::event::send_default`]
-//! - [`once::event::app_exit`]
+//! - [`once::event::app_exit_success`]
 
 
 use bevy::app::AppExit;
@@ -20,7 +20,7 @@ use crate::action::seed::ActionSeed;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::send().with(AppExit)).await;
+///     task.will(Update, once::event::send().with(AppExit::Success)).await;
 /// });
 /// ```
 #[inline(always)]
@@ -53,7 +53,7 @@ pub fn send_default<E>() -> ActionSeed
     })
 }
 
-/// Once send [`AppExit`].
+/// Once send [`AppExit::Success`].
 ///
 /// ## Examples
 ///
@@ -62,12 +62,12 @@ pub fn send_default<E>() -> ActionSeed
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::app_exit()).await;
+///     task.will(Update, once::event::app_exit_success()).await;
 /// });
 /// ```
 #[inline(always)]
-pub fn app_exit() -> Action<AppExit, ()> {
-    send().with(AppExit)
+pub fn app_exit_success() -> Action<AppExit, ()> {
+    send().with(AppExit::Success)
 }
 
 
@@ -86,7 +86,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, once::event::send().with(AppExit)).await;
+                task.will(First, once::event::send().with(AppExit::Success)).await;
             }));
         });
 

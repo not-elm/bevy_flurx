@@ -41,7 +41,7 @@ fn without_flurx(repeat: Repeat, count: Count, c: &mut Criterion) {
                     }
                     *local += 1;
                     if *local == count.0 {
-                        ew.send(AppExit);
+                        ew.send(AppExit::Success);
                     }
                 })
                 .add_systems(Update, |mut exit: ResMut<Exit>,
@@ -59,7 +59,7 @@ fn without_flurx(repeat: Repeat, count: Count, c: &mut Criterion) {
                     }
                 });
 
-            while !app.world.resource::<Exit>().0 {
+            while !app.world().resource::<Exit>().0 {
                 app.update();
             }
         });
@@ -93,7 +93,7 @@ fn with_flurx(repeat: Repeat, count: Count, c: &mut Criterion) {
                     }));
                 });
 
-            while !app.world.resource::<Exit>().0 {
+            while !app.world().resource::<Exit>().0 {
                 app.update();
             }
         });

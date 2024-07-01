@@ -1,4 +1,5 @@
 use bevy::prelude::World;
+
 use crate::action::effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 
@@ -29,11 +30,11 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 /// });
 /// ```
 pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
-    where
-        I: 'static,
-        Functor: AsyncFunctor<I, Out, M> + 'static,
-        Out: Send + 'static,
-        M: Send + 'static
+where
+    I: 'static,
+    Functor: AsyncFunctor<I, Out, M> + 'static,
+    Out: Send + 'static,
+    M: Send + 'static,
 {
     ActionSeed::new(|input, output| {
         BevyTaskRunner {
@@ -41,7 +42,7 @@ pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
             #[cfg(not(target_arch = "wasm32"))]
             task: bevy::tasks::AsyncComputeTaskPool::get().spawn(f.functor(input)),
             #[cfg(target_arch = "wasm32")]
-            task: Box::pin(f.functor(input))
+            task: Box::pin(f.functor(input)),
         }
     })
 }
@@ -55,8 +56,8 @@ struct BevyTaskRunner<Out> {
 }
 
 impl<Out> Runner for BevyTaskRunner<Out>
-    where
-        Out: Send + 'static
+where
+    Out: Send + 'static,
 {
     #[allow(clippy::async_yields_async)]
     fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
@@ -85,22 +86,23 @@ mod tests {
     //TODO: It fails about once every two times.
     // Need to check the internal code of `bevy_task` crate.
     #[test]
-    #[ignore]
     fn test_simple_case() {
-        let mut app = test_app();
-        app.add_plugins(TaskPoolPlugin::default());
-        app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, {
-                    effect::bevy_task::spawn(async move {
-                        Count(1 + 1)
-                    })
-                        .pipe(once::res::insert())
-                }).await;
-            }));
-        });
-        app.update();
-        app.assert_resource_eq(Count(2));
+        for _ in 0..100 {
+            let mut app = test_app();
+            app.add_plugins(TaskPoolPlugin::default());
+            app.add_systems(Startup, |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(Update, {
+                        effect::bevy_task::spawn(async move {
+                            Count(1 + 1)
+                        })
+                            .pipe(once::res::insert())
+                    }).await;
+                }));
+            });
+            app.update();
+            app.assert_resource_eq(Count(2));
+        }
     }
 }
 

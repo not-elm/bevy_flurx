@@ -237,7 +237,7 @@ mod tests {
                     ]
                 })
                     .pipe(wait::all())
-                    .then(once::event::app_exit())
+                    .then(once::event::app_exit_success())
             })
                 .await;
         });
@@ -271,25 +271,23 @@ mod tests {
                     .await;
                 assert_eq!(event1, TestEvent1);
                 assert_eq!(event2, TestEvent2);
-                task.will(Update, once::non_send::insert().with(AppExit))
+                task.will(Update, once::non_send::insert().with(AppExit::Success))
                     .await;
             }));
         });
 
         app.update();
 
-        app.world
-            .run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
-        app.world
-            .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
+        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 
     #[test]
@@ -307,14 +305,14 @@ mod tests {
                     )
                     .await;
                 assert_eq!(event1, TestEvent1);
-                task.will(Update, once::non_send::insert().with(AppExit))
+                task.will(Update, once::non_send::insert().with(AppExit::Success))
                     .await;
             }));
         });
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 }

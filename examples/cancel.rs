@@ -35,7 +35,7 @@ fn setup_camera_and_box(
         PbrBundle {
             mesh: meshes.add(Cuboid::new(1., 1., 1.)),
             material: materials.add(StandardMaterial {
-                base_color: Color::BLUE,
+                base_color: Color::WHITE,
                 ..default()
             }),
             ..default()

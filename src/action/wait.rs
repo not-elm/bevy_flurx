@@ -29,11 +29,11 @@ use crate::runner::{CancellationToken, Output, Runner};
 
 pub mod event;
 pub mod input;
-pub mod state;
 pub mod switch;
-
 #[cfg(feature = "audio")]
 pub mod audio;
+#[cfg(feature = "state")]
+pub mod state;
 #[path = "wait/either.rs"]
 mod _either;
 #[path = "wait/both.rs"]
@@ -152,7 +152,7 @@ mod tests {
     #[test]
     fn count_up() {
         let mut app = test_app();
-        app.world.run_system_once(|mut commands: Commands| {
+        app.world_mut().run_system_once(|mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -163,23 +163,23 @@ mod tests {
                 )
                     .await;
 
-                task.will(Update, once::non_send::insert().with(AppExit)).await;
+                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
             }));
         });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 
     #[test]
     fn count_up_until_with_input() {
         let mut app = test_app();
 
-        app.world.run_system_once(|mut commands: Commands| {
+        app.world_mut().run_system_once(|mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -190,15 +190,15 @@ mod tests {
                 )
                     .await;
 
-                task.will(Update, once::non_send::insert().with(AppExit)).await;
+                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
             }));
         });
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 
     #[test]
@@ -213,15 +213,14 @@ mod tests {
             });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
-        app.world
-            .run_system_once(|mut w: EventWriter<AppExit>| w.send(AppExit));
+        app.world_mut().run_system_once(|mut w: EventWriter<AppExit>| w.send(AppExit::Success));
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 
     #[test]
@@ -236,21 +235,21 @@ mod tests {
                     let (event1, event2) = task.will(Update, wait::both(t1, t2)).await;
                     assert_eq!(event1, TestEvent1);
                     assert_eq!(event2, TestEvent2);
-                    task.will(Update, once::non_send::insert().with(AppExit)).await;
+                    task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
                 }));
             });
 
         app.update();
 
-        app.world.run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
-        app.world.run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
+        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 }
