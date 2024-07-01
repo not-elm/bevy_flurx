@@ -40,7 +40,7 @@ pub trait Then<I1, O1, O2, ActionOrSeed> {
     /// Reactor::schedule(|task| async move{
     ///     task.will(Update, {
     ///         wait::input::just_pressed().with(KeyCode::KeyR)
-    ///             .then(once::event::app_exit())
+    ///             .then(once::event::app_exit_success())
     ///     }).await;
     /// });
     /// ```
@@ -90,11 +90,11 @@ impl<I1, O1, O2, ActionOrSeed, A> Then<I1, O1, O2, ActionOrSeed> for A
 /// use bevy_flurx::sequence;
 ///
 /// Reactor::schedule(|task|async move{
-///     let o = task.will(Update, sequence!{
+///     let o = task.will(Update, sequence![
 ///         once::run(||{}),
 ///         once::run(||{}),
 ///         once::run(||{ 1 + 1}),
-///     }).await;
+///     ]).await;
 ///     assert_eq!(o, 2);
 /// });
 /// ```
@@ -191,8 +191,7 @@ mod tests {
         app.assert_resource_eq(Mark1);
         app.assert_resource_eq(Mark2);
     }
-
-
+    
     #[test]
     fn output_is_2() {
         let mut app = test_app();
@@ -212,6 +211,26 @@ mod tests {
         app.assert_resource_eq(OutputUSize(2));
     }
 
+    #[test]
+    fn output_is_2_with_sequence_macro() {
+        let mut app = test_app();
+
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let output = task.will(Update, sequence![
+                    once::run(|| {}),
+                    once::res::insert().with(Mark1),
+                    once::res::insert().with(Mark2),
+                    once::run(|| { 1 + 1 }),
+                ]).await;
+                task.will(Update, once::res::insert().with(OutputUSize(output))).await;
+            }));
+        });
+        app.update();
+        app.update();
+        app.assert_resource_eq(OutputUSize(2));
+    }
+    
     #[test]
     fn using_sequence_macro() {
         let mut app = test_app();

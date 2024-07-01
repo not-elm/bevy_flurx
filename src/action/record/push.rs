@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn multi_push() {
         let mut app = test_app();
-        app.world.init_resource::<Record<H2>>();
+        app.world_mut().init_resource::<Record<H2>>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push(H1)).await;

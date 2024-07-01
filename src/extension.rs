@@ -60,7 +60,7 @@ mod tests {
     fn world_extension() {
         let mut app = test_app();
         app.update();
-        app.world.run_system_once(|world: &mut World| {
+        app.world_mut().run_system_once(|world: &mut World| {
             world.spawn_initialized_reactor(|task| async move {
                 task.will(Update, increment_count()).await;
             });
@@ -73,7 +73,7 @@ mod tests {
     fn commands_extension() {
         let mut app = test_app();
         app.update();
-        app.world.run_system_once(|mut commands: Commands| {
+        app.world_mut().run_system_once(|mut commands: Commands| {
             commands.spawn_initialized_reactor(|task| async move {
                 task.will(Update, increment_count()).await;
             });

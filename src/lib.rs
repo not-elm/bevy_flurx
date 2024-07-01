@@ -77,7 +77,7 @@ impl Plugin for FlurxPlugin {
             .add_systems(PostStartup, initialize_reactors)
             .add_systems(RunReactor, run_reactors);
         app
-            .world
+            .world_mut()
             .resource_mut::<MainScheduleOrder>()
             .insert_after(Last, RunReactor);
     }
@@ -131,6 +131,7 @@ mod tests {
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
     use bevy::prelude::{Event, EventReader, FrameCountPlugin, ResMut, Resource};
+    use bevy::state::app::StatesPlugin;
     use bevy::time::TimePlugin;
     use bevy_test_helper::BevyTestHelperPlugin;
     use bevy_test_helper::resource::count::Count;
@@ -169,7 +170,8 @@ mod tests {
             FlurxPlugin,
             InputPlugin,
             TimePlugin,
-            FrameCountPlugin
+            FrameCountPlugin,
+            StatesPlugin
         ));
         app.add_record_events::<NumAct>();
         app.add_record_events::<TestAct>();
@@ -182,7 +184,7 @@ mod tests {
 
     #[allow(unused)]
     pub fn came_event<E: Event>(app: &mut App) -> bool {
-        app.world.run_system_once(|mut e: EventReader<E>| {
+        app.world_mut().run_system_once(|mut e: EventReader<E>| {
             let came = !e.is_empty();
             e.clear();
             came

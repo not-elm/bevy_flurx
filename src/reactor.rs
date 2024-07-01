@@ -41,7 +41,7 @@ impl Reactor {
     ///
     /// Reactor::schedule(|task| async move{
     ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
-    ///         ew.send(AppExit);
+    ///         ew.send(AppExit::Success);
     ///     })).await;
     /// });
     /// ```
@@ -132,7 +132,7 @@ mod tests {
         app.update();
         app.assert_resource_eq(Count(1));
 
-        app.world.run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
+        app.world_mut().run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
             cmd.entity(reactor.single()).remove::<Reactor>();
         });
         for _ in 0..10 {
@@ -150,10 +150,10 @@ mod tests {
            }));
         });
         app.update();
-        assert!(app.world.query::<&Reactor>().get_single(&app.world).is_ok());
-        assert_eq!(app.world.non_send_resource::<BoxedRunners<Update>>().0.len(), 1);
+        assert!(app.world_mut().query::<&Reactor>().get_single(app.world()).is_ok());
+        assert_eq!(app.world().non_send_resource::<BoxedRunners<Update>>().0.len(), 1);
         app.update();
-        assert!(app.world.query::<&Reactor>().get_single(&app.world).is_err());
-        assert_eq!(app.world.non_send_resource::<BoxedRunners<Update>>().0.len(), 0);
+        assert!(app.world_mut().query::<&Reactor>().get_single(app.world()).is_err());
+        assert_eq!(app.world().non_send_resource::<BoxedRunners<Update>>().0.len(), 0);
     }
 }

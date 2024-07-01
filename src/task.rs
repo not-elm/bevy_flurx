@@ -73,7 +73,7 @@ impl ReactiveTask {
     /// app.add_systems(Startup, |mut commands: Commands|{
     ///     commands.spawn(Reactor::schedule(|task|async move{
     ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
-    ///         task.will(Update, once::event::send().with(AppExit)).await;
+    ///         task.will(Update, once::event::send().with(AppExit::Success)).await;
     ///         wait_event.await;
     ///     }));
     /// });
@@ -114,16 +114,16 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 let event_task = task.run(First, wait::event::read::<AppExit>()).await;
-                task.will(Update, once::event::send().with(AppExit)).await;
+                task.will(Update, once::event::send().with(AppExit::Success)).await;
                 event_task.await;
-                task.will(Update, once::non_send::insert().with(AppExit)).await;
+                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
             }));
         });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
         app.update();
-        assert!(app.world.get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 }

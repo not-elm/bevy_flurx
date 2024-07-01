@@ -98,7 +98,7 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world.get_resource::<TestResource>().is_some());
+        assert!(app.world().get_resource::<TestResource>().is_some());
     }
 
     #[test]
@@ -111,7 +111,7 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world.get_resource::<TestResource>().is_some());
+        assert!(app.world().get_resource::<TestResource>().is_some());
     }
 
     #[test]
@@ -125,6 +125,6 @@ mod tests {
             });
 
         app.update();
-        assert!(app.world.get_resource::<TestResource>().is_none());
+        assert!(app.world().get_resource::<TestResource>().is_none());
     }
 }

@@ -20,7 +20,7 @@ impl SpawnReactor for World {
 
 impl SpawnReactor for App {
     fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static) where F: Future {
-        self.world.spawn_reactor(f);
+        self.world_mut().spawn_reactor(f);
     }
 }
 

@@ -100,7 +100,7 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<TestResource>().is_some());
+        assert!(app.world().get_non_send_resource::<TestResource>().is_some());
     }
 
     #[test]
@@ -113,7 +113,7 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<TestResource>().is_some());
+        assert!(app.world().get_non_send_resource::<TestResource>().is_some());
     }
 
     #[test]
@@ -127,7 +127,7 @@ mod tests {
             });
 
         app.update();
-        assert!(app.world.get_non_send_resource::<TestResource>().is_none());
+        assert!(app.world().get_non_send_resource::<TestResource>().is_none());
     }
 
     #[test]
@@ -135,41 +135,41 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, non_send::insert().with(AppExit)).await;
+                task.will(First, non_send::insert().with(AppExit::Success)).await;
                 println!("First finished");
-                task.will(PreUpdate, non_send::insert().with(AppExit)).await;
+                task.will(PreUpdate, non_send::insert().with(AppExit::Success)).await;
                 println!("PreUpdate finished");
-                task.will(Update, non_send::insert().with(AppExit)).await;
+                task.will(Update, non_send::insert().with(AppExit::Success)).await;
                 println!("Update finished");
-                task.will(PostUpdate, non_send::insert().with(AppExit)).await;
+                task.will(PostUpdate, non_send::insert().with(AppExit::Success)).await;
                 println!("PostUpdate finished");
-                task.will(Last, non_send::insert().with(AppExit)).await;
+                task.will(Last, non_send::insert().with(AppExit::Success)).await;
                 println!("Last finished");
             }));
         });
 
         println!("First");
         app.update();
-        assert!(app.world.remove_non_send_resource::<AppExit>().is_some());
+        assert!(app.world_mut().remove_non_send_resource::<AppExit>().is_some());
 
         println!("PreUpdate");
         app.update();
-        assert!(app.world.remove_non_send_resource::<AppExit>().is_some());
+        assert!(app.world_mut().remove_non_send_resource::<AppExit>().is_some());
 
         println!("Update");
         app.update();
-        assert!(app.world.remove_non_send_resource::<AppExit>().is_some());
+        assert!(app.world_mut().remove_non_send_resource::<AppExit>().is_some());
 
         println!("PostUpdate");
         app.update();
-        assert!(app.world.remove_non_send_resource::<AppExit>().is_some());
+        assert!(app.world_mut().remove_non_send_resource::<AppExit>().is_some());
 
         println!("Last");
         app.update();
-        assert!(app.world.remove_non_send_resource::<AppExit>().is_some());
+        assert!(app.world_mut().remove_non_send_resource::<AppExit>().is_some());
 
         println!("After Reactor Finished");
         app.update();
-        assert!(app.world.remove_non_send_resource::<AppExit>().is_none());
+        assert!(app.world_mut().remove_non_send_resource::<AppExit>().is_none());
     }
 }

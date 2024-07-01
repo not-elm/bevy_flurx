@@ -63,7 +63,7 @@ fn spawn_reactor(
                 .then(once::switch::off::<MoveSlowly>())
                 .then(once::switch::on::<MoveFast>())
                 .then(delay::time().with(Duration::from_millis(300)))
-                .then(once::event::app_exit())
+                .then(once::event::app_exit_success())
         })
             .await;
     }));
@@ -79,7 +79,7 @@ fn setup(
         SpriteBundle {
             sprite: Sprite {
                 custom_size: Some(Vec2::new(wh.width() * 2., 300.)),
-                color: Color::rgb(0.8, 0.6, 0.1),
+                color: Color::srgb(0.8, 0.6, 0.1),
                 ..default()
             },
             transform: Transform::from_rotation(Quat::from_rotation_z(angle))
