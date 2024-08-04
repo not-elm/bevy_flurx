@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.6.0-rc.1"
+version = "0.6.0"
 edition = "2021"
 authors = ["notelm"]
 categories = ["asynchronous", "game-development"]
@@ -39,7 +39,7 @@ path = "examples/bug_check/switch_just_change.rs"
 
 
 [dependencies]
-bevy = { version = "0.14.0-rc.4", default-features = false, features = ["multi_threaded"] }
+bevy = { version = "0.14.1", default-features = false, features = ["multi_threaded"] }
 flurx = { version = "0.1.6" }
 futures-polling = "0.1.1"
 pollster = "0.3.0"
@@ -50,12 +50,12 @@ futures-lite = "2.3.0"
 async-compat = { version = "0.2.3", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.14.0-rc.4" }
+bevy = { version = "0.14.1" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
 reqwest = "0.12.5"
 futures = "0.3.30"
 criterion = { version = "0.5.1", features = ["plotters", "html_reports"] }
-bevy_egui = "0.27.1"
+bevy_egui = "0.28.0"
 bevy_progress_bar = { version = "0.9.0" }
 
 [features]
