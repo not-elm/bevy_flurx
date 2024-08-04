@@ -1,26 +1,32 @@
+## v0.6.0
+
+Support for new versions of bevy.
+
+- [v0.6.0](https://github.com/not-elm/bevy_flurx/pull/58)
+
 ## v0.5.3
 
 Fixed `Reactor` `despawn_recursive` to be called correctly.
 
--[v0.5.3](https://github.com/not-elm/bevy_flurx/pull/54)
+- [v0.5.3](https://github.com/not-elm/bevy_flurx/pull/54)
 
 ## v0.5.2
 
 This version fixed a bug associated with cancellation handlers.
 
--[v0.5.2](https://github.com/not-elm/bevy_flurx/pull/51)
+- [v0.5.2](https://github.com/not-elm/bevy_flurx/pull/51)
 
 ## v0.5.1
 
 This version has reduced the binary size.
 
--[v0.5.1](https://github.com/not-elm/bevy_flurx/pull/47)
+- [v0.5.1](https://github.com/not-elm/bevy_flurx/pull/47)
 
 ## v0.5.0
 
 Fixed a bug where the execution run condition switch_just_* was not working correctly
 
--[v0.5.0](https://github.com/not-elm/bevy_flurx/pull/44)
+- [v0.5.0](https://github.com/not-elm/bevy_flurx/pull/44)
 
 ## v0.4.0
 
