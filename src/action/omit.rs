@@ -1,7 +1,7 @@
 //! Provides the mechanisms  to omit input and/or output types from an action.
 //!
 //! - [`Omit`]
-//! - [`OmitInput`] 
+//! - [`OmitInput`]
 //! - [`OmitOutput`]
 
 use bevy::prelude::World;
@@ -22,7 +22,7 @@ pub trait Omit {
     /// use bevy_flurx::prelude::*;
     ///
     /// fn play_audio() -> ActionSeed{
-    ///     once::audio::play().with(("example.ogg", PlaybackSettings::default()))
+    ///     once::audio::play().with("example.ogg")
     ///         .pipe(wait::audio::finished())
     ///         .omit()
     /// }
@@ -65,7 +65,7 @@ pub trait OmitInput<I, O> {
     /// use bevy_flurx::prelude::*;
     ///
     /// fn play_audio() -> ActionSeed<(), usize>{
-    ///     once::audio::play().with(("example.ogg", PlaybackSettings::default()))
+    ///     once::audio::play().with("example.ogg")
     ///         .pipe(wait::audio::finished())
     ///         .then(once::run(||{1}))
     ///         .omit_input()
@@ -75,8 +75,8 @@ pub trait OmitInput<I, O> {
 }
 
 impl<O> Omit for ActionSeed<(), O>
-    where
-        O: 'static
+where
+    O: 'static,
 {
     fn omit(self) -> ActionSeed {
         let action: Action<(), O> = self.into();
@@ -85,9 +85,9 @@ impl<O> Omit for ActionSeed<(), O>
 }
 
 impl<I, O> Omit for Action<I, O>
-    where
-        I: 'static,
-        O: 'static
+where
+    I: 'static,
+    O: 'static,
 {
     fn omit(self) -> ActionSeed {
         self.omit_output().omit_input()
@@ -95,51 +95,43 @@ impl<I, O> Omit for Action<I, O>
 }
 
 impl<I, O, A> OmitInput<I, O> for A
-    where
-        A: Into<Action<I, O>> + 'static,
-        I: 'static,
-        O: 'static
+where
+    A: Into<Action<I, O>> + 'static,
+    I: 'static,
+    O: 'static,
 {
     #[inline]
     fn omit_input(self) -> ActionSeed<(), O> {
-        ActionSeed::from(|_, output| {
-            self.into().into_runner(output)
-        })
+        ActionSeed::from(|_, output| self.into().into_runner(output))
     }
 }
 
 impl<I, O> OmitOutput<I, O, Action<I, ()>> for Action<I, O>
-    where
-        I: 'static,
-        O: 'static
+where
+    I: 'static,
+    O: 'static,
 {
     #[inline]
     fn omit_output(self) -> Action<I, ()> {
         let Action(input, seed) = self;
         ActionSeed::new(|input, output| {
             let r1 = seed.create_runner(input, Output::default());
-            OmitRunner {
-                output,
-                r1,
-            }
+            OmitRunner { output, r1 }
         })
-            .with(input)
+        .with(input)
     }
 }
 
 impl<I, O> OmitOutput<I, O, ActionSeed<I, ()>> for ActionSeed<I, O>
-    where
-        I: 'static,
-        O: 'static
+where
+    I: 'static,
+    O: 'static,
 {
     #[inline]
     fn omit_output(self) -> ActionSeed<I, ()> {
         ActionSeed::new(|input, output| {
             let r1 = self.create_runner(input, Output::default());
-            OmitRunner {
-                output,
-                r1,
-            }
+            OmitRunner { output, r1 }
         })
     }
 }
@@ -160,17 +152,15 @@ impl Runner for OmitRunner {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use bevy::app::Startup;
-    use bevy::audio::PlaybackSettings;
     use bevy::prelude::{Commands, In, ResMut, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{once, wait};
     use crate::action::omit::{Omit, OmitInput, OmitOutput};
+    use crate::action::{once, wait};
     use crate::prelude::{ActionSeed, Pipe, Reactor};
     use crate::tests::test_app;
 
@@ -179,13 +169,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|In(num): In<usize>| { num })
-                    .with(3)
-                    .omit_input()
-                    .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
-                        count.set(num);
-                    })),
-                ).await;
+                task.will(
+                    Update,
+                    once::run(|In(num): In<usize>| num)
+                        .with(3)
+                        .omit_input()
+                        .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
+                            count.set(num);
+                        })),
+                )
+                .await;
             }));
         });
 
@@ -198,13 +191,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|In(num): In<usize>| { num })
-                    .with(3)
-                    .omit_output()
-                    .pipe(once::run(|mut count: ResMut<Count>| {
-                        count.set(3);
-                    })),
-                ).await;
+                task.will(
+                    Update,
+                    once::run(|In(num): In<usize>| num)
+                        .with(3)
+                        .omit_output()
+                        .pipe(once::run(|mut count: ResMut<Count>| {
+                            count.set(3);
+                        })),
+                )
+                .await;
             }));
         });
 
@@ -212,9 +208,9 @@ mod tests {
         app.assert_resource_eq(Count(3));
     }
 
-
     fn _omit_action_seed() -> ActionSeed {
-        once::audio::play().with(("tmp.ogg", PlaybackSettings::ONCE))
+        once::audio::play()
+            .with("tmp.ogg")
             .pipe(wait::audio::finished())
             .omit()
     }

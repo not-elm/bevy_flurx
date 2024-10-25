@@ -6,7 +6,6 @@
 //!
 //! - [`through`]
 
-
 use bevy::prelude::World;
 
 use crate::action::pipe::Pipe;
@@ -38,17 +37,15 @@ use crate::runner::{BoxedRunner, Output, Runner};
 /// ```
 #[inline(always)]
 pub fn through<V, I, O>(action: impl Into<Action<I, O>> + 'static) -> ActionSeed<V, V>
-    where
-        V: 'static,
-        I: 'static,
-        O: 'static
+where
+    V: 'static,
+    I: 'static,
+    O: 'static,
 {
-    ActionSeed::new(|input, output| {
-        ThroughRunner {
-            value: Some(input),
-            output,
-            inner: action.into().into_runner(Output::default()),
-        }
+    ActionSeed::new(|input, output| ThroughRunner {
+        value: Some(input),
+        output,
+        inner: action.into().into_runner(Output::default()),
     })
 }
 
@@ -78,35 +75,35 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// });
     /// ```
     fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
-        where
-            I2: 'static;
+    where
+        I2: 'static;
 }
 
 impl<I1, O1, O2> Through<I1, O1, O2, ActionSeed<I1, O1>> for ActionSeed<I1, O1>
-    where
-        I1: 'static,
-        O1: 'static,
-        O2: 'static,
+where
+    I1: 'static,
+    O1: 'static,
+    O2: 'static,
 {
     #[inline]
     fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionSeed<I1, O1>
-        where
-            I2: 'static
+    where
+        I2: 'static,
     {
         self.pipe(through(action))
     }
 }
 
 impl<I1, O1, O2> Through<I1, O1, O2, Action<I1, O1>> for Action<I1, O1>
-    where
-        I1: 'static,
-        O1: 'static,
-        O2: 'static,
+where
+    I1: 'static,
+    O1: 'static,
+    O2: 'static,
 {
     #[inline]
     fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O1>
-        where
-            I2: 'static
+    where
+        I2: 'static,
     {
         self.pipe(through(action))
     }
@@ -119,8 +116,8 @@ struct ThroughRunner<V> {
 }
 
 impl<V> Runner for ThroughRunner<V>
-    where
-        V: 'static,
+where
+    V: 'static,
 {
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if self.inner.run(world, token) {
@@ -131,7 +128,6 @@ impl<V> Runner for ThroughRunner<V>
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -153,12 +149,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|| 1usize)
-                    .through(once::run(|| {}))
-                    .pipe(once::run(|In(num): In<usize>, mut commands: Commands| {
-                        commands.insert_resource(Count(num));
-                    })),
-                ).await;
+                task.will(
+                    Update,
+                    once::run(|| 1usize)
+                        .through(once::run(|| {}))
+                        .pipe(once::run(|In(num): In<usize>, mut commands: Commands| {
+                            commands.insert_resource(Count(num));
+                        })),
+                )
+                .await;
             }));
         });
         app.update();

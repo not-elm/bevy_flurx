@@ -29,7 +29,7 @@ impl Reactor {
     /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
     /// to reduce the delay until initialization.
     ///
-    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel), 
+    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel),
     /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor).
     ///
     /// ## Examples
@@ -46,16 +46,14 @@ impl Reactor {
     /// });
     /// ```
     pub fn schedule<F>(f: impl FnOnce(ReactiveTask) -> F + 'static) -> Reactor
-        where F: Future
+    where
+        F: Future,
     {
         let mut scheduler = flurx::Scheduler::new();
         let token = CancellationToken::default();
         let t1 = token.clone();
         scheduler.schedule(move |task| async move {
-            f(ReactiveTask {
-                task,
-                token: t1,
-            }).await;
+            f(ReactiveTask { task, token: t1 }).await;
         });
         Self {
             scheduler,
@@ -81,7 +79,7 @@ impl Reactor {
         }
 
         let finished = self.scheduler.not_exists_reactor();
-        if finished{
+        if finished {
             self.token.set_finished();
         }
         finished || self.token.is_cancellation_requested()
@@ -95,13 +93,11 @@ impl Drop for Reactor {
     }
 }
 
-
 /// SAFETY: Scheduler must always run on the main thread only.
 unsafe impl Send for Reactor {}
 
 /// SAFETY: Scheduler must always run on the main thread only.
 unsafe impl Sync for Reactor {}
-
 
 #[cfg(test)]
 mod tests {
@@ -123,37 +119,63 @@ mod tests {
         app.init_resource::<Count>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, wait::until(|mut count: ResMut<Count>| {
-                    count.0 += 1;
-                    false
-                })).await;
+                task.will(
+                    Update,
+                    wait::until(|mut count: ResMut<Count>| {
+                        count.0 += 1;
+                        false
+                    }),
+                )
+                .await;
             }));
         });
         app.update();
         app.assert_resource_eq(Count(1));
 
-        app.world_mut().run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
-            cmd.entity(reactor.single()).remove::<Reactor>();
-        });
+        app.world_mut()
+            .run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
+                cmd.entity(reactor.single()).remove::<Reactor>();
+            })
+            .expect("Failed to run system");
         for _ in 0..10 {
             app.update();
             app.assert_resource_eq(Count(1));
         }
     }
-    
+
     #[test]
-    fn despawn_after_finished_reactor(){
+    fn despawn_after_finished_reactor() {
         let mut app = test_app();
-        app.add_systems(Startup, |mut commands: Commands|{
-           commands.spawn(Reactor::schedule(|task|async move{
-                task.will(Update, delay::frames().with(1)).await; 
-           }));
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, delay::frames().with(1)).await;
+            }));
         });
         app.update();
-        assert!(app.world_mut().query::<&Reactor>().get_single(app.world()).is_ok());
-        assert_eq!(app.world().non_send_resource::<BoxedRunners<Update>>().0.len(), 1);
+        assert!(app
+            .world_mut()
+            .query::<&Reactor>()
+            .get_single(app.world())
+            .is_ok());
+        assert_eq!(
+            app.world()
+                .non_send_resource::<BoxedRunners<Update>>()
+                .0
+                .len(),
+            1
+        );
         app.update();
-        assert!(app.world_mut().query::<&Reactor>().get_single(app.world()).is_err());
-        assert_eq!(app.world().non_send_resource::<BoxedRunners<Update>>().0.len(), 0);
+        assert!(app
+            .world_mut()
+            .query::<&Reactor>()
+            .get_single(app.world())
+            .is_err());
+        assert_eq!(
+            app.world()
+                .non_send_resource::<BoxedRunners<Update>>()
+                .0
+                .len(),
+            0
+        );
     }
 }

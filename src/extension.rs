@@ -20,9 +20,9 @@ pub trait ScheduleReactor<'w, Fun, Fut, Out: 'w> {
 }
 
 impl<'w, Fun, Fut> ScheduleReactor<'w, Fun, Fut, EntityWorldMut<'w>> for &'w mut World
-    where
-        Fun: FnOnce(ReactiveTask) -> Fut + 'static,
-        Fut: Future + 'static
+where
+    Fun: FnOnce(ReactiveTask) -> Fut + 'static,
+    Fut: Future + 'static,
 {
     fn spawn_initialized_reactor(self, f: Fun) -> EntityWorldMut<'w> {
         let mut reactor = Reactor::schedule(f);
@@ -33,18 +33,17 @@ impl<'w, Fun, Fut> ScheduleReactor<'w, Fun, Fut, EntityWorldMut<'w>> for &'w mut
 }
 
 impl<'w, 'b, F, Fut> ScheduleReactor<'w, F, Fut, ()> for &mut Commands<'w, 'b>
-    where
-        F: FnOnce(ReactiveTask) -> Fut + Send + 'static,
-        Fut: Future + 'static
+where
+    F: FnOnce(ReactiveTask) -> Fut + Send + 'static,
+    Fut: Future + 'static,
 {
     #[inline]
     fn spawn_initialized_reactor(self, f: F) {
-        self.add(|world: &mut World| {
+        self.queue(|world: &mut World| {
             world.spawn_initialized_reactor(f);
         });
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -56,28 +55,32 @@ mod tests {
     use crate::extension::ScheduleReactor;
     use crate::tests::{increment_count, test_app};
 
-     #[test]
+    #[test]
     fn world_extension() {
         let mut app = test_app();
         app.update();
-        app.world_mut().run_system_once(|world: &mut World| {
-            world.spawn_initialized_reactor(|task| async move {
-                task.will(Update, increment_count()).await;
-            });
-        });
+        app.world_mut()
+            .run_system_once(|world: &mut World| {
+                world.spawn_initialized_reactor(|task| async move {
+                    task.will(Update, increment_count()).await;
+                });
+            })
+            .expect("Failed to run system");
         app.update();
         app.assert_resource_eq(Count(1));
     }
-    
+
     #[test]
     fn commands_extension() {
         let mut app = test_app();
         app.update();
-        app.world_mut().run_system_once(|mut commands: Commands| {
-            commands.spawn_initialized_reactor(|task| async move {
-                task.will(Update, increment_count()).await;
-            });
-        });
+        app.world_mut()
+            .run_system_once(|mut commands: Commands| {
+                commands.spawn_initialized_reactor(|task| async move {
+                    task.will(Update, increment_count()).await;
+                });
+            })
+            .expect("Failed to run system");
         app.update();
         app.assert_resource_eq(Count(1));
     }

@@ -3,7 +3,7 @@
 //! - [`wait::event::comes`]
 //! - [`wait::event::read`]
 
-use bevy::ecs::event::ManualEventReader;
+use bevy::ecs::event::EventCursor;
 use bevy::prelude::{Event, Events, Local, ResMut};
 
 use crate::prelude::seed::ActionSeed;
@@ -24,26 +24,27 @@ use crate::prelude::wait;
 /// ```
 #[inline(always)]
 pub fn comes<E>() -> ActionSeed
-    where
-        E: Event,
+where
+    E: Event,
 {
-    wait::until(|mut er: Local<Option<ManualEventReader<E>>>,
-                 mut events: ResMut<Events<E>>| {
-        if er.is_none() {
-            if 0 < events.iter_current_update_events().count() {
-                events.clear();
-                return true;
+    wait::until(
+        |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
+            if er.is_none() {
+                if 0 < events.iter_current_update_events().count() {
+                    events.clear();
+                    return true;
+                }
+                er.replace(events.get_cursor_current());
             }
-            er.replace(events.get_reader_current());
-        }
 
-        if 0 < er.as_mut().unwrap().read(&events).count() {
-            events.clear();
-            true
-        } else {
-            false
-        }
-    })
+            if 0 < er.as_mut().unwrap().read(&events).count() {
+                events.clear();
+                true
+            } else {
+                false
+            }
+        },
+    )
 }
 
 /// Waits until the specified event is sent.
@@ -63,34 +64,34 @@ pub fn comes<E>() -> ActionSeed
 /// ```
 #[inline(always)]
 pub fn read<E>() -> ActionSeed<(), E>
-    where
-        E: Event + Clone,
+where
+    E: Event + Clone,
 {
-    wait::output(|mut er: Local<Option<ManualEventReader<E>>>,
-                  mut events: ResMut<Events<E>>| {
-        if er.is_none() {
-            if let Some(event) = events.iter_current_update_events().last().cloned() {
-                events.clear();
-                return Some(event);
+    wait::output(
+        |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
+            if er.is_none() {
+                if let Some(event) = events.iter_current_update_events().last().cloned() {
+                    events.clear();
+                    return Some(event);
+                }
+                er.replace(events.get_cursor_current());
             }
-            er.replace(events.get_reader_current());
-        }
-        if let Some(event) = er.as_mut().unwrap().read(&events).last().cloned() {
-            events.clear();
-            Some(event)
-        } else {
-            None
-        }
-    })
+            if let Some(event) = er.as_mut().unwrap().read(&events).last().cloned() {
+                events.clear();
+                Some(event)
+            } else {
+                None
+            }
+        },
+    )
 }
-
 
 #[cfg(test)]
 mod tests {
     use bevy::app::{Startup, Update};
-    use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Commands, EventWriter, In};
+    use bevy::prelude::{Commands, EventWriter, Events, In};
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{once, wait};
     use crate::prelude::{Either, Pipe, Reactor, Then};
@@ -106,7 +107,7 @@ mod tests {
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::comes::<TestEvent1>()),
                 )
-                    .await;
+                .await;
 
                 task.will(Update, {
                     wait::either(wait::event::comes::<TestEvent1>(), once::run(|| {})).pipe(
@@ -119,14 +120,14 @@ mod tests {
                         ),
                     )
                 })
-                    .await;
+                .await;
             }));
         });
 
         app.update();
         app.update();
 
-        let mut er = ManualEventReader::<TestEvent2>::default();
+        let mut er = app.resource_mut::<Events<TestEvent2>>().get_cursor();
         app.assert_event_comes(&mut er);
     }
 
@@ -140,12 +141,13 @@ mod tests {
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::read::<TestEvent1>()),
                 )
-                    .await;
+                .await;
 
                 task.will(Update, {
                     wait::either(wait::event::read::<TestEvent1>(), once::run(|| {})).pipe(
                         once::run(
-                            |In(either): In<Either<TestEvent1, ()>>, mut ew: EventWriter<TestEvent2>| {
+                            |In(either): In<Either<TestEvent1, ()>>,
+                             mut ew: EventWriter<TestEvent2>| {
                                 if either.is_right() {
                                     ew.send_default();
                                 }
@@ -153,14 +155,14 @@ mod tests {
                         ),
                     )
                 })
-                    .await;
+                .await;
             }));
         });
 
         app.update();
         app.update();
 
-        let mut er = ManualEventReader::<TestEvent2>::default();
+        let mut er = app.resource_mut::<Events<TestEvent2>>().get_cursor();
         app.assert_event_comes(&mut er);
     }
 }

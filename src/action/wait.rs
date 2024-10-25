@@ -15,8 +15,7 @@
 //! - [`wait::audio`] (require feature flag `audio`)
 //! - [`wait::any`]
 
-
-use bevy::prelude::{In, IntoSystem, System, World};
+use bevy::prelude::{In, IntoSystem, System, SystemIn, SystemInput, World};
 
 pub use _any::any;
 pub use _both::both;
@@ -27,20 +26,20 @@ use crate::action::seed::ActionSeed;
 use crate::prelude::wait;
 use crate::runner::{CancellationToken, Output, Runner};
 
-pub mod event;
-pub mod input;
-pub mod switch;
-#[cfg(feature = "audio")]
-pub mod audio;
-#[cfg(feature = "state")]
-pub mod state;
-#[path = "wait/either.rs"]
-mod _either;
-#[path = "wait/both.rs"]
-mod _both;
 #[path = "wait/any.rs"]
 mod _any;
+#[path = "wait/both.rs"]
+mod _both;
+#[path = "wait/either.rs"]
+mod _either;
 mod all;
+#[cfg(feature = "audio")]
+pub mod audio;
+pub mod event;
+pub mod input;
+#[cfg(feature = "state")]
+pub mod state;
+pub mod switch;
 
 /// Run until it returns [`Option::Some`].
 /// The contents of Some will be return value of the task.
@@ -59,26 +58,25 @@ mod all;
 /// });
 /// ```
 #[inline(always)]
-pub fn output<Sys, Input, Out, Marker>(system: Sys) -> ActionSeed<Input, Out>
-    where
-        Sys: IntoSystem<Input, Option<Out>, Marker> + 'static,
-        Input: Clone + 'static,
-        Out: 'static,
+pub fn output<Sys, I, O, Marker>(system: Sys) -> ActionSeed<I::Inner<'static>, O>
+where
+    Sys: IntoSystem<I, Option<O>, Marker> + 'static,
+    I: SystemInput + 'static,
+    I::Inner<'static>: Clone,
+    O: 'static,
 {
-    ActionSeed::new(move |input, output| {
-        WaitRunner{
-            system: IntoSystem::into_system(system),
-            input,
-            output,
-            init: false,
-        }
+    ActionSeed::new(move |input, output| WaitRunner {
+        system: IntoSystem::into_system(system),
+        input,
+        output,
+        init: false,
     })
 }
 
 /// Run until it returns true.
 ///
 /// ## Examples
-/// 
+///
 /// ```
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
@@ -92,33 +90,30 @@ pub fn output<Sys, Input, Out, Marker>(system: Sys) -> ActionSeed<Input, Out>
 /// });
 ///```
 #[inline(always)]
-pub fn until<Input, Sys, M>(system: Sys) -> ActionSeed<Input>
-    where
-        Sys: IntoSystem<Input, bool, M> + 'static,
-        Input: Clone + 'static,
+pub fn until<I, Sys, M>(system: Sys) -> ActionSeed<I::Inner<'static>>
+where
+    Sys: IntoSystem<I, bool, M> + 'static,
+    I: SystemInput + 'static,
+    I::Inner<'static>: Clone,
 {
-    wait::output(system.pipe(
-        |In(finish): In<bool>| {
-            if finish {
-                Some(())
-            } else {
-                None
-            }
-        }))
+    wait::output(system.pipe(|In(finish): In<bool>| if finish { Some(()) } else { None }))
 }
 
-struct WaitRunner<Sys, I, O> {
+struct WaitRunner<Sys, O>
+where
+    Sys: System,
+    SystemIn<'static, Sys>: Clone,
+{
     system: Sys,
-    input: I,
+    input: <Sys::In as SystemInput>::Inner<'static>,
     output: Output<O>,
     init: bool,
 }
 
-impl<Sys, In, Out> Runner for WaitRunner<Sys, In, Out>
-    where
-        Sys: System<In=In, Out=Option<Out>>,
-        In: Clone + 'static,
-        Out: 'static
+impl<Sys, O> Runner for WaitRunner<Sys, O>
+where
+    Sys: System<Out = Option<O>>,
+    SystemIn<'static, Sys>: Clone + 'static,
 {
     fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         if !self.init {
@@ -144,28 +139,31 @@ mod tests {
     use bevy::prelude::{Commands, EventWriter, In, Local, Update};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
-    use crate::action::{once, wait};
     use crate::action::wait::until;
+    use crate::action::{once, wait};
     use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
     fn count_up() {
         let mut app = test_app();
-        app.world_mut().run_system_once(|mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
-                task.will(
-                    Update,
-                    until(|mut count: Local<u32>| {
-                        *count += 1;
-                        *count == 2
-                    }),
-                )
+        app.world_mut()
+            .run_system_once(|mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(
+                        Update,
+                        until(|mut count: Local<u32>| {
+                            *count += 1;
+                            *count == 2
+                        }),
+                    )
                     .await;
 
-                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
-            }));
-        });
+                    task.will(Update, once::non_send::insert().with(AppExit::Success))
+                        .await;
+                }));
+            })
+            .expect("Failed to run system");
 
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
@@ -179,20 +177,24 @@ mod tests {
     fn count_up_until_with_input() {
         let mut app = test_app();
 
-        app.world_mut().run_system_once(|mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
-                task.will(
-                    Update,
-                    until(|input: In<u32>, mut count: Local<u32>| {
-                        *count += 1 + input.0;
-                        *count == 4
-                    }).with(1),
-                )
+        app.world_mut()
+            .run_system_once(|mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(
+                        Update,
+                        until(|input: In<u32>, mut count: Local<u32>| {
+                            *count += 1 + input.0;
+                            *count == 4
+                        })
+                        .with(1),
+                    )
                     .await;
 
-                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
-            }));
-        });
+                    task.will(Update, once::non_send::insert().with(AppExit::Success))
+                        .await;
+                }));
+            })
+            .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
@@ -204,18 +206,20 @@ mod tests {
     #[test]
     fn wait_event() {
         let mut app = test_app();
-        app
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
-                    task.will(Update, once::non_send::insert().with(event)).await;
-                }));
-            });
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
+                task.will(Update, once::non_send::insert().with(event))
+                    .await;
+            }));
+        });
 
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
-        app.world_mut().run_system_once(|mut w: EventWriter<AppExit>| w.send(AppExit::Success));
+        app.world_mut()
+            .run_system_once(|mut w: EventWriter<AppExit>| w.send(AppExit::Success))
+            .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
@@ -226,26 +230,30 @@ mod tests {
     #[test]
     fn both_read_event1_and_event2() {
         let mut app = test_app();
-        app
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    let t1 = wait::event::read::<TestEvent1>();
-                    let t2 = wait::event::read::<TestEvent2>();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                let t1 = wait::event::read::<TestEvent1>();
+                let t2 = wait::event::read::<TestEvent2>();
 
-                    let (event1, event2) = task.will(Update, wait::both(t1, t2)).await;
-                    assert_eq!(event1, TestEvent1);
-                    assert_eq!(event2, TestEvent2);
-                    task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
-                }));
-            });
+                let (event1, event2) = task.will(Update, wait::both(t1, t2)).await;
+                assert_eq!(event1, TestEvent1);
+                assert_eq!(event2, TestEvent2);
+                task.will(Update, once::non_send::insert().with(AppExit::Success))
+                    .await;
+            }));
+        });
 
         app.update();
 
-        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        app.world_mut()
+            .run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1))
+            .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
-        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
+        app.world_mut()
+            .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2))
+            .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 

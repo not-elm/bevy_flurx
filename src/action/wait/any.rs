@@ -28,8 +28,8 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 /// });
 /// ```
 pub fn any<Actions>() -> ActionSeed<Actions, usize>
-    where
-        Actions: IntoIterator<Item=ActionSeed> + 'static
+where
+    Actions: IntoIterator<Item = ActionSeed> + 'static,
 {
     ActionSeed::new(move |actions: Actions, output| {
         let runners = actions
@@ -40,10 +40,7 @@ pub fn any<Actions>() -> ActionSeed<Actions, usize>
             panic!("The length of actions passed to `wait::any` must be greater than 0.")
         }
 
-        AnyRunner {
-            output,
-            runners,
-        }
+        AnyRunner { output, runners }
     })
 }
 
@@ -74,9 +71,9 @@ impl Runner for AnyRunner {
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, Startup};
-    use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Commands, Update};
+    use bevy::prelude::{Commands, Events, Update};
     use bevy_test_helper::event::DirectEvents;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{delay, once};
     use crate::actions;
@@ -89,10 +86,12 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let index = task.will(Update, wait::any().with(actions![
-                    wait::until(|| false),
-                    once::run(|| {})
-                ])).await;
+                let index = task
+                    .will(
+                        Update,
+                        wait::any().with(actions![wait::until(|| false), once::run(|| {})]),
+                    )
+                    .await;
                 if index == 1 {
                     task.will(Update, once::event::app_exit_success()).await;
                 }
@@ -100,7 +99,7 @@ mod tests {
         });
         app.update();
         app.update();
-        let mut er = ManualEventReader::<AppExit>::default();
+        let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
         app.assert_event_comes(&mut er);
     }
 
@@ -109,17 +108,23 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let index = task.will(Update, wait::any().with(actions![
-                    delay::frames().with(1),
-                    delay::frames().with(3),
-                    wait::until(||false)
-                ])).await;
+                let index = task
+                    .will(
+                        Update,
+                        wait::any().with(actions![
+                            delay::frames().with(1),
+                            delay::frames().with(3),
+                            wait::until(|| false)
+                        ]),
+                    )
+                    .await;
                 if index == 0 {
                     task.will(Update, once::event::app_exit_success()).await;
                 }
             }));
         });
-        let mut er = ManualEventReader::<AppExit>::default();
+
+        let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
         app.update();
         app.assert_event_not_comes(&mut er);
 

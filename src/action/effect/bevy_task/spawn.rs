@@ -31,7 +31,7 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 /// ```
 pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
 where
-    I: 'static,
+     I: 'static,
     Functor: AsyncFunctor<I, Out, M> + 'static,
     Out: Send + 'static,
     M: Send + 'static,

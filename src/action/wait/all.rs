@@ -25,8 +25,8 @@ use crate::runner::{BoxedRunner, CancellationToken};
 /// });
 /// ```
 pub fn all<Actions>() -> ActionSeed<Actions>
-    where
-        Actions: IntoIterator<Item=ActionSeed> + 'static,
+where
+    Actions: IntoIterator<Item = ActionSeed> + 'static,
 {
     ActionSeed::new(|actions: Actions, output| AllRunner {
         runners: actions
@@ -113,8 +113,8 @@ pub mod private {
 
     use crate::action::Action;
     use crate::prelude::ActionSeed;
-    use crate::runner::{BoxedRunner, Output, Runner};
     use crate::runner::macros::impl_tuple_runner;
+    use crate::runner::{BoxedRunner, Output, Runner};
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
         o1: Output<O1>,
@@ -205,7 +205,7 @@ mod tests {
 
     use crate::action::delay;
     use crate::actions;
-    use crate::prelude::{once, Pipe, Then, wait};
+    use crate::prelude::{once, wait, Pipe, Then};
     use crate::reactor::Reactor;
     use crate::test_util::SpawnReactor;
     use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
@@ -218,7 +218,7 @@ mod tests {
                 once::run(|| [increment_count(), increment_count(), decrement_count()])
                     .pipe(wait::all())
             })
-                .await;
+            .await;
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -236,10 +236,10 @@ mod tests {
                         increment_count()
                     ]
                 })
-                    .pipe(wait::all())
-                    .then(once::event::app_exit_success())
+                .pipe(wait::all())
+                .then(once::event::app_exit_success())
             })
-                .await;
+            .await;
         });
         let mut er = exit_reader();
         app.update();
@@ -278,11 +278,15 @@ mod tests {
 
         app.update();
 
-        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1));
+        app.world_mut()
+            .run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1))
+            .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
-        app.world_mut().run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2));
+        app.world_mut()
+            .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2))
+            .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 

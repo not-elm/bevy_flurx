@@ -9,21 +9,19 @@
 //! - [`once::switch`](crate::prelude::once::switch)
 //! - [`once::audio`](crate::prelude::once::audio) (require feature flag `audio`)
 
-
-use bevy::prelude::{IntoSystem, System, World};
+use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
 
 use crate::action::seed::ActionSeed;
-use crate::prelude::Action;
 use crate::runner::{CancellationToken, Output, Runner};
 
-pub mod res;
-pub mod non_send;
-pub mod event;
-pub mod switch;
 #[cfg(feature = "audio")]
 pub mod audio;
+pub mod event;
+pub mod non_send;
+pub mod res;
 #[cfg(feature = "state")]
 pub mod state;
+pub mod switch;
 
 /// Once run a system.
 ///
@@ -43,59 +41,31 @@ pub mod state;
 /// });
 /// ```
 #[inline(always)]
-pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I, Out>
-    where
-        Sys: IntoSystem<I, Out, M> + 'static,
-        I: 'static,
-        Out: 'static
+pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I::Inner<'static>, Out>
+where
+    Sys: IntoSystem<I, Out, M> + 'static,
+    I: SystemInput + 'static,
+    Out: 'static,
 {
-    ActionSeed::new(move |input, output| {
-        OnceRunner{
-            input: Some(input),
-            output,
-            system: IntoSystem::into_system(system)      
-        }
+    ActionSeed::new(move |input, output| OnceRunner {
+        input: Some(input),
+        output,
+        system: IntoSystem::into_system(system),
     })
 }
 
-/// Once run a system with input.
-///
-/// The return value will be the system return value.
-///
-/// ## Examples
-///
-/// ```no_run
-/// use bevy::app::AppExit;
-/// use bevy::prelude::{World, Update, EventWriter, In};
-/// use bevy_flurx::prelude::*;
-///
-/// Reactor::schedule(|task| async move{
-///     task.will(Update, once::run_with(1, |In(num): In<usize>|{
-///         num + 1
-///     })).await;
-/// });
-/// ```
-#[inline(always)]
-pub fn run_with<Sys, Input, Out, Marker>(input: Input, system: Sys) -> Action<Input, Out>
-    where
-        Sys: IntoSystem<Input, Out, Marker> + Clone + 'static,
-        Input: 'static,
-        Out: 'static
+struct OnceRunner<Sys>
+where
+    Sys: System,
 {
-    run(system).with(input)
-}
-
-struct OnceRunner<Sys, I, O> {
     system: Sys,
-    input: Option<I>,
-    output: Output<O>,
+    input: Option<SystemIn<'static, Sys>>,
+    output: Output<Sys::Out>,
 }
 
-impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
-    where
-        Sys: System<In=I, Out=O>,
-        I: 'static,
-        O: 'static
+impl<Sys> Runner for OnceRunner<Sys>
+where
+    Sys: System,
 {
     fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         self.system.initialize(world);
@@ -108,4 +78,3 @@ impl<Sys, I, O> Runner for OnceRunner<Sys, I, O>
         true
     }
 }
-

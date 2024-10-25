@@ -1,5 +1,4 @@
-//! Provides the trait for converting into an action. 
-
+//! Provides the trait for converting into an action.
 
 use crate::action::Action;
 use crate::runner::{BoxedRunner, Output, Runner};
@@ -12,21 +11,21 @@ use crate::runner::{BoxedRunner, Output, Runner};
 ///
 /// [`Action`]: crate::prelude::Action
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
-/// 
+///
 ///
 #[repr(transparent)]
 pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>);
 
 impl<I, O> ActionSeed<I, O>
-    where
-        I: 'static,
-        O: 'static
+where
+    I: 'static,
+    O: 'static,
 {
     /// Create the [`ActionSeed`].
     #[inline]
     pub fn new<R>(f: impl FnOnce(I, Output<O>) -> R + 'static) -> ActionSeed<I, O>
-        where
-            R: Runner + 'static
+    where
+        R: Runner + 'static,
     {
         ActionSeed(Box::new(move |input, output| {
             BoxedRunner::new(f(input, output))
@@ -51,13 +50,11 @@ impl<I, O> ActionSeed<I, O>
     /// ```
     #[inline]
     pub fn define<I2, A>(f: impl FnOnce(I) -> A + 'static) -> ActionSeed<I, O>
-        where
-            I2: 'static,
-            A: Into<Action<I2, O>>
+    where
+        I2: 'static,
+        A: Into<Action<I2, O>>,
     {
-        ActionSeed::from(|input, output| {
-            f(input).into().into_runner(output)
-        })
+        ActionSeed::from(|input, output| f(input).into().into_runner(output))
     }
 
     /// Into [`Action`] with `input`.
@@ -75,14 +72,11 @@ impl<I, O> ActionSeed<I, O>
 }
 
 impl<I, O, F> From<F> for ActionSeed<I, O>
-    where
-        F: FnOnce(I, Output<O>) -> BoxedRunner + 'static
+where
+    F: FnOnce(I, Output<O>) -> BoxedRunner + 'static,
 {
     #[inline]
     fn from(value: F) -> Self {
         Self(Box::new(value))
     }
 }
-
-
-

@@ -54,7 +54,7 @@ impl Rollback {
     /// ```
     pub fn new<I, A, F>(f: F) -> Self
         where
-            I: 'static,
+             I: 'static,
             F: Fn() -> A + 'static,
             A: Into<Action<I, Option<RedoAction>>> + 'static,
     {
@@ -75,7 +75,7 @@ impl Rollback {
     /// ```
     pub fn undo<I, O, A, F>(f: F) -> Self
         where
-            I: 'static,
+             I: 'static,
             O: 'static,
             F: Fn() -> A + 'static,
             A: Into<Action<I, O>> + 'static,
@@ -100,7 +100,7 @@ impl Rollback {
     /// ```
     pub fn undo_redo<I, A, F>(f: F) -> Self
         where
-            I: 'static,
+             I: 'static,
             F: Fn() -> A + 'static,
             A: Into<Action<I, RedoAction>> + 'static,
     {
@@ -145,7 +145,7 @@ impl Rollback {
         redo: (Option<RF>, PhantomData<(RI, O, RO, RA)>),
     ) -> Self
         where
-            I: 'static,
+             I: 'static,
             O: 'static,
             F: Fn() -> A + 'static,
             A: Into<Action<I, O>> + 'static,

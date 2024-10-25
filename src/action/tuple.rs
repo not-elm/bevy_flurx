@@ -4,10 +4,10 @@ use crate::prelude::{ActionSeed, CancellationToken};
 use crate::runner::{BoxedRunner, Output, Runner};
 
 /// Convert to the output of action to tuple.
-pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
-    where
-        I: 'static,
-        O: 'static
+pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O,)>
+where
+    I: 'static,
+    O: 'static,
 {
     ActionSeed::new(|input, output| {
         let tmp = Output::default();
@@ -15,7 +15,7 @@ pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
         TupleRunner {
             runner,
             tmp,
-            output
+            output,
         }
     })
 }
@@ -23,14 +23,14 @@ pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O, )>
 struct TupleRunner<O> {
     runner: BoxedRunner,
     tmp: Output<O>,
-    output: Output<(O, )>
+    output: Output<(O,)>,
 }
 
 impl<O> Runner for TupleRunner<O> {
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         self.runner.run(world, token);
         if let Some(o) = self.tmp.take() {
-            self.output.set((o, ));
+            self.output.set((o,));
             true
         } else {
             false
