@@ -170,7 +170,7 @@ fn move_action<const MILLIS: u64>() -> ActionSeed<StartAndEndPos, StartAndEndPos
          time: Res<Time>| {
             let mut t = m.single_mut();
             let end_millis = Duration::from_millis(MILLIS).as_secs_f32();
-            *tick = end_millis.min(*tick + time.delta_seconds());
+            *tick = end_millis.min(*tick + time.delta_secs());
             let d = *tick / end_millis;
             t.translation = start + (end - start) * d;
             ((*tick - end_millis).abs() < 0.01).then_some((start, end))

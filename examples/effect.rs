@@ -1,15 +1,13 @@
 //! This example shows how to convert an asynchronous process such as HTTP communication into an action.
 
-
 use bevy::app::{App, Startup, Update};
-use bevy::DefaultPlugins;
-use bevy::prelude::{Camera2dBundle, Commands, default, Event, EventWriter, Local, Query, Res, Resource, Window, With};
+use bevy::prelude::{default, Camera2d, Camera2dBundle, Commands, Event, EventWriter, Local, Query, Res, Resource, Window, With};
 use bevy::window::PrimaryWindow;
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
+use bevy::DefaultPlugins;
 use bevy_egui::egui::{Align2, Pos2};
+use bevy_egui::{egui, EguiContexts, EguiPlugin};
 
 use bevy_flurx::prelude::*;
-
 
 #[derive(Event, Clone)]
 struct RequestGet {
@@ -24,30 +22,19 @@ struct ResponseInfo {
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            EguiPlugin,
-            FlurxPlugin
-        ))
+        .add_plugins((DefaultPlugins, EguiPlugin, FlurxPlugin))
         .init_resource::<ResponseInfo>()
         .add_event::<RequestGet>()
-        .add_systems(Startup, (
-            spawn_camera,
-            spawn_reactor,
-        ))
+        .add_systems(Startup, (spawn_camera, spawn_reactor))
         .add_systems(Update, show_ui)
         .run();
 }
 
-fn spawn_camera(
-    mut commands: Commands
-) {
-    commands.spawn(Camera2dBundle::default());
+fn spawn_camera(mut commands: Commands) {
+    commands.spawn(Camera2d);
 }
 
-fn spawn_reactor(
-    mut commands: Commands
-) {
+fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         loop {
             task.will(Update, {
@@ -61,11 +48,12 @@ fn spawn_reactor(
                             Err(error) => ResponseInfo {
                                 error_message: Some(error.to_string()),
                                 ..default()
-                            }
+                            },
                         }
                     }))
                     .pipe(once::res::insert())
-            }).await;
+            })
+            .await;
         }
     }));
 }
@@ -79,24 +67,34 @@ fn show_ui(
 ) {
     egui::Window::new("bevy_flurx demo")
         .pivot(Align2::CENTER_CENTER)
-        .default_pos(Pos2::new(window.single().width() / 2., window.single().height() / 2.))
+        .default_pos(Pos2::new(
+            window.single().width() / 2.,
+            window.single().height() / 2.,
+        ))
         .show(cx.ctx_mut(), |ui| {
             ui.vertical(|ui| {
                 ui.add(egui::TextEdit::singleline(&mut *input_text).hint_text("url"));
                 if ui.button("submit").clicked() {
                     ew.send(RequestGet {
-                        url: input_text.to_string()
+                        url: input_text.to_string(),
                     });
                 }
                 ui.allocate_space(egui::Vec2::new(1.0, 30.0));
                 ui.separator();
                 ui.vertical(|ui| {
-                    ui.label(format!("status code: {}", response.status.map(|s| s.to_string()).unwrap_or_default()));
-                    ui.label(format!("error message: {}", response.error_message.as_ref().map(|url| url.to_string()).unwrap_or_default()));
+                    ui.label(format!(
+                        "status code: {}",
+                        response.status.map(|s| s.to_string()).unwrap_or_default()
+                    ));
+                    ui.label(format!(
+                        "error message: {}",
+                        response
+                            .error_message
+                            .as_ref()
+                            .map(|url| url.to_string())
+                            .unwrap_or_default()
+                    ));
                 });
             });
         });
 }
-
-
-
