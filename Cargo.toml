@@ -10,53 +10,48 @@ license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
 
-[workspace]
-exclude = ["benches"]
+ [[bench]]
+ name = "cmp_countup"
+ path = "benches/cmp_countup.rs"
+ harness = false
 
-[[bench]]
-name = "cmp_countup"
-path = "benches/cmp_countup.rs"
-harness = false
+ [[bench]]
+ name = "cmp_repeat_countup"
+ path = "benches/cmp_repeat_countup.rs"
+ harness = false
 
-[[bench]]
-name = "cmp_repeat_countup"
-path = "benches/cmp_repeat_countup.rs"
-harness = false
+ [[bench]]
+ name = "sequence"
+ path = "benches/sequence.rs"
+ harness = false
 
-[[bench]]
-name = "sequence"
-path = "benches/sequence.rs"
-harness = false
-
-[[example]]
-name = "effect"
-path = "examples/effect.rs"
-required-features = ["tokio"]
+ [[example]]
+ name = "effect"
+ path = "examples/effect.rs"
+ required-features = ["tokio"]
 
 [[example]]
 name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"
 
-
 [dependencies]
-bevy = { version = "0.14.1", default-features = false, features = ["multi_threaded"] }
+bevy = { version = "0.15.0", default-features = false }
 flurx = { version = "0.1.6" }
 futures-polling = "0.1.1"
-pollster = "0.3.0"
-tokio = { version = "1.37.0", optional = true, features = ["sync"] }
-futures-lite = "2.3.0"
+pollster = "0.4.0"
+tokio = { version = "1.42.0", optional = true, features = ["sync"] }
+futures-lite = "2.5.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 async-compat = { version = "0.2.3", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.14.1" }
-bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper" }
-reqwest = "0.12.5"
-futures = "0.3.30"
+bevy = { version = "0.15.0" }
+bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.15.0" }
+reqwest = "0.12.9"
+futures = "0.3.31"
 criterion = { version = "0.5.1", features = ["plotters", "html_reports"] }
-bevy_egui = "0.28.0"
-bevy_progress_bar = { version = "0.9.0" }
+bevy_egui = "0.31.1"
 
 [features]
 default = ["audio", "record", "effect"]

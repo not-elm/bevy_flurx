@@ -3,11 +3,11 @@
 //! - [`once::audio::play`]
 
 use bevy::asset::{AssetPath, AssetServer};
-use bevy::audio::{AudioBundle, PlaybackSettings};
+use bevy::audio::{AudioPlayer, AudioSource};
 use bevy::prelude::{Commands, Entity, In, Res};
 
 use crate::action::once;
-use crate::prelude::{ActionSeed};
+use crate::prelude::ActionSeed;
 
 /// Spawns [`AudioBundle`].
 ///
@@ -22,18 +22,18 @@ use crate::prelude::{ActionSeed};
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::audio::play().with(("<audio_path>", PlaybackSettings::ONCE))).await;
+///     task.will(Update, once::audio::play().with("<audio_path>")).await;
 /// });
 /// ```
-pub fn play<Path>() -> ActionSeed<(Path, PlaybackSettings), Entity>
-    where Path: Into<AssetPath<'static>> + 'static
+pub fn play<Path>() -> ActionSeed<Path, Entity>
+where
+    Path: Into<AssetPath<'static>> + 'static,
 {
-    once::run(|In((path, settings)): In<(Path, PlaybackSettings)>, mut commands: Commands, asset_server: Res<AssetServer>| {
-        commands
-            .spawn(AudioBundle {
-                source: asset_server.load(path.into()),
-                settings,
-            })
-            .id()
-    })
+    once::run(
+        |In(path): In<Path>, mut commands: Commands, asset_server: Res<AssetServer>| {
+            commands
+                .spawn(AudioPlayer::<AudioSource>(asset_server.load(path.into())))
+                .id()
+        },
+    )
 }

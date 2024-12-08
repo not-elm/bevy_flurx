@@ -1,9 +1,9 @@
 use bevy::prelude::World;
 
 use crate::action::record::push_track;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 use crate::prelude::record::EditRecordResult;
 use crate::prelude::record::Track;
+use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 
 /// Push the [`Track`](crate::prelude::Track) onto the [`Record`](crate::prelude::Record).
 ///
@@ -14,7 +14,6 @@ use crate::prelude::record::Track;
 /// ```no_run
 ///
 /// use bevy::prelude::*;
-/// use bevy::window::CursorIcon::Move;
 /// use futures::SinkExt;
 /// use bevy_flurx::prelude::*;
 ///
@@ -37,14 +36,12 @@ use crate::prelude::record::Track;
 /// });
 /// ```
 pub fn push<Act>() -> ActionSeed<Track<Act>, EditRecordResult>
-    where
-        Act: Send + Sync + 'static,
+where
+    Act: Send + Sync + 'static,
 {
-    ActionSeed::new(|track: Track<Act>, output| {
-        PushRunner {
-            output,
-            track: Some(track),
-        }
+    ActionSeed::new(|track: Track<Act>, output| PushRunner {
+        output,
+        track: Some(track),
     })
 }
 
@@ -54,8 +51,8 @@ struct PushRunner<Act> {
 }
 
 impl<Act> Runner for PushRunner<Act>
-    where
-        Act: Send + Sync + 'static
+where
+    Act: Send + Sync + 'static,
 {
     fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
         if let Some(track) = self.track.take() {
@@ -69,18 +66,17 @@ impl<Act> Runner for PushRunner<Act>
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{once, record};
     use crate::action::record::{Record, Track};
+    use crate::action::{once, record};
     use crate::prelude::{ActionSeed, Omit, Reactor, Rollback};
 
-    use crate::tests::{test_app};
+    use crate::tests::test_app;
 
     #[derive(Default)]
     struct H1;
@@ -138,12 +134,11 @@ mod tests {
     }
 
     fn push<Act: Send + Sync + 'static>(act: Act) -> ActionSeed {
-        record::push().with(Track {
-            act,
-            rollback: Rollback::undo(|| {
-                once::run(|| {})
-            }),
-        })
+        record::push()
+            .with(Track {
+                act,
+                rollback: Rollback::undo(|| once::run(|| {})),
+            })
             .omit()
     }
 }

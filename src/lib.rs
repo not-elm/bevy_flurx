@@ -1,12 +1,11 @@
 //! This library provides a mechanism for more sequential description of delays, character movement,
 //! waiting for user input, and other state waits.
 //!
-//! [`Reactor`] can be used partially. 
+//! [`Reactor`] can be used partially.
 //! This means there is no need to rewrite existing applications to use this library.
-//! And I recommend using it partially. 
+//! And I recommend using it partially.
 //! This is because the system that runs [`Reactor`] and the systems that are run by [`Reactor`] run on the main thread.
 //! (Please check [`Switch`](crate::prelude::Switch) for multi thread operation.)
-
 
 #![allow(clippy::type_complexity)]
 
@@ -18,51 +17,44 @@ use bevy::prelude::{Entity, QueryState, World};
 use crate::reactor::Reactor;
 use crate::world_ptr::WorldPtr;
 
-pub mod extension;
-pub mod task;
 pub mod action;
+pub mod extension;
 pub mod runner;
+pub mod task;
 
 #[allow(missing_docs)]
 pub mod prelude {
+    #[cfg(feature = "effect")]
+    pub use crate::action::effect::AsyncFunctor;
+    #[cfg(feature = "record")]
+    pub use crate::action::record::{
+        extension::{RecordExtension, RequestRedo, RequestUndo},
+        EditRecordResult, Record, Redo, RedoAction, Rollback, Track, Undo, UndoRedoInProgress,
+    };
     pub use crate::{
-        action::*,
-        action::Map,
         action::omit::*,
         action::pipe::Pipe,
-        action::Remake,
         action::seed::ActionSeed,
         action::sequence::Then,
         action::switch::*,
         action::through::{through, Through},
         action::wait::Either,
+        action::Map,
+        action::Remake,
+        action::*,
         extension::*,
-        FlurxPlugin,
         reactor::Reactor,
         runner::*,
         task::ReactiveTask,
-    };
-    #[cfg(feature = "effect")]
-    pub use crate::action::effect::AsyncFunctor;
-    #[cfg(feature = "record")]
-    pub use crate::action::record::{
-        EditRecordResult,
-        extension::{RecordExtension, RequestRedo, RequestUndo},
-        Record,
-        Redo,
-        RedoAction,
-        Rollback,
-        Track,
-        Undo,
-        UndoRedoInProgress,
+        FlurxPlugin,
     };
 }
 
-mod world_ptr;
 mod reactor;
 mod selector;
+mod world_ptr;
 
-/// Define utilities for testing. 
+/// Define utilities for testing.
 #[cfg(test)]
 mod test_util;
 
@@ -72,12 +64,10 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        app
-            .init_schedule(RunReactor)
+        app.init_schedule(RunReactor)
             .add_systems(PostStartup, initialize_reactors)
             .add_systems(RunReactor, run_reactors);
-        app
-            .world_mut()
+        app.world_mut()
             .resource_mut::<MainScheduleOrder>()
             .insert_after(Last, RunReactor);
     }
@@ -87,10 +77,7 @@ impl Plugin for FlurxPlugin {
 #[derive(ScheduleLabel, Eq, PartialEq, Debug, Copy, Clone, Hash)]
 struct RunReactor;
 
-fn initialize_reactors(
-    world: &mut World,
-    reactors: &mut QueryState<&mut Reactor>,
-) {
+fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut Reactor>) {
     let world_ptr = WorldPtr::new(world);
     for mut reactor in reactors.iter_mut(world) {
         if reactor.initialized {
@@ -101,10 +88,7 @@ fn initialize_reactors(
     }
 }
 
-fn run_reactors(
-    world: &mut World,
-    reactors: &mut QueryState<(Entity, &mut Reactor)>,
-) {
+fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut Reactor)>) {
     let world_ptr = WorldPtr::new(world);
     let mut entities = Vec::with_capacity(reactors.iter(world).len());
     for (entity, mut reactor) in reactors.iter_mut(world) {
@@ -123,25 +107,25 @@ fn run_reactors(
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use bevy::app::{App, AppExit};
-    use bevy::ecs::event::ManualEventReader;
+
+    use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
     use bevy::prelude::{Event, EventReader, FrameCountPlugin, ResMut, Resource};
     use bevy::state::app::StatesPlugin;
     use bevy::time::TimePlugin;
-    use bevy_test_helper::BevyTestHelperPlugin;
     use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::BevyTestHelperPlugin;
 
     use crate::action::once;
-    use crate::FlurxPlugin;
     use crate::prelude::{ActionSeed, Record, RecordExtension};
+    use crate::FlurxPlugin;
 
-    pub fn exit_reader() -> ManualEventReader<AppExit> {
-        ManualEventReader::<AppExit>::default()
+    pub fn exit_reader() -> EventCursor<AppExit> {
+        EventCursor::<AppExit>::default()
     }
 
     pub fn increment_count() -> ActionSeed {
@@ -171,7 +155,7 @@ mod tests {
             InputPlugin,
             TimePlugin,
             FrameCountPlugin,
-            StatesPlugin
+            StatesPlugin,
         ));
         app.add_record_events::<NumAct>();
         app.add_record_events::<TestAct>();
@@ -184,10 +168,12 @@ mod tests {
 
     #[allow(unused)]
     pub fn came_event<E: Event>(app: &mut App) -> bool {
-        app.world_mut().run_system_once(|mut e: EventReader<E>| {
-            let came = !e.is_empty();
-            e.clear();
-            came
-        })
+        app.world_mut()
+            .run_system_once(|mut e: EventReader<E>| {
+                let came = !e.is_empty();
+                e.clear();
+                came
+            })
+            .expect("Failed to run system `came_event`")
     }
 }

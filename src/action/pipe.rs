@@ -1,9 +1,8 @@
-//! Provides the mechanism to pipe the actions. 
+//! Provides the mechanism to pipe the actions.
 //!
 //! trait
 //!
 //! [`Pipe`]
-
 
 use bevy::prelude::World;
 
@@ -40,23 +39,21 @@ pub trait Pipe<I1, O1, O2, A> {
 }
 
 impl<I1, O1, O2, A, ActionOrSeed> Pipe<I1, O1, O2, A> for ActionOrSeed
-    where
-        I1: 'static,
-        O1: 'static,
-        O2: 'static,
-        ActionOrSeed: Remake<I1, O1, O2, A>
+where
+    I1: 'static,
+    O1: 'static,
+    O2: 'static,
+    ActionOrSeed: Remake<I1, O1, O2, A>,
 {
     #[inline(always)]
     fn pipe(self, seed: ActionSeed<O1, O2>) -> A {
-        self.remake(|r1, o1, output| {
-            PipeRunner {
-                r1,
-                r2: None,
-                o1,
-                output,
-                seed: Some(seed),
-                finished_r1: false,
-            }
+        self.remake(|r1, o1, output| PipeRunner {
+            r1,
+            r2: None,
+            o1,
+            output,
+            seed: Some(seed),
+            finished_r1: false,
         })
     }
 }
@@ -71,9 +68,9 @@ struct PipeRunner<O1, O2> {
 }
 
 impl<O1, O2> PipeRunner<O1, O2>
-    where
-        O1: 'static,
-        O2: 'static
+where
+    O1: 'static,
+    O2: 'static,
 {
     fn setup_second_runner(&mut self) {
         if let Some(o1) = self.o1.take() {
@@ -89,9 +86,9 @@ impl<O1, O2> PipeRunner<O1, O2>
 }
 
 impl<O1, O2> Runner for PipeRunner<O1, O2>
-    where
-        O1: 'static,
-        O2: 'static
+where
+    O1: 'static,
+    O2: 'static,
 {
     fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
         if !self.finished_r1 {
@@ -109,12 +106,11 @@ impl<O1, O2> Runner for PipeRunner<O1, O2>
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, Startup};
-    use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::{Commands, Update};
+
+    use bevy::prelude::{Commands, Events, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -130,12 +126,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, delay::frames().with(2)
-                    .map(|dummy| dummy)
-                    .through(delay::frames().with(2))
-                    .through(once::run(|| {}))
-                    .then(once::event::app_exit_success()),
-                ).await;
+                task.will(
+                    Update,
+                    delay::frames()
+                        .with(2)
+                        .map(|dummy| dummy)
+                        .through(delay::frames().with(2))
+                        .through(once::run(|| {}))
+                        .then(once::event::app_exit_success()),
+                )
+                .await;
             }));
         });
         app.update();
@@ -143,7 +143,7 @@ mod tests {
         app.update();
         app.update();
         app.update();
-        let mut er = ManualEventReader::<AppExit>::default();
+        let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
         assert!(app.read_last_event(&mut er).is_some());
     }
 
@@ -152,9 +152,8 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, test::cancel()
-                    .pipe(increment_count()),
-                ).await;
+                task.will(Update, test::cancel().pipe(increment_count()))
+                    .await;
             }));
         });
         app.update();

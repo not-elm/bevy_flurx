@@ -28,20 +28,15 @@ use crate::prelude::ActionSeed;
 /// ```
 #[inline(always)]
 pub fn time() -> ActionSeed<Duration> {
-    wait::until(move |In(duration): In<Duration>,
-                      mut timer: Local<Option<Timer>>,
-                      time: Res<Time>,
-    | {
-        if timer.is_none() {
-            timer.replace(Timer::new(duration, TimerMode::Once));
-        }
+    wait::until(
+        move |In(duration): In<Duration>, mut timer: Local<Option<Timer>>, time: Res<Time>| {
+            if timer.is_none() {
+                timer.replace(Timer::new(duration, TimerMode::Once));
+            }
 
-        timer
-            .as_mut()
-            .unwrap()
-            .tick(time.delta())
-            .just_finished()
-    })
+            timer.as_mut().unwrap().tick(time.delta()).just_finished()
+        },
+    )
 }
 
 /// Delays the specified number of frames.
@@ -58,8 +53,7 @@ pub fn time() -> ActionSeed<Duration> {
 /// ```
 #[inline(always)]
 pub fn frames() -> ActionSeed<usize> {
-    wait::until(move |In(frames): In<usize>,
-                      mut frame_now: Local<usize>| {
+    wait::until(move |In(frames): In<usize>, mut frame_now: Local<usize>| {
         *frame_now += 1;
         frames <= (*frame_now - 1)
     })
@@ -68,9 +62,10 @@ pub fn frames() -> ActionSeed<usize> {
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, First, Startup};
-    use bevy::ecs::event::ManualEventReader;
-    use bevy::prelude::Commands;
+
+    use bevy::prelude::{Commands, Events};
     use bevy_test_helper::event::DirectEvents;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     use crate::action::{delay, once};
     use crate::prelude::Then;
@@ -80,18 +75,21 @@ mod tests {
     #[test]
     fn delay_1frame() {
         let mut app = test_app();
-        app
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(First, delay::frames().with(1)
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    First,
+                    delay::frames()
+                        .with(1)
                         .then(once::event::app_exit_success()),
-                    ).await;
-                }));
-            });
-        let mut er = ManualEventReader::<AppExit>::default();
+                )
+                .await;
+            }));
+        });
+        let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
         app.update();
         app.assert_event_not_comes(&mut er);
-        
+
         app.update();
         app.assert_event_comes(&mut er);
     }
@@ -99,14 +97,17 @@ mod tests {
     #[test]
     fn delay_2frames() {
         let mut app = test_app();
-        app
-            .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(First, delay::frames().with(2)
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    First,
+                    delay::frames()
+                        .with(2)
                         .then(once::non_send::init::<AppExit>()),
-                    ).await;
-                }));
-            });
+                )
+                .await;
+            }));
+        });
 
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
