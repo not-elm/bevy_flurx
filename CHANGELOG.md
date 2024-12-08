@@ -1,3 +1,8 @@
+## v0.7.0
+
+- Support bevy0.15.0
+- Removed the flag for the multi-thread feature of bevy, which was depended upon internally in this lib.
+
 ## v0.6.0
 
 Support for new versions of bevy.

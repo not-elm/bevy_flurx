@@ -86,7 +86,8 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 | 0.3.0         | 0.13.0 |
 | 0.3.1         | 0.13.1 |
 | 0.3.2 ~ 0.5.3 | 0.13.2 | 
-| 0.6.0         | 0.4.1  | 
+| 0.6.0         | 0.14.1 | 
+| 0.7.0         | 0.15   | 
 
 ## License
 
