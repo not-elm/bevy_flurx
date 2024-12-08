@@ -32,7 +32,7 @@ where
     }
 }
 
-impl<'w, 'b, F, Fut> ScheduleReactor<'w, F, Fut, ()> for &mut Commands<'w, 'b>
+impl<'w, F, Fut> ScheduleReactor<'w, F, Fut, ()> for &mut Commands<'w, '_>
 where
     F: FnOnce(ReactiveTask) -> Fut + Send + 'static,
     Fut: Future + 'static,

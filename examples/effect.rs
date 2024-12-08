@@ -1,7 +1,9 @@
 //! This example shows how to convert an asynchronous process such as HTTP communication into an action.
 
 use bevy::app::{App, Startup, Update};
-use bevy::prelude::{default, Camera2d, Camera2dBundle, Commands, Event, EventWriter, Local, Query, Res, Resource, Window, With};
+use bevy::prelude::{
+    default, Camera2d, Commands, Event, EventWriter, Local, Query, Res, Resource, Window, With,
+};
 use bevy::window::PrimaryWindow;
 use bevy::DefaultPlugins;
 use bevy_egui::egui::{Align2, Pos2};

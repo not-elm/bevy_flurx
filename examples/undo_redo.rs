@@ -13,10 +13,9 @@ use std::time::Duration;
 use bevy::app::{App, Startup, Update};
 use bevy::math::{Vec2, Vec3};
 use bevy::prelude::{
-    Camera2dBundle, Color, Commands, Component, EventWriter, In, KeyCode, LinearRgba, Local, Query,
-    Res, Sprite, Transform, With,
+    Camera2d, Color, Commands, Component, EventWriter, In, KeyCode, LinearRgba,
+    Local, Query, Res, Sprite, Transform, With,
 };
-use bevy::sprite::SpriteBundle;
 use bevy::time::Time;
 use bevy::utils::default;
 use bevy::DefaultPlugins;
@@ -53,18 +52,15 @@ fn main() {
 }
 
 fn spawn_camera(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2d);
 }
 
 fn spawn_mr_shape(mut commands: Commands) {
     commands.spawn((
         MrShape,
-        SpriteBundle {
-            sprite: Sprite {
-                custom_size: Some(Vec2::new(50., 50.)),
-                color: Color::WHITE,
-                ..default()
-            },
+        Sprite {
+            custom_size: Some(Vec2::new(50., 50.)),
+            color: Color::WHITE,
             ..default()
         },
     ));
