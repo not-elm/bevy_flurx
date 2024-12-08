@@ -35,7 +35,7 @@ name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
-bevy = { version = "0.15.0", default-features = false, features = ["multi_threaded"] }
+bevy = { version = "0.15.0", default-features = false }
 flurx = { version = "0.1.6" }
 futures-polling = "0.1.1"
 pollster = "0.4.0"
