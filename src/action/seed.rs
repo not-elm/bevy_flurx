@@ -10,10 +10,8 @@ use bevy::prelude::Reflect;
 /// Otherwise, to convert to the action,
 /// you need call [`ActionSeed::with`] or passed itself as an argument to [`Pipe::pipe`].  
 ///
-/// [`Action`]: crate::prelude::Action
+/// [`Action`]: Action
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
-///
-///
 #[derive(Reflect)]
 #[repr(transparent)]
 pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>);
@@ -61,7 +59,7 @@ where
 
     /// Into [`Action`] with `input`.
     ///
-    /// [`Action`]: crate::prelude::Action
+    /// [`Action`]:  Action
     #[inline]
     pub const fn with(self, input: I) -> Action<I, O> {
         Action(input, self)
@@ -69,7 +67,7 @@ where
 
     #[inline(always)]
     pub(crate) fn create_runner(self, input: I, output: Output<O>) -> BoxedRunner {
-        (self.0)(input, output)
+        self.0(input, output)
     }
 }
 
@@ -83,3 +81,13 @@ where
     }
 }
 
+impl<I, O> Default for ActionSeed<I, O>
+where
+    I: 'static,
+    O: Default + 'static,
+{
+    #[inline]
+    fn default() -> Self {
+        crate::prelude::once::no_op_with_generics::<I, O>()
+    }
+}

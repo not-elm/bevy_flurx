@@ -2,26 +2,31 @@
 //!
 //! actions
 //!
-//! - [`once::res`](crate::prelude::once::res)
-//! - [`once::non_send`](crate::prelude::once::res)
-//! - [`once::event`](crate::prelude::once::res)
-//! - [`once::state`](crate::prelude::once::res)
-//! - [`once::switch`](crate::prelude::once::switch)
-//! - [`once::audio`](crate::prelude::once::audio) (require feature flag `audio`)
-
-use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
+//! - [`once::run`](run)
+//! - [`once::no_op`](no_op)
+//! - [`once::no_op_with_generics`](no_op_with_generics)
+//! - [`once::res`](res)
+//! - [`once::non_send`](res)
+//! - [`once::event`](res)
+//! - [`once::state`](res)
+//! - [`once::switch`](switch)
+//! - [`once::audio`](audio) (require feature flag `audio`)
 
 use crate::action::seed::ActionSeed;
 use crate::runner::{CancellationToken, Output, Runner};
+use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
+pub use _no_op::{no_op, no_op_with_generics};
 
-#[cfg(feature = "audio")]
-pub mod audio;
 pub mod event;
 pub mod non_send;
 pub mod res;
+pub mod switch;
+#[cfg(feature = "audio")]
+pub mod audio;
 #[cfg(feature = "state")]
 pub mod state;
-pub mod switch;
+#[path="once/no_op.rs"]
+mod _no_op;
 
 /// Once run a system.
 ///

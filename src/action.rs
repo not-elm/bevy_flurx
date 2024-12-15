@@ -36,8 +36,8 @@
 //! - [`remake::Remake`]
 //! - [`effect`]
 
-use bevy::prelude::Reflect;
 pub use _tuple::tuple;
+use bevy::prelude::Reflect;
 pub use map::Map;
 pub use remake::Remake;
 
@@ -70,9 +70,9 @@ mod remake;
 pub struct Action<I = (), O = ()>(pub(crate) I, pub(crate) ActionSeed<I, O>);
 
 impl<I1, O1> Action<I1, O1>
-    where
-        I1: 'static,
-        O1: 'static
+where
+    I1: 'static,
+    O1: 'static,
 {
     #[inline(always)]
     pub(crate) fn into_runner(self, output: Output<O1>) -> BoxedRunner {
@@ -81,12 +81,22 @@ impl<I1, O1> Action<I1, O1>
 }
 
 impl<Out> From<ActionSeed<(), Out>> for Action<(), Out>
-    where
-        Out: 'static
+where
+    Out: 'static,
 {
     #[inline]
     fn from(value: ActionSeed<(), Out>) -> Self {
         value.with(())
+    }
+}
+
+impl<I, O> Default for Action<I, O>
+where
+    I: Default + 'static,
+    O: Default + 'static,
+{
+    fn default() -> Self {
+        ActionSeed::<I, O>::default().with(I::default())
     }
 }
 
