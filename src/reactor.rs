@@ -1,10 +1,20 @@
-use std::future::Future;
-
-use bevy::prelude::Component;
-
-use crate::runner::CancellationToken;
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
+use bevy::prelude::{Component, Reflect, ReflectDefault};
+use std::future::Future;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+#[derive(Default, Reflect, Eq, PartialEq, Hash, Copy, Clone)]
+#[reflect(Default)]
+pub(crate) struct ReactorId(u64);
+impl ReactorId {
+    #[inline]
+    pub(crate) fn increment() -> Self {
+        static TASK_ID: AtomicU64 = AtomicU64::new(0);
+        Self(TASK_ID.fetch_add(1, Ordering::Relaxed))
+    }
+}
+
 
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
@@ -18,7 +28,7 @@ use crate::world_ptr::WorldPtr;
 pub struct Reactor {
     pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
     pub(crate) initialized: bool,
-    token: CancellationToken,
+    pub(crate) id: ReactorId,
 }
 
 impl Reactor {
@@ -50,24 +60,22 @@ impl Reactor {
         F: Future,
     {
         let mut scheduler = flurx::Scheduler::new();
-        let token = CancellationToken::default();
-        let t1 = token.clone();
+        let id = ReactorId::increment();
         scheduler.schedule(move |task| async move {
-            f(ReactiveTask { task, token: t1 }).await;
+            f(ReactiveTask{
+                task,
+                id,
+            }).await;
         });
         Self {
             scheduler,
-            token,
             initialized: false,
+            id,
         }
     }
 
     #[inline(always)]
     pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool {
-        if self.token.is_cancellation_requested() {
-            return true;
-        }
-
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
@@ -77,19 +85,7 @@ impl Reactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
-
-        let finished = self.scheduler.not_exists_reactor();
-        if finished {
-            self.token.set_finished();
-        }
-        finished || self.token.is_cancellation_requested()
-    }
-}
-
-impl Drop for Reactor {
-    #[inline]
-    fn drop(&mut self) {
-        self.token.cancel();
+        self.scheduler.not_exists_reactor()
     }
 }
 
@@ -126,7 +122,7 @@ mod tests {
                         false
                     }),
                 )
-                .await;
+                    .await;
             }));
         });
         app.update();

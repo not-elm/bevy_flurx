@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::action::Action;
-use crate::prelude::{ActionSeed, BoxedRunner};
+use crate::prelude::{ActionSeed, BoxedRunner, RunnerStatus};
 use crate::runner::{CancellationToken, Output, Runner};
 
 /// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
@@ -74,7 +74,7 @@ where
             output,
         }
     })
-    .with((li, ri))
+        .with((li, ri))
 }
 
 struct EitherRunner<O1, O2> {
@@ -90,18 +90,25 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.r1.run(world, token);
-        if let Some(lhs) = self.o1.take() {
-            self.output.set(Either::Left(lhs));
-            return true;
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+        match self.r1.run(world, token) {
+            RunnerStatus::Cancel => return RunnerStatus::Cancel,
+            RunnerStatus::Pending => {}
+            RunnerStatus::Ready => {
+                let lhs = self.o1.take().expect("An output value hasn't been set!!!");
+                self.output.set(Either::Left(lhs));
+                return RunnerStatus::Ready;
+            }
         }
-        self.r2.run(world, token);
-        if let Some(rhs) = self.o2.take() {
-            self.output.set(Either::Right(rhs));
-            true
-        } else {
-            false
+
+        match self.r2.run(world, token) {
+            RunnerStatus::Cancel => RunnerStatus::Cancel,
+            RunnerStatus::Pending => RunnerStatus::Pending,
+            RunnerStatus::Ready => {
+                let rhs = self.o2.take().expect("An output value hasn't been set!!!");
+                self.output.set(Either::Right(rhs));
+                RunnerStatus::Ready
+            }
         }
     }
 }
@@ -178,7 +185,7 @@ mod tests {
                             wait::input::pressed().with(KeyCode::KeyA),
                         ),
                     )
-                    .await;
+                        .await;
                     task.will(Update, wait::until(|| false)).await;
                 }));
             })

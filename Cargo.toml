@@ -15,16 +15,6 @@ repository = "https://github.com/not-elm/bevy_flurx"
  path = "benches/cmp_countup.rs"
  harness = false
 
- [[bench]]
- name = "cmp_repeat_countup"
- path = "benches/cmp_repeat_countup.rs"
- harness = false
-
- [[bench]]
- name = "sequence"
- path = "benches/sequence.rs"
- harness = false
-
  [[example]]
  name = "effect"
  path = "examples/effect.rs"

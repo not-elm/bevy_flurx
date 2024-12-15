@@ -1,17 +1,34 @@
 //! `Runner` defines what does the actual processing of the action.
 
-use std::marker::PhantomData;
+use crate::prelude::Reactor;
+use crate::reactor::ReactorId;
+pub use crate::runner::cancellation_token::{CancellationId, CancellationToken};
 use bevy::ecs::intern::Interned;
-
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Schedule, Schedules, World};
-
-pub use cancellation_token::{CancellationId, CancellationToken};
+use bevy::prelude::{Commands, Entity, Query, Reflect, ResMut, Resource, Schedule, Schedules, World, ReflectResource, ReflectDefault};
 pub use output::Output;
+use std::marker::PhantomData;
 
 mod output;
 mod cancellation_token;
 
+pub enum RunnerStatus {
+    Pending,
+    Ready,
+    Cancel,
+}
+
+impl RunnerStatus {
+    #[inline(always)]
+    pub const fn is_ready(&self) -> bool {
+        matches!(self, RunnerStatus::Ready)
+    }
+
+    #[inline(always)]
+    pub const fn is_cancel(&self) -> bool {
+        matches!(self, RunnerStatus::Cancel)
+    }
+}
 
 /// The structure that implements [`Runner`] is given [`Output`],
 /// if the system termination condition is met, return `true` and
@@ -21,7 +38,7 @@ pub trait Runner {
     ///
     /// If this runner finishes, it must return `true`.
     /// If it returns `true`, an entity attached this runner will be removed.
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool;
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus;
 }
 
 /// The boxed runner.
@@ -39,35 +56,42 @@ impl BoxedRunner {
 
 impl Runner for BoxedRunner {
     #[inline(always)]
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if let Some(mut runner) = self.0.take() {
-            if runner.run(world, token) {
-                true
-            } else {
-                self.0.replace(runner);
-                false
+            match runner.run(world, token) {
+                RunnerStatus::Ready => RunnerStatus::Ready,
+                status => {
+                    self.0.replace(runner);
+                    status
+                }
             }
         } else {
-            true
+            RunnerStatus::Ready
         }
     }
 }
 
 #[repr(transparent)]
-pub(crate) struct BoxedRunners<L: Send + Sync>(pub Vec<(BoxedRunner, CancellationToken)>, PhantomData<L>);
+pub(crate) struct BoxedRunners<L: Send + Sync>(pub Vec<(ReactorId, BoxedRunner, CancellationToken)>, PhantomData<L>);
+
+#[derive(Resource, Default, Reflect)]
+#[reflect(Default, Resource)]
+#[repr(transparent)]
+pub(crate) struct CancelledReactorIds(pub Vec<ReactorId>);
 
 pub(crate) fn initialize_runner<Label>(
     world: &mut World,
     label: &Label,
-    token: CancellationToken,
+    task_id: ReactorId,
     runner: BoxedRunner,
 )
-    where Label: ScheduleLabel
+where
+    Label: ScheduleLabel,
 {
     if let Some(mut runners) = world.get_non_send_resource_mut::<BoxedRunners<Label>>() {
-        runners.0.push((runner, token));
+        runners.0.push((task_id, runner, CancellationToken::default()));
     } else {
-        world.insert_non_send_resource(BoxedRunners::<Label>(vec![(runner, token)], PhantomData));
+        world.insert_non_send_resource(BoxedRunners::<Label>(vec![(task_id, runner, CancellationToken::default())], PhantomData));
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
@@ -86,18 +110,49 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
     schedules.get_mut(schedule_label).unwrap()
 }
 
+pub(crate) fn despawn_canceled_reactors(
+    mut commands: Commands,
+    mut cancelled_ids: ResMut<CancelledReactorIds>,
+    reactors: Query<(Entity, &Reactor)>,
+) {
+    for id in std::mem::take(&mut cancelled_ids.0) {
+        if let Some((entity, _)) = reactors.iter().find(|(_, reactor)| reactor.id == id) {
+            commands.entity(entity).despawn();
+        }
+    }
+}
+
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
+    let Some(mut cancel_ids) = world.remove_resource::<CancelledReactorIds>() else {
+        return;
+    };
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
-        runners.0.retain_mut(|(runner, token)| {
-            if token.finished_reactor(){
-                false
-            } else if token.is_cancellation_requested() {
+        runners.0.retain_mut(|(task_id, runner, token)| {
+            if cancel_ids.0.contains(task_id) {
                 token.call_cancel_handles(world);
-                false
-            } else {
-                !runner.run(world, token)
+                return false;
+            }
+            match runner.run(world, token) {
+                RunnerStatus::Ready => false,
+                RunnerStatus::Pending => true,
+                RunnerStatus::Cancel => {
+                    cancel_ids.0.push(*task_id);
+                    token.call_cancel_handles(world);
+                    false
+                }
             }
         });
+        if !cancel_ids.0.is_empty() {
+            runners.0.retain_mut(|(task_id, _, token)| {
+                if cancel_ids.0.contains(task_id) {
+                    token.call_cancel_handles(world);
+                    false
+                } else {
+                    true
+                }
+            });
+        }
+        world.insert_resource(cancel_ids);
         world.insert_non_send_resource(runners);
     }
 }
@@ -108,13 +163,13 @@ pub(crate) mod macros {
             if let Some(out1) = $o1.take() {
                 if let Some(out2) = $o2.take() {
                     $output.set((out1, out2));
-                    true
+                    $crate::prelude::RunnerStatus::Ready
                 } else {
                     $o1.set(out1);
-                    false
+                    $crate::prelude::RunnerStatus::Pending
                 }
             } else {
-                false
+                $crate::prelude::RunnerStatus::Pending
             }
         };
 
@@ -122,13 +177,13 @@ pub(crate) mod macros {
             if let Some(($($out,)*)) = $o1.take() {
                 if let Some(out2) = $o2.take() {
                     $output.set(($($out,)* out2));
-                    true
+                    $crate::prelude::RunnerStatus::Ready
                 } else {
                     $o1.set(($($out,)*));
-                    false
+                     $crate::prelude::RunnerStatus::Pending
                 }
             } else {
-                false
+               $crate::prelude:: RunnerStatus::Pending
             }
         };
     }
@@ -161,10 +216,9 @@ mod tests {
     use bevy::prelude::{Commands, ResMut, Update, World};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::wait;
     use crate::prelude::{ActionSeed, CancellationToken, Reactor};
-    use crate::runner::Runner;
+    use crate::runner::{Runner, RunnerStatus};
     use crate::test_util::test;
     use crate::tests::test_app;
 
@@ -173,14 +227,13 @@ mod tests {
     }
 
     impl Runner for TestCancelRunner {
-        fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+        fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
             let mut count = world.resource_mut::<Count>();
             count.increment();
             if self.limit == count.0 {
-                token.cancel();
-                true
+                RunnerStatus::Cancel
             } else {
-                false
+                RunnerStatus::Pending
             }
         }
     }

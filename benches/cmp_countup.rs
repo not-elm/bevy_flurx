@@ -15,28 +15,6 @@ struct Exit(bool);
 #[derive(Resource, Default)]
 struct Limit(usize);
 
-fn without_flurx(count: usize, c: &mut Criterion) {
-    c.bench_function(&format!("without_flurx count: {count}"), |b| {
-        b.iter(|| {
-            let mut app = App::new();
-            app
-                .add_plugins(TaskPoolPlugin::default())
-                .init_resource::<Exit>()
-                .insert_resource(Limit(count))
-                .add_systems(Update, move |mut exit: ResMut<Exit>, mut local: Local<usize>, limit: Res<Limit>| {
-                    *local += 1;
-                    if *local == limit.0 {
-                        exit.0 = true;
-                    }
-                });
-
-            while !app.world().resource::<Exit>().0 {
-                app.update();
-            }
-        });
-    });
-}
-
 fn with_flurx(count: usize, c: &mut Criterion) {
     c.bench_function(&format!("with_flurx count: {count}"), move |b| {
         b.iter(move || {
@@ -71,7 +49,6 @@ fn with_flurx(count: usize, c: &mut Criterion) {
 
 fn cmp_count_10000(c: &mut Criterion) {
     const COUNT: usize = 10000;
-    without_flurx(COUNT, c);
     with_flurx(COUNT, c);
 }
 

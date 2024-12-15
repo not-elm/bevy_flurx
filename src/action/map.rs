@@ -2,7 +2,7 @@ use bevy::prelude::World;
 
 use crate::action::remake::Remake;
 use crate::prelude::CancellationToken;
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
 
 /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
 /// applying function.
@@ -53,7 +53,7 @@ where
 
 impl<I, O, O2, A, Re> Map<I, O, O2, A> for Re
 where
-     I: 'static,
+    I: 'static,
     O: 'static,
     O2: 'static,
     Re: Remake<I, O, O2, A> + 'static,
@@ -80,25 +80,26 @@ impl<O1, O2, F> Runner for MapRunner<O1, O2, F>
 where
     F: FnOnce(O1) -> O2 + 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.r1.run(world, token);
-        if let Some(o) = self.o1.take() {
-            self.output.set(self.map.take().unwrap()(o));
-            true
-        } else {
-            false
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+        match self.r1.run(world, token) {
+            RunnerStatus::Cancel => RunnerStatus::Cancel,
+            RunnerStatus::Pending => RunnerStatus::Pending,
+            RunnerStatus::Ready => {
+                let o = self.o1.take().expect("The output value has not been set!!!");
+                self.output.set(self.map.take().unwrap()(o));
+                RunnerStatus::Ready
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
-    use bevy::prelude::{Commands, In};
-
     use crate::action::once;
     use crate::prelude::{Map, Pipe, Reactor};
     use crate::tests::test_app;
+    use bevy::app::{Startup, Update};
+    use bevy::prelude::{Commands, In};
 
     #[test]
     fn map_num_to_string() {
@@ -124,7 +125,7 @@ mod tests {
                             assert_eq!(num, 5);
                         })),
                 )
-                .await;
+                    .await;
 
                 task.will(
                     Update,
@@ -134,7 +135,7 @@ mod tests {
                         },
                     )),
                 )
-                .await;
+                    .await;
             }));
         });
 

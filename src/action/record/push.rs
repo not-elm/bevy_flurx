@@ -3,7 +3,7 @@ use bevy::prelude::World;
 use crate::action::record::push_track;
 use crate::prelude::record::EditRecordResult;
 use crate::prelude::record::Track;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus};
 
 /// Push the [`Track`](crate::prelude::Track) onto the [`Record`](crate::prelude::Record).
 ///
@@ -54,15 +54,15 @@ impl<Act> Runner for PushRunner<Act>
 where
     Act: Send + Sync + 'static,
 {
-    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         if let Some(track) = self.track.take() {
             if let Err(error) = push_track::<Act>(track, world, true) {
                 self.output.set(Err(error));
-                return true;
+                return RunnerStatus::Ready;
             }
         }
         self.output.set(Ok(()));
-        true
+        RunnerStatus::Ready
     }
 }
 

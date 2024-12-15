@@ -6,12 +6,11 @@
 //!
 //! - [`through`]
 
-use bevy::prelude::World;
-
 use crate::action::pipe::Pipe;
 use crate::action::seed::ActionSeed;
 use crate::prelude::{Action, CancellationToken};
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
+use bevy::prelude::World;
 
 /// This function is used when you want to insert some kind of action,
 /// such as a delay, between the action that sends output and the action that receives it.
@@ -119,27 +118,27 @@ impl<V> Runner for ThroughRunner<V>
 where
     V: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if self.inner.run(world, token) {
-            self.output.set(self.value.take().unwrap());
-            true
-        } else {
-            false
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+        match self.inner.run(world, token) {
+            RunnerStatus::Ready => {
+                self.output.set(self.value.take().unwrap());
+                RunnerStatus::Ready
+            }
+            other => other
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
-    use bevy::prelude::{Commands, In, Resource};
-    use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::once;
     use crate::action::pipe::Pipe;
     use crate::action::through::Through;
     use crate::prelude::Reactor;
     use crate::tests::test_app;
+    use bevy::app::{Startup, Update};
+    use bevy::prelude::{Commands, In, Resource};
+    use bevy_test_helper::resource::DirectResourceControl;
 
     #[derive(Resource, Eq, PartialEq, Debug)]
     struct Count(usize);
@@ -157,7 +156,7 @@ mod tests {
                             commands.insert_resource(Count(num));
                         })),
                 )
-                .await;
+                    .await;
             }));
         });
         app.update();

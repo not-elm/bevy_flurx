@@ -8,7 +8,7 @@ use bevy::prelude::World;
 
 use crate::action::Action;
 use crate::prelude::{ActionSeed, CancellationToken};
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
 
 /// [`Omit`] provides a mechanism to omit both input and output types from an action.
 pub trait Omit {
@@ -118,7 +118,7 @@ where
             let r1 = seed.create_runner(input, Output::default());
             OmitRunner { output, r1 }
         })
-        .with(input)
+            .with(input)
     }
 }
 
@@ -142,12 +142,14 @@ struct OmitRunner {
 }
 
 impl Runner for OmitRunner {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if self.r1.run(world, token) {
-            self.output.set(());
-            true
-        } else {
-            false
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+        match self.r1.run(world, token) {
+            RunnerStatus::Cancel => RunnerStatus::Cancel,
+            RunnerStatus::Pending => RunnerStatus::Pending,
+            RunnerStatus::Ready => {
+                self.output.set(());
+                RunnerStatus::Ready
+            }
         }
     }
 }
@@ -178,7 +180,7 @@ mod tests {
                             count.set(num);
                         })),
                 )
-                .await;
+                    .await;
             }));
         });
 
@@ -200,7 +202,7 @@ mod tests {
                             count.set(3);
                         })),
                 )
-                .await;
+                    .await;
             }));
         });
 

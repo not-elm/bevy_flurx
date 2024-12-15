@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner, RunnerStatus};
 
 /// Wait until the execution of one of the actions is completed.
 ///
@@ -29,7 +29,7 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
 /// ```
 pub fn any<Actions>() -> ActionSeed<Actions, usize>
 where
-    Actions: IntoIterator<Item = ActionSeed> + 'static,
+    Actions: IntoIterator<Item=ActionSeed> + 'static,
 {
     ActionSeed::new(move |actions: Actions, output| {
         let runners = actions
@@ -50,20 +50,26 @@ struct AnyRunner {
 }
 
 impl Runner for AnyRunner {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         let mut finished = None;
         for (i, runner) in self.runners.iter_mut().enumerate() {
-            if runner.run(world, token) {
-                finished.replace(i);
-                break;
+            match runner.run(world, token) {
+                RunnerStatus::Ready => {
+                    finished.replace(i);
+                    break;
+                }
+                RunnerStatus::Cancel => {
+                    return RunnerStatus::Cancel;
+                }
+                RunnerStatus::Pending => continue
             }
         }
         if let Some(finished_index) = finished {
             self.runners.clear();
             self.output.set(finished_index);
-            true
+            RunnerStatus::Ready
         } else {
-            false
+            RunnerStatus::Pending
         }
     }
 }
@@ -74,7 +80,6 @@ mod tests {
     use bevy::prelude::{Commands, Events, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::{delay, once};
     use crate::actions;
     use crate::prelude::wait;

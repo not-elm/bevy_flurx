@@ -1,4 +1,4 @@
-use crate::prelude::{ActionSeed, CancellationToken, Runner};
+use crate::prelude::{ActionSeed, CancellationToken, Runner, RunnerStatus};
 use bevy::prelude::World;
 use crate::runner::Output;
 
@@ -46,9 +46,9 @@ pub fn no_op_with_generics<I, O>() -> ActionSeed<I, O>
 struct NoOpRunner<O>(Output<O>);
 
 impl<O: Default> Runner for NoOpRunner<O> {
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         self.0.set(O::default());
-        true
+        RunnerStatus::Ready
     }
 }
 

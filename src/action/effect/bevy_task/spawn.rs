@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::action::effect::AsyncFunctor;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus};
 
 /// Spawns a future onto the bevy thread pool,
 /// and then wait until its completed.
@@ -31,7 +31,7 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 /// ```
 pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
 where
-     I: 'static,
+    I: 'static,
     Functor: AsyncFunctor<I, Out, M> + 'static,
     Out: Send + 'static,
     M: Send + 'static,
@@ -60,12 +60,12 @@ where
     Out: Send + 'static,
 {
     #[allow(clippy::async_yields_async)]
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         if let Some(out) = pollster::block_on(futures_lite::future::poll_once(&mut self.task)) {
             self.output.set(out);
-            true
+            RunnerStatus::Ready
         } else {
-            false
+            RunnerStatus::Pending
         }
     }
 }

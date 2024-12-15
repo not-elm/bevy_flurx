@@ -23,7 +23,7 @@ pub use _either::*;
 pub use all::{all, private};
 
 use crate::action::seed::ActionSeed;
-use crate::prelude::wait;
+use crate::prelude::{wait, RunnerStatus};
 use crate::runner::{CancellationToken, Output, Runner};
 
 #[path = "wait/any.rs"]
@@ -112,10 +112,10 @@ where
 
 impl<Sys, O> Runner for WaitRunner<Sys, O>
 where
-    Sys: System<Out = Option<O>>,
+    Sys: System<Out=Option<O>>,
     SystemIn<'static, Sys>: Clone + 'static,
 {
-    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> crate::prelude::RunnerStatus {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
@@ -125,9 +125,9 @@ where
         self.system.apply_deferred(world);
         if let Some(o) = out {
             self.output.set(o);
-            true
+            RunnerStatus::Ready
         } else {
-            false
+            RunnerStatus::Pending
         }
     }
 }
@@ -138,7 +138,6 @@ mod tests {
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, EventWriter, In, Local, Update};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
-
     use crate::action::wait::until;
     use crate::action::{once, wait};
     use crate::reactor::Reactor;
@@ -157,10 +156,9 @@ mod tests {
                             *count == 2
                         }),
                     )
-                    .await;
-
-                    task.will(Update, once::non_send::insert().with(AppExit::Success))
                         .await;
+
+                    task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
                 }));
             })
             .expect("Failed to run system");
@@ -186,9 +184,9 @@ mod tests {
                             *count += 1 + input.0;
                             *count == 4
                         })
-                        .with(1),
+                            .with(1),
                     )
-                    .await;
+                        .await;
 
                     task.will(Update, once::non_send::insert().with(AppExit::Success))
                         .await;

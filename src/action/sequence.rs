@@ -13,12 +13,11 @@
 //!
 //! [`sequence!`](crate::sequence)
 
-
 use bevy::prelude::World;
 
 use crate::action::{Action, Remake};
 use crate::prelude::CancellationToken;
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
 
 /// Create the action combined with the subsequent action.
 ///
@@ -45,21 +44,21 @@ pub trait Then<I1, O1, O2, ActionOrSeed> {
     /// });
     /// ```
     fn then<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
-        where
-            I2: 'static;
+    where
+        I2: 'static;
 }
 
 
 impl<I1, O1, O2, ActionOrSeed, A> Then<I1, O1, O2, ActionOrSeed> for A
-    where
-        I1: 'static,
-        O1: 'static,
-        O2: 'static,
-        A: Remake<I1, O1, O2, ActionOrSeed> + 'static
+where
+    I1: 'static,
+    O1: 'static,
+    O2: 'static,
+    A: Remake<I1, O1, O2, ActionOrSeed> + 'static,
 {
     fn then<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
-        where
-            I2: 'static
+    where
+        I2: 'static,
     {
         self.remake(|r1, o1, output| {
             SequenceRunner {
@@ -120,20 +119,23 @@ struct SequenceRunner<O1> {
 }
 
 impl<O1> Runner for SequenceRunner<O1>
-    where
-        O1: 'static,
+where
+    O1: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if self.o1.is_none() {
-            self.r1.run(world, token);
+            match self.r1.run(world, token) {
+                RunnerStatus::Pending => return RunnerStatus::Pending,
+                RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                RunnerStatus::Ready => {}
+            };
         }
-        if token.is_cancellation_requested(){
-            return true;
-        }
+
         if self.o1.is_some() {
             self.r2.run(world, token)
         } else {
-            false
+            // unreachable
+            RunnerStatus::Cancel
         }
     }
 }
@@ -191,7 +193,7 @@ mod tests {
         app.assert_resource_eq(Mark1);
         app.assert_resource_eq(Mark2);
     }
-    
+
     #[test]
     fn output_is_2() {
         let mut app = test_app();
@@ -230,7 +232,7 @@ mod tests {
         app.update();
         app.assert_resource_eq(OutputUSize(2));
     }
-    
+
     #[test]
     fn using_sequence_macro() {
         let mut app = test_app();
@@ -252,7 +254,7 @@ mod tests {
         app.update();
         app.assert_resource_eq(OutputUSize(2));
     }
-    
+
     #[test]
     fn r2_no_run_after_r1_cancelled() {
         let mut app = test_app();

@@ -8,7 +8,7 @@ use bevy::prelude::World;
 
 use crate::action::remake::Remake;
 use crate::prelude::seed::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationToken, Output, Runner, RunnerStatus};
 
 /// Provides the mechanism to pipe the actions.
 pub trait Pipe<I1, O1, O2, A> {
@@ -90,19 +90,22 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if !self.finished_r1 {
-            self.r1.run(world, token);
-        }
-        if token.is_cancellation_requested() {
-            return true;
+            match self.r1.run(world, token) {
+                RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                RunnerStatus::Pending => return RunnerStatus::Pending,
+                RunnerStatus::Ready => {}
+            };
         }
 
         self.setup_second_runner();
         if let Some(r2) = self.r2.as_mut() {
-            r2.run(world, token);
+            r2.run(world, token)
+        } else {
+            // unreachable
+            RunnerStatus::Cancel
         }
-        self.output.is_some()
     }
 }
 
@@ -135,7 +138,7 @@ mod tests {
                         .through(once::run(|| {}))
                         .then(once::event::app_exit_success()),
                 )
-                .await;
+                    .await;
             }));
         });
         app.update();

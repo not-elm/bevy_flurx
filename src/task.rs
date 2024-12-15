@@ -1,21 +1,18 @@
 //! Create a task that runs the system until certain conditions are met.
 
-
-use std::future::Future;
-
-use bevy::ecs::schedule::ScheduleLabel;
-use futures_polling::FuturePollingExt;
-
 use crate::action::Action;
-use crate::runner::CancellationToken;
+use crate::reactor::ReactorId;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
+use bevy::ecs::schedule::ScheduleLabel;
+use futures_polling::FuturePollingExt;
+use std::future::Future;
 
 /// Create a task that runs the system until certain conditions are met.
 #[derive(Clone)]
 pub struct ReactiveTask {
     pub(crate) task: flurx::task::ReactiveTask<'static, WorldPtr>,
-    pub(crate) token: CancellationToken,
+    pub(crate) id: ReactorId,
 }
 
 impl ReactiveTask {
@@ -51,12 +48,12 @@ impl ReactiveTask {
         label: Label,
         action: impl Into<Action<In, Out>> + 'static,
     ) -> impl Future<Output=Out>
-        where
-            Label: ScheduleLabel,
-            In: 'static,
-            Out: 'static,
+    where
+        Label: ScheduleLabel,
+        In: 'static,
+        Out: 'static,
     {
-        self.task.will(WorldSelector::new(label, action.into(), self.token.clone()))
+        self.task.will(WorldSelector::new(label, self.id, action.into()))
     }
 
     /// Create a new initialized task.
@@ -87,10 +84,10 @@ impl ReactiveTask {
         label: Label,
         action: impl Into<Action<In, Out>> + 'static,
     ) -> impl Future<Output=Out>
-        where
-            Label: ScheduleLabel,
-            In: 'static,
-            Out: 'static,
+    where
+        Label: ScheduleLabel,
+        In: 'static,
+        Out: 'static,
     {
         let mut future = self.will(label, action).polling();
         let _ = future.poll_once().await;
@@ -100,13 +97,12 @@ impl ReactiveTask {
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, First, Startup, Update};
-    use bevy::prelude::Commands;
-
     use crate::action::once;
     use crate::prelude::wait;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
+    use bevy::app::{AppExit, First, Startup, Update};
+    use bevy::prelude::Commands;
 
     #[test]
     fn run() {

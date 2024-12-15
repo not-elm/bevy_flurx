@@ -9,13 +9,12 @@
 //! - [`record::undo::to`](crate::prelude::record::undo::to)
 //! - [`record::undo::all`](crate::prelude::record::undo::all)
 
-use bevy::prelude::World;
-
 use crate::action::record::EditRecordResult;
 use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};
-use crate::prelude::{ActionSeed, Output, Runner, Track};
+use crate::prelude::{ActionSeed, Output, Runner, RunnerStatus, Track};
 use crate::runner::{BoxedRunner, CancellationId, CancellationToken};
+use bevy::prelude::World;
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -118,11 +117,11 @@ where
     P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static,
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
         if self.cancellation_id.is_none() {
             if let Err(progressing) = lock_record::<Act>(world) {
                 self.output.set(Err(progressing));
-                return true;
+                return RunnerStatus::Ready;
             }
             world.insert_non_send_resource(RedoStore::<Act>(Vec::new()));
             self.cancellation_id.replace(token.register(cleanup::<Act>));
@@ -145,12 +144,12 @@ where
                 if let Some(id) = self.cancellation_id.as_ref() {
                     token.unregister(id);
                 }
-                return true;
+                return RunnerStatus::Ready;
             };
 
             undo_runner.run(world, token);
             let Some(redo) = self.undo_output.take() else {
-                return false;
+                return RunnerStatus::Pending;
             };
             if let Some(redo) = redo {
                 let undo = self.track.take().unwrap();
@@ -206,8 +205,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(record::undo::all::<TestAct>()),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.update();
@@ -230,8 +229,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(record::undo::all::<TestAct>()),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.update();
@@ -252,8 +251,8 @@ mod tests {
                     Update,
                     push_undo_increment().then(record::undo::index_to::<TestAct>().with(0)),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.update();
@@ -274,8 +273,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(record::undo::index_to::<TestAct>().with(1)),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.update();
@@ -312,8 +311,8 @@ mod tests {
                         .then(push(Act::Stop))
                         .then(record::undo::to().with(Act::Move)),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.update();
@@ -333,8 +332,8 @@ mod tests {
                         rollback: Rollback::undo(|| delay::frames().with(1)),
                     })),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
 
                 let t1 = task.run(Update, record::undo::once::<TestAct>()).await;
                 task.will(
@@ -347,7 +346,7 @@ mod tests {
                         },
                     )),
                 )
-                .await;
+                    .await;
                 task.will(
                     Update,
                     record::undo::all::<TestAct>().pipe(once::run(
@@ -358,7 +357,7 @@ mod tests {
                         },
                     )),
                 )
-                .await;
+                    .await;
                 t1.await.unwrap();
             }));
         });
@@ -383,8 +382,8 @@ mod tests {
                     })
                     .then(record::undo::once::<TestAct>())
             })
-            .await
-            .unwrap();
+                .await
+                .unwrap();
         });
         app.update();
         app.update();
@@ -421,7 +420,7 @@ mod tests {
                             .then(record::undo::once::<TestAct>())
                             .then(delay::frames().with(1000))
                     })
-                    .await;
+                        .await;
                 }),
             ));
         });
@@ -430,7 +429,7 @@ mod tests {
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
                 commands.entity(reactor.single()).despawn_recursive();
             })
-            .run_if(on_event::<AppExit>),
+                .run_if(on_event::<AppExit>),
         );
         app.update();
         app.update();

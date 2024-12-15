@@ -4,7 +4,6 @@
 //!
 //! - [`effect::tokio::spawn`](crate::prelude::effect::tokio::spawn)
 
-
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -13,7 +12,7 @@ use bevy::prelude::World;
 use tokio::task::JoinHandle;
 
 use crate::action::effect::AsyncFunctor;
-use crate::prelude::{ActionSeed, CancellationToken};
+use crate::prelude::{ActionSeed, CancellationToken, RunnerStatus};
 use crate::runner::{Output, Runner};
 
 /// Spawns a new tokio task, and then wait its output.
@@ -40,11 +39,11 @@ use crate::runner::{Output, Runner};
 /// });
 /// ```
 pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
-    where
-        I: Send + 'static,
-        M: Send + 'static,
-        Out: Send + 'static,
-        Functor: AsyncFunctor<I, Out, M> + Send + 'static,
+where
+    I: Send + 'static,
+    M: Send + 'static,
+    Out: Send + 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + 'static,
 {
     ActionSeed::new(|input: I, output: Output<Out>| {
         TokioRunner {
@@ -68,14 +67,14 @@ struct TokioRunner<I, Out, Functor, M>
 }
 
 impl<I, Out, Functor, M> Runner for TokioRunner<I, Out, Functor, M>
-    where
-        I: Send + 'static,
-        Functor: AsyncFunctor<I, Out, M> + Send + 'static,
-        M: Send + 'static,
-        Out: Send + 'static
+where
+    I: Send + 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + 'static,
+    M: Send + 'static,
+    Out: Send + 'static,
 {
     #[allow(clippy::async_yields_async)]
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         if let Some((input, functor)) = self.args.take() {
             let arc_output = self.arc_output.clone();
             self.handle.replace(pollster::block_on(async move {
@@ -87,9 +86,9 @@ impl<I, Out, Functor, M> Runner for TokioRunner<I, Out, Functor, M>
 
         if let Some(out) = self.arc_output.blocking_lock().take() {
             self.output.set(out);
-            true
+            RunnerStatus::Ready
         } else {
-            false
+            RunnerStatus::Pending
         }
     }
 }

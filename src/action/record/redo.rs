@@ -13,7 +13,7 @@ use bevy::prelude::World;
 use crate::action::record::{push_tracks, Record};
 use crate::action::record::{unlock_record, EditRecordResult};
 use crate::prelude::record::lock_record;
-use crate::prelude::{ActionSeed, Output, Track};
+use crate::prelude::{ActionSeed, Output, RunnerStatus, Track};
 use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner};
 
 /// Pops the last pushed `redo` action and execute it.
@@ -135,11 +135,11 @@ where
     Act: Send + Sync + 'static,
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
         if self.cancellation_id.is_none() {
             if let Err(e) = lock_record::<Act>(world) {
                 self.output.set(Err(e));
-                return true;
+                return RunnerStatus::Ready;
             }
             world.insert_non_send_resource(TracksStore::<Act>(Vec::new()));
             self.cancellation_id.replace(token.register(cleanup::<Act>));
@@ -162,15 +162,16 @@ where
                         token.unregister(id);
                     }
                     cleanup::<Act>(world);
-                    return true;
+                    return RunnerStatus::Ready;
                 }
             }
 
-            if self.redo_runner.as_mut().unwrap().run(world, token) {
-                self.redo_runner.take();
-                self.redo_output.take();
-            } else {
-                return false;
+            match self.redo_runner.as_mut().unwrap().run(world, token) {
+                RunnerStatus::Ready => {
+                    self.redo_runner.take();
+                    self.redo_output.take();
+                }
+                other => return other
             }
         }
     }
@@ -228,8 +229,8 @@ mod tests {
                         ),
                     }),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
                 task.will(Update, record::undo::once::<TestAct>())
                     .await
                     .unwrap();
@@ -435,8 +436,8 @@ mod tests {
                         )
                     })],
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
 
                 let t1 = task.run(Update, record::undo::once::<TestAct>()).await;
                 if task
@@ -473,8 +474,8 @@ mod tests {
                     .then(record::undo::once::<TestAct>())
                     .then(record::redo::once::<TestAct>())
             })
-            .await
-            .unwrap();
+                .await
+                .unwrap();
         });
         app.update();
         app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());
@@ -520,7 +521,7 @@ mod tests {
                             .then(record::undo::once::<TestAct>())
                             .then(delay::frames().with(1000))
                     })
-                    .await;
+                        .await;
                 }),
             ));
         });
@@ -529,7 +530,7 @@ mod tests {
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
                 commands.entity(reactor.single()).despawn_recursive();
             })
-            .run_if(on_event::<AppExit>),
+                .run_if(on_event::<AppExit>),
         );
         app.update();
         app.send(RequestRedo::<TestAct>::Once);

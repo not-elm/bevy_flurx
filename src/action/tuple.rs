@@ -1,6 +1,6 @@
 use bevy::prelude::World;
 
-use crate::prelude::{ActionSeed, CancellationToken};
+use crate::prelude::{ActionSeed, CancellationToken, RunnerStatus};
 use crate::runner::{BoxedRunner, Output, Runner};
 
 /// Convert to the output of action to tuple.
@@ -27,13 +27,13 @@ struct TupleRunner<O> {
 }
 
 impl<O> Runner for TupleRunner<O> {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
         self.runner.run(world, token);
         if let Some(o) = self.tmp.take() {
             self.output.set((o,));
-            true
+            RunnerStatus::Ready
         } else {
-            false
+            RunnerStatus::Pending
         }
     }
 }

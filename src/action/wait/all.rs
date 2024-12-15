@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::prelude::{ActionSeed, Output, Runner};
-use crate::runner::{BoxedRunner, CancellationToken};
+use crate::runner::{BoxedRunner, CancellationToken, RunnerStatus};
 
 /// Wait until all the actions are completed.
 ///
@@ -43,13 +43,22 @@ struct AllRunner {
 }
 
 impl Runner for AllRunner {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.runners.retain_mut(|r| !r.run(world, token));
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+        let runners = std::mem::take(&mut self.runners);
+        for mut runner in runners{
+            match runner.run(world, token) {
+                RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                RunnerStatus::Ready => {},
+                RunnerStatus::Pending => {
+                    self.runners.push(runner);
+                }
+            }
+        }
         if self.runners.is_empty() {
             self.output.set(());
-            true
+            RunnerStatus::Ready
         } else {
-            false
+            RunnerStatus::Pending
         }
     }
 }
@@ -110,11 +119,11 @@ macro_rules! wait_all {
 #[allow(non_snake_case)]
 pub mod private {
     use std::marker::PhantomData;
-
     use crate::action::Action;
     use crate::prelude::ActionSeed;
     use crate::runner::macros::impl_tuple_runner;
     use crate::runner::{BoxedRunner, Output, Runner};
+    use crate::prelude::RunnerStatus;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
         o1: Output<O1>,
@@ -168,23 +177,29 @@ pub mod private {
                     O2: 'static,
             {
                 #[allow(non_snake_case)]
-                  fn run(&mut self, world: &mut bevy::prelude::World, token: &$crate::prelude::CancellationToken) -> bool {
+                  fn run(&mut self, world: &mut bevy::prelude::World, token: &mut $crate::prelude::CancellationToken) -> RunnerStatus {
                     if self.o1.is_none(){
-                        self.r1.run(world, token);
+                        match self.r1.run(world, token){
+                            RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                            _ => {}
+                        }
                     }
                     if self.o2.is_none(){
-                        self.r2.run(world, token);
+                        match self.r2.run(world, token){
+                            RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                            _ => {}
+                        }
                     }
                     if let Some(($($lhs_out,)*)) = self.o1.take(){
                         if let Some(out2) = self.o2.take(){
                             self.output.set(($($lhs_out,)* out2));
-                            true
+                            RunnerStatus::Ready
                         }else{
                             self.o1.set(($($lhs_out,)*));
-                            false
+                            RunnerStatus::Pending
                         }
                     }else{
-                        false
+                        RunnerStatus::Pending
                     }
                 }
             }

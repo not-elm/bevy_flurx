@@ -8,18 +8,24 @@ use crate::task::ReactiveTask;
 
 pub trait SpawnReactor {
     fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
-        where
-            F: Future;
+    where
+        F: Future;
 }
 
 impl SpawnReactor for World {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static) where F: Future {
+    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
+    where
+        F: Future,
+    {
         self.spawn(Reactor::schedule(f));
     }
 }
 
 impl SpawnReactor for App {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static) where F: Future {
+    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
+    where
+        F: Future,
+    {
         self.world_mut().spawn_reactor(f);
     }
 }
@@ -38,9 +44,8 @@ pub mod test {
     struct TestCancelRunner;
 
     impl Runner for TestCancelRunner {
-        fn run(&mut self, _: &mut World, token: &CancellationToken) -> bool {
-            token.cancel();
-            true
+        fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+            crate::prelude::RunnerStatus::Cancel
         }
     }
 }

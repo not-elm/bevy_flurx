@@ -13,9 +13,10 @@
 //! - [`once::audio`](audio) (require feature flag `audio`)
 
 use crate::action::seed::ActionSeed;
+use crate::prelude::RunnerStatus;
 use crate::runner::{CancellationToken, Output, Runner};
-use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
 pub use _no_op::{no_op, no_op_with_generics};
+use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
 
 pub mod event;
 pub mod non_send;
@@ -25,7 +26,7 @@ pub mod switch;
 pub mod audio;
 #[cfg(feature = "state")]
 pub mod state;
-#[path="once/no_op.rs"]
+#[path = "once/no_op.rs"]
 mod _no_op;
 
 /// Once run a system.
@@ -72,14 +73,14 @@ impl<Sys> Runner for OnceRunner<Sys>
 where
     Sys: System,
 {
-    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         self.system.initialize(world);
         let Some(input) = self.input.take() else {
-            return true;
+            return RunnerStatus::Ready;
         };
         let out = self.system.run(input, world);
         self.system.apply_deferred(world);
         self.output.set(out);
-        true
+        RunnerStatus::Ready
     }
 }

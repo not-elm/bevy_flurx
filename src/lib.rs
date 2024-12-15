@@ -9,13 +9,14 @@
 
 #![allow(clippy::type_complexity)]
 
+use crate::prelude::despawn_canceled_reactors;
+use crate::reactor::{Reactor, ReactorId};
+use crate::world_ptr::WorldPtr;
 use bevy::app::{App, Last, MainScheduleOrder, Plugin, PostStartup};
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::hierarchy::DespawnRecursiveExt;
 use bevy::prelude::{Entity, QueryState, World};
-
-use crate::reactor::Reactor;
-use crate::world_ptr::WorldPtr;
+use crate::runner::CancelledReactorIds;
 
 pub mod action;
 pub mod extension;
@@ -64,10 +65,19 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        app.init_schedule(RunReactor)
+        app
+            .register_type::<ReactorId>()
+            .register_type::<CancelledReactorIds>()
+            .init_resource::<CancelledReactorIds>()
+            .init_schedule(RunReactor)
             .add_systems(PostStartup, initialize_reactors)
-            .add_systems(RunReactor, run_reactors);
-        app.world_mut()
+            .add_systems(RunReactor, (
+                run_reactors,
+                despawn_canceled_reactors
+            ));
+
+        app
+            .world_mut()
             .resource_mut::<MainScheduleOrder>()
             .insert_after(Last, RunReactor);
     }
@@ -109,8 +119,10 @@ fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut React
 
 #[cfg(test)]
 mod tests {
+    use crate::action::once;
+    use crate::prelude::{ActionSeed, Record, RecordExtension};
+    use crate::FlurxPlugin;
     use bevy::app::{App, AppExit};
-
     use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
@@ -119,10 +131,6 @@ mod tests {
     use bevy::time::TimePlugin;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::BevyTestHelperPlugin;
-
-    use crate::action::once;
-    use crate::prelude::{ActionSeed, Record, RecordExtension};
-    use crate::FlurxPlugin;
 
     pub fn exit_reader() -> EventCursor<AppExit> {
         EventCursor::<AppExit>::default()
