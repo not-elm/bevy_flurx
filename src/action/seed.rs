@@ -1,8 +1,8 @@
 //! Provides the trait for converting into an action.
 
-use crate::action::{once, Action};
+use crate::action::Action;
 use crate::runner::{BoxedRunner, Output, Runner};
-use bevy::prelude::{Reflect, ReflectDefault};
+use bevy::prelude::Reflect;
 
 /// If [`In`](bevy::prelude::In) type of the struct implements this is `()`,
 /// its struct also implements Into<[`Action`]> automatically.
