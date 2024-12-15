@@ -1,7 +1,8 @@
 //! Provides the trait for converting into an action.
 
-use crate::action::Action;
+use crate::action::{once, Action};
 use crate::runner::{BoxedRunner, Output, Runner};
+use bevy::prelude::{Reflect, ReflectDefault};
 
 /// If [`In`](bevy::prelude::In) type of the struct implements this is `()`,
 /// its struct also implements Into<[`Action`]> automatically.
@@ -13,6 +14,7 @@ use crate::runner::{BoxedRunner, Output, Runner};
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
 ///
 ///
+#[derive(Reflect)]
 #[repr(transparent)]
 pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>);
 
@@ -80,3 +82,4 @@ where
         Self(Box::new(value))
     }
 }
+
