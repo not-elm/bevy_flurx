@@ -6,32 +6,32 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ macos-latest, windows-latest, ubuntu-latest ]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Toolchain
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
-        if: runner.os == 'linux'
-      - name: Test all features
-        run: cargo test --all-features --all
-      - name: Test
-        run: cargo test --all
-  clippy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Toolchain
-        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: actions/cache@v4
         with:
-          components: clippy
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Toolchain
+        uses: dtolnay/rust-toolchain@stable
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
+
       - name: Clippy all features
         run: cargo clippy --all-targets --all-features -- -D warnings
-      - name: Clippy
-        run: cargo clippy -- -D warnings
+
+      - name: Test all features
+        run: cargo test --all-features --all
+

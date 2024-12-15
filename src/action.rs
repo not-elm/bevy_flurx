@@ -36,6 +36,7 @@
 //! - [`remake::Remake`]
 //! - [`effect`]
 
+use bevy::prelude::Reflect;
 pub use _tuple::tuple;
 pub use map::Map;
 pub use remake::Remake;
@@ -65,6 +66,7 @@ mod remake;
 /// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
 ///
 /// Please check [here](crate::action) for more details.
+#[derive(Reflect)]
 pub struct Action<I = (), O = ()>(pub(crate) I, pub(crate) ActionSeed<I, O>);
 
 impl<I1, O1> Action<I1, O1>
