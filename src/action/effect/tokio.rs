@@ -26,7 +26,7 @@ use crate::runner::{Output, Runner};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::run(|| 2)
 ///             .pipe(effect::tokio::spawn(|num: usize| async move{
@@ -40,10 +40,10 @@ use crate::runner::{Output, Runner};
 /// ```
 pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
 where
-    I: Send + 'static,
-    M: Send + 'static,
-    Out: Send + 'static,
-    Functor: AsyncFunctor<I, Out, M> + Send + 'static,
+    I: Send + Sync + 'static,
+    M: Send + Sync + 'static,
+    Out: Send + Sync + 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + Sync + 'static,
 {
     ActionSeed::new(|input: I, output: Output<Out>| {
         TokioRunner {
@@ -107,22 +107,21 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::time::Duration;
 
+    use crate::action::{delay, effect, once, wait};
+    use crate::actions;
+    use crate::prelude::{Pipe, Then};
+    use crate::tests::{exit_reader, test_app};
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{delay, effect, once, wait};
-    use crate::actions;
-    use crate::prelude::{Pipe, Reactor, Then};
-    use crate::tests::{exit_reader, test_app};
-
     #[test]
     fn tokio_task_with_input() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, effect::tokio::spawn(|_| async move { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
                         count.0 = num;
@@ -140,7 +139,7 @@ mod tests {
     fn tokio_task_without_input() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, effect::tokio::spawn(async move { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
                         count.0 = num;
@@ -160,7 +159,7 @@ mod tests {
         static TASK_FINISHED: AtomicBool = AtomicBool::new(false);
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, {
                     wait::either(
                         once::run(|| {}),
@@ -188,7 +187,7 @@ mod tests {
         static TASK_FINISHED: AtomicBool = AtomicBool::new(false);
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, {
                     wait::any().with(actions![
                         once::run(|| {}),

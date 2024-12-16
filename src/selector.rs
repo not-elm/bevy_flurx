@@ -2,13 +2,14 @@ use crate::action::Action;
 use crate::runner::{initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
+use bevy::prelude::Entity;
 use flurx::selector::Selector;
 use std::marker::PhantomData;
 use std::sync::Mutex;
-use crate::reactor::ReactorId;
+
 
 pub(crate) struct WorldSelector<Label, In, Out> {
-    action: Mutex<Option<(ReactorId, Action<In, Out>)>>,
+    action: Mutex<Option<(Entity, Action<In, Out>)>>,
     output: Output<Out>,
     label: Label,
     _m: PhantomData<In>,
@@ -21,9 +22,9 @@ where
     Out: 'static,
 {
     #[inline]
-    pub(crate) fn new(label: Label, task_id: ReactorId, action: Action<In, Out>) -> WorldSelector<Label, In, Out> {
+    pub(crate) fn new(label: Label, entity: Entity, action: Action<In, Out>) -> WorldSelector<Label, In, Out> {
         Self {
-            action: Mutex::new(Some((task_id, action))),
+            action: Mutex::new(Some((entity, action))),
             output: Output::default(),
             label,
             _m: PhantomData,
@@ -41,9 +42,9 @@ where
 
     #[inline(always)]
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
-        if let Some((task_id, action)) = self.action.lock().unwrap().take() {
+        if let Some((entity, action)) = self.action.lock().unwrap().take() {
             let runner = action.into_runner(self.output.clone());
-            initialize_runner(world.as_mut(), &self.label, task_id, runner);
+            initialize_runner(world.as_mut(), &self.label, entity, runner);
             None
         } else {
             self.output.take()

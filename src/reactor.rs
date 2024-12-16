@@ -1,19 +1,90 @@
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
-use bevy::prelude::{Component, Event, Reflect, ReflectDefault};
+use bevy::ecs::component::{ComponentHooks, StorageType};
+use bevy::ecs::world::DeferredWorld;
+use bevy::prelude::{Component, Entity, };
 use std::future::Future;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::marker::PhantomData;
 
-#[derive(Default, Reflect, Eq, PartialEq, Hash, Copy, Clone, Event)]
-#[reflect(Default)]
-pub(crate) struct ReactorId(u64);
-impl ReactorId {
-    #[inline]
-    pub(crate) fn increment() -> Self {
-        static TASK_ID: AtomicU64 = AtomicU64::new(0);
-        Self(TASK_ID.fetch_add(1, Ordering::Relaxed))
+/// [`Reactor`] represents the asynchronous processing flow.
+///
+/// This structure is created by [`Reactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
+///
+/// Remove this component if you want to interrupt the processing flow.
+///
+/// After all scheduled processes have completed, the entity attached to this component
+/// and it's children will be despawn.
+pub struct Flow<Fut>
+where
+    Fut: Future,
+{
+    f: Option<fn(ReactiveTask) -> Fut>,
+    _m: PhantomData<Fut>,
+}
+
+unsafe impl<Fut: Future> Send for Flow<Fut> {}
+
+unsafe impl<Fut: Future> Sync for Flow<Fut> {}
+
+impl<Fut> Flow<Fut>
+where
+    Fut: Future + 'static,
+{
+    /// Create new [`Reactor`].
+    ///
+    /// The scheduled [`Reactor`] will be run and initialized at `RunReactor` schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
+    ///
+    /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
+    /// to reduce the delay until initialization.
+    ///
+    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel),
+    /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor).
+    ///
+    /// ## Examples
+    ///
+    /// ```no_run
+    /// use bevy::app::AppExit;
+    /// use bevy::prelude::*;
+    /// use bevy_flurx::prelude::*;
+    ///
+    /// Flow::schedule(|task| async move{
+    ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
+    ///         ew.send(AppExit::Success);
+    ///     })).await;
+    /// });
+    /// ```
+    pub fn schedule(f: fn(ReactiveTask) -> Fut) -> Flow<Fut>
+    {
+        Self {
+            f: Some(f),
+            _m: PhantomData,
+        }
     }
 }
+
+impl<Fut> Component for Flow<Fut>
+where
+    Fut: Future + 'static,
+{
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks.on_add(|mut world: DeferredWorld, entity: Entity, _| {
+            let f = {
+                let mut entity_mut = world.entity_mut(entity);
+                let Some(mut flow) = entity_mut.get_mut::<Flow<Fut>>() else {
+                    return;
+                };
+                let Some(f) = flow.f.take() else {
+                    return;
+                };
+                f
+            };
+            world.commands().entity(entity).insert(Reactor::schedule(entity, f));
+        });
+    }
+}
+
 
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
@@ -27,7 +98,6 @@ impl ReactorId {
 pub struct Reactor {
     pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
     pub(crate) initialized: bool,
-    pub(crate) id: ReactorId,
 }
 
 impl Reactor {
@@ -48,29 +118,26 @@ impl Reactor {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// Reactor::schedule(|task| async move{
+    /// crate::prelude::Flow::schedule(|task| async move{
     ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
     ///         ew.send(AppExit::Success);
     ///     })).await;
     /// });
     /// ```
-    pub fn schedule<F>(f: impl FnOnce(ReactiveTask) -> F + 'static) -> Reactor
+    pub fn schedule<F>(entity: Entity, f: impl FnOnce(ReactiveTask) -> F + 'static) -> Reactor
     where
         F: Future,
     {
         let mut scheduler = flurx::Scheduler::new();
-        let id = ReactorId::increment();
-
         scheduler.schedule(move |task| async move {
             f(ReactiveTask {
                 task,
-                id,
+                entity,
             }).await;
         });
         Self {
             scheduler,
             initialized: false,
-            id,
         }
     }
 
@@ -104,6 +171,7 @@ mod tests {
 
     use crate::action::{delay, wait};
     use crate::prelude::{BoxedRunners, Reactor};
+    use crate::reactor::Flow;
     use crate::tests::test_app;
 
     #[derive(Resource, Debug, Default, Eq, PartialEq)]
@@ -114,7 +182,7 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<Count>();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     wait::until(|mut count: ResMut<Count>| {
@@ -143,7 +211,7 @@ mod tests {
     fn despawn_after_finished_reactor() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, delay::frames().with(1)).await;
             }));
         });

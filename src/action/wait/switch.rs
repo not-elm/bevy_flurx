@@ -20,7 +20,7 @@ use crate::prelude::ActionSeed;
 ///
 /// struct Animation;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, wait::switch::on::<Animation>()).await;
 /// });
 /// ```
@@ -43,7 +43,7 @@ pub fn on<M>() -> ActionSeed
 ///
 /// struct Animation;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::switch::on::<Animation>()
 ///             .then(wait::switch::off::<Animation>())

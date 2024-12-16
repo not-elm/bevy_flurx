@@ -51,7 +51,7 @@ pub mod switch;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, wait::output(||{
 ///         Some(())
 ///     })).await;
@@ -60,7 +60,7 @@ pub mod switch;
 #[inline(always)]
 pub fn output<Sys, I, O, Marker>(system: Sys) -> ActionSeed<I::Inner<'static>, O>
 where
-    Sys: IntoSystem<I, Option<O>, Marker> + 'static,
+    Sys: IntoSystem<I, Option<O>, Marker> + Send + Sync + 'static,
     I: SystemInput + 'static,
     I::Inner<'static>: Clone,
     O: 'static,
@@ -82,7 +82,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, wait::until(|mut count: Local<usize>|{
 ///         *count += 1;
 ///         *count == 4
@@ -92,7 +92,7 @@ where
 #[inline(always)]
 pub fn until<I, Sys, M>(system: Sys) -> ActionSeed<I::Inner<'static>>
 where
-    Sys: IntoSystem<I, bool, M> + 'static,
+    Sys: IntoSystem<I, bool, M> + Send + Sync + 'static,
     I: SystemInput + 'static,
     I::Inner<'static>: Clone,
 {
@@ -140,7 +140,6 @@ mod tests {
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
     use crate::action::wait::until;
     use crate::action::{once, wait};
-    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
@@ -148,7 +147,7 @@ mod tests {
         let mut app = test_app();
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                     task.will(
                         Update,
                         until(|mut count: Local<u32>| {
@@ -177,7 +176,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                     task.will(
                         Update,
                         until(|input: In<u32>, mut count: Local<u32>| {
@@ -205,7 +204,7 @@ mod tests {
     fn wait_event() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
                 task.will(Update, once::non_send::insert().with(event))
                     .await;
@@ -229,7 +228,7 @@ mod tests {
     fn both_read_event1_and_event2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let t1 = wait::event::read::<TestEvent1>();
                 let t2 = wait::event::read::<TestEvent2>();
 

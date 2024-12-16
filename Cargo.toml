@@ -14,15 +14,15 @@ repository = "https://github.com/not-elm/bevy_flurx"
  name = "cmp_countup"
  path = "benches/cmp_countup.rs"
  harness = false
-
- [[example]]
- name = "effect"
- path = "examples/effect.rs"
- required-features = ["tokio"]
-
-[[example]]
-name = "switch_just_change"
-path = "examples/bug_check/switch_just_change.rs"
+#
+# [[example]]
+# name = "effect"
+# path = "examples/effect.rs"
+# required-features = ["tokio"]
+#
+#[[example]]
+#name = "switch_just_change"
+#path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
 bevy = { version = "0.15.0", default-features = false, features = [] }

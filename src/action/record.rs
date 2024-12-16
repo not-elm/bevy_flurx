@@ -184,14 +184,13 @@ fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, 
 
 #[cfg(test)]
 mod tests {
+    use crate::action::record::track::Track;
+    use crate::action::{record, wait, Action};
+    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Record, Redo, Rollback, Then, Undo};
+    use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
     use bevy::app::{Startup, Update};
     use bevy::prelude::Commands;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::record::track::Track;
-    use crate::action::{record, wait, Action};
-    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
-    use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
 
     pub fn push_num_act(num: usize) -> ActionSeed {
         record::push().with(Track {
@@ -218,7 +217,7 @@ mod tests {
     fn clear_if_undo_finished() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, push_undo_increment()
                     .then(record::undo::once::<TestAct>()),
                 )
@@ -234,7 +233,7 @@ mod tests {
     fn clear_failed_if_undo_doing() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, record::push().with(Track {
                     act: TestAct,
                     rollback: Rollback::undo(|| wait::until(|| false)),

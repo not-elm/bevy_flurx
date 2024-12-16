@@ -21,7 +21,6 @@ use bevy::utils::default;
 use bevy::DefaultPlugins;
 use bevy_egui::egui::{Color32, RichText};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-
 use bevy_flurx::actions;
 use bevy_flurx::prelude::*;
 
@@ -67,7 +66,7 @@ fn spawn_mr_shape(mut commands: Commands) {
 }
 
 fn spawn_undo_redo_reactor(mut commands: Commands) {
-    commands.spawn(Reactor::schedule(|task| async move {
+    commands.spawn(Flow::schedule(|task| async move {
         loop {
             let either = task
                 .will(
@@ -119,7 +118,7 @@ fn show_record(
 }
 
 fn spawn_move_reactor(mut commands: Commands) {
-    commands.spawn(Reactor::schedule(|task| async move {
+    commands.spawn(Flow::schedule(|task| async move {
         loop {
             task.will(
                 Update,

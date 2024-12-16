@@ -19,7 +19,7 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus
 ///
 /// struct MoveAct;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, record::push()
 ///         .with(Track{
 ///             act: MoveAct,
@@ -68,14 +68,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::record::{Record, Track};
+    use crate::action::{once, record};
+    use crate::prelude::{ActionSeed, Omit, Rollback};
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::record::{Record, Track};
-    use crate::action::{once, record};
-    use crate::prelude::{ActionSeed, Omit, Reactor, Rollback};
-
     use crate::tests::test_app;
 
     #[derive(Default)]
@@ -88,7 +86,7 @@ mod tests {
     fn push1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, push(H1)).await;
             }));
         });
@@ -100,7 +98,7 @@ mod tests {
     fn push2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, push(H1)).await;
                 task.will(Update, push(H1)).await;
             }));
@@ -116,7 +114,7 @@ mod tests {
         let mut app = test_app();
         app.world_mut().init_resource::<Record<H2>>();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, push(H1)).await;
                 task.will(Update, push(H2)).await;
                 task.will(Update, push(H1)).await;

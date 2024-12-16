@@ -1,30 +1,28 @@
-use std::future::Future;
-
+use crate::prelude::Flow;
+use crate::task::ReactiveTask;
 use bevy::app::App;
 use bevy::prelude::World;
-
-use crate::prelude::Reactor;
-use crate::task::ReactiveTask;
+use std::future::Future;
 
 pub trait SpawnReactor {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
+    fn spawn_reactor<F>(&mut self, f: fn(ReactiveTask) -> F)
     where
-        F: Future;
+        F: Future + 'static;
 }
 
 impl SpawnReactor for World {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
+    fn spawn_reactor<F>(&mut self, f: fn(ReactiveTask) -> F)
     where
-        F: Future,
+        F: Future + 'static,
     {
-        self.spawn(Reactor::schedule(f));
+        self.spawn(Flow::schedule(f));
     }
 }
 
 impl SpawnReactor for App {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
+    fn spawn_reactor<F>(&mut self, f: fn(ReactiveTask) -> F)
     where
-        F: Future,
+        F: Future + 'static,
     {
         self.world_mut().spawn_reactor(f);
     }

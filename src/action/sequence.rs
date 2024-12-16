@@ -36,14 +36,14 @@ pub trait Then<I1, O1, O2, ActionOrSeed> {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// Reactor::schedule(|task| async move{
+    /// crate::prelude::Flow::schedule(|task| async move{
     ///     task.will(Update, {
     ///         wait::input::just_pressed().with(KeyCode::KeyR)
     ///             .then(once::event::app_exit_success())
     ///     }).await;
     /// });
     /// ```
-    fn then<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
+    fn then<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionOrSeed
     where
         I2: 'static;
 }
@@ -56,7 +56,7 @@ where
     O2: 'static,
     A: Remake<I1, O1, O2, ActionOrSeed> + 'static,
 {
-    fn then<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
+    fn then<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionOrSeed
     where
         I2: 'static,
     {
@@ -88,7 +88,7 @@ where
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::sequence;
 ///
-/// Reactor::schedule(|task|async move{
+/// crate::prelude::Flow::schedule(|task|async move{
 ///     let o = task.will(Update, sequence![
 ///         once::run(||{}),
 ///         once::run(||{}),
@@ -143,7 +143,6 @@ mod tests {
 
     use crate::action::once;
     use crate::action::sequence::Then;
-    use crate::reactor::Reactor;
     use crate::test_util::test;
     use crate::tests::{increment_count, test_app};
 
@@ -161,7 +160,7 @@ mod tests {
     fn two() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert().with(Mark1)),
                 ).await;
@@ -175,7 +174,7 @@ mod tests {
     fn three() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert().with(Mark1))
                     .then(once::res::insert().with(Mark2)),
@@ -192,7 +191,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let output = task.will(Update, once::run(|| {})
                     .then(once::res::insert().with(Mark1))
                     .then(once::res::insert().with(Mark2))
@@ -211,7 +210,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let output = task.will(Update, sequence![
                     once::run(|| {}),
                     once::res::insert().with(Mark1),
@@ -231,7 +230,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let output = task.will(Update, {
                     once::run(|| {})
                         .then(once::res::insert().with(Mark1))
@@ -252,7 +251,7 @@ mod tests {
     fn r2_no_run_after_r1_cancelled() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, test::cancel()
                     .then(increment_count()),
                 ).await;

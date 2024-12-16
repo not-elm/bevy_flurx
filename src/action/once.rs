@@ -40,7 +40,7 @@ mod _no_op;
 /// use bevy::prelude::{World, Update, EventWriter};
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
 ///         ew.send(AppExit::Success);
 ///     })).await;
@@ -49,7 +49,7 @@ mod _no_op;
 #[inline(always)]
 pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I::Inner<'static>, Out>
 where
-    Sys: IntoSystem<I, Out, M> + 'static,
+    Sys: IntoSystem<I, Out, M> + 'static + Send + Sync,
     I: SystemInput + 'static,
     Out:  'static,
 {

@@ -26,7 +26,7 @@ pub trait Pipe<I1, O1, O2, A> {
     /// #[derive(Event, Clone)]
     /// struct PlayerHit(Entity);
     ///
-    /// Reactor::schedule(|task| async move{
+    /// crate::prelude::Flow::schedule(|task| async move{
     ///     task.will(Update, {
     ///         wait::event::read::<PlayerHit>()
     ///             .pipe(once::run(|In(PlayerHit(entity)): In<PlayerHit>, mut players: Query<&mut Hp>|{
@@ -111,24 +111,22 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{delay, once};
+    use crate::prelude::{Map, Pipe, Then, Through};
+    use crate::test_util::test;
+    use crate::tests::{increment_count, test_app};
     use bevy::app::{AppExit, Startup};
-
     use bevy::prelude::{Commands, Events, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{delay, once};
-    use crate::prelude::{Map, Pipe, Reactor, Then, Through};
-    use crate::test_util::test;
-    use crate::tests::{increment_count, test_app};
 
     /// Make sure `Option::unwrap() on a None` does not occur.
     #[test]
     fn not_occur_unwrap_panic() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     delay::frames()
@@ -154,7 +152,7 @@ mod tests {
     fn r2_no_run_after_r1_cancelled() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, test::cancel().pipe(increment_count()))
                     .await;
             }));

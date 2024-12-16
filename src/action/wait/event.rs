@@ -18,7 +18,7 @@ use crate::prelude::wait;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, wait::event::comes::<AppExit>()).await;
 /// });
 /// ```
@@ -58,7 +58,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, wait::event::read::<AppExit>()).await;
 /// });
 /// ```
@@ -88,26 +88,25 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{once, wait};
+    use crate::prelude::{Either, Pipe, Then};
+    use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, EventWriter, Events, In};
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{once, wait};
-    use crate::prelude::{Either, Pipe, Reactor, Then};
-    use crate::tests::test_app;
-
     #[test]
     fn wait_until_event_consumed_events() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::comes::<TestEvent1>()),
                 )
-                .await;
+                    .await;
 
                 task.will(Update, {
                     wait::either(wait::event::comes::<TestEvent1>(), once::run(|| {})).pipe(
@@ -120,7 +119,7 @@ mod tests {
                         ),
                     )
                 })
-                .await;
+                    .await;
             }));
         });
 
@@ -135,13 +134,13 @@ mod tests {
     fn wait_read_event_consumed_events() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::read::<TestEvent1>()),
                 )
-                .await;
+                    .await;
 
                 task.will(Update, {
                     wait::either(wait::event::read::<TestEvent1>(), once::run(|| {})).pipe(
@@ -155,7 +154,7 @@ mod tests {
                         ),
                     )
                 })
-                .await;
+                    .await;
             }));
         });
 

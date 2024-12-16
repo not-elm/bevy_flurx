@@ -42,7 +42,7 @@ fn setup_camera_and_box(mut commands: Commands, mut materials: ResMut<Assets<Sta
 }
 
 fn spawn_reactor(mut commands: Commands) {
-    commands.spawn(Reactor::schedule(|task| async move {
+    commands.spawn(Flow::schedule(|task| async move {
         task.will(Update, wait::until(rotate_shape)).await;
     }));
 }

@@ -8,18 +8,13 @@
 //! (Please check [`Switch`](crate::prelude::Switch) for multi thread operation.)
 
 #![allow(clippy::type_complexity)]
-use crate::reactor::{Reactor, ReactorId};
-use crate::runner::CancellationToken;
+use crate::reactor::Reactor;
 use crate::world_ptr::WorldPtr;
-use bevy::app::{App, Last, Plugin, PostStartup, PreUpdate};
-use bevy::ecs::system::SystemState;
-use bevy::ecs::world::DeferredWorld;
+use bevy::app::{App, Last, Plugin, PostStartup};
 use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{on_event, Entity, Event, EventReader, IntoSystemConfigs, Mut, QueryState, Reflect, Resource, World};
-use bevy::utils::HashMap;
+use bevy::prelude::{Entity, QueryState, World};
 
 pub mod action;
-pub mod extension;
 pub mod runner;
 pub mod task;
 
@@ -43,8 +38,7 @@ pub mod prelude {
         action::Map,
         action::Remake,
         action::*,
-        extension::*,
-        reactor::Reactor,
+        reactor::{Flow, Reactor},
         runner::*,
         task::ReactiveTask,
         FlurxPlugin,
@@ -66,26 +60,8 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
-            .add_event::<ReactorId>()
-            .register_type::<ReactorId>()
-            .add_event::<CallCancelHandlers>()
-            .register_type::<CallCancelHandlers>()
-            .init_resource::<CancelHandlers>()
             .add_systems(PostStartup, initialize_reactors)
-            .add_systems(PreUpdate, call_cancel_handlers.run_if(on_event::<CallCancelHandlers>))
             .add_systems(Last, run_reactors);
-
-        app
-            .world_mut()
-            .register_component_hooks::<Reactor>()
-            .on_add(|mut world: DeferredWorld, entity, _| {
-                let reactor_id = world.get::<Reactor>(entity).unwrap().id;
-                world.resource_mut::<CancelHandlers>().0.insert(reactor_id, (entity, CancellationToken::default()));
-            })
-            .on_remove(|mut world: DeferredWorld, entity, _| {
-                let reactor_id = world.get::<Reactor>(entity).unwrap().id;
-                world.send_event::<CallCancelHandlers>(CallCancelHandlers(reactor_id));
-            });
     }
 }
 
@@ -118,29 +94,6 @@ fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut React
     for entity in entities {
         world.entity_mut(entity).despawn_recursive();
     }
-}
-
-#[derive(Default, Reflect, Eq, PartialEq, Hash, Copy, Clone, Event)]
-struct CallCancelHandlers(pub ReactorId);
-#[derive(Default, Resource)]
-struct CancelHandlers(pub HashMap<ReactorId, (Entity, CancellationToken)>);
-
-fn call_cancel_handlers(
-    world: &mut World,
-) {
-    world.resource_scope(move |world, mut handlers: Mut<CancelHandlers>| {
-        let mut event_system_state = SystemState::<EventReader<CallCancelHandlers>>::new(world);
-        let ids = event_system_state
-            .get_mut(world)
-            .read()
-            .copied()
-            .collect::<Vec<_>>();
-        for CallCancelHandlers(id) in ids {
-            if let Some(mut handler) = handlers.0.remove(&id) {
-                handler.1.call_cancel_handles(world);
-            }
-        }
-    });
 }
 
 #[cfg(test)]

@@ -19,7 +19,7 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner, RunnerStatus
 /// use bevy_flurx::prelude::*;
 /// use bevy::app::AppExit;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     // The output value is the index of the completed action.
 ///     let index: usize = task.will(Update, wait::any().with(actions![
 ///         wait::input::just_pressed().with(KeyCode::KeyB),
@@ -83,14 +83,13 @@ mod tests {
     use crate::action::{delay, once};
     use crate::actions;
     use crate::prelude::wait;
-    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
     fn return_1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let index = task
                     .will(
                         Update,
@@ -112,7 +111,7 @@ mod tests {
     fn return_0() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 let index = task
                     .will(
                         Update,

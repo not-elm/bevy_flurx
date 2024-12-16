@@ -25,7 +25,7 @@ use crate::runner::{Output, Runner};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::run(||{
 ///             2
@@ -39,7 +39,7 @@ use crate::runner::{Output, Runner};
 ///     }).await;
 /// });
 /// ```
-pub fn spawn<I, O>(f: impl FnOnce(I) -> O + Send + 'static) -> ActionSeed<I, O>
+pub fn spawn<I, O>(f: impl FnOnce(I) -> O + Send + Sync + 'static) -> ActionSeed<I, O>
 where
     I: Send + 'static,
     O: Send + 'static,
@@ -87,19 +87,18 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{effect, once};
+    use crate::prelude::Pipe;
+    use crate::tests::test_app;
     use bevy::prelude::{Commands, In, ResMut, Startup, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{effect, once};
-    use crate::prelude::{Pipe, Reactor};
-    use crate::tests::test_app;
 
     #[test]
     fn thread_calc_2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, {
                     effect::thread::spawn(|_| {
                         1 + 1

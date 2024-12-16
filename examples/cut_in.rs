@@ -41,7 +41,7 @@ fn main() {
 }
 
 fn spawn_reactor(mut commands: Commands) {
-    commands.spawn(Reactor::schedule(|task| async move {
+    commands.spawn(Flow::schedule(|task| async move {
         info!("please press [`R`] key!");
         task.will(Update, {
             wait::input::just_pressed()

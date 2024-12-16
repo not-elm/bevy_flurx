@@ -16,7 +16,7 @@ use crate::runner::{BoxedRunner, CancellationToken, RunnerStatus};
 /// use bevy_flurx::actions;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, wait::all().with(actions![
 ///         once::run(||{}),
 ///         delay::time().with(Duration::from_millis(300)),
@@ -86,7 +86,7 @@ impl Runner for AllRunner {
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event4;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     let (event1, event2, event3, event4) = task.will(Update, wait_all![
 ///         wait::event::read::<Event1>(),
 ///         wait::event::read::<Event2>(),
@@ -217,11 +217,10 @@ mod tests {
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::delay;
     use crate::actions;
     use crate::prelude::{once, wait, Pipe, Then};
-    use crate::reactor::Reactor;
+    use crate::reactor::Flow;
     use crate::test_util::SpawnReactor;
     use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
 
@@ -270,7 +269,7 @@ mod tests {
     fn wait_all() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 let (event1, event2, ()) = task
                     .will(
                         Update,
@@ -313,7 +312,7 @@ mod tests {
     fn wait_all_with_once() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 let (event1, ..) = task
                     .will(
                         Update,

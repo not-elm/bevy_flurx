@@ -26,7 +26,7 @@ use bevy::prelude::{Resource, World};
 ///
 /// struct Act;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, record::push().with(Track{
 ///         act: Act,
 ///         rollback: Rollback::undo(|| once::run(||{}))
@@ -82,11 +82,11 @@ where
     do_undo(|_: ()| |record: &mut Record<Act>| std::mem::take(&mut record.tracks))
 }
 
-fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I, EditRecordResult>
+fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + Send + Sync + 'static) -> ActionSeed<I, EditRecordResult>
 where
     I: 'static,
     Act: Send + Sync + 'static,
-    F: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static,
+    F: Fn(&mut Record<Act>) -> Vec<Track<Act>> + Send + Sync + 'static,
 {
     ActionSeed::new(|input: I, output| UndoRunner {
         output,
@@ -202,7 +202,7 @@ mod tests {
     fn pop_all() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -222,7 +222,7 @@ mod tests {
     fn pop_all_with_delay() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -248,7 +248,7 @@ mod tests {
     fn nothing_happens() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, record::undo::all::<TestAct>())
                     .await
                     .unwrap();
@@ -270,7 +270,7 @@ mod tests {
     fn undo_index_to_1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -308,7 +308,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push(Act::Move)
@@ -329,7 +329,7 @@ mod tests {
     fn failed_if_running_other() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment().then(record::push().with(Track {
@@ -411,7 +411,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn((
                 R,
-                Reactor::schedule(|task| async move {
+                crate::prelude::Flow::schedule(|task| async move {
                     task.will(Update, {
                         record::push()
                             .with(Track {

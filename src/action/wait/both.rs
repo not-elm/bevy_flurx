@@ -14,7 +14,7 @@ use crate::runner::macros::output_combine;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task|async move{
+/// crate::prelude::Flow::schedule(|task|async move{
 ///     task.will(Update, wait::both(
 ///         wait::input::just_pressed().with(KeyCode::KeyR),
 ///         wait::event::read::<AppExit>()

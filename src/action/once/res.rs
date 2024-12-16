@@ -19,13 +19,14 @@ use crate::action::seed::ActionSeed;
 /// #[derive(Resource, Default)]
 /// struct Res;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, once::res::init::<Res>()).await;
 /// });
 /// ```
 #[inline(always)]
 pub fn init<R>() -> ActionSeed
-    where R: Resource + Default + 'static
+where
+    R: Resource + Default + 'static,
 {
     once::run(|mut commands: Commands| {
         commands.init_resource::<R>();
@@ -42,13 +43,14 @@ pub fn init<R>() -> ActionSeed
 /// #[derive(Resource)]
 /// struct Res;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, once::res::insert().with(Res)).await;
 /// });
 /// ```
 #[inline(always)]
 pub fn insert<R>() -> ActionSeed<R>
-    where R: Resource + 'static
+where
+    R: Resource + 'static,
 {
     once::run(|input: In<R>, mut commands: Commands| {
         commands.insert_resource(input.0);
@@ -65,13 +67,14 @@ pub fn insert<R>() -> ActionSeed<R>
 /// #[derive(Resource)]
 /// struct Res;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, once::res::remove::<Res>()).await;
 /// });
 /// ```
 #[inline(always)]
 pub fn remove<R>() -> ActionSeed
-    where R: Resource + 'static
+where
+    R: Resource + 'static,
 {
     once::run(|mut commands: Commands| {
         commands.remove_resource::<R>();
@@ -81,18 +84,16 @@ pub fn remove<R>() -> ActionSeed
 
 #[cfg(test)]
 mod tests {
+    use crate::action::once::res;
+    use crate::tests::{test_app, TestResource};
     use bevy::app::{First, Startup};
     use bevy::prelude::Commands;
-
-    use crate::action::once::res;
-    use crate::reactor::Reactor;
-    use crate::tests::{test_app, TestResource};
 
     #[test]
     fn init_resource() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(First, res::init::<TestResource>()).await;
             }));
         });
@@ -105,7 +106,7 @@ mod tests {
     fn insert_resource() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(First, res::insert().with(TestResource)).await;
             }));
         });
@@ -119,7 +120,7 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<TestResource>()
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                     task.will(First, res::remove::<TestResource>()).await;
                 }));
             });

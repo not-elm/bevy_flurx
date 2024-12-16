@@ -1,18 +1,18 @@
 //! Create a task that runs the system until certain conditions are met.
 
 use crate::action::Action;
-use crate::reactor::ReactorId;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use futures_polling::FuturePollingExt;
 use std::future::Future;
+use bevy::prelude::Entity;
 
 /// Create a task that runs the system until certain conditions are met.
 #[derive(Clone)]
 pub struct ReactiveTask {
     pub(crate) task: flurx::task::ReactiveTask<'static, WorldPtr>,
-    pub(crate) id: ReactorId,
+    pub(crate) entity: Entity,
 }
 
 impl ReactiveTask {
@@ -31,7 +31,7 @@ impl ReactiveTask {
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
-    ///     commands.spawn(Reactor::schedule(|task| async move{
+    ///     commands.spawn(crate::prelude::Flow::schedule(|task| async move{
     ///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
     ///             *count += 1;
     ///             (*count == 2).then_some(*count)
@@ -53,7 +53,7 @@ impl ReactiveTask {
         In: 'static,
         Out: 'static,
     {
-        self.task.will(WorldSelector::new(label, self.id, action.into()))
+        self.task.will(WorldSelector::new(label, self.entity, action.into()))
     }
 
     /// Create a new initialized task.
@@ -68,7 +68,7 @@ impl ReactiveTask {
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
-    ///     commands.spawn(Reactor::schedule(|task|async move{
+    ///     commands.spawn(crate::prelude::Flow::schedule(|task|async move{
     ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
     ///         task.will(Update, once::event::send().with(AppExit::Success)).await;
     ///         wait_event.await;
@@ -99,7 +99,7 @@ impl ReactiveTask {
 mod tests {
     use crate::action::once;
     use crate::prelude::wait;
-    use crate::reactor::Reactor;
+    use crate::reactor::Flow;
     use crate::tests::test_app;
     use bevy::app::{AppExit, First, Startup, Update};
     use bevy::prelude::Commands;
@@ -108,7 +108,7 @@ mod tests {
     fn run() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 let event_task = task.run(First, wait::event::read::<AppExit>()).await;
                 task.will(Update, once::event::send().with(AppExit::Success)).await;
                 event_task.await;

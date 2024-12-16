@@ -22,13 +22,13 @@ use crate::runner::Runner;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, effect::bevy_task::spawn_detached(async move{
 ///
 ///     })).await;
 /// });
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
 ///             .pipe(effect::bevy_task::spawn_detached(|num: usize| async move{
@@ -43,7 +43,7 @@ use crate::runner::Runner;
 pub fn spawn_detached<I, Out, Functor, M>(functor: Functor) -> ActionSeed<I, Out>
 where
     I: Send + 'static,
-    Functor: AsyncFunctor<I, Out, M> + Send + 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + Sync + 'static,
     Out: Send + 'static,
     M: Send + 'static,
 {
@@ -101,8 +101,6 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
     use std::time::Duration;
-
-    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
@@ -110,7 +108,7 @@ mod tests {
         let mut app = test_app();
         app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, {
                     effect::bevy_task::spawn_detached(async move {
                         Count(1 + 1)

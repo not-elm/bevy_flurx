@@ -21,7 +21,7 @@ use crate::action::switch::Switch;
 /// 
 /// struct Animation;
 /// 
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, once::switch::on::<Animation>()).await;
 /// });
 /// ```
@@ -44,7 +44,7 @@ pub fn on<M>() -> ActionSeed
 /// 
 /// struct Animation;
 /// 
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, once::switch::off::<Animation>()).await;
 /// });
 /// ```
@@ -63,10 +63,9 @@ mod tests {
     use bevy::app::Startup;
     use bevy::prelude::{Commands, IntoSystemConfigs, ResMut, Update};
     use bevy_test_helper::resource::bool::{Bool, BoolExtension};
-
     use crate::action::once;
     use crate::prelude::{switch_just_turned_off, switch_just_turned_on};
-    use crate::reactor::Reactor;
+    use crate::reactor::Flow;
     use crate::tests::test_app;
 
     struct T;
@@ -76,7 +75,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(Update, once::switch::on::<T>()).await;
                 }));
             })
@@ -93,7 +92,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(Update, once::run(|| {})).await;
                     task.will(Update, once::switch::on::<T>()).await;
                 }));
@@ -113,7 +112,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(Update, once::switch::off::<T>()).await;
                 }));
             })
@@ -130,7 +129,7 @@ mod tests {
         let mut app = test_app();
         app
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(Update, once::run(|| {})).await;
                     task.will(Update, once::switch::off::<T>()).await;
                 }));

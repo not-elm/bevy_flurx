@@ -76,7 +76,7 @@ pub trait OmitInput<I, O> {
 
 impl<O> Omit for ActionSeed<(), O>
 where
-    O: 'static,
+    O: Send + Sync + 'static,
 {
     fn omit(self) -> ActionSeed {
         let action: Action<(), O> = self.into();
@@ -86,8 +86,8 @@ where
 
 impl<I, O> Omit for Action<I, O>
 where
-    I: 'static,
-    O: 'static,
+    I: Send + Sync + 'static,
+    O:  Send + Sync + 'static,
 {
     fn omit(self) -> ActionSeed {
         self.omit_output().omit_input()
@@ -96,7 +96,7 @@ where
 
 impl<I, O, A> OmitInput<I, O> for A
 where
-    A: Into<Action<I, O>> + 'static,
+    A: Into<Action<I, O>> + Send + Sync+ 'static,
     I: 'static,
     O: 'static,
 {
@@ -108,7 +108,7 @@ where
 
 impl<I, O> OmitOutput<I, O, Action<I, ()>> for Action<I, O>
 where
-    I: 'static,
+    I: Send + Sync + 'static,
     O: 'static,
 {
     #[inline]
@@ -156,21 +156,20 @@ impl Runner for OmitRunner {
 
 #[cfg(test)]
 mod tests {
+    use crate::action::omit::{Omit, OmitInput, OmitOutput};
+    use crate::action::{once, wait};
+    use crate::prelude::{ActionSeed, Pipe};
+    use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::omit::{Omit, OmitInput, OmitOutput};
-    use crate::action::{once, wait};
-    use crate::prelude::{ActionSeed, Pipe, Reactor};
-    use crate::tests::test_app;
-
     #[test]
     fn omit_input() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|In(num): In<usize>| num)
@@ -192,7 +191,7 @@ mod tests {
     fn omit_output() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|In(num): In<usize>| num)

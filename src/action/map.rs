@@ -8,7 +8,7 @@ use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
 /// applying function.
 pub trait Map<I1, O1, O2, ActionOrSeed>: Sized
 where
-    O2: 'static,
+    O2: Send + Sync + 'static,
 {
     /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
     /// applying function.
@@ -19,7 +19,7 @@ where
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// Reactor::schedule(|task| async move{
+    /// crate::prelude::Flow::schedule(|task| async move{
     ///     task.will(Update, once::run(|| 3)
     ///         .map(|num| num + 5)
     ///         .pipe(once::run(|In(num): In<usize>|{
@@ -28,7 +28,7 @@ where
     ///     ).await;
     /// });
     /// ```
-    fn map(self, f: impl FnOnce(O1) -> O2 + 'static) -> ActionOrSeed;
+    fn map(self, f: impl FnOnce(O1) -> O2 + Send + Sync + 'static) -> ActionOrSeed;
 
     /// Overwrite the output of [`Action`](crate::prelude::Action) or [`ActionSeed`](crate::prelude::ActionSeed).
     ///
@@ -38,7 +38,7 @@ where
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// Reactor::schedule(|task| async move{
+    /// crate::prelude::Flow::schedule(|task| async move{
     ///     task.will(Update, once::run(|| 3)
     ///         .overwrite("hello")
     ///         .pipe(once::run(|In(word): In<&'static str>|{
@@ -46,8 +46,8 @@ where
     ///         }))
     ///     ).await;
     /// });
-    fn overwrite(self, output: O2) -> ActionOrSeed {
-        self.map(|_| output)
+    fn overwrite(self, output: O2 ) -> ActionOrSeed {
+        self.map(move |_| output)
     }
 }
 
@@ -55,11 +55,11 @@ impl<I, O, O2, A, Re> Map<I, O, O2, A> for Re
 where
     I: 'static,
     O: 'static,
-    O2: 'static,
+    O2: Send + Sync + 'static,
     Re: Remake<I, O, O2, A> + 'static,
 {
     #[inline]
-    fn map(self, f: impl FnOnce(O) -> O2 + 'static) -> A {
+    fn map(self, f: impl FnOnce(O) -> O2 + Send + Sync + 'static) -> A {
         self.remake(|r1, o1, output| MapRunner {
             r1,
             o1,
@@ -96,7 +96,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::once;
-    use crate::prelude::{Map, Pipe, Reactor};
+    use crate::prelude::{Map, Pipe};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In};
@@ -105,7 +105,7 @@ mod tests {
     fn map_num_to_string() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(Update, once::run(|| 3).map(|num| format!("{num}")))
                     .await;
             }));
@@ -116,7 +116,7 @@ mod tests {
     fn overwrite() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|| 3)

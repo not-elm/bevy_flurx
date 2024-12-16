@@ -39,7 +39,7 @@ impl<L, R> Either<L, R> {
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     let either = task.will(Update, wait::either(
 ///         wait::until(||false),
 ///         wait::event::read::<AppExit>()
@@ -119,10 +119,8 @@ mod tests {
     use bevy::input::ButtonInput;
     use bevy::prelude::{Commands, KeyCode, Local, ResMut, Resource, Update};
     use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::wait::{output, until, Either};
     use crate::action::{once, wait};
-    use crate::reactor::Reactor;
     use crate::tests::test_app;
     use crate::wait_all;
 
@@ -133,7 +131,7 @@ mod tests {
         struct Count(usize);
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                     let u1 = until(|mut count: Local<u32>| {
                         *count += 1;
                         *count == 3
@@ -171,7 +169,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
+                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                     task.will(
                         Update,
                         wait::either(

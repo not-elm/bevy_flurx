@@ -22,7 +22,7 @@ use crate::prelude::ActionSeed;
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, delay::time().with(Duration::from_secs(1))).await;
 /// });
 /// ```
@@ -47,7 +47,7 @@ pub fn time() -> ActionSeed<Duration> {
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Reactor::schedule(|task| async move{
+/// crate::prelude::Flow::schedule(|task| async move{
 ///     task.will(Update, delay::frames().with(30)).await;
 /// });
 /// ```
@@ -62,28 +62,25 @@ pub fn frames() -> ActionSeed<usize> {
 #[cfg(test)]
 mod tests {
     use bevy::app::{AppExit, First, Startup};
-
     use bevy::prelude::{Commands, Events};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::{delay, once};
     use crate::prelude::Then;
-    use crate::reactor::Reactor;
     use crate::tests::test_app;
 
     #[test]
     fn delay_1frame() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     First,
                     delay::frames()
                         .with(1)
                         .then(once::event::app_exit_success()),
                 )
-                .await;
+                    .await;
             }));
         });
         let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
@@ -98,14 +95,14 @@ mod tests {
     fn delay_2frames() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     First,
                     delay::frames()
                         .with(2)
                         .then(once::non_send::init::<AppExit>()),
                 )
-                .await;
+                    .await;
             }));
         });
 

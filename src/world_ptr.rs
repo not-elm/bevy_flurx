@@ -6,6 +6,9 @@ use bevy::prelude::World;
 #[derive(Clone, Copy)]
 pub struct WorldPtr(*mut World);
 
+unsafe impl Send for WorldPtr{}
+unsafe impl Sync for WorldPtr{}
+
 impl WorldPtr {
     #[inline]
     pub(crate) fn new(value: &mut World) -> Self {

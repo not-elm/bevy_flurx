@@ -25,7 +25,7 @@ use bevy::prelude::World;
 /// #[derive(Event, Clone)]
 /// struct Damage(usize);
 ///
-/// Reactor::schedule(|task|async move{
+/// crate::prelude::Flow::schedule(|task|async move{
 ///     task.will(Update, wait::event::read::<Damage>()
 ///         .pipe(through(delay::time().with(Duration::from_millis(500))))
 ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
@@ -35,7 +35,7 @@ use bevy::prelude::World;
 /// });
 /// ```
 #[inline(always)]
-pub fn through<V, I, O>(action: impl Into<Action<I, O>> + 'static) -> ActionSeed<V, V>
+pub fn through<V, I, O>(action: impl Into<Action<I, O>> + Send + Sync + 'static) -> ActionSeed<V, V>
 where
     V: 'static,
     I: 'static,
@@ -64,7 +64,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// #[derive(Event, Clone)]
     /// struct Damage(usize);
     ///
-    /// Reactor::schedule(|task|async move{
+    /// crate::prelude::Flow::schedule(|task|async move{
     ///     task.will(Update, wait::event::read::<Damage>()
     ///         .through(delay::time().with(Duration::from_millis(500)))
     ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
@@ -73,7 +73,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     ///     ).await;
     /// });
     /// ```
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionOrSeed
     where
         I2: 'static;
 }
@@ -85,7 +85,7 @@ where
     O2: 'static,
 {
     #[inline]
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionSeed<I1, O1>
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionSeed<I1, O1>
     where
         I2: 'static,
     {
@@ -100,7 +100,7 @@ where
     O2: 'static,
 {
     #[inline]
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O1>
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> Action<I1, O1>
     where
         I2: 'static,
     {
@@ -134,7 +134,6 @@ mod tests {
     use crate::action::once;
     use crate::action::pipe::Pipe;
     use crate::action::through::Through;
-    use crate::prelude::Reactor;
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In, Resource};
@@ -147,7 +146,7 @@ mod tests {
     fn through_output_num1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
+            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|| 1usize)

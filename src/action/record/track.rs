@@ -15,8 +15,8 @@ pub struct Track<Act> {
 }
 
 impl<Act> Track<Act>
-    where
-        Act: Send + Sync + 'static
+where
+    Act: Send + Sync + 'static,
 {
     #[inline]
     pub(crate) fn create_runner(&self, output: Output<Option<ActionSeed>>) -> BoxedRunner {
@@ -53,10 +53,10 @@ impl Rollback {
     /// }));
     /// ```
     pub fn new<I, A, F>(f: F) -> Self
-        where
-             I: 'static,
-            F: Fn() -> A + Send + Sync + 'static,
-            A: Into<Action<I, Option<RedoAction>>> + 'static,
+    where
+        I: 'static,
+        F: Fn() -> A + Send + Sync + 'static,
+        A: Into<Action<I, Option<RedoAction>>> + Send + Sync + 'static,
     {
         Self(Box::new(move || { f().omit_input().map(|redo| redo.map(|r| r.0)).with(()) }))
     }
@@ -74,11 +74,11 @@ impl Rollback {
     /// Rollback::undo(|| once::run(||{}));
     /// ```
     pub fn undo<I, O, A, F>(f: F) -> Self
-        where
-             I: 'static,
-            O: 'static,
-            F: Fn() -> A + Send + Sync + 'static,
-            A: Into<Action<I, O>> + 'static,
+    where
+        I: 'static,
+        O: 'static,
+        F: Fn() -> A + Send + Sync + 'static,
+        A: Into<Action<I, O>> + Send + Sync + 'static,
     {
         Self(Box::new(move || { f().omit_input().map(|_| None).with(()) }))
     }
@@ -99,10 +99,10 @@ impl Rollback {
     /// }));
     /// ```
     pub fn undo_redo<I, A, F>(f: F) -> Self
-        where
-             I: 'static,
-            F: Fn() -> A + Send + Sync + 'static,
-            A: Into<Action<I, RedoAction>> + 'static,
+    where
+        I: 'static,
+        F: Fn() -> A + Send + Sync + 'static,
+        A: Into<Action<I, RedoAction>> + Send + Sync + 'static,
     {
         Self(Box::new(move || { f().omit_input().map(|redo| Some(redo.0)).with(()) }))
     }
@@ -144,15 +144,15 @@ impl Rollback {
         undo: Undo<F, I, O, A>,
         redo: (Option<RF>, PhantomData<(RI, O, RO, RA)>),
     ) -> Self
-        where
-             I: 'static,
-            O: 'static,
-            F: Fn() -> A + Send + Sync + 'static,
-            A: Into<Action<I, O>> + 'static,
-            RI: 'static,
-            RF: Fn(O) -> RA + Send + Sync + Clone + 'static,
-            RO: 'static,
-            RA: Into<Action<RI, RO>> + 'static
+    where
+        I: Send + Sync + 'static,
+        O: 'static,
+        F: Fn() -> A + Send + Sync + 'static,
+        A: Into<Action<I, O>> + Send + Sync + 'static,
+        RI: Send + Sync + 'static,
+        RF: Fn(O) -> RA + Send + Sync + Clone + 'static,
+        RO: Send + Sync + 'static,
+        RA: Into<Action<RI, RO>> + Send + Sync + 'static,
     {
         let undo = undo.0;
         let redo = redo.0;
@@ -174,7 +174,11 @@ pub struct RedoAction(pub ActionSeed);
 impl RedoAction {
     /// Creates the [`RedoAction`].
     #[inline]
-    pub fn new<I: 'static, O: 'static>(action: impl Into<Action<I, O>> + 'static) -> Self {
+    pub fn new<I, O>(action: impl Into<Action<I, O>> + Send + Sync + 'static) -> Self
+    where
+        I: Send + Sync + 'static,
+        O: Send + Sync + 'static,
+    {
         Self(action.into().omit())
     }
 }
