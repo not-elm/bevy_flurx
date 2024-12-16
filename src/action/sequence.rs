@@ -125,18 +125,12 @@ where
     fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if self.o1.is_none() {
             match self.r1.run(world, token) {
-                RunnerStatus::Pending => return RunnerStatus::Pending,
-                RunnerStatus::Cancel => return RunnerStatus::Cancel,
-                RunnerStatus::Ready => {}
+                RunnerStatus::Ready => {},
+                other => return other
             };
         }
 
-        if self.o1.is_some() {
-            self.r2.run(world, token)
-        } else {
-            // unreachable
-            RunnerStatus::Cancel
-        }
+        self.r2.run(world, token)
     }
 }
 

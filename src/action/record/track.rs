@@ -27,7 +27,7 @@ impl<Act> Track<Act>
 
 /// This structure holds the function that will be called when an `undo` operation is requested on the track that holds it.
 #[repr(transparent)]
-pub struct Rollback(Box<dyn Fn() -> Action<(), Option<ActionSeed>>>);
+pub struct Rollback(Box<dyn Fn() -> Action<(), Option<ActionSeed>> + Send + Sync>);
 
 impl Rollback {
     /// Create a [`Rollback`] with the function creates `undo action`.
@@ -55,7 +55,7 @@ impl Rollback {
     pub fn new<I, A, F>(f: F) -> Self
         where
              I: 'static,
-            F: Fn() -> A + 'static,
+            F: Fn() -> A + Send + Sync + 'static,
             A: Into<Action<I, Option<RedoAction>>> + 'static,
     {
         Self(Box::new(move || { f().omit_input().map(|redo| redo.map(|r| r.0)).with(()) }))
@@ -77,7 +77,7 @@ impl Rollback {
         where
              I: 'static,
             O: 'static,
-            F: Fn() -> A + 'static,
+            F: Fn() -> A + Send + Sync + 'static,
             A: Into<Action<I, O>> + 'static,
     {
         Self(Box::new(move || { f().omit_input().map(|_| None).with(()) }))
@@ -101,7 +101,7 @@ impl Rollback {
     pub fn undo_redo<I, A, F>(f: F) -> Self
         where
              I: 'static,
-            F: Fn() -> A + 'static,
+            F: Fn() -> A + Send + Sync + 'static,
             A: Into<Action<I, RedoAction>> + 'static,
     {
         Self(Box::new(move || { f().omit_input().map(|redo| Some(redo.0)).with(()) }))
@@ -147,10 +147,10 @@ impl Rollback {
         where
              I: 'static,
             O: 'static,
-            F: Fn() -> A + 'static,
+            F: Fn() -> A + Send + Sync + 'static,
             A: Into<Action<I, O>> + 'static,
             RI: 'static,
-            RF: Fn(O) -> RA + Clone + 'static,
+            RF: Fn(O) -> RA + Send + Sync + Clone + 'static,
             RO: 'static,
             RA: Into<Action<RI, RO>> + 'static
     {

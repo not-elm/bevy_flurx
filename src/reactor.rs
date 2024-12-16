@@ -1,10 +1,11 @@
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
-use bevy::prelude::{Component, Reflect, ReflectDefault};
+use bevy::prelude::{Component, Event, Reflect, ReflectDefault};
 use std::future::Future;
 use std::sync::atomic::{AtomicU64, Ordering};
+use bevy::ecs::component::{ComponentHooks, StorageType, };
 
-#[derive(Default, Reflect, Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Default, Reflect, Eq, PartialEq, Hash, Copy, Clone, Event)]
 #[reflect(Default)]
 pub(crate) struct ReactorId(u64);
 impl ReactorId {
@@ -14,7 +15,6 @@ impl ReactorId {
         Self(TASK_ID.fetch_add(1, Ordering::Relaxed))
     }
 }
-
 
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
@@ -61,8 +61,9 @@ impl Reactor {
     {
         let mut scheduler = flurx::Scheduler::new();
         let id = ReactorId::increment();
+
         scheduler.schedule(move |task| async move {
-            f(ReactiveTask{
+            f(ReactiveTask {
                 task,
                 id,
             }).await;

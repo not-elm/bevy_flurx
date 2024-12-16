@@ -16,7 +16,7 @@
 
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-
+use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::{NonSendMut, Resource, World};
 
 pub use _push::push;
@@ -154,9 +154,10 @@ pub(crate) fn lock_record<Opr: Send + Sync + 'static>(world: &mut World) -> Edit
 }
 
 #[inline]
-pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(world: &mut World) {
-    let mut record = world.get_resource_or_insert_with::<Record<Opr>>(Record::<Opr>::default);
-    record.progressing = false;
+pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(mut world: DeferredWorld) {
+    if let Some(mut record) = world.get_resource_mut::<Record<Opr>>(){
+         record.progressing = false;
+    }
 }
 
 fn push_tracks<Act: Send + Sync + 'static>(track: impl Iterator<Item=Track<Act>>, world: &mut World, in_undo: bool) -> EditRecordResult {

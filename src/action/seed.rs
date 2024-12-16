@@ -14,7 +14,7 @@ use bevy::prelude::Reflect;
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
 #[derive(Reflect)]
 #[repr(transparent)]
-pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>);
+pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner + Send + Sync>);
 
 impl<I, O> ActionSeed<I, O>
 where

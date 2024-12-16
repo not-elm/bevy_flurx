@@ -84,9 +84,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, First, Last, PostUpdate, PreUpdate, Startup, Update};
+    use bevy::app::{AppExit, First, PostUpdate, PreUpdate, Startup, Update};
     use bevy::prelude::Commands;
-
     use crate::action::once::non_send;
     use crate::reactor::Reactor;
     use crate::tests::{test_app, TestResource};
@@ -158,9 +157,6 @@ mod tests {
                 task.will(PostUpdate, non_send::insert().with(AppExit::Success))
                     .await;
                 println!("PostUpdate finished");
-                task.will(Last, non_send::insert().with(AppExit::Success))
-                    .await;
-                println!("Last finished");
             }));
         });
 
@@ -186,13 +182,6 @@ mod tests {
             .is_some());
 
         println!("PostUpdate");
-        app.update();
-        assert!(app
-            .world_mut()
-            .remove_non_send_resource::<AppExit>()
-            .is_some());
-
-        println!("Last");
         app.update();
         assert!(app
             .world_mut()

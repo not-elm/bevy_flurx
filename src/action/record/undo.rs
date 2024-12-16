@@ -14,7 +14,9 @@ use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};
 use crate::prelude::{ActionSeed, Output, Runner, RunnerStatus, Track};
 use crate::runner::{BoxedRunner, CancellationId, CancellationToken};
-use bevy::prelude::World;
+use bevy::ecs::world::DeferredWorld;
+use bevy::log::Resource;
+use bevy::prelude::{Resource, World};
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -109,6 +111,7 @@ struct UndoRunner<P, Act> {
     cancellation_id: Option<CancellationId>,
 }
 
+#[derive(Resource)]
 struct RedoStore<Act>(Vec<(Track<Act>, ActionSeed)>);
 
 impl<P, Act> Runner for UndoRunner<P, Act>
@@ -164,9 +167,13 @@ where
     }
 }
 
-fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
-    if let Some(store) = world.remove_non_send_resource::<RedoStore<Act>>() {
-        world.resource_mut::<Record<Act>>().redo.extend(store.0);
+fn cleanup<Act: Send + Sync + 'static>(mut world: DeferredWorld) {
+    if let Some(store) = world
+        .get_resource_mut::<RedoStore<Act>>()
+        .map(|mut store| std::mem::take(&mut store.0))
+    {
+        world.resource_mut::<Record<Act>>().redo.extend(store);
+        world.commands().remove_resource::<RedoStore<Act>>();
     }
 
     unlock_record::<Act>(world);

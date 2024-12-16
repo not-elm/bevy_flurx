@@ -63,9 +63,8 @@ impl<O1, O2> Runner for BothRunner<O1, O2>
 {
     fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if self.o1.is_none() {
-            match self.r1.run(world, token) {
-                RunnerStatus::Cancel => return RunnerStatus::Cancel,
-                _ => {}
+            if let RunnerStatus::Cancel = self.r1.run(world, token) { 
+                return RunnerStatus::Cancel;
             }
         }
         if self.o2.is_none() && self.r2.run(world, token).is_cancel(){

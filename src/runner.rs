@@ -1,13 +1,13 @@
 //! `Runner` defines what does the actual processing of the action.
 
-use crate::prelude::Reactor;
 use crate::reactor::ReactorId;
 pub use crate::runner::cancellation_token::{CancellationId, CancellationToken};
 use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Commands, Entity, Query, Reflect, ResMut, Resource, Schedule, Schedules, World, ReflectResource, ReflectDefault};
+use bevy::prelude::{Schedule, Schedules, World};
 pub use output::Output;
 use std::marker::PhantomData;
+use crate::CancelHandlers;
 
 mod output;
 mod cancellation_token;
@@ -71,31 +71,26 @@ impl Runner for BoxedRunner {
     }
 }
 
+#[derive(Default)]
 #[repr(transparent)]
-pub(crate) struct BoxedRunners<L: Send + Sync>(pub Vec<(ReactorId, BoxedRunner, CancellationToken)>, PhantomData<L>);
-
-#[derive(Resource, Default, Reflect)]
-#[reflect(Default, Resource)]
-#[repr(transparent)]
-pub(crate) struct CancelledReactorIds(pub Vec<ReactorId>);
+pub(crate) struct BoxedRunners<L: Send + Sync>(pub Vec<(ReactorId, BoxedRunner)>, PhantomData<L>);
 
 pub(crate) fn initialize_runner<Label>(
     world: &mut World,
     label: &Label,
-    task_id: ReactorId,
+    reactor_id: ReactorId,
     runner: BoxedRunner,
 )
 where
     Label: ScheduleLabel,
 {
     if let Some(mut runners) = world.get_non_send_resource_mut::<BoxedRunners<Label>>() {
-        runners.0.push((task_id, runner, CancellationToken::default()));
+        runners.0.push((reactor_id, runner));
     } else {
-        world.insert_non_send_resource(BoxedRunners::<Label>(vec![(task_id, runner, CancellationToken::default())], PhantomData));
+        world.insert_non_send_resource(BoxedRunners::<Label>(vec![(reactor_id, runner)], PhantomData));
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
-
         let schedule = initialize_schedule(&mut schedules, label.intern());
         schedule.add_systems(run_runners::<Label>);
     }
@@ -110,49 +105,33 @@ pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Int
     schedules.get_mut(schedule_label).unwrap()
 }
 
-pub(crate) fn despawn_canceled_reactors(
-    mut commands: Commands,
-    mut cancelled_ids: ResMut<CancelledReactorIds>,
-    reactors: Query<(Entity, &Reactor)>,
-) {
-    for id in std::mem::take(&mut cancelled_ids.0) {
-        if let Some((entity, _)) = reactors.iter().find(|(_, reactor)| reactor.id == id) {
-            commands.entity(entity).despawn();
-        }
-    }
-}
-
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
-    let Some(mut cancel_ids) = world.remove_resource::<CancelledReactorIds>() else {
+    let Some(mut handlers)= world.remove_resource::<CancelHandlers>() else{
         return;
     };
+    let mut request_cancels = Vec::new();
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
-        runners.0.retain_mut(|(task_id, runner, token)| {
-            if cancel_ids.0.contains(task_id) {
-                token.call_cancel_handles(world);
+        runners.0.retain_mut(|(reactor_id, runner)| {
+            if request_cancels.contains(reactor_id) {
                 return false;
             }
+            let Some(token) = handlers.0.get_mut(reactor_id) else{
+                return false;
+            };
             match runner.run(world, token) {
                 RunnerStatus::Ready => false,
                 RunnerStatus::Pending => true,
                 RunnerStatus::Cancel => {
-                    cancel_ids.0.push(*task_id);
-                    token.call_cancel_handles(world);
+                    request_cancels.push(*reactor_id);
                     false
                 }
             }
         });
-        if !cancel_ids.0.is_empty() {
-            runners.0.retain_mut(|(task_id, _, token)| {
-                if cancel_ids.0.contains(task_id) {
-                    token.call_cancel_handles(world);
-                    false
-                } else {
-                    true
-                }
-            });
+
+        for id in request_cancels {
+            world.trigger(id);
         }
-        world.insert_resource(cancel_ids);
+        world.insert_resource(handlers);
         world.insert_non_send_resource(runners);
     }
 }
@@ -209,25 +188,24 @@ pub(crate) mod macros {
     pub(crate) use impl_tuple_runner;
 }
 
-
 #[cfg(test)]
 mod tests {
-    use bevy::app::Startup;
-    use bevy::prelude::{Commands, ResMut, Update, World};
-    use bevy_test_helper::resource::count::Count;
-    use bevy_test_helper::resource::DirectResourceControl;
     use crate::action::wait;
     use crate::prelude::{ActionSeed, CancellationToken, Reactor};
     use crate::runner::{Runner, RunnerStatus};
     use crate::test_util::test;
     use crate::tests::test_app;
+    use bevy::app::Startup;
+    use bevy::prelude::{Commands, ResMut, Update, World};
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     struct TestCancelRunner {
         limit: usize,
     }
 
     impl Runner for TestCancelRunner {
-        fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+        fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
             let mut count = world.resource_mut::<Count>();
             count.increment();
             if self.limit == count.0 {
@@ -285,7 +263,7 @@ mod tests {
         for _ in 0..50 {
             app.update();
             assert_eq!(app.world_mut().query::<&Reactor>().iter(app.world()).len(), 0);
-            app.assert_resource_eq(Count(1));
+            app.assert_resource_eq(Count(0));
         }
     }
 }
