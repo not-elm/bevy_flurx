@@ -3,12 +3,12 @@ use crate::runner::{initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use flurx::selector::Selector;
-use std::cell::Cell;
 use std::marker::PhantomData;
+use std::sync::Mutex;
 use crate::reactor::ReactorId;
 
 pub(crate) struct WorldSelector<Label, In, Out> {
-    action: Cell<Option<(ReactorId, Action<In, Out>)>>,
+    action: Mutex<Option<(ReactorId, Action<In, Out>)>>,
     output: Output<Out>,
     label: Label,
     _m: PhantomData<In>,
@@ -23,7 +23,7 @@ where
     #[inline]
     pub(crate) fn new(label: Label, task_id: ReactorId, action: Action<In, Out>) -> WorldSelector<Label, In, Out> {
         Self {
-            action: Cell::new(Some((task_id, action))),
+            action: Mutex::new(Some((task_id, action))),
             output: Output::default(),
             label,
             _m: PhantomData,
@@ -41,7 +41,7 @@ where
 
     #[inline(always)]
     fn select(&self, world: WorldPtr) -> Option<Self::Output> {
-        if let Some((task_id, action)) = self.action.take() {
+        if let Some((task_id, action)) = self.action.lock().unwrap().take() {
             let runner = action.into_runner(self.output.clone());
             initialize_runner(world.as_mut(), &self.label, task_id, runner);
             None

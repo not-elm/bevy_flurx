@@ -13,17 +13,15 @@
 //! - [`record::undo`](crate::prelude::record::undo)
 //! - [`record::redo`](crate::prelude::record::redo)
 
-
+use crate::action::once;
+use crate::prelude::ActionSeed;
+use bevy::prelude::{NonSendMut, Resource, World};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
-use bevy::ecs::world::DeferredWorld;
-use bevy::prelude::{NonSendMut, Resource, World};
 
 pub use _push::push;
 pub use track::*;
 
-use crate::action::once;
-use crate::prelude::ActionSeed;
 
 pub mod undo;
 pub mod redo;
@@ -68,8 +66,8 @@ pub struct Record<Act> {
 }
 
 impl<Act> Record<Act>
-    where
-        Act: 'static
+where
+    Act: 'static,
 {
     /// Clear all history of `undo` and `redo`.
     pub fn all_clear(&mut self) -> Result<(), UndoRedoInProgress> {
@@ -127,20 +125,20 @@ impl<M> Default for Record<M> {
 }
 
 impl<Op> Resource for Record<Op>
-    where
-        Op: Send + Sync + 'static
+where
+    Op: Send + Sync + 'static,
 {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Send for Record<Op>
-    where
-        Op: Send + Sync + 'static
+where
+    Op: Send + Sync + 'static,
 {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Sync for Record<Op>
-    where
-        Op: Send + Sync + 'static
+where
+    Op: Send + Sync + 'static,
 {}
 
 pub(crate) fn lock_record<Opr: Send + Sync + 'static>(world: &mut World) -> EditRecordResult {
@@ -154,9 +152,9 @@ pub(crate) fn lock_record<Opr: Send + Sync + 'static>(world: &mut World) -> Edit
 }
 
 #[inline]
-pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(mut world: DeferredWorld) {
-    if let Some(mut record) = world.get_resource_mut::<Record<Opr>>(){
-         record.progressing = false;
+pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(world: &mut World) {
+    if let Some(mut record) = world.get_resource_mut::<Record<Opr>>() {
+        record.progressing = false;
     }
 }
 
@@ -190,18 +188,18 @@ mod tests {
     use bevy::prelude::Commands;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::{Action, record, wait};
     use crate::action::record::track::Track;
+    use crate::action::{record, wait, Action};
     use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
-    use crate::tests::{decrement_count, increment_count, NumAct, test_app, TestAct};
+    use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
 
     pub fn push_num_act(num: usize) -> ActionSeed {
         record::push().with(Track {
             act: NumAct(num),
             rollback: Rollback::parts(
                 Undo::make(increment_count),
-                Redo::make(|_| decrement_count())
-            )
+                Redo::make(|_| decrement_count()),
+            ),
         })
             .omit()
     }
@@ -211,8 +209,8 @@ mod tests {
             act: TestAct,
             rollback: Rollback::parts(
                 Undo::make(increment_count),
-                Redo::make(|_| decrement_count())
-            )
+                Redo::make(|_| decrement_count()),
+            ),
         })
     }
 

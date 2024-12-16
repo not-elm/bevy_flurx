@@ -129,7 +129,6 @@ where
                 other => return other
             };
         }
-
         self.r2.run(world, token)
     }
 }

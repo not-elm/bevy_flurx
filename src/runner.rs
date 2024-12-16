@@ -4,9 +4,11 @@ use crate::reactor::ReactorId;
 pub use crate::runner::cancellation_token::{CancellationId, CancellationToken};
 use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Schedule, Schedules, World};
+use bevy::prelude::{Entity, Schedule, Schedules, World};
 pub use output::Output;
 use std::marker::PhantomData;
+use bevy::asset::AssetContainer;
+use bevy::utils::HashMap;
 use crate::CancelHandlers;
 
 mod output;
@@ -109,27 +111,27 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     let Some(mut handlers)= world.remove_resource::<CancelHandlers>() else{
         return;
     };
-    let mut request_cancels = Vec::new();
+    let mut request_cancels = Vec::with_capacity(handlers.0.len());
     if let Some(mut runners) = world.remove_non_send_resource::<BoxedRunners<L>>() {
         runners.0.retain_mut(|(reactor_id, runner)| {
-            if request_cancels.contains(reactor_id) {
-                return false;
-            }
-            let Some(token) = handlers.0.get_mut(reactor_id) else{
+            let Some((entity, token)) = handlers.0.get_mut(reactor_id) else{
                 return false;
             };
+            if request_cancels.contains(entity){
+                return false;
+            }
             match runner.run(world, token) {
                 RunnerStatus::Ready => false,
                 RunnerStatus::Pending => true,
                 RunnerStatus::Cancel => {
-                    request_cancels.push(*reactor_id);
+                    request_cancels.push(*entity);
                     false
                 }
             }
         });
 
-        for id in request_cancels {
-            world.trigger(id);
+        for entity in request_cancels {
+            world.entity_mut(entity).despawn();
         }
         world.insert_resource(handlers);
         world.insert_non_send_resource(runners);

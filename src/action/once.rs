@@ -51,7 +51,7 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I::Inner<'static>, Out>
 where
     Sys: IntoSystem<I, Out, M> + 'static,
     I: SystemInput + 'static,
-    Out: 'static,
+    Out:  'static,
 {
     ActionSeed::new(move |input, output| OnceRunner {
         input: Some(input),
@@ -71,7 +71,8 @@ where
 
 impl<Sys> Runner for OnceRunner<Sys>
 where
-    Sys: System,
+    Sys: System  + 'static,
+    Sys::Out: ,
 {
     fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         self.system.initialize(world);

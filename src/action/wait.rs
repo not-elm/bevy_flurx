@@ -115,7 +115,7 @@ where
     Sys: System<Out=Option<O>>,
     SystemIn<'static, Sys>: Clone + 'static,
 {
-    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
