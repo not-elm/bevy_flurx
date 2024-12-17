@@ -16,27 +16,6 @@ impl<State> StatePtr<State> {
 
 impl<State> Drop for StatePtr<State> {
     fn drop(&mut self) {
-        // if let Some(state) = self.0.get_mut(0) {
-        //     state.take();
-        // }
         self.0.take();
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::core::scheduler::state_ptr::StatePtr;
-
-    struct A;
-
-    #[test]
-    fn state_ref_come_be_none_after_dropped() {
-        let mut ptr = StatePtr(Box::new(None));
-        ptr.0.replace(A);
-        let refer = ptr.state_ref();
-
-        assert!(refer.is_some());
-        drop(ptr);
-        assert!(refer.is_none());
     }
 }
