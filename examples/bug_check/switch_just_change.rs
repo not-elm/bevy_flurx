@@ -1,7 +1,6 @@
 //! Testing that the system runs properly when the switch is switched
 
 use bevy::prelude::*;
-
 use bevy_flurx::prelude::*;
 
 struct S;
@@ -25,7 +24,7 @@ fn main() {
 fn setup(
     mut commands: Commands
 ) {
-    commands.spawn(Flow::schedule(|task| async move {
+    commands.spawn(Reactor::schedule(|task| async move {
         loop {
             task.will(Update, wait::input::just_pressed().with(KeyCode::KeyT)
                 .then(once::switch::on::<S>())

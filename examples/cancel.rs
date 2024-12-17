@@ -5,7 +5,6 @@
 //! [`Reactor`]: bevy_flurx::prelude::Reactor
 
 use bevy::prelude::*;
-use bevy::DefaultPlugins;
 use bevy_flurx::prelude::*;
 
 #[derive(Component)]
@@ -16,14 +15,22 @@ struct Cancel;
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, FlurxPlugin))
+        .add_plugins((
+            DefaultPlugins,
+            FlurxPlugin,
+        ))
         .add_systems(Startup, (setup_camera_and_box, spawn_reactor))
         .add_systems(Update, cancel)
         .run();
 }
 
-fn setup_camera_and_box(mut commands: Commands, mut materials: ResMut<Assets<StandardMaterial>>) {
+fn setup_camera_and_box(
+    mut commands: Commands,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
+) {
     commands.spawn((
+        Mesh3d(meshes.add(Cuboid::default())),
         MeshMaterial3d(materials.add(StandardMaterial {
             base_color: Color::WHITE,
             ..default()
@@ -46,6 +53,7 @@ fn setup_camera_and_box(mut commands: Commands, mut materials: ResMut<Assets<Sta
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn((
         Reactor::schedule(|task| async move {
+            // It will keep rotating the shape forever until cancel.
             task.will(Update, wait::until(rotate_shape)).await;
         }),
         Cancel,
@@ -66,7 +74,8 @@ fn cancel(
 ) {
     if input.just_pressed(KeyCode::Escape) {
         if let Ok(entity) = reactor.get_single() {
-            info!("reactor has been cancelled");
+            info!("Reactor has been cancelled");
+            // Despawn the entity is attached the reactor to request cancel.
             commands.entity(entity).despawn();
         }
     }
