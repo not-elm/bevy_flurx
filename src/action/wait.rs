@@ -15,16 +15,14 @@
 //! - [`wait::audio`] (require feature flag `audio`)
 //! - [`wait::any`]
 
-use bevy::prelude::{In, IntoSystem, System, SystemIn, SystemInput, World};
-
+use crate::action::seed::ActionSeed;
+use crate::prelude::{wait, RunnerStatus};
+use crate::runner::{CancellationToken, Output, Runner};
 pub use _any::any;
 pub use _both::both;
 pub use _either::*;
 pub use all::{all, private};
-
-use crate::action::seed::ActionSeed;
-use crate::prelude::{wait, RunnerStatus};
-use crate::runner::{CancellationToken, Output, Runner};
+use bevy::prelude::{In, IntoSystem, System, SystemIn, SystemInput, World};
 
 #[path = "wait/any.rs"]
 mod _any;
@@ -51,7 +49,7 @@ pub mod switch;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, wait::output(||{
 ///         Some(())
 ///     })).await;
@@ -82,7 +80,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, wait::until(|mut count: Local<usize>|{
 ///         *count += 1;
 ///         *count == 4
@@ -134,20 +132,21 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::wait::until;
+    use crate::action::{once, wait};
+    use crate::prelude::Flow;
+    use crate::tests::test_app;
     use bevy::app::{AppExit, PreUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, EventWriter, In, Local, Update};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
-    use crate::action::wait::until;
-    use crate::action::{once, wait};
-    use crate::tests::test_app;
 
     #[test]
     fn count_up() {
         let mut app = test_app();
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(
                         Update,
                         until(|mut count: Local<u32>| {
@@ -176,7 +175,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(
                         Update,
                         until(|input: In<u32>, mut count: Local<u32>| {
@@ -204,7 +203,7 @@ mod tests {
     fn wait_event() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
                 task.will(Update, once::non_send::insert().with(event))
                     .await;
@@ -228,7 +227,7 @@ mod tests {
     fn both_read_event1_and_event2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 let t1 = wait::event::read::<TestEvent1>();
                 let t2 = wait::event::read::<TestEvent2>();
 

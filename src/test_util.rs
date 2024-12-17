@@ -1,7 +1,7 @@
 use crate::prelude::Flow;
 use crate::task::ReactiveTask;
-use bevy::app::App;
-use bevy::prelude::World;
+use bevy::app::{App, Startup};
+use bevy::prelude::Commands;
 use std::future::Future;
 
 pub trait SpawnReactor {
@@ -10,21 +10,14 @@ pub trait SpawnReactor {
         F: Future + 'static;
 }
 
-impl SpawnReactor for World {
-    fn spawn_reactor<F>(&mut self, f: fn(ReactiveTask) -> F)
-    where
-        F: Future + 'static,
-    {
-        self.spawn(Flow::schedule(f));
-    }
-}
-
 impl SpawnReactor for App {
     fn spawn_reactor<F>(&mut self, f: fn(ReactiveTask) -> F)
     where
         F: Future + 'static,
     {
-        self.world_mut().spawn_reactor(f);
+        self.add_systems(Startup, move |mut commands: Commands| {
+            commands.spawn(Flow::schedule(f));
+        });
     }
 }
 

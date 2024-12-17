@@ -21,7 +21,7 @@ use crate::action::switch::Switch;
 /// 
 /// struct Animation;
 /// 
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::switch::on::<Animation>()).await;
 /// });
 /// ```
@@ -44,7 +44,7 @@ pub fn on<M>() -> ActionSeed
 /// 
 /// struct Animation;
 /// 
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::switch::off::<Animation>()).await;
 /// });
 /// ```

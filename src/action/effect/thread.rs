@@ -25,7 +25,7 @@ use crate::runner::{Output, Runner};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::run(||{
 ///             2
@@ -88,7 +88,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::Pipe;
+    use crate::prelude::{Flow, Pipe};
     use crate::tests::test_app;
     use bevy::prelude::{Commands, In, ResMut, Startup, Update};
     use bevy_test_helper::resource::count::Count;
@@ -98,7 +98,7 @@ mod tests {
     fn thread_calc_2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, {
                     effect::thread::spawn(|_| {
                         1 + 1

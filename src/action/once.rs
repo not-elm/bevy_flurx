@@ -40,7 +40,7 @@ mod _no_op;
 /// use bevy::prelude::{World, Update, EventWriter};
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
 ///         ew.send(AppExit::Success);
 ///     })).await;

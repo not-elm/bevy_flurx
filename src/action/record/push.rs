@@ -3,7 +3,8 @@ use bevy::prelude::World;
 use crate::action::record::push_track;
 use crate::prelude::record::EditRecordResult;
 use crate::prelude::record::Track;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus};
+use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
+use crate::runner::RunnerStatus;
 
 /// Push the [`Track`](crate::prelude::Track) onto the [`Record`](crate::prelude::Record).
 ///
@@ -19,7 +20,7 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus
 ///
 /// struct MoveAct;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, record::push()
 ///         .with(Track{
 ///             act: MoveAct,
@@ -70,11 +71,11 @@ where
 mod tests {
     use crate::action::record::{Record, Track};
     use crate::action::{once, record};
-    use crate::prelude::{ActionSeed, Omit, Rollback};
+    use crate::prelude::{ActionSeed, Flow, Omit, Rollback};
+    use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::DirectResourceControl;
-    use crate::tests::test_app;
 
     #[derive(Default)]
     struct H1;
@@ -86,7 +87,7 @@ mod tests {
     fn push1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push(H1)).await;
             }));
         });
@@ -98,7 +99,7 @@ mod tests {
     fn push2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push(H1)).await;
                 task.will(Update, push(H1)).await;
             }));
@@ -114,7 +115,7 @@ mod tests {
         let mut app = test_app();
         app.world_mut().init_resource::<Record<H2>>();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push(H1)).await;
                 task.will(Update, push(H2)).await;
                 task.will(Update, push(H1)).await;

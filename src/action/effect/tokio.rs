@@ -26,7 +26,7 @@ use crate::runner::{Output, Runner};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::run(|| 2)
 ///             .pipe(effect::tokio::spawn(|num: usize| async move{
@@ -109,7 +109,7 @@ mod tests {
 
     use crate::action::{delay, effect, once, wait};
     use crate::actions;
-    use crate::prelude::{Pipe, Then};
+    use crate::prelude::{Flow, Pipe, Then};
     use crate::tests::{exit_reader, test_app};
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
@@ -121,7 +121,7 @@ mod tests {
     fn tokio_task_with_input() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, effect::tokio::spawn(|_| async move { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
                         count.0 = num;
@@ -139,7 +139,7 @@ mod tests {
     fn tokio_task_without_input() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, effect::tokio::spawn(async move { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
                         count.0 = num;
@@ -159,7 +159,7 @@ mod tests {
         static TASK_FINISHED: AtomicBool = AtomicBool::new(false);
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, {
                     wait::either(
                         once::run(|| {}),
@@ -187,7 +187,7 @@ mod tests {
         static TASK_FINISHED: AtomicBool = AtomicBool::new(false);
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, {
                     wait::any().with(actions![
                         once::run(|| {}),

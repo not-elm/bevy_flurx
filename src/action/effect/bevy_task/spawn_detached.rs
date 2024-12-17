@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-use std::sync::{Arc, Mutex};
-
-use bevy::prelude::World;
-use bevy::tasks::AsyncComputeTaskPool;
-
 use crate::action::effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationToken, Output, RunnerStatus};
 use crate::runner::Runner;
+use bevy::prelude::World;
+use bevy::tasks::AsyncComputeTaskPool;
+use std::marker::PhantomData;
+use std::sync::{Arc, Mutex};
 
 
 /// Spawns a future onto the bevy thread pool, 
@@ -22,13 +20,13 @@ use crate::runner::Runner;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, effect::bevy_task::spawn_detached(async move{
 ///
 ///     })).await;
 /// });
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
 ///             .pipe(effect::bevy_task::spawn_detached(|num: usize| async move{
@@ -94,21 +92,21 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::Pipe;
+    use crate::prelude::{Flow, Pipe};
+    use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::core::TaskPoolPlugin;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
     use std::time::Duration;
-    use crate::tests::test_app;
 
     #[test]
     fn test_simple_spawn_detached() {
         let mut app = test_app();
         app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, {
                     effect::bevy_task::spawn_detached(async move {
                         Count(1 + 1)

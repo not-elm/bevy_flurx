@@ -9,10 +9,12 @@
 
 #![allow(clippy::type_complexity)]
 use crate::reactor::Reactor;
+use crate::runner::CallCancellationHandlers;
 use crate::world_ptr::WorldPtr;
 use bevy::app::{App, Last, Plugin, PostStartup};
+use bevy::ecs::system::SystemState;
 use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{Entity, QueryState, World};
+use bevy::prelude::{Entity, EventReader, IntoSystemConfigs, QueryState, World};
 
 pub mod action;
 pub mod runner;
@@ -60,8 +62,12 @@ impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
         app
+            .add_event::<CallCancellationHandlers>()
             .add_systems(PostStartup, initialize_reactors)
-            .add_systems(Last, run_reactors);
+            .add_systems(Last, (
+                call_cancel_handlers.run_if(bevy::prelude::on_event::<CallCancellationHandlers>),
+                run_reactors,
+            ));
     }
 }
 
@@ -73,6 +79,20 @@ fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut Reactor
         }
         reactor.initialized = true;
         reactor.run_sync(world_ptr);
+    }
+}
+
+fn call_cancel_handlers(
+    world: &mut World,
+) {
+    let mut event_system_state = SystemState::<EventReader<CallCancellationHandlers>>::new(world);
+    let handlers = event_system_state
+        .get_mut(world)
+        .read()
+        .flat_map(|handler| handler.0.0.values().copied())
+        .collect::<Vec<_>>();
+    for handler in handlers {
+        handler(world);
     }
 }
 

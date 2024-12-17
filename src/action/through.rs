@@ -25,7 +25,7 @@ use bevy::prelude::World;
 /// #[derive(Event, Clone)]
 /// struct Damage(usize);
 ///
-/// crate::prelude::Flow::schedule(|task|async move{
+/// Flow::schedule(|task|async move{
 ///     task.will(Update, wait::event::read::<Damage>()
 ///         .pipe(through(delay::time().with(Duration::from_millis(500))))
 ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
@@ -64,7 +64,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// #[derive(Event, Clone)]
     /// struct Damage(usize);
     ///
-    /// crate::prelude::Flow::schedule(|task|async move{
+    /// Flow::schedule(|task|async move{
     ///     task.will(Update, wait::event::read::<Damage>()
     ///         .through(delay::time().with(Duration::from_millis(500)))
     ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
@@ -134,6 +134,7 @@ mod tests {
     use crate::action::once;
     use crate::action::pipe::Pipe;
     use crate::action::through::Through;
+    use crate::prelude::Flow;
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In, Resource};
@@ -146,7 +147,7 @@ mod tests {
     fn through_output_num1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|| 1usize)

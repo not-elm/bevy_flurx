@@ -19,7 +19,7 @@ where
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// crate::prelude::Flow::schedule(|task| async move{
+    /// Flow::schedule(|task| async move{
     ///     task.will(Update, once::run(|| 3)
     ///         .map(|num| num + 5)
     ///         .pipe(once::run(|In(num): In<usize>|{
@@ -38,7 +38,7 @@ where
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// crate::prelude::Flow::schedule(|task| async move{
+    /// Flow::schedule(|task| async move{
     ///     task.will(Update, once::run(|| 3)
     ///         .overwrite("hello")
     ///         .pipe(once::run(|In(word): In<&'static str>|{
@@ -46,7 +46,7 @@ where
     ///         }))
     ///     ).await;
     /// });
-    fn overwrite(self, output: O2 ) -> ActionOrSeed {
+    fn overwrite(self, output: O2) -> ActionOrSeed {
         self.map(move |_| output)
     }
 }
@@ -96,7 +96,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::once;
-    use crate::prelude::{Map, Pipe};
+    use crate::prelude::{Flow, Map, Pipe};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In};
@@ -105,7 +105,7 @@ mod tests {
     fn map_num_to_string() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, once::run(|| 3).map(|num| format!("{num}")))
                     .await;
             }));
@@ -116,7 +116,7 @@ mod tests {
     fn overwrite() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|| 3)

@@ -13,8 +13,8 @@ use bevy::prelude::World;
 use crate::action::record::{push_tracks, Record};
 use crate::action::record::{unlock_record, EditRecordResult};
 use crate::prelude::record::lock_record;
-use crate::prelude::{ActionSeed, Output, RunnerStatus, Track};
-use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner};
+use crate::prelude::{ActionSeed, Output, Track};
+use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner, RunnerStatus};
 
 /// Pops the last pushed `redo` action and execute it.
 /// After the `redo` action is executed, then the `undo` action that created it
@@ -33,7 +33,7 @@ use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner};
 ///
 /// struct Act;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, record::push().with(
 ///         Track{
 ///             act: Act,
@@ -105,7 +105,7 @@ fn do_redo<In, Act, F>(
 where
     In: 'static,
     Act: Send + Sync + 'static,
-    F: Fn(&mut Record<Act>) -> Vec<(Track<Act>, ActionSeed)> + 'static,
+    F: Fn(&mut Record<Act>) -> Vec<(Track<Act>, ActionSeed)> + Send + Sync + 'static,
 {
     ActionSeed::new(|input: In, output| RedoExecuteRunner {
         output,
@@ -131,11 +131,11 @@ struct TracksStore<Act>(Vec<Track<Act>>);
 
 impl<P, Act> Runner for RedoExecuteRunner<P, Act>
 where
-    P: Fn(&mut Record<Act>) -> Vec<(Track<Act>, ActionSeed)> + 'static,
+    P: Fn(&mut Record<Act>) -> Vec<(Track<Act>, ActionSeed)> + Send + Sync + 'static,
     Act: Send + Sync + 'static,
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if self.cancellation_id.is_none() {
             if let Err(e) = lock_record::<Act>(world) {
                 self.output.set(Err(e));
@@ -200,7 +200,7 @@ mod tests {
 
     use crate::action::record::track::{Redo, Undo};
     use crate::action::{delay, once, record};
-    use crate::prelude::{ActionSeed, Omit, Record, RequestRedo, Rollback, Then, Track};
+    use crate::prelude::{ActionSeed, Flow, Omit, Record, RequestRedo, Rollback, Then, Track};
     use crate::reactor::Reactor;
     use crate::sequence;
     use crate::test_util::SpawnReactor;
@@ -210,7 +210,7 @@ mod tests {
     fn test_redo_once() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     record::push().with(Track {
@@ -274,7 +274,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push("1").then(push("2")).then(push("3")))
                     .await;
                 task.will(Update, record::undo::all::<TestAct>())
@@ -321,7 +321,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push(1).then(push(2)).then(push(3)).then(push(4)))
                     .await;
                 task.will(Update, record::undo::all::<Act>()).await.unwrap();
@@ -366,7 +366,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push(1).then(push(2)).then(push(3)).then(push(4)))
                     .await;
                 task.will(Update, record::undo::all::<Act>()).await.unwrap();
@@ -400,7 +400,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push().then(push()).then(push())).await;
                 task.will(Update, record::undo::all::<TestAct>())
                     .await
@@ -423,7 +423,7 @@ mod tests {
     fn failed_in_progressing() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     sequence![record::push().with(Track {
@@ -499,7 +499,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn((
                 R,
-                crate::prelude::Flow::schedule(|task| async move {
+                Flow::schedule(|task| async move {
                     task.will(Update, {
                         record::push()
                             .with(Track {

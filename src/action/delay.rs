@@ -5,13 +5,11 @@
 //! - [`delay::time`](crate::prelude::delay::time)
 //! - [`delay::frames`](crate::prelude::delay::frames)
 
-use std::time::Duration;
-
-use bevy::prelude::{In, Local, Res, TimerMode};
-use bevy::time::{Time, Timer};
-
 use crate::action::wait;
 use crate::prelude::ActionSeed;
+use bevy::prelude::{In, Local, Res, TimerMode};
+use bevy::time::{Time, Timer};
+use std::time::Duration;
 
 /// Delays by the specified amount of time.
 ///
@@ -22,7 +20,7 @@ use crate::prelude::ActionSeed;
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, delay::time().with(Duration::from_secs(1))).await;
 /// });
 /// ```
@@ -47,7 +45,7 @@ pub fn time() -> ActionSeed<Duration> {
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, delay::frames().with(30)).await;
 /// });
 /// ```
@@ -61,19 +59,19 @@ pub fn frames() -> ActionSeed<usize> {
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{delay, once};
+    use crate::prelude::{Flow, Then};
+    use crate::tests::test_app;
     use bevy::app::{AppExit, First, Startup};
     use bevy::prelude::{Commands, Events};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::DirectResourceControl;
-    use crate::action::{delay, once};
-    use crate::prelude::Then;
-    use crate::tests::test_app;
 
     #[test]
     fn delay_1frame() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     First,
                     delay::frames()
@@ -95,7 +93,7 @@ mod tests {
     fn delay_2frames() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     First,
                     delay::frames()

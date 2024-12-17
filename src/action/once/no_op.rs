@@ -12,7 +12,7 @@ use crate::runner::Output;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::no_op()).await;
 /// });
 /// ```
@@ -31,7 +31,7 @@ pub fn no_op() -> ActionSeed {
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::no_op_with_generics::<(), ()>()).await;
 /// });
 #[inline]

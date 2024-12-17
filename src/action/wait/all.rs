@@ -1,7 +1,6 @@
-use bevy::prelude::World;
-
 use crate::prelude::{ActionSeed, Output, Runner};
 use crate::runner::{BoxedRunner, CancellationToken, RunnerStatus};
+use bevy::prelude::World;
 
 /// Wait until all the actions are completed.
 ///
@@ -16,7 +15,7 @@ use crate::runner::{BoxedRunner, CancellationToken, RunnerStatus};
 /// use bevy_flurx::actions;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, wait::all().with(actions![
 ///         once::run(||{}),
 ///         delay::time().with(Duration::from_millis(300)),
@@ -26,7 +25,7 @@ use crate::runner::{BoxedRunner, CancellationToken, RunnerStatus};
 /// ```
 pub fn all<Actions>() -> ActionSeed<Actions>
 where
-    Actions: IntoIterator<Item = ActionSeed> + 'static,
+    Actions: IntoIterator<Item=ActionSeed> + 'static,
 {
     ActionSeed::new(|actions: Actions, output| AllRunner {
         runners: actions
@@ -45,10 +44,10 @@ struct AllRunner {
 impl Runner for AllRunner {
     fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
         let runners = std::mem::take(&mut self.runners);
-        for mut runner in runners{
+        for mut runner in runners {
             match runner.run(world, token) {
                 RunnerStatus::Cancel => return RunnerStatus::Cancel,
-                RunnerStatus::Ready => {},
+                RunnerStatus::Ready => {}
                 RunnerStatus::Pending => {
                     self.runners.push(runner);
                 }
@@ -86,7 +85,7 @@ impl Runner for AllRunner {
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event4;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     let (event1, event2, event3, event4) = task.will(Update, wait_all![
 ///         wait::event::read::<Event1>(),
 ///         wait::event::read::<Event2>(),
@@ -118,12 +117,12 @@ macro_rules! wait_all {
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub mod private {
-    use std::marker::PhantomData;
     use crate::action::Action;
     use crate::prelude::ActionSeed;
+    use crate::prelude::RunnerStatus;
     use crate::runner::macros::impl_tuple_runner;
     use crate::runner::{BoxedRunner, Output, Runner};
-    use crate::prelude::RunnerStatus;
+    use std::marker::PhantomData;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
         o1: Output<O1>,
@@ -211,28 +210,29 @@ pub mod private {
 
 #[cfg(test)]
 mod tests {
+    use crate::action::delay;
+    use crate::actions;
+    use crate::prelude::{once, wait, Pipe, Then};
+    use crate::reactor::Flow;
+    use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, EventWriter, Local};
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-    use crate::action::delay;
-    use crate::actions;
-    use crate::prelude::{once, wait, Pipe, Then};
-    use crate::reactor::Flow;
-    use crate::test_util::SpawnReactor;
-    use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
 
     #[test]
     fn wai_all_actions() {
         let mut app = test_app();
-        app.spawn_reactor(|task| async move {
-            task.will(Update, {
-                once::run(|| [increment_count(), increment_count(), decrement_count()])
-                    .pipe(wait::all())
-            })
-            .await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flow::schedule(|task| async move {
+                task.will(Update, {
+                    once::run(|| [increment_count(), increment_count(), decrement_count()])
+                        .pipe(wait::all())
+                })
+                    .await;
+            }));
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -241,19 +241,20 @@ mod tests {
     #[test]
     fn with_delay_1frame() {
         let mut app = test_app();
-        app.spawn_reactor(|task| async move {
-            task.will(Update, {
-                once::run(|| {
-                    actions![
-                        increment_count(),
-                        delay::frames().with(1),
-                        increment_count()
-                    ]
-                })
-                .pipe(wait::all())
-                .then(once::event::app_exit_success())
-            })
-            .await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Flow::schedule(|task| async move {
+                task.will(Update, {
+                    once::run(|| {
+                        actions![
+                            increment_count(),
+                            delay::frames().with(1),
+                            increment_count()
+                        ]
+                    })
+                        .pipe(wait::all())
+                        .then(once::event::app_exit_success())
+                }).await;
+            }));
         });
         let mut er = exit_reader();
         app.update();

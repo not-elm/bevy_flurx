@@ -4,9 +4,9 @@ use crate::action::Action;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
+use bevy::prelude::Entity;
 use futures_polling::FuturePollingExt;
 use std::future::Future;
-use bevy::prelude::Entity;
 
 /// Create a task that runs the system until certain conditions are met.
 #[derive(Clone)]
@@ -31,7 +31,7 @@ impl ReactiveTask {
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
-    ///     commands.spawn(crate::prelude::Flow::schedule(|task| async move{
+    ///     commands.spawn(Flow::schedule(|task| async move{
     ///         let count: u8 = task.will(Update, wait::output(|mut count: Local<u8>|{
     ///             *count += 1;
     ///             (*count == 2).then_some(*count)
@@ -68,7 +68,7 @@ impl ReactiveTask {
     /// let mut app = App::new();
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
-    ///     commands.spawn(crate::prelude::Flow::schedule(|task|async move{
+    ///     commands.spawn(Flow::schedule(|task|async move{
     ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
     ///         task.will(Update, once::event::send().with(AppExit::Success)).await;
     ///         wait_event.await;

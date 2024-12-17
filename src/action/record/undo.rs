@@ -9,12 +9,13 @@
 //! - [`record::undo::to`](crate::prelude::record::undo::to)
 //! - [`record::undo::all`](crate::prelude::record::undo::all)
 
+use bevy::prelude::World;
+
 use crate::action::record::EditRecordResult;
 use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};
-use crate::prelude::{ActionSeed, Output, Runner, RunnerStatus, Track};
-use crate::runner::{BoxedRunner, CancellationId, CancellationToken};
-use bevy::prelude::{Resource, World};
+use crate::prelude::{ActionSeed, Output, Runner, Track};
+use crate::runner::{BoxedRunner, CancellationId, CancellationToken, RunnerStatus};
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -26,7 +27,7 @@ use bevy::prelude::{Resource, World};
 ///
 /// struct Act;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, record::push().with(Track{
 ///         act: Act,
 ///         rollback: Rollback::undo(|| once::run(||{}))
@@ -109,16 +110,15 @@ struct UndoRunner<P, Act> {
     cancellation_id: Option<CancellationId>,
 }
 
-#[derive(Resource)]
 struct RedoStore<Act>(Vec<(Track<Act>, ActionSeed)>);
 
 impl<P, Act> Runner for UndoRunner<P, Act>
 where
     Act: Send + Sync + 'static,
-    P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static,
+    P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + Send + Sync + 'static,
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
         if self.cancellation_id.is_none() {
             if let Err(progressing) = lock_record::<Act>(world) {
                 self.output.set(Err(progressing));
@@ -150,7 +150,7 @@ where
 
             undo_runner.run(world, token);
             let Some(redo) = self.undo_output.take() else {
-                return RunnerStatus::Pending;
+               return RunnerStatus::Pending;
             };
             if let Some(redo) = redo {
                 let undo = self.track.take().unwrap();
@@ -166,12 +166,8 @@ where
 }
 
 fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
-    if let Some(store) = world
-        .get_non_send_resource_mut::<RedoStore<Act>>()
-        .map(|mut store| std::mem::take(&mut store.0))
-    {
-        world.resource_mut::<Record<Act>>().redo.extend(store);
-        world.remove_non_send_resource::<RedoStore<Act>>();
+    if let Some(store) = world.remove_non_send_resource::<RedoStore<Act>>() {
+        world.resource_mut::<Record<Act>>().redo.extend(store.0);
     }
 
     unlock_record::<Act>(world);
@@ -192,9 +188,7 @@ mod tests {
     use crate::action::record::tests::push_undo_increment;
     use crate::action::record::EditRecordResult;
     use crate::action::{delay, record};
-    use crate::prelude::{
-        once, ActionSeed, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track,
-    };
+    use crate::prelude::{once, ActionSeed, Flow, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track};
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
@@ -202,7 +196,7 @@ mod tests {
     fn pop_all() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -210,8 +204,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(record::undo::all::<TestAct>()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();
@@ -222,7 +216,7 @@ mod tests {
     fn pop_all_with_delay() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -234,8 +228,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(record::undo::all::<TestAct>()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();
@@ -248,7 +242,7 @@ mod tests {
     fn nothing_happens() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, record::undo::all::<TestAct>())
                     .await
                     .unwrap();
@@ -256,8 +250,8 @@ mod tests {
                     Update,
                     push_undo_increment().then(record::undo::index_to::<TestAct>().with(0)),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();
@@ -270,7 +264,7 @@ mod tests {
     fn undo_index_to_1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -278,8 +272,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(record::undo::index_to::<TestAct>().with(1)),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();
@@ -308,7 +302,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push(Act::Move)
@@ -316,8 +310,8 @@ mod tests {
                         .then(push(Act::Stop))
                         .then(record::undo::to().with(Act::Move)),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();
@@ -329,7 +323,7 @@ mod tests {
     fn failed_if_running_other() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment().then(record::push().with(Track {
@@ -337,8 +331,8 @@ mod tests {
                         rollback: Rollback::undo(|| delay::frames().with(1)),
                     })),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
 
                 let t1 = task.run(Update, record::undo::once::<TestAct>()).await;
                 task.will(
@@ -351,7 +345,7 @@ mod tests {
                         },
                     )),
                 )
-                    .await;
+                .await;
                 task.will(
                     Update,
                     record::undo::all::<TestAct>().pipe(once::run(
@@ -362,7 +356,7 @@ mod tests {
                         },
                     )),
                 )
-                    .await;
+                .await;
                 t1.await.unwrap();
             }));
         });
@@ -387,8 +381,8 @@ mod tests {
                     })
                     .then(record::undo::once::<TestAct>())
             })
-                .await
-                .unwrap();
+            .await
+            .unwrap();
         });
         app.update();
         app.update();
@@ -411,7 +405,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn((
                 R,
-                crate::prelude::Flow::schedule(|task| async move {
+                Flow::schedule(|task| async move {
                     task.will(Update, {
                         record::push()
                             .with(Track {
@@ -425,7 +419,7 @@ mod tests {
                             .then(record::undo::once::<TestAct>())
                             .then(delay::frames().with(1000))
                     })
-                        .await;
+                    .await;
                 }),
             ));
         });
@@ -434,7 +428,7 @@ mod tests {
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
                 commands.entity(reactor.single()).despawn_recursive();
             })
-                .run_if(on_event::<AppExit>),
+            .run_if(on_event::<AppExit>),
         );
         app.update();
         app.update();

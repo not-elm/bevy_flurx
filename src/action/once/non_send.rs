@@ -20,7 +20,7 @@ use crate::action::seed::ActionSeed;
 /// #[derive(Default)]
 /// struct Res;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::non_send::init::<Res>()).await;
 /// });
 /// ```
@@ -44,7 +44,7 @@ where
 ///
 /// struct Res;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::non_send::insert().with(Res)).await;
 /// });
 /// ```
@@ -68,7 +68,7 @@ where
 ///
 /// struct Res;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::non_send::remove::<Res>()).await;
 /// });
 /// ```
@@ -85,6 +85,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::once::non_send;
+    use crate::prelude::Flow;
     use crate::tests::{test_app, TestResource};
     use bevy::app::{AppExit, First, PostUpdate, PreUpdate, Startup, Update};
     use bevy::prelude::Commands;
@@ -93,7 +94,7 @@ mod tests {
     fn init_non_send_resource() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(First, non_send::init::<TestResource>()).await;
             }));
         });
@@ -109,7 +110,7 @@ mod tests {
     fn insert_non_send_resource() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(First, non_send::insert().with(TestResource))
                     .await;
             }));
@@ -127,7 +128,7 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<TestResource>()
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(First, non_send::remove::<TestResource>()).await;
                 }));
             });
@@ -143,7 +144,7 @@ mod tests {
     fn success_run_all_schedule_labels() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(First, non_send::insert().with(AppExit::Success))
                     .await;
                 println!("First finished");

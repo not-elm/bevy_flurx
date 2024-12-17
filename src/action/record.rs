@@ -13,15 +13,16 @@
 //! - [`record::undo`](crate::prelude::record::undo)
 //! - [`record::redo`](crate::prelude::record::redo)
 
-use crate::action::once;
-use crate::prelude::ActionSeed;
-use bevy::prelude::{NonSendMut, Resource, World};
 use std::error::Error;
 use std::fmt::{Display, Formatter};
+
+use bevy::prelude::{NonSendMut, Resource, World};
 
 pub use _push::push;
 pub use track::*;
 
+use crate::action::once;
+use crate::prelude::ActionSeed;
 
 pub mod undo;
 pub mod redo;
@@ -153,9 +154,8 @@ pub(crate) fn lock_record<Opr: Send + Sync + 'static>(world: &mut World) -> Edit
 
 #[inline]
 pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(world: &mut World) {
-    if let Some(mut record) = world.get_resource_mut::<Record<Opr>>() {
-        record.progressing = false;
-    }
+    let mut record = world.get_resource_or_insert_with::<Record<Opr>>(Record::<Opr>::default);
+    record.progressing = false;
 }
 
 fn push_tracks<Act: Send + Sync + 'static>(track: impl Iterator<Item=Track<Act>>, world: &mut World, in_undo: bool) -> EditRecordResult {
@@ -186,7 +186,7 @@ fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, 
 mod tests {
     use crate::action::record::track::Track;
     use crate::action::{record, wait, Action};
-    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Record, Redo, Rollback, Then, Undo};
+    use crate::prelude::{ActionSeed, EditRecordResult, Flow, Omit, Record, Redo, Rollback, Then, Undo};
     use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
     use bevy::app::{Startup, Update};
     use bevy::prelude::Commands;
@@ -217,7 +217,7 @@ mod tests {
     fn clear_if_undo_finished() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push_undo_increment()
                     .then(record::undo::once::<TestAct>()),
                 )
@@ -233,7 +233,7 @@ mod tests {
     fn clear_failed_if_undo_doing() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, record::push().with(Track {
                     act: TestAct,
                     rollback: Rollback::undo(|| wait::until(|| false)),

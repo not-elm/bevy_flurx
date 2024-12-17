@@ -24,7 +24,7 @@ use crate::prelude::ActionSeed;
 ///     S2
 /// };
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::state::set().with(S::S2)).await;
 /// });
 /// ```

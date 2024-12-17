@@ -150,7 +150,7 @@ impl Rollback {
         F: Fn() -> A + Send + Sync + 'static,
         A: Into<Action<I, O>> + Send + Sync + 'static,
         RI: Send + Sync + 'static,
-        RF: Fn(O) -> RA + Send + Sync + Clone + 'static,
+        RF: Fn(O) -> RA + Clone + Send + Sync + 'static,
         RO: Send + Sync + 'static,
         RA: Into<Action<RI, RO>> + Send + Sync + 'static,
     {

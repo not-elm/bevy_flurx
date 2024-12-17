@@ -1,6 +1,5 @@
 //! Provides the trait for converting into an action.
 
-use bevy::prelude::Component;
 use crate::action::Action;
 use crate::runner::{BoxedRunner, Output, Runner};
 use bevy::prelude::Reflect;

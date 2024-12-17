@@ -18,7 +18,7 @@ The full source code can be found [here](examples/cut_in.rs).
 fn spawn_reactor(
     mut commands: Commands
 ) {
-    commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+    commands.spawn(Flow::schedule(|task| async move {
         task.will(Update, {
             wait::input::just_pressed().with(KeyCode::KeyR)
                 .then(once::switch::on::<CutInBackground>())

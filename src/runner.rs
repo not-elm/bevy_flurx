@@ -4,6 +4,7 @@ pub use crate::runner::cancellation_token::{CancellationId, CancellationToken};
 use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Component, Entity, Schedule, Schedules, World};
+pub(crate) use cancellation_token::CallCancellationHandlers;
 pub use output::Output;
 use std::marker::PhantomData;
 
@@ -90,14 +91,11 @@ pub(crate) fn initialize_runner<Label>(
 where
     Label: ScheduleLabel,
 {
-    if let Some(mut runners) = world.get_non_send_resource_mut::<BoxedRunners<Label>>() {
+    if let Ok(mut runners) = world.query::<&mut BoxedRunners<Label>>().get_mut(world, entity) {
         runners.0.push(runner);
     } else {
-        world.insert_non_send_resource(BoxedRunners::<Label>(vec![runner], PhantomData));
-        // world.entity_mut(entity).insert((
-        //     BoxedRunners::<Label>(vec![runner], PhantomData),
-        //     CancellationToken::default(),
-        // ));
+        // world.insert_non_send_resource(BoxedRunners::<Label>(vec![runner], PhantomData));
+        world.entity_mut(entity).insert(BoxedRunners::<Label>(vec![runner], PhantomData));
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
@@ -128,11 +126,10 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
             std::mem::take(&mut *token),
         )).collect()
     };
-
     for (entity, mut runners, mut token) in query {
         let mut request_cancel = false;
         runners.0.retain_mut(|runner| {
-            if request_cancel{
+            if request_cancel {
                 return false;
             }
             match runner.run(world, &mut token) {
@@ -145,9 +142,9 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
             }
         });
         if request_cancel {
-            world.commands().entity(entity).despawn();
+            world.entity_mut(entity).despawn();
         } else {
-            world.commands().entity(entity).insert((
+            world.entity_mut(entity).insert((
                 runners,
                 token,
             ));
@@ -210,7 +207,7 @@ pub(crate) mod macros {
 #[cfg(test)]
 mod tests {
     use crate::action::wait;
-    use crate::prelude::{ActionSeed, CancellationToken, Reactor};
+    use crate::prelude::{ActionSeed, CancellationToken, Flow, Reactor};
     use crate::runner::{Runner, RunnerStatus};
     use crate::test_util::test;
     use crate::tests::test_app;
@@ -247,7 +244,7 @@ mod tests {
     fn remove_reactor_after_cancel() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, test_action(3)).await;
             }));
         });
@@ -268,7 +265,7 @@ mod tests {
     fn test_cancel_reactor() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, wait::both(
                     test::cancel(),
                     wait::until(|mut count: ResMut<Count>| {

@@ -1,8 +1,9 @@
+use crate::runner::{CallCancellationHandlers, CancellationToken};
 use crate::task::ReactiveTask;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::component::{ComponentHooks, StorageType};
 use bevy::ecs::world::DeferredWorld;
-use bevy::prelude::{Component, Entity, };
+use bevy::prelude::{Component, Entity};
 use std::future::Future;
 use std::marker::PhantomData;
 
@@ -14,20 +15,15 @@ use std::marker::PhantomData;
 ///
 /// After all scheduled processes have completed, the entity attached to this component
 /// and it's children will be despawn.
-pub struct Flow<Fut>
-where
-    Fut: Future,
-{
-    f: Option<fn(ReactiveTask) -> Fut>,
+pub struct Flow<F, Fut> {
+    f: Option<F>,
     _m: PhantomData<Fut>,
 }
 
-unsafe impl<Fut: Future> Send for Flow<Fut> {}
 
-unsafe impl<Fut: Future> Sync for Flow<Fut> {}
-
-impl<Fut> Flow<Fut>
+impl<F, Fut> Flow<F, Fut>
 where
+    F: FnOnce(ReactiveTask) -> Fut + Send + Sync + 'static,
     Fut: Future + 'static,
 {
     /// Create new [`Reactor`].
@@ -53,8 +49,7 @@ where
     ///     })).await;
     /// });
     /// ```
-    pub fn schedule(f: fn(ReactiveTask) -> Fut) -> Flow<Fut>
-    {
+    pub fn schedule(f: F) -> Flow<F, Fut> {
         Self {
             f: Some(f),
             _m: PhantomData,
@@ -62,26 +57,34 @@ where
     }
 }
 
-impl<Fut> Component for Flow<Fut>
+unsafe impl<F, Fut> Send for Flow<F, Fut> {}
+unsafe impl<F, Fut> Sync for Flow<F, Fut> {}
+
+impl<F, Fut> Component for Flow<F, Fut>
 where
+    F: FnOnce(ReactiveTask) -> Fut + Send + Sync + 'static,
     Fut: Future + 'static,
 {
     const STORAGE_TYPE: StorageType = StorageType::Table;
 
     fn register_component_hooks(hooks: &mut ComponentHooks) {
-        hooks.on_add(|mut world: DeferredWorld, entity: Entity, _| {
-            let f = {
-                let mut entity_mut = world.entity_mut(entity);
-                let Some(mut flow) = entity_mut.get_mut::<Flow<Fut>>() else {
-                    return;
+        hooks
+            .on_add(|mut world: DeferredWorld, entity: Entity, _| {
+                let f = {
+                    let mut entity_mut = world.entity_mut(entity);
+                    let Some(mut flow) = entity_mut.get_mut::<Flow<F, Fut>>() else {
+                        return;
+                    };
+                    let Some(f) = flow.f.take() else {
+                        return;
+                    };
+                    f
                 };
-                let Some(f) = flow.f.take() else {
-                    return;
-                };
-                f
-            };
-            world.commands().entity(entity).insert(Reactor::schedule(entity, f));
-        });
+                world.commands().entity(entity).insert((
+                    Reactor::schedule(entity, f),
+                    CancellationToken::default(),
+                ));
+            });
     }
 }
 
@@ -94,7 +97,6 @@ where
 ///
 /// After all scheduled processes have completed, the entity attached to this component
 /// and it's children will be despawn.
-#[derive(Component)]
 pub struct Reactor {
     pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
     pub(crate) initialized: bool,
@@ -118,7 +120,7 @@ impl Reactor {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// crate::prelude::Flow::schedule(|task| async move{
+    /// Flow::schedule(|task| async move{
     ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
     ///         ew.send(AppExit::Success);
     ///     })).await;
@@ -156,6 +158,22 @@ impl Reactor {
     }
 }
 
+impl Component for Reactor {
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks.on_remove(|mut world: DeferredWorld, entity, _| {
+            world.commands().entity(entity).despawn();
+            if let Some(token) = world
+                .get_mut::<CancellationToken>(entity)
+                .map(|mut token| std::mem::take(&mut *token)) {
+                world.send_event(CallCancellationHandlers(token));
+            }
+        });
+    }
+}
+
 /// SAFETY: Scheduler must always run on the main thread only.
 unsafe impl Send for Reactor {}
 
@@ -164,15 +182,14 @@ unsafe impl Sync for Reactor {}
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{delay, wait};
+    use crate::prelude::Reactor;
+    use crate::reactor::Flow;
+    use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{delay, wait};
-    use crate::prelude::{BoxedRunners, Reactor};
-    use crate::reactor::Flow;
-    use crate::tests::test_app;
 
     #[derive(Resource, Debug, Default, Eq, PartialEq)]
     struct Count(usize);
@@ -198,7 +215,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
-                cmd.entity(reactor.single()).remove::<Reactor>();
+                cmd.entity(reactor.single()).despawn();
             })
             .expect("Failed to run system");
         for _ in 0..10 {
@@ -211,7 +228,7 @@ mod tests {
     fn despawn_after_finished_reactor() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, delay::frames().with(1)).await;
             }));
         });
@@ -221,25 +238,11 @@ mod tests {
             .query::<&Reactor>()
             .get_single(app.world())
             .is_ok());
-        assert_eq!(
-            app.world()
-                .non_send_resource::<BoxedRunners<Update>>()
-                .0
-                .len(),
-            1
-        );
         app.update();
         assert!(app
             .world_mut()
             .query::<&Reactor>()
             .get_single(app.world())
             .is_err());
-        assert_eq!(
-            app.world()
-                .non_send_resource::<BoxedRunners<Update>>()
-                .0
-                .len(),
-            0
-        );
     }
 }

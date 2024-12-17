@@ -25,7 +25,7 @@ fn main() {
 fn setup(
     mut commands: Commands
 ) {
-    commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+    commands.spawn(Flow::schedule(|task| async move {
         loop {
             task.will(Update, wait::input::just_pressed().with(KeyCode::KeyT)
                 .then(once::switch::on::<S>())

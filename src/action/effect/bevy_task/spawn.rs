@@ -11,13 +11,13 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, effect::bevy_task::spawn(async move{
 ///
 ///     })).await;
 /// });
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
 ///             .pipe(effect::bevy_task::spawn(|num: usize| async move{
@@ -74,7 +74,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::Pipe;
+    use crate::prelude::{Flow, Pipe};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::core::TaskPoolPlugin;
@@ -90,7 +90,7 @@ mod tests {
             let mut app = test_app();
             app.add_plugins(TaskPoolPlugin::default());
             app.add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(Update, {
                         effect::bevy_task::spawn(async move {
                             Count(1 + 1)
@@ -112,6 +112,7 @@ mod test_tokio {
     use bevy::prelude::Commands;
 
     use crate::action::effect;
+    use crate::prelude::Flow;
     use crate::tests::test_app;
 
     #[test]
@@ -119,7 +120,7 @@ mod test_tokio {
         let mut app = test_app();
         app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, {
                     effect::bevy_task::spawn(async move {
                         tokio::time::sleep(std::time::Duration::new(1, 0)).await;

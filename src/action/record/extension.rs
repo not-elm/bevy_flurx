@@ -8,10 +8,11 @@
 //! traits
 //! - [`RecordExtension`]
 
-use crate::action::{record, wait};
-use crate::prelude::{ActionSeed, Flow, Omit, Then};
 use bevy::app::{App, PostUpdate, Update};
-use bevy::prelude::{Commands, Event, EventReader, Resource, World};
+use bevy::prelude::{Commands, Event, EventReader};
+
+use crate::action::record;
+use crate::prelude::{Flow, Omit, Reactor, Then};
 
 /// Represents a request `undo` operations.
 ///
@@ -83,12 +84,8 @@ where
         })
         .reduce(|r1, r2| r1.then(r2))
     {
-        #[derive(Resource)]
-        struct RequestUndoAction(ActionSeed);
-        commands.insert_resource(RequestUndoAction(actions));
         commands.spawn(Flow::schedule(|task| async move {
-            let actions = task.will(Update, wait::output(|world: &mut World| { world.remove_resource::<RequestUndoAction>() })).await;
-            task.will(Update, actions.0).await;
+            task.will(Update, actions).await;
         }));
     }
 }
@@ -107,12 +104,8 @@ where
         })
         .reduce(|r1, r2| r1.then(r2))
     {
-        #[derive(Resource)]
-        struct RequestRedoAction(ActionSeed);
-        commands.insert_resource(RequestRedoAction(actions));
         commands.spawn(Flow::schedule(|task| async move {
-            let actions = task.will(Update, wait::output(|world: &mut World| { world.remove_resource::<RequestRedoAction>() })).await;
-            task.will(Update, actions.0).await;
+            task.will(Update, actions).await;
         }));
     }
 }
@@ -120,21 +113,22 @@ where
 //noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
-    use crate::action::record::tests::push_undo_increment;
-    use crate::prelude::record::tests::push_num_act;
-    use crate::prelude::{RequestRedo, RequestUndo, Then};
-    use crate::tests::{test_app, NumAct, TestAct};
     use bevy::app::{PreStartup, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, EventWriter};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
+    use crate::action::record::tests::push_undo_increment;
+    use crate::prelude::record::tests::push_num_act;
+    use crate::prelude::{Flow, RequestRedo, RequestUndo, Then};
+    use crate::tests::{test_app, NumAct, TestAct};
+
     #[test]
     fn test_request_undo_once() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(Update, push_undo_increment()).await.unwrap();
             }));
         });
@@ -150,7 +144,7 @@ mod tests {
     fn test_request_undo_index_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -173,7 +167,7 @@ mod tests {
     fn test_request_undo_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
@@ -193,7 +187,7 @@ mod tests {
     fn test_request_undo_all() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -216,7 +210,7 @@ mod tests {
     fn test_request_redo_once() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -245,7 +239,7 @@ mod tests {
     fn test_request_redo_index_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -274,7 +268,7 @@ mod tests {
     fn test_request_redo_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
@@ -300,7 +294,7 @@ mod tests {
     fn test_request_redo_all() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),

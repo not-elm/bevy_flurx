@@ -19,7 +19,7 @@ use crate::action::seed::ActionSeed;
 /// #[derive(Resource, Default)]
 /// struct Res;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::res::init::<Res>()).await;
 /// });
 /// ```
@@ -43,7 +43,7 @@ where
 /// #[derive(Resource)]
 /// struct Res;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::res::insert().with(Res)).await;
 /// });
 /// ```
@@ -67,7 +67,7 @@ where
 /// #[derive(Resource)]
 /// struct Res;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, once::res::remove::<Res>()).await;
 /// });
 /// ```
@@ -85,6 +85,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::once::res;
+    use crate::prelude::Flow;
     use crate::tests::{test_app, TestResource};
     use bevy::app::{First, Startup};
     use bevy::prelude::Commands;
@@ -93,7 +94,7 @@ mod tests {
     fn init_resource() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(First, res::init::<TestResource>()).await;
             }));
         });
@@ -106,7 +107,7 @@ mod tests {
     fn insert_resource() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(First, res::insert().with(TestResource)).await;
             }));
         });
@@ -120,7 +121,7 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<TestResource>()
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+                commands.spawn(Flow::schedule(|task| async move {
                     task.will(First, res::remove::<TestResource>()).await;
                 }));
             });

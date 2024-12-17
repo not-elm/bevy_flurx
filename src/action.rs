@@ -11,7 +11,7 @@
 //! use bevy::prelude::*;
 //! use bevy_flurx::prelude::*;
 //!
-//! crate::prelude::Flow::schedule(|task| async move{
+//! Flow::schedule(|task| async move{
 //!     // `process: 1`
 //!     task.will(Update, wait::until(|mut count: Local<usize>|{
 //!         *count += 1;

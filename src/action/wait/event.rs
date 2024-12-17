@@ -18,7 +18,7 @@ use crate::prelude::wait;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, wait::event::comes::<AppExit>()).await;
 /// });
 /// ```
@@ -58,7 +58,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// crate::prelude::Flow::schedule(|task| async move{
+/// Flow::schedule(|task| async move{
 ///     task.will(Update, wait::event::read::<AppExit>()).await;
 /// });
 /// ```
@@ -89,7 +89,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{once, wait};
-    use crate::prelude::{Either, Pipe, Then};
+    use crate::prelude::{Either, Flow, Pipe, Then};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, EventWriter, Events, In};
@@ -100,7 +100,7 @@ mod tests {
     fn wait_until_event_consumed_events() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::event::send_default::<TestEvent1>()
@@ -134,7 +134,7 @@ mod tests {
     fn wait_read_event_consumed_events() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(crate::prelude::Flow::schedule(|task| async move {
+            commands.spawn(Flow::schedule(|task| async move {
                 task.will(
                     Update,
                     once::event::send_default::<TestEvent1>()

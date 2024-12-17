@@ -1,4 +1,4 @@
-use bevy::prelude::{Component, World};
+use bevy::prelude::{Component, Event, World};
 use bevy::utils::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -16,7 +16,7 @@ pub struct CancellationId(u64);
 /// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by calling [`CancellationToken::cancel`]. 
 #[repr(transparent)]
 #[derive(Default, Component)]
-pub struct CancellationToken(HashMap<CancellationId, fn(&mut World)>);
+pub struct CancellationToken(pub(crate) HashMap<CancellationId, fn(&mut World)>);
 
 impl CancellationToken {
     /// Register a function that will be called when [`CancellationToken`] is cancelled.
@@ -41,3 +41,7 @@ impl CancellationToken {
         }
     }
 }
+
+#[repr(transparent)]
+#[derive(Event)]
+pub(crate) struct CallCancellationHandlers(pub(crate) CancellationToken);
