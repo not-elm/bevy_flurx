@@ -1,36 +1,40 @@
-use std::future::Future;
-
-use bevy::prelude::Component;
-
-use crate::runner::CancellationToken;
-use crate::task::ReactiveTask;
+use crate::core::scheduler::CoreScheduler;
+use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
+use bevy::ecs::component::{ComponentHooks, StorageType};
+use bevy::ecs::world::DeferredWorld;
+use bevy::prelude::{Component, Entity, ReflectComponent};
+use bevy::reflect::Reflect;
+use std::future::Future;
+use std::marker::PhantomData;
 
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
-/// This structure is created by [`Reactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
+/// This structure is created by [`Reactor::schedule`].
 ///
-/// Remove this component if you want to interrupt the processing flow.
+/// Despawn the entity attached this component if you want to interrupt the processing flow.
 ///
 /// After all scheduled processes have completed, the entity attached to this component
 /// and it's children will be despawn.
-#[derive(Component)]
-pub struct Reactor {
-    pub(crate) scheduler: flurx::Scheduler<'static, 'static, WorldPtr>,
-    pub(crate) initialized: bool,
-    token: CancellationToken,
+#[derive(Reflect)]
+#[reflect(Component)]
+pub struct Reactor<F, Fut>
+where
+    F: FnOnce(ReactorTask) -> Fut + Send + Sync + 'static,
+    Fut: Future + Send + Sync + 'static,
+{
+    f: Option<F>,
+    _m: PhantomData<Fut>,
 }
 
-impl Reactor {
+impl<F, Fut> Reactor<F, Fut>
+where
+    F: FnOnce(ReactorTask) -> Fut + Send + Sync + 'static,
+    Fut: Future + Send + Sync + 'static,
+{
     /// Create new [`Reactor`].
     ///
-    /// The scheduled [`Reactor`] will be run and initialized at `RunReactor` schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
-    ///
-    /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
-    /// to reduce the delay until initialization.
-    ///
-    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel),
-    /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor).
+    /// The scheduled [`Reactor`] will be run and initialized at [Last](bevy::prelude::Last) schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
     ///
     /// ## Examples
     ///
@@ -45,29 +49,64 @@ impl Reactor {
     ///     })).await;
     /// });
     /// ```
-    pub fn schedule<F>(f: impl FnOnce(ReactiveTask) -> F + 'static) -> Reactor
+    pub fn schedule(f: F) -> Reactor<F, Fut> {
+        Self {
+            f: Some(f),
+            _m: PhantomData,
+        }
+    }
+}
+
+impl<F, Fut> Component for Reactor<F, Fut>
+where
+    F: FnOnce(ReactorTask) -> Fut + Send + Sync + 'static,
+    Fut: Future + Send + Sync + 'static,
+{
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks
+            .on_add(|mut world: DeferredWorld, entity: Entity, _| {
+                let f = {
+                    let mut entity_mut = world.entity_mut(entity);
+                    let Some(mut flow) = entity_mut.get_mut::<Reactor<F, Fut>>() else {
+                        return;
+                    };
+                    let Some(f) = flow.f.take() else {
+                        return;
+                    };
+                    f
+                };
+                world.commands().entity(entity).insert(NativeReactor::schedule(entity, f));
+            });
+    }
+}
+
+#[derive(Component)]
+pub(crate) struct NativeReactor {
+    pub(crate) scheduler: CoreScheduler<WorldPtr>,
+    pub(crate) initialized: bool,
+}
+
+impl NativeReactor {
+    fn schedule<F>(entity: Entity, f: impl FnOnce(ReactorTask) -> F + Send + Sync + 'static) -> NativeReactor
     where
-        F: Future,
+        F: Future + Send + Sync,
     {
-        let mut scheduler = flurx::Scheduler::new();
-        let token = CancellationToken::default();
-        let t1 = token.clone();
-        scheduler.schedule(move |task| async move {
-            f(ReactiveTask { task, token: t1 }).await;
+        let scheduler = CoreScheduler::schedule(move |task| async move {
+            f(ReactorTask {
+                task,
+                entity,
+            }).await;
         });
         Self {
             scheduler,
-            token,
             initialized: false,
         }
     }
 
     #[inline(always)]
     pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool {
-        if self.token.is_cancellation_requested() {
-            return true;
-        }
-
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
@@ -77,38 +116,21 @@ impl Reactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
-
-        let finished = self.scheduler.not_exists_reactor();
-        if finished {
-            self.token.set_finished();
-        }
-        finished || self.token.is_cancellation_requested()
+        self.scheduler.finished
     }
 }
 
-impl Drop for Reactor {
-    #[inline]
-    fn drop(&mut self) {
-        self.token.cancel();
-    }
-}
-
-/// SAFETY: Scheduler must always run on the main thread only.
-unsafe impl Send for Reactor {}
-
-/// SAFETY: Scheduler must always run on the main thread only.
-unsafe impl Sync for Reactor {}
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{delay, wait};
+    use crate::prelude::Reactor;
+    use crate::reactor::NativeReactor;
+    use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, Entity, Query, ResMut, Resource, With};
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{delay, wait};
-    use crate::prelude::{BoxedRunners, Reactor};
-    use crate::tests::test_app;
 
     #[derive(Resource, Debug, Default, Eq, PartialEq)]
     struct Count(usize);
@@ -126,15 +148,15 @@ mod tests {
                         false
                     }),
                 )
-                .await;
+                    .await;
             }));
         });
         app.update();
         app.assert_resource_eq(Count(1));
 
         app.world_mut()
-            .run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<Reactor>>| {
-                cmd.entity(reactor.single()).remove::<Reactor>();
+            .run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<NativeReactor>>| {
+                cmd.entity(reactor.single()).despawn();
             })
             .expect("Failed to run system");
         for _ in 0..10 {
@@ -154,28 +176,14 @@ mod tests {
         app.update();
         assert!(app
             .world_mut()
-            .query::<&Reactor>()
+            .query::<&NativeReactor>()
             .get_single(app.world())
             .is_ok());
-        assert_eq!(
-            app.world()
-                .non_send_resource::<BoxedRunners<Update>>()
-                .0
-                .len(),
-            1
-        );
         app.update();
         assert!(app
             .world_mut()
-            .query::<&Reactor>()
+            .query::<&NativeReactor>()
             .get_single(app.world())
             .is_err());
-        assert_eq!(
-            app.world()
-                .non_send_resource::<BoxedRunners<Update>>()
-                .0
-                .len(),
-            0
-        );
     }
 }

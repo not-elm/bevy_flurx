@@ -1,12 +1,10 @@
-use std::marker::PhantomData;
-use std::sync::{Arc, Mutex};
-
+use crate::action::effect::AsyncFunctor;
+use crate::prelude::{ActionSeed, CancellationHandlers, Output, RunnerIs};
+use crate::runner::Runner;
 use bevy::prelude::World;
 use bevy::tasks::AsyncComputeTaskPool;
-
-use crate::action::effect::AsyncFunctor;
-use crate::prelude::{ActionSeed, CancellationToken, Output};
-use crate::runner::Runner;
+use std::marker::PhantomData;
+use std::sync::{Arc, Mutex};
 
 
 /// Spawns a future onto the bevy thread pool, 
@@ -14,9 +12,9 @@ use crate::runner::Runner;
 ///
 /// Unlike [`effect::bevy_task::spawn`](crate::prelude::effect::bevy_task::spawn_detached),
 /// a spawned task is detached and continues to run in the background.
-/// 
+///
 /// Note that tasks created from this function will continue to run even if [`Reactor`](crate::prelude::Reactor) is canceled.
-/// 
+///
 /// ```no_run
 ///
 /// use bevy::prelude::*;
@@ -41,11 +39,11 @@ use crate::runner::Runner;
 /// });
 /// ```
 pub fn spawn_detached<I, Out, Functor, M>(functor: Functor) -> ActionSeed<I, Out>
-    where
-        I: Send + 'static,
-        Functor: AsyncFunctor<I, Out, M> + Send + 'static,
-        Out: Send + 'static,
-        M: Send + 'static
+where
+    I: Send + 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + Sync + 'static,
+    Out: Send + 'static,
+    M: Send + 'static,
 {
     ActionSeed::new(|input, output| {
         BevyDetachedTaskRunner {
@@ -65,13 +63,13 @@ struct BevyDetachedTaskRunner<I, O, Functor, M> {
 }
 
 impl<I, O, Functor, M> Runner for BevyDetachedTaskRunner<I, O, Functor, M>
-    where
-        I: Send + 'static,
-        O: Send + 'static,
-        Functor: AsyncFunctor<I, O, M> + Send + 'static,
-        M: Send + 'static
+where
+    I: Send + 'static,
+    O: Send + 'static,
+    Functor: AsyncFunctor<I, O, M> + Send + 'static,
+    M: Send + 'static,
 {
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some((input, f)) = self.args.take() {
             let o = self.arc_output.clone();
             AsyncComputeTaskPool::get()
@@ -84,26 +82,24 @@ impl<I, O, Functor, M> Runner for BevyDetachedTaskRunner<I, O, Functor, M>
 
         if let Some(out) = self.arc_output.lock().unwrap().take() {
             self.output.set(out);
-            true
+            RunnerIs::Completed
         } else {
-            false
+            RunnerIs::Running
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
+    use crate::action::{effect, once};
+    use crate::prelude::{Reactor, Pipe};
+    use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::core::TaskPoolPlugin;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-    use crate::action::{effect, once};
-    use crate::prelude::Pipe;
-
-    use crate::reactor::Reactor;
-    use crate::tests::test_app;
+    use std::time::Duration;
 
     #[test]
     fn test_simple_spawn_detached() {
@@ -112,7 +108,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    effect::bevy_task::spawn_detached(async move{
+                    effect::bevy_task::spawn_detached(async move {
                         Count(1 + 1)
                     })
                         .pipe(once::res::insert())

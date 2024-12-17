@@ -1,33 +1,30 @@
+use crate::prelude::Reactor;
+use crate::task::ReactorTask;
+use bevy::app::{App, Startup};
+use bevy::prelude::Commands;
 use std::future::Future;
 
-use bevy::app::App;
-use bevy::prelude::World;
-
-use crate::prelude::Reactor;
-use crate::task::ReactiveTask;
-
 pub trait SpawnReactor {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static)
-        where
-            F: Future;
-}
-
-impl SpawnReactor for World {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static) where F: Future {
-        self.spawn(Reactor::schedule(f));
-    }
+    fn spawn_reactor<F>(&mut self, f: fn(ReactorTask) -> F)
+    where
+        F: Future + Send + Sync  + 'static;
 }
 
 impl SpawnReactor for App {
-    fn spawn_reactor<F>(&mut self, f: impl FnOnce(ReactiveTask) -> F + 'static) where F: Future {
-        self.world_mut().spawn_reactor(f);
+    fn spawn_reactor<F>(&mut self, f: fn(ReactorTask) -> F)
+    where
+        F: Future + Send + Sync + 'static,
+    {
+        self.add_systems(Startup, move |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(f));
+        });
     }
 }
 
 pub mod test {
     use bevy::prelude::World;
 
-    use crate::prelude::{ActionSeed, CancellationToken, Runner};
+    use crate::prelude::{ActionSeed, CancellationHandlers, Runner};
 
     pub fn cancel() -> ActionSeed {
         ActionSeed::new(|_, _| {
@@ -38,9 +35,8 @@ pub mod test {
     struct TestCancelRunner;
 
     impl Runner for TestCancelRunner {
-        fn run(&mut self, _: &mut World, token: &CancellationToken) -> bool {
-            token.cancel();
-            true
+        fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
+            crate::prelude::RunnerIs::Canceled
         }
     }
 }

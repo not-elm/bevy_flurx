@@ -1,24 +1,22 @@
 //! This library provides a mechanism for more sequential description of delays, character movement,
 //! waiting for user input, and other state waits.
 //!
-//! [`Reactor`] can be used partially.
+//! [`NativeReactor`] can be used partially.
 //! This means there is no need to rewrite existing applications to use this library.
 //! And I recommend using it partially.
-//! This is because the system that runs [`Reactor`] and the systems that are run by [`Reactor`] run on the main thread.
+//! This is because the system that runs [`NativeReactor`] and the systems that are run by [`NativeReactor`] run on the main thread.
 //! (Please check [`Switch`](crate::prelude::Switch) for multi thread operation.)
 
 #![allow(clippy::type_complexity)]
-
-use bevy::app::{App, Last, MainScheduleOrder, Plugin, PostStartup};
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{Entity, QueryState, World};
-
-use crate::reactor::Reactor;
+use crate::reactor::NativeReactor;
+use crate::runner::CallCancellationHandlers;
 use crate::world_ptr::WorldPtr;
+use bevy::app::{App, Last, Plugin, PostStartup};
+use bevy::ecs::system::SystemState;
+use bevy::hierarchy::DespawnRecursiveExt;
+use bevy::prelude::{Entity, EventReader, IntoSystemConfigs, QueryState, World};
 
 pub mod action;
-pub mod extension;
 pub mod runner;
 pub mod task;
 
@@ -42,10 +40,9 @@ pub mod prelude {
         action::Map,
         action::Remake,
         action::*,
-        extension::*,
         reactor::Reactor,
         runner::*,
-        task::ReactiveTask,
+        task::ReactorTask,
         FlurxPlugin,
     };
 }
@@ -57,6 +54,7 @@ mod world_ptr;
 /// Define utilities for testing.
 #[cfg(test)]
 mod test_util;
+mod core;
 
 /// Provides the async systems.
 pub struct FlurxPlugin;
@@ -64,20 +62,17 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        app.init_schedule(RunReactor)
+        app
+            .add_event::<CallCancellationHandlers>()
             .add_systems(PostStartup, initialize_reactors)
-            .add_systems(RunReactor, run_reactors);
-        app.world_mut()
-            .resource_mut::<MainScheduleOrder>()
-            .insert_after(Last, RunReactor);
+            .add_systems(Last, (
+                call_cancel_handlers.run_if(bevy::prelude::on_event::<CallCancellationHandlers>),
+                run_reactors,
+            ));
     }
 }
 
-/// Runs after the [`Last`](bevy::prelude::Last).
-#[derive(ScheduleLabel, Eq, PartialEq, Debug, Copy, Clone, Hash)]
-struct RunReactor;
-
-fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut Reactor>) {
+fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut NativeReactor>) {
     let world_ptr = WorldPtr::new(world);
     for mut reactor in reactors.iter_mut(world) {
         if reactor.initialized {
@@ -88,9 +83,24 @@ fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut Reactor
     }
 }
 
-fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut Reactor)>) {
+fn call_cancel_handlers(
+    world: &mut World,
+) {
+    let mut event_system_state = SystemState::<EventReader<CallCancellationHandlers>>::new(world);
+    let handlers = event_system_state
+        .get_mut(world)
+        .read()
+        .flat_map(|handler| handler.0.0.values().copied())
+        .collect::<Vec<_>>();
+    for handler in handlers {
+        handler(world);
+    }
+}
+
+fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut NativeReactor)>) {
     let world_ptr = WorldPtr::new(world);
     let mut entities = Vec::with_capacity(reactors.iter(world).len());
+
     for (entity, mut reactor) in reactors.iter_mut(world) {
         if !reactor.initialized {
             if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {
@@ -102,6 +112,7 @@ fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut React
             entities.push(entity);
         }
     }
+
     for entity in entities {
         world.entity_mut(entity).despawn_recursive();
     }
@@ -109,8 +120,10 @@ fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut React
 
 #[cfg(test)]
 mod tests {
+    use crate::action::once;
+    use crate::prelude::{ActionSeed, Record, RecordExtension};
+    use crate::FlurxPlugin;
     use bevy::app::{App, AppExit};
-
     use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
@@ -119,10 +132,6 @@ mod tests {
     use bevy::time::TimePlugin;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::BevyTestHelperPlugin;
-
-    use crate::action::once;
-    use crate::prelude::{ActionSeed, Record, RecordExtension};
-    use crate::FlurxPlugin;
 
     pub fn exit_reader() -> EventCursor<AppExit> {
         EventCursor::<AppExit>::default()

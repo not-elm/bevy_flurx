@@ -15,7 +15,7 @@ use crate::action::record::EditRecordResult;
 use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};
 use crate::prelude::{ActionSeed, Output, Runner, Track};
-use crate::runner::{BoxedRunner, CancellationId, CancellationToken};
+use crate::runner::{BoxedRunner, CancellationId, CancellationHandlers, RunnerIs};
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -83,11 +83,11 @@ where
     do_undo(|_: ()| |record: &mut Record<Act>| std::mem::take(&mut record.tracks))
 }
 
-fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + 'static) -> ActionSeed<I, EditRecordResult>
+fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + Send + Sync + 'static) -> ActionSeed<I, EditRecordResult>
 where
     I: 'static,
     Act: Send + Sync + 'static,
-    F: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static,
+    F: Fn(&mut Record<Act>) -> Vec<Track<Act>> + Send + Sync + 'static,
 {
     ActionSeed::new(|input: I, output| UndoRunner {
         output,
@@ -115,14 +115,14 @@ struct RedoStore<Act>(Vec<(Track<Act>, ActionSeed)>);
 impl<P, Act> Runner for UndoRunner<P, Act>
 where
     Act: Send + Sync + 'static,
-    P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + 'static,
+    P: Fn(&mut Record<Act>) -> Vec<Track<Act>> + Send + Sync + 'static,
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if self.cancellation_id.is_none() {
             if let Err(progressing) = lock_record::<Act>(world) {
                 self.output.set(Err(progressing));
-                return true;
+                return RunnerIs::Completed;
             }
             world.insert_non_send_resource(RedoStore::<Act>(Vec::new()));
             self.cancellation_id.replace(token.register(cleanup::<Act>));
@@ -145,12 +145,12 @@ where
                 if let Some(id) = self.cancellation_id.as_ref() {
                     token.unregister(id);
                 }
-                return true;
+                return RunnerIs::Completed;
             };
 
             undo_runner.run(world, token);
             let Some(redo) = self.undo_output.take() else {
-                return false;
+               return RunnerIs::Running;
             };
             if let Some(redo) = redo {
                 let undo = self.track.take().unwrap();
@@ -188,9 +188,8 @@ mod tests {
     use crate::action::record::tests::push_undo_increment;
     use crate::action::record::EditRecordResult;
     use crate::action::{delay, record};
-    use crate::prelude::{
-        once, ActionSeed, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track,
-    };
+    use crate::prelude::{once, ActionSeed, Reactor, Omit, Pipe, Record, RequestUndo, Rollback, Then, Track};
+    use crate::reactor::NativeReactor;
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
@@ -390,7 +389,7 @@ mod tests {
         app.update();
         app.world_mut()
             .run_system_once(
-                |mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
+                |mut commands: Commands, reactor: Query<Entity, With<NativeReactor>>| {
                     commands.entity(reactor.single()).despawn();
                 },
             )

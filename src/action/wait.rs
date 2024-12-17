@@ -15,16 +15,14 @@
 //! - [`wait::audio`] (require feature flag `audio`)
 //! - [`wait::any`]
 
-use bevy::prelude::{In, IntoSystem, System, SystemIn, SystemInput, World};
-
+use crate::action::seed::ActionSeed;
+use crate::prelude::{wait, RunnerIs};
+use crate::runner::{CancellationHandlers, Output, Runner};
 pub use _any::any;
 pub use _both::both;
 pub use _either::*;
 pub use all::{all, private};
-
-use crate::action::seed::ActionSeed;
-use crate::prelude::wait;
-use crate::runner::{CancellationToken, Output, Runner};
+use bevy::prelude::{In, IntoSystem, System, SystemIn, SystemInput, World};
 
 #[path = "wait/any.rs"]
 mod _any;
@@ -60,7 +58,7 @@ pub mod switch;
 #[inline(always)]
 pub fn output<Sys, I, O, Marker>(system: Sys) -> ActionSeed<I::Inner<'static>, O>
 where
-    Sys: IntoSystem<I, Option<O>, Marker> + 'static,
+    Sys: IntoSystem<I, Option<O>, Marker> + Send + Sync + 'static,
     I: SystemInput + 'static,
     I::Inner<'static>: Clone,
     O: 'static,
@@ -92,7 +90,7 @@ where
 #[inline(always)]
 pub fn until<I, Sys, M>(system: Sys) -> ActionSeed<I::Inner<'static>>
 where
-    Sys: IntoSystem<I, bool, M> + 'static,
+    Sys: IntoSystem<I, bool, M> + Send + Sync + 'static,
     I: SystemInput + 'static,
     I::Inner<'static>: Clone,
 {
@@ -112,10 +110,11 @@ where
 
 impl<Sys, O> Runner for WaitRunner<Sys, O>
 where
-    Sys: System<Out = Option<O>>,
+    Sys: System<Out=Option<O>>,
     SystemIn<'static, Sys>: Clone + 'static,
 {
-    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
+    #[inline]
+    fn run(&mut self, world: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
@@ -125,24 +124,23 @@ where
         self.system.apply_deferred(world);
         if let Some(o) = out {
             self.output.set(o);
-            true
+            RunnerIs::Completed
         } else {
-            false
+            RunnerIs::Running
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::action::wait::until;
+    use crate::action::{once, wait};
+    use crate::prelude::Reactor;
+    use crate::tests::test_app;
     use bevy::app::{AppExit, PreUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, EventWriter, In, Local, Update};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
-
-    use crate::action::wait::until;
-    use crate::action::{once, wait};
-    use crate::reactor::Reactor;
-    use crate::tests::test_app;
 
     #[test]
     fn count_up() {
@@ -157,10 +155,9 @@ mod tests {
                             *count == 2
                         }),
                     )
-                    .await;
-
-                    task.will(Update, once::non_send::insert().with(AppExit::Success))
                         .await;
+
+                    task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
                 }));
             })
             .expect("Failed to run system");
@@ -186,9 +183,9 @@ mod tests {
                             *count += 1 + input.0;
                             *count == 4
                         })
-                        .with(1),
+                            .with(1),
                     )
-                    .await;
+                        .await;
 
                     task.will(Update, once::non_send::insert().with(AppExit::Success))
                         .await;

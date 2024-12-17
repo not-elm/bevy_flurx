@@ -1,10 +1,14 @@
-use std::ptr;
-
 use bevy::prelude::World;
+use std::ptr;
 
 #[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct WorldPtr(*mut World);
+
+ // SAFETY: The actual value is created only by the exclusive system and is not used at any other time.
+unsafe impl Send for WorldPtr {}
+ // SAFETY: The actual value is created only by the exclusive system and is not used at any other time.
+unsafe impl Sync for WorldPtr {}
 
 impl WorldPtr {
     #[inline]

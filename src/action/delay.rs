@@ -5,13 +5,11 @@
 //! - [`delay::time`](crate::prelude::delay::time)
 //! - [`delay::frames`](crate::prelude::delay::frames)
 
-use std::time::Duration;
-
-use bevy::prelude::{In, Local, Res, TimerMode};
-use bevy::time::{Time, Timer};
-
 use crate::action::wait;
 use crate::prelude::ActionSeed;
+use bevy::prelude::{In, Local, Res, TimerMode};
+use bevy::time::{Time, Timer};
+use std::time::Duration;
 
 /// Delays by the specified amount of time.
 ///
@@ -61,16 +59,13 @@ pub fn frames() -> ActionSeed<usize> {
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{delay, once};
+    use crate::prelude::{Reactor, Then};
+    use crate::tests::test_app;
     use bevy::app::{AppExit, First, Startup};
-
     use bevy::prelude::{Commands, Events};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{delay, once};
-    use crate::prelude::Then;
-    use crate::reactor::Reactor;
-    use crate::tests::test_app;
 
     #[test]
     fn delay_1frame() {
@@ -83,7 +78,7 @@ mod tests {
                         .with(1)
                         .then(once::event::app_exit_success()),
                 )
-                .await;
+                    .await;
             }));
         });
         let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
@@ -105,7 +100,7 @@ mod tests {
                         .with(2)
                         .then(once::non_send::init::<AppExit>()),
                 )
-                .await;
+                    .await;
             }));
         });
 

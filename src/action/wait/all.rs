@@ -1,7 +1,6 @@
-use bevy::prelude::World;
-
 use crate::prelude::{ActionSeed, Output, Runner};
-use crate::runner::{BoxedRunner, CancellationToken};
+use crate::runner::{BoxedRunner, CancellationHandlers, RunnerIs};
+use bevy::prelude::World;
 
 /// Wait until all the actions are completed.
 ///
@@ -26,7 +25,7 @@ use crate::runner::{BoxedRunner, CancellationToken};
 /// ```
 pub fn all<Actions>() -> ActionSeed<Actions>
 where
-    Actions: IntoIterator<Item = ActionSeed> + 'static,
+    Actions: IntoIterator<Item=ActionSeed> + 'static,
 {
     ActionSeed::new(|actions: Actions, output| AllRunner {
         runners: actions
@@ -43,13 +42,22 @@ struct AllRunner {
 }
 
 impl Runner for AllRunner {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.runners.retain_mut(|r| !r.run(world, token));
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
+        let runners = std::mem::take(&mut self.runners);
+        for mut runner in runners {
+            match runner.run(world, token) {
+                RunnerIs::Canceled => return RunnerIs::Canceled,
+                RunnerIs::Completed => {}
+                RunnerIs::Running => {
+                    self.runners.push(runner);
+                }
+            }
+        }
         if self.runners.is_empty() {
             self.output.set(());
-            true
+            RunnerIs::Completed
         } else {
-            false
+            RunnerIs::Running
         }
     }
 }
@@ -109,12 +117,12 @@ macro_rules! wait_all {
 #[doc(hidden)]
 #[allow(non_snake_case)]
 pub mod private {
-    use std::marker::PhantomData;
-
     use crate::action::Action;
     use crate::prelude::ActionSeed;
+    use crate::prelude::RunnerIs;
     use crate::runner::macros::impl_tuple_runner;
     use crate::runner::{BoxedRunner, Output, Runner};
+    use std::marker::PhantomData;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
         o1: Output<O1>,
@@ -168,23 +176,29 @@ pub mod private {
                     O2: 'static,
             {
                 #[allow(non_snake_case)]
-                  fn run(&mut self, world: &mut bevy::prelude::World, token: &$crate::prelude::CancellationToken) -> bool {
+                  fn run(&mut self, world: &mut bevy::prelude::World, token: &mut $crate::prelude::CancellationHandlers) -> RunnerIs {
                     if self.o1.is_none(){
-                        self.r1.run(world, token);
+                        match self.r1.run(world, token){
+                            RunnerIs::Canceled => return RunnerIs::Canceled,
+                            _ => {}
+                        }
                     }
                     if self.o2.is_none(){
-                        self.r2.run(world, token);
+                        match self.r2.run(world, token){
+                            RunnerIs::Canceled => return RunnerIs::Canceled,
+                            _ => {}
+                        }
                     }
                     if let Some(($($lhs_out,)*)) = self.o1.take(){
                         if let Some(out2) = self.o2.take(){
                             self.output.set(($($lhs_out,)* out2));
-                            true
+                            RunnerIs::Completed
                         }else{
                             self.o1.set(($($lhs_out,)*));
-                            false
+                            RunnerIs::Running
                         }
                     }else{
-                        false
+                        RunnerIs::Running
                     }
                 }
             }
@@ -196,6 +210,11 @@ pub mod private {
 
 #[cfg(test)]
 mod tests {
+    use crate::action::delay;
+    use crate::actions;
+    use crate::prelude::{once, wait, Pipe, Then};
+    use crate::reactor::Reactor;
+    use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{Commands, EventWriter, Local};
@@ -203,22 +222,17 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
-    use crate::action::delay;
-    use crate::actions;
-    use crate::prelude::{once, wait, Pipe, Then};
-    use crate::reactor::Reactor;
-    use crate::test_util::SpawnReactor;
-    use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
-
     #[test]
     fn wai_all_actions() {
         let mut app = test_app();
-        app.spawn_reactor(|task| async move {
-            task.will(Update, {
-                once::run(|| [increment_count(), increment_count(), decrement_count()])
-                    .pipe(wait::all())
-            })
-            .await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, {
+                    once::run(|| [increment_count(), increment_count(), decrement_count()])
+                        .pipe(wait::all())
+                })
+                    .await;
+            }));
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -227,19 +241,20 @@ mod tests {
     #[test]
     fn with_delay_1frame() {
         let mut app = test_app();
-        app.spawn_reactor(|task| async move {
-            task.will(Update, {
-                once::run(|| {
-                    actions![
-                        increment_count(),
-                        delay::frames().with(1),
-                        increment_count()
-                    ]
-                })
-                .pipe(wait::all())
-                .then(once::event::app_exit_success())
-            })
-            .await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, {
+                    once::run(|| {
+                        actions![
+                            increment_count(),
+                            delay::frames().with(1),
+                            increment_count()
+                        ]
+                    })
+                        .pipe(wait::all())
+                        .then(once::event::app_exit_success())
+                }).await;
+            }));
         });
         let mut er = exit_reader();
         app.update();

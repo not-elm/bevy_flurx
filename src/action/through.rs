@@ -6,12 +6,11 @@
 //!
 //! - [`through`]
 
-use bevy::prelude::World;
-
 use crate::action::pipe::Pipe;
 use crate::action::seed::ActionSeed;
-use crate::prelude::{Action, CancellationToken};
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::prelude::{Action, CancellationHandlers};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
+use bevy::prelude::World;
 
 /// This function is used when you want to insert some kind of action,
 /// such as a delay, between the action that sends output and the action that receives it.
@@ -36,7 +35,7 @@ use crate::runner::{BoxedRunner, Output, Runner};
 /// });
 /// ```
 #[inline(always)]
-pub fn through<V, I, O>(action: impl Into<Action<I, O>> + 'static) -> ActionSeed<V, V>
+pub fn through<V, I, O>(action: impl Into<Action<I, O>> + Send + Sync + 'static) -> ActionSeed<V, V>
 where
     V: 'static,
     I: 'static,
@@ -74,7 +73,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     ///     ).await;
     /// });
     /// ```
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionOrSeed
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionOrSeed
     where
         I2: 'static;
 }
@@ -86,7 +85,7 @@ where
     O2: 'static,
 {
     #[inline]
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> ActionSeed<I1, O1>
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionSeed<I1, O1>
     where
         I2: 'static,
     {
@@ -101,7 +100,7 @@ where
     O2: 'static,
 {
     #[inline]
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + 'static) -> Action<I1, O1>
+    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> Action<I1, O1>
     where
         I2: 'static,
     {
@@ -119,27 +118,27 @@ impl<V> Runner for ThroughRunner<V>
 where
     V: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if self.inner.run(world, token) {
-            self.output.set(self.value.take().unwrap());
-            true
-        } else {
-            false
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
+        match self.inner.run(world, token) {
+            RunnerIs::Completed => {
+                self.output.set(self.value.take().unwrap());
+                RunnerIs::Completed
+            }
+            other => other
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
-    use bevy::prelude::{Commands, In, Resource};
-    use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::once;
     use crate::action::pipe::Pipe;
     use crate::action::through::Through;
     use crate::prelude::Reactor;
     use crate::tests::test_app;
+    use bevy::app::{Startup, Update};
+    use bevy::prelude::{Commands, In, Resource};
+    use bevy_test_helper::resource::DirectResourceControl;
 
     #[derive(Resource, Eq, PartialEq, Debug)]
     struct Count(usize);
@@ -157,7 +156,7 @@ mod tests {
                             commands.insert_resource(Count(num));
                         })),
                 )
-                .await;
+                    .await;
             }));
         });
         app.update();

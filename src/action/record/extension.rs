@@ -10,9 +10,8 @@
 
 use bevy::app::{App, PostUpdate, Update};
 use bevy::prelude::{Commands, Event, EventReader};
-
 use crate::action::record;
-use crate::prelude::{Omit, Reactor, Then};
+use crate::prelude::{Reactor, Omit, Then};
 
 /// Represents a request `undo` operations.
 ///
@@ -151,8 +150,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -172,7 +171,7 @@ mod tests {
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
                 )
-                .await;
+                    .await;
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
@@ -194,8 +193,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -217,8 +216,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -246,8 +245,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                .await
-                .unwrap();
+                    .await
+                    .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -273,7 +272,7 @@ mod tests {
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
                 )
-                .await;
+                    .await;
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
@@ -299,7 +298,7 @@ mod tests {
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
                 )
-                .await;
+                    .await;
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {

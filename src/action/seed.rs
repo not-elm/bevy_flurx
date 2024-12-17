@@ -14,7 +14,8 @@ use bevy::prelude::Reflect;
 /// [`Pipe::pipe`]: crate::prelude::Pipe::pipe
 #[derive(Reflect)]
 #[repr(transparent)]
-pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner>);
+pub struct ActionSeed<I = (), O = ()>(Box<dyn FnOnce(I, Output<O>) -> BoxedRunner + Send + Sync> );
+
 
 impl<I, O> ActionSeed<I, O>
 where
@@ -23,9 +24,9 @@ where
 {
     /// Create the [`ActionSeed`].
     #[inline]
-    pub fn new<R>(f: impl FnOnce(I, Output<O>) -> R + 'static) -> ActionSeed<I, O>
+    pub fn new<R>(f: impl FnOnce(I, Output<O>) -> R + Send + Sync   + 'static ) -> ActionSeed<I, O>
     where
-        R: Runner + 'static,
+        R: Runner  + 'static,
     {
         ActionSeed(Box::new(move |input, output| {
             BoxedRunner::new(f(input, output))
@@ -49,7 +50,7 @@ where
     /// });
     /// ```
     #[inline]
-    pub fn define<I2, A>(f: impl FnOnce(I) -> A + 'static) -> ActionSeed<I, O>
+    pub fn define<I2, A>(f: impl FnOnce(I) -> A + Send + Sync + 'static) -> ActionSeed<I, O>
     where
         I2: 'static,
         A: Into<Action<I2, O>>,
@@ -73,7 +74,7 @@ where
 
 impl<I, O, F> From<F> for ActionSeed<I, O>
 where
-    F: FnOnce(I, Output<O>) -> BoxedRunner + 'static,
+    F: FnOnce(I, Output<O>) -> BoxedRunner + Send + Sync + 'static,
 {
     #[inline]
     fn from(value: F) -> Self {

@@ -8,7 +8,7 @@ use bevy::prelude::World;
 
 use crate::action::remake::Remake;
 use crate::prelude::seed::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs};
 
 /// Provides the mechanism to pipe the actions.
 pub trait Pipe<I1, O1, O2, A> {
@@ -90,35 +90,36 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if !self.finished_r1 {
-            self.r1.run(world, token);
-        }
-        if token.is_cancellation_requested() {
-            return true;
+            match self.r1.run(world, token) {
+                RunnerIs::Canceled => return RunnerIs::Canceled,
+                RunnerIs::Running => return RunnerIs::Running,
+                RunnerIs::Completed => {}
+            };
         }
 
         self.setup_second_runner();
         if let Some(r2) = self.r2.as_mut() {
-            r2.run(world, token);
+            r2.run(world, token)
+        } else {
+            // unreachable
+            RunnerIs::Canceled
         }
-        self.output.is_some()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{delay, once};
+    use crate::prelude::{Reactor, Map, Pipe, Then, Through};
+    use crate::test_util::test;
+    use crate::tests::{increment_count, test_app};
     use bevy::app::{AppExit, Startup};
-
     use bevy::prelude::{Commands, Events, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{delay, once};
-    use crate::prelude::{Map, Pipe, Reactor, Then, Through};
-    use crate::test_util::test;
-    use crate::tests::{increment_count, test_app};
 
     /// Make sure `Option::unwrap() on a None` does not occur.
     #[test]
@@ -135,7 +136,7 @@ mod tests {
                         .through(once::run(|| {}))
                         .then(once::event::app_exit_success()),
                 )
-                .await;
+                    .await;
             }));
         });
         app.update();

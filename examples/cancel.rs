@@ -6,11 +6,13 @@
 
 use bevy::prelude::*;
 use bevy::DefaultPlugins;
-
 use bevy_flurx::prelude::*;
 
 #[derive(Component)]
 struct RotateBox;
+
+#[derive(Component)]
+struct Cancel;
 
 fn main() {
     App::new()
@@ -42,9 +44,12 @@ fn setup_camera_and_box(mut commands: Commands, mut materials: ResMut<Assets<Sta
 }
 
 fn spawn_reactor(mut commands: Commands) {
-    commands.spawn(Reactor::schedule(|task| async move {
-        task.will(Update, wait::until(rotate_shape)).await;
-    }));
+    commands.spawn((
+        Reactor::schedule(|task| async move {
+            task.will(Update, wait::until(rotate_shape)).await;
+        }),
+        Cancel,
+    ));
 }
 
 fn rotate_shape(mut shape: Query<&mut Transform, With<RotateBox>>, time: Res<Time>) -> bool {
@@ -56,13 +61,13 @@ fn rotate_shape(mut shape: Query<&mut Transform, With<RotateBox>>, time: Res<Tim
 
 fn cancel(
     mut commands: Commands,
-    reactor: Query<Entity, With<Reactor>>,
+    reactor: Query<Entity, With<Cancel>>,
     input: Res<ButtonInput<KeyCode>>,
 ) {
     if input.just_pressed(KeyCode::Escape) {
         if let Ok(entity) = reactor.get_single() {
             info!("reactor has been cancelled");
-            commands.entity(entity).remove::<Reactor>();
+            commands.entity(entity).despawn();
         }
     }
 }

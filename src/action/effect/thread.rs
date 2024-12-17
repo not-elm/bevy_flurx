@@ -1,14 +1,14 @@
 //! Convert the thread operations into [`Action`](crate::prelude::Action).
-//! 
+//!
 //! actions
-//! 
+//!
 //! - [`effect::thread::spawn`](crate::prelude::effect::thread::spawn)
 
 use std::sync::{Arc, Mutex};
 
 use bevy::prelude::World;
 
-use crate::prelude::{ActionSeed, CancellationToken};
+use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
 
 
@@ -17,11 +17,11 @@ use crate::runner::{Output, Runner};
 /// The thread is started when [`Runner`] is executed for the first time.
 ///
 /// Note that thead created from this function will continue to run even if [`Reactor`](crate::prelude::Reactor) is canceled.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```no_run
-/// 
+///
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
@@ -39,10 +39,10 @@ use crate::runner::{Output, Runner};
 ///     }).await;
 /// });
 /// ```
-pub fn spawn<I, O>(f: impl FnOnce(I) -> O + Send + 'static) -> ActionSeed<I, O>
-    where
-        I: Send + 'static,
-        O: Send + 'static
+pub fn spawn<I, O>(f: impl FnOnce(I) -> O + Send + Sync + 'static) -> ActionSeed<I, O>
+where
+    I: Send + 'static,
+    O: Send + 'static,
 {
     ActionSeed::new(|input, output: Output<O>| {
         ThreadRunner {
@@ -62,12 +62,12 @@ struct ThreadRunner<I, O, F> {
 }
 
 impl<I, O, F> Runner for ThreadRunner<I, O, F>
-    where
-        I: Send + 'static,
-        O: Send + 'static,
-        F: FnOnce(I) -> O + Send + 'static
+where
+    I: Send + 'static,
+    O: Send + 'static,
+    F: FnOnce(I) -> O + Send + 'static,
 {
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some((input, f)) = self.args.take() {
             let arc_out = self.arc_output.clone();
             self.handle.replace(std::thread::spawn(move || {
@@ -77,9 +77,9 @@ impl<I, O, F> Runner for ThreadRunner<I, O, F>
 
         if let Some(out) = self.arc_output.lock().unwrap().take() {
             self.output.set(out);
-            true
+            RunnerIs::Completed
         } else {
-            false
+            RunnerIs::Running
         }
     }
 }
@@ -87,13 +87,12 @@ impl<I, O, F> Runner for ThreadRunner<I, O, F>
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{effect, once};
+    use crate::prelude::{Reactor, Pipe};
+    use crate::tests::test_app;
     use bevy::prelude::{Commands, In, ResMut, Startup, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{effect, once};
-    use crate::prelude::{Pipe, Reactor};
-    use crate::tests::test_app;
 
     #[test]
     fn thread_calc_2() {

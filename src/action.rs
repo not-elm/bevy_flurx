@@ -63,7 +63,7 @@ mod map;
 mod remake;
 
 
-/// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
+/// Represents the system passed to [`ReactiveTask`](crate::task::ReactorTask).
 ///
 /// Please check [here](crate::action) for more details.
 #[derive(Reflect)]

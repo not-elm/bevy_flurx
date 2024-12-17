@@ -13,7 +13,6 @@
 //! - [`record::undo`](crate::prelude::record::undo)
 //! - [`record::redo`](crate::prelude::record::redo)
 
-
 use std::error::Error;
 use std::fmt::{Display, Formatter};
 
@@ -68,8 +67,8 @@ pub struct Record<Act> {
 }
 
 impl<Act> Record<Act>
-    where
-        Act: 'static
+where
+    Act: 'static,
 {
     /// Clear all history of `undo` and `redo`.
     pub fn all_clear(&mut self) -> Result<(), UndoRedoInProgress> {
@@ -127,20 +126,20 @@ impl<M> Default for Record<M> {
 }
 
 impl<Op> Resource for Record<Op>
-    where
-        Op: Send + Sync + 'static
+where
+    Op: Send + Sync + 'static,
 {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Send for Record<Op>
-    where
-        Op: Send + Sync + 'static
+where
+    Op: Send + Sync + 'static,
 {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Sync for Record<Op>
-    where
-        Op: Send + Sync + 'static
+where
+    Op: Send + Sync + 'static,
 {}
 
 pub(crate) fn lock_record<Opr: Send + Sync + 'static>(world: &mut World) -> EditRecordResult {
@@ -185,22 +184,21 @@ fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, 
 
 #[cfg(test)]
 mod tests {
+    use crate::action::record::track::Track;
+    use crate::action::{record, wait, Action};
+    use crate::prelude::{ActionSeed, EditRecordResult, Reactor, Omit, Record, Redo, Rollback, Then, Undo};
+    use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
     use bevy::app::{Startup, Update};
     use bevy::prelude::Commands;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{Action, record, wait};
-    use crate::action::record::track::Track;
-    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
-    use crate::tests::{decrement_count, increment_count, NumAct, test_app, TestAct};
 
     pub fn push_num_act(num: usize) -> ActionSeed {
         record::push().with(Track {
             act: NumAct(num),
             rollback: Rollback::parts(
                 Undo::make(increment_count),
-                Redo::make(|_| decrement_count())
-            )
+                Redo::make(|_| decrement_count()),
+            ),
         })
             .omit()
     }
@@ -210,8 +208,8 @@ mod tests {
             act: TestAct,
             rollback: Rollback::parts(
                 Undo::make(increment_count),
-                Redo::make(|_| decrement_count())
-            )
+                Redo::make(|_| decrement_count()),
+            ),
         })
     }
 

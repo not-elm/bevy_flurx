@@ -18,9 +18,9 @@ use crate::action::switch::Switch;
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// struct Animation;
-/// 
+///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::switch::on::<Animation>()).await;
 /// });
@@ -41,9 +41,9 @@ pub fn on<M>() -> ActionSeed
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// 
+///
 /// struct Animation;
-/// 
+///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::switch::off::<Animation>()).await;
 /// });
@@ -63,7 +63,6 @@ mod tests {
     use bevy::app::Startup;
     use bevy::prelude::{Commands, IntoSystemConfigs, ResMut, Update};
     use bevy_test_helper::resource::bool::{Bool, BoolExtension};
-
     use crate::action::once;
     use crate::prelude::{switch_just_turned_off, switch_just_turned_on};
     use crate::reactor::Reactor;

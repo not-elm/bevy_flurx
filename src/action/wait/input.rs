@@ -7,7 +7,6 @@
 //! - [`wait::input::just_released`]
 //! - [`wait::input::any_just_released`]
 
-
 use std::hash::Hash;
 
 use bevy::input::ButtonInput;
@@ -30,7 +29,8 @@ use crate::action::wait;
 /// ```
 #[inline(always)]
 pub fn just_pressed<T>() -> ActionSeed<T>
-    where T: Copy + Eq + Hash + Send + Sync + 'static
+where
+    T: Copy + Eq + Hash + Send + Sync + 'static,
 {
     wait::until(move |In(expect): In<T>,
                       input: Res<ButtonInput<T>>| {
@@ -52,7 +52,8 @@ pub fn just_pressed<T>() -> ActionSeed<T>
 /// ```
 #[inline(always)]
 pub fn pressed<T>() -> ActionSeed<T>
-    where T: Copy + Eq + Hash + Send + Sync + 'static
+where
+    T: Copy + Eq + Hash + Send + Sync + 'static,
 {
     wait::until(move |In(expect): In<T>,
                       input: Res<ButtonInput<T>>| {
@@ -74,8 +75,8 @@ pub fn pressed<T>() -> ActionSeed<T>
 /// ```
 #[inline(always)]
 pub fn any_pressed<T>() -> ActionSeed<Vec<T>>
-    where
-        T: Copy + Eq + Hash + Send + Sync + 'static
+where
+    T: Copy + Eq + Hash + Send + Sync + 'static,
 {
     wait::until(|In(items): In<Vec<T>>,
                  input: Res<ButtonInput<T>>| {
@@ -97,7 +98,8 @@ pub fn any_pressed<T>() -> ActionSeed<Vec<T>>
 /// ```
 #[inline(always)]
 pub fn all_pressed<T>() -> ActionSeed<Vec<T>>
-    where T: Copy + Eq + Hash + Send + Sync + 'static
+where
+    T: Copy + Eq + Hash + Send + Sync + 'static,
 {
     wait::until(|In(items): In<Vec<T>>,
                  input: Res<ButtonInput<T>>| {
@@ -119,7 +121,8 @@ pub fn all_pressed<T>() -> ActionSeed<Vec<T>>
 /// ```
 #[inline(always)]
 pub fn just_released<T>() -> ActionSeed<T>
-    where T: Copy + Eq + Hash + Send + Sync + 'static
+where
+    T: Copy + Eq + Hash + Send + Sync + 'static,
 {
     wait::until(move |In(expect): In<T>,
                       input: Res<ButtonInput<T>>| {
@@ -141,7 +144,8 @@ pub fn just_released<T>() -> ActionSeed<T>
 /// ```
 #[inline(always)]
 pub fn any_just_released<T>() -> ActionSeed<Vec<T>>
-    where T: Copy + Eq + Hash + Send + Sync + 'static
+where
+    T: Copy + Eq + Hash + Send + Sync + 'static,
 {
     wait::until(|In(items): In<Vec<T>>,
                  input: Res<ButtonInput<T>>| {
@@ -151,18 +155,17 @@ pub fn any_just_released<T>() -> ActionSeed<Vec<T>>
 
 #[cfg(test)]
 mod tests {
-    use bevy::app::{First, Startup};
-    use bevy::input::ButtonInput;
-    use bevy::prelude::{Commands, KeyCode, World};
-    use bevy::prelude::KeyCode::{KeyA, KeyB, KeyC, KeyD};
-    use bevy_test_helper::resource::bool::BoolExtension;
-    use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{once, wait};
     use crate::action::sequence::Then;
-    use crate::reactor::Reactor;
+    use crate::action::{once, wait};
+    use crate::prelude::Reactor;
     use crate::sequence;
     use crate::tests::test_app;
+    use bevy::app::{First, Startup};
+    use bevy::input::ButtonInput;
+    use bevy::prelude::KeyCode::{KeyA, KeyB, KeyC, KeyD};
+    use bevy::prelude::{Commands, KeyCode, World};
+    use bevy_test_helper::resource::bool::BoolExtension;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     #[test]
     fn wait_until_pressed_a() {

@@ -1,9 +1,11 @@
-use crate::prelude::{ActionSeed, CancellationToken, Runner};
+use crate::prelude::{ActionSeed, CancellationHandlers, Runner, RunnerIs};
 use bevy::prelude::World;
 use crate::runner::Output;
 
 /// Creates a no-op action.
-/// 
+///
+/// This action can be useful for the null-object-pattern.
+///
 /// This is also the [Default] action for [Action] and [`ActionSeed`].
 /// 
 /// ## Examples
@@ -22,6 +24,8 @@ pub fn no_op() -> ActionSeed {
 }
 
 /// Creates a no-op action with input and output types.
+///
+/// This action can be useful for the null-object-pattern.
 ///
 /// This is also the [Default] action for [Action] and [`ActionSeed`].
 /// 
@@ -46,9 +50,9 @@ pub fn no_op_with_generics<I, O>() -> ActionSeed<I, O>
 struct NoOpRunner<O>(Output<O>);
 
 impl<O: Default> Runner for NoOpRunner<O> {
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         self.0.set(O::default());
-        true
+        RunnerIs::Completed
     }
 }
 

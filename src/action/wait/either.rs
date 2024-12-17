@@ -1,8 +1,8 @@
 use bevy::prelude::World;
 
 use crate::action::Action;
-use crate::prelude::{ActionSeed, BoxedRunner};
-use crate::runner::{CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, BoxedRunner, RunnerIs};
+use crate::runner::{CancellationHandlers, Output, Runner};
 
 /// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -74,7 +74,7 @@ where
             output,
         }
     })
-    .with((li, ri))
+        .with((li, ri))
 }
 
 struct EitherRunner<O1, O2> {
@@ -90,34 +90,40 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.r1.run(world, token);
-        if let Some(lhs) = self.o1.take() {
-            self.output.set(Either::Left(lhs));
-            return true;
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
+        match self.r1.run(world, token) {
+            RunnerIs::Canceled => return RunnerIs::Canceled,
+            RunnerIs::Running => {}
+            RunnerIs::Completed => {
+                let lhs = self.o1.take().expect("An output value hasn't been set!!!");
+                self.output.set(Either::Left(lhs));
+                return RunnerIs::Completed;
+            }
         }
-        self.r2.run(world, token);
-        if let Some(rhs) = self.o2.take() {
-            self.output.set(Either::Right(rhs));
-            true
-        } else {
-            false
+
+        match self.r2.run(world, token) {
+            RunnerIs::Canceled => RunnerIs::Canceled,
+            RunnerIs::Running => RunnerIs::Running,
+            RunnerIs::Completed => {
+                let rhs = self.o2.take().expect("An output value hasn't been set!!!");
+                self.output.set(Either::Right(rhs));
+                RunnerIs::Completed
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::action::wait::{output, until, Either};
+    use crate::action::{once, wait};
+    use crate::prelude::Reactor;
+    use crate::tests::test_app;
+    use crate::wait_all;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::ButtonInput;
     use bevy::prelude::{Commands, KeyCode, Local, ResMut, Resource, Update};
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::wait::{output, until, Either};
-    use crate::action::{once, wait};
-    use crate::reactor::Reactor;
-    use crate::tests::test_app;
-    use crate::wait_all;
 
     #[test]
     fn wait_either() {
@@ -178,7 +184,7 @@ mod tests {
                             wait::input::pressed().with(KeyCode::KeyA),
                         ),
                     )
-                    .await;
+                        .await;
                     task.will(Update, wait::until(|| false)).await;
                 }));
             })

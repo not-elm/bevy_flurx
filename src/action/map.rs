@@ -1,14 +1,14 @@
 use bevy::prelude::World;
 
 use crate::action::remake::Remake;
-use crate::prelude::CancellationToken;
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::prelude::CancellationHandlers;
+use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
 
 /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
 /// applying function.
 pub trait Map<I1, O1, O2, ActionOrSeed>: Sized
 where
-    O2: 'static,
+    O2: Send + Sync + 'static,
 {
     /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
     /// applying function.
@@ -28,7 +28,7 @@ where
     ///     ).await;
     /// });
     /// ```
-    fn map(self, f: impl FnOnce(O1) -> O2 + 'static) -> ActionOrSeed;
+    fn map(self, f: impl FnOnce(O1) -> O2 + Send + Sync + 'static) -> ActionOrSeed;
 
     /// Overwrite the output of [`Action`](crate::prelude::Action) or [`ActionSeed`](crate::prelude::ActionSeed).
     ///
@@ -47,19 +47,19 @@ where
     ///     ).await;
     /// });
     fn overwrite(self, output: O2) -> ActionOrSeed {
-        self.map(|_| output)
+        self.map(move |_| output)
     }
 }
 
 impl<I, O, O2, A, Re> Map<I, O, O2, A> for Re
 where
-     I: 'static,
+    I: 'static,
     O: 'static,
-    O2: 'static,
+    O2: Send + Sync + 'static,
     Re: Remake<I, O, O2, A> + 'static,
 {
     #[inline]
-    fn map(self, f: impl FnOnce(O) -> O2 + 'static) -> A {
+    fn map(self, f: impl FnOnce(O) -> O2 + Send + Sync + 'static) -> A {
         self.remake(|r1, o1, output| MapRunner {
             r1,
             o1,
@@ -80,25 +80,26 @@ impl<O1, O2, F> Runner for MapRunner<O1, O2, F>
 where
     F: FnOnce(O1) -> O2 + 'static,
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        self.r1.run(world, token);
-        if let Some(o) = self.o1.take() {
-            self.output.set(self.map.take().unwrap()(o));
-            true
-        } else {
-            false
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
+        match self.r1.run(world, token) {
+            RunnerIs::Canceled => RunnerIs::Canceled,
+            RunnerIs::Running => RunnerIs::Running,
+            RunnerIs::Completed => {
+                let o = self.o1.take().expect("The output value has not been set!!!");
+                self.output.set(self.map.take().unwrap()(o));
+                RunnerIs::Completed
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::action::once;
+    use crate::prelude::{Reactor, Map, Pipe};
+    use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In};
-
-    use crate::action::once;
-    use crate::prelude::{Map, Pipe, Reactor};
-    use crate::tests::test_app;
 
     #[test]
     fn map_num_to_string() {
@@ -124,7 +125,7 @@ mod tests {
                             assert_eq!(num, 5);
                         })),
                 )
-                .await;
+                    .await;
 
                 task.will(
                     Update,
@@ -134,7 +135,7 @@ mod tests {
                         },
                     )),
                 )
-                .await;
+                    .await;
             }));
         });
 

@@ -3,7 +3,8 @@ use bevy::prelude::World;
 use crate::action::record::push_track;
 use crate::prelude::record::EditRecordResult;
 use crate::prelude::record::Track;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner};
+use crate::runner::RunnerIs;
 
 /// Push the [`Track`](crate::prelude::Track) onto the [`Record`](crate::prelude::Record).
 ///
@@ -54,29 +55,27 @@ impl<Act> Runner for PushRunner<Act>
 where
     Act: Send + Sync + 'static,
 {
-    fn run(&mut self, world: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some(track) = self.track.take() {
             if let Err(error) = push_track::<Act>(track, world, true) {
                 self.output.set(Err(error));
-                return true;
+                return RunnerIs::Completed;
             }
         }
         self.output.set(Ok(()));
-        true
+        RunnerIs::Completed
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::action::record::{Record, Track};
+    use crate::action::{once, record};
+    use crate::prelude::{ActionSeed, Reactor, Omit, Rollback};
+    use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::record::{Record, Track};
-    use crate::action::{once, record};
-    use crate::prelude::{ActionSeed, Omit, Reactor, Rollback};
-
-    use crate::tests::test_app;
 
     #[derive(Default)]
     struct H1;

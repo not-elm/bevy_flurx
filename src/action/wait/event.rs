@@ -88,14 +88,13 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{once, wait};
+    use crate::prelude::{Either, Reactor, Pipe, Then};
+    use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, EventWriter, Events, In};
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{once, wait};
-    use crate::prelude::{Either, Pipe, Reactor, Then};
-    use crate::tests::test_app;
 
     #[test]
     fn wait_until_event_consumed_events() {
@@ -107,7 +106,7 @@ mod tests {
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::comes::<TestEvent1>()),
                 )
-                .await;
+                    .await;
 
                 task.will(Update, {
                     wait::either(wait::event::comes::<TestEvent1>(), once::run(|| {})).pipe(
@@ -120,7 +119,7 @@ mod tests {
                         ),
                     )
                 })
-                .await;
+                    .await;
             }));
         });
 
@@ -141,7 +140,7 @@ mod tests {
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::read::<TestEvent1>()),
                 )
-                .await;
+                    .await;
 
                 task.will(Update, {
                     wait::either(wait::event::read::<TestEvent1>(), once::run(|| {})).pipe(
@@ -155,7 +154,7 @@ mod tests {
                         ),
                     )
                 })
-                .await;
+                    .await;
             }));
         });
 

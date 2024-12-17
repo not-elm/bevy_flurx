@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::action::effect::AsyncFunctor;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner, RunnerIs};
 
 /// Spawns a future onto the bevy thread pool,
 /// and then wait until its completed.
@@ -31,8 +31,8 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner};
 /// ```
 pub fn spawn<I, Out, Functor, M>(f: Functor) -> ActionSeed<I, Out>
 where
-     I: 'static,
-    Functor: AsyncFunctor<I, Out, M> + 'static,
+    I: 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + Sync + 'static,
     Out: Send + 'static,
     M: Send + 'static,
 {
@@ -60,12 +60,12 @@ where
     Out: Send + 'static,
 {
     #[allow(clippy::async_yields_async)]
-    fn run(&mut self, _: &mut World, _: &CancellationToken) -> bool {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some(out) = pollster::block_on(futures_lite::future::poll_once(&mut self.task)) {
             self.output.set(out);
-            true
+            RunnerIs::Completed
         } else {
-            false
+            RunnerIs::Running
         }
     }
 }
@@ -73,15 +73,14 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::{effect, once};
+    use crate::prelude::{Reactor, Pipe};
+    use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::core::TaskPoolPlugin;
     use bevy::prelude::Commands;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::{effect, once};
-    use crate::prelude::{Pipe, Reactor};
-    use crate::tests::test_app;
 
     //TODO: It fails about once every two times.
     // Need to check the internal code of `bevy_task` crate.

@@ -7,8 +7,8 @@
 use bevy::prelude::World;
 
 use crate::action::Action;
-use crate::prelude::{ActionSeed, CancellationToken};
-use crate::runner::{BoxedRunner, Output, Runner};
+use crate::prelude::{ActionSeed, CancellationHandlers};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
 
 /// [`Omit`] provides a mechanism to omit both input and output types from an action.
 pub trait Omit {
@@ -76,7 +76,7 @@ pub trait OmitInput<I, O> {
 
 impl<O> Omit for ActionSeed<(), O>
 where
-    O: 'static,
+    O: Send + Sync + 'static,
 {
     fn omit(self) -> ActionSeed {
         let action: Action<(), O> = self.into();
@@ -86,8 +86,8 @@ where
 
 impl<I, O> Omit for Action<I, O>
 where
-    I: 'static,
-    O: 'static,
+    I: Send + Sync + 'static,
+    O: Send + Sync + 'static,
 {
     fn omit(self) -> ActionSeed {
         self.omit_output().omit_input()
@@ -96,7 +96,7 @@ where
 
 impl<I, O, A> OmitInput<I, O> for A
 where
-    A: Into<Action<I, O>> + 'static,
+    A: Into<Action<I, O>> + Send + Sync + 'static,
     I: 'static,
     O: 'static,
 {
@@ -108,7 +108,7 @@ where
 
 impl<I, O> OmitOutput<I, O, Action<I, ()>> for Action<I, O>
 where
-    I: 'static,
+    I: Send + Sync + 'static,
     O: 'static,
 {
     #[inline]
@@ -118,7 +118,7 @@ where
             let r1 = seed.create_runner(input, Output::default());
             OmitRunner { output, r1 }
         })
-        .with(input)
+            .with(input)
     }
 }
 
@@ -142,27 +142,28 @@ struct OmitRunner {
 }
 
 impl Runner for OmitRunner {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
-        if self.r1.run(world, token) {
-            self.output.set(());
-            true
-        } else {
-            false
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
+        match self.r1.run(world, token) {
+            RunnerIs::Canceled => RunnerIs::Canceled,
+            RunnerIs::Running => RunnerIs::Running,
+            RunnerIs::Completed => {
+                self.output.set(());
+                RunnerIs::Completed
+            }
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::action::omit::{Omit, OmitInput, OmitOutput};
+    use crate::action::{once, wait};
+    use crate::prelude::{ActionSeed, Reactor, Pipe};
+    use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::omit::{Omit, OmitInput, OmitOutput};
-    use crate::action::{once, wait};
-    use crate::prelude::{ActionSeed, Pipe, Reactor};
-    use crate::tests::test_app;
 
     #[test]
     fn omit_input() {
@@ -178,7 +179,7 @@ mod tests {
                             count.set(num);
                         })),
                 )
-                .await;
+                    .await;
             }));
         });
 
@@ -200,7 +201,7 @@ mod tests {
                             count.set(3);
                         })),
                 )
-                .await;
+                    .await;
             }));
         });
 

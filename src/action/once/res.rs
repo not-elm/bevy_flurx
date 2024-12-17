@@ -25,7 +25,8 @@ use crate::action::seed::ActionSeed;
 /// ```
 #[inline(always)]
 pub fn init<R>() -> ActionSeed
-    where R: Resource + Default + 'static
+where
+    R: Resource + Default + 'static,
 {
     once::run(|mut commands: Commands| {
         commands.init_resource::<R>();
@@ -48,7 +49,8 @@ pub fn init<R>() -> ActionSeed
 /// ```
 #[inline(always)]
 pub fn insert<R>() -> ActionSeed<R>
-    where R: Resource + 'static
+where
+    R: Resource + 'static,
 {
     once::run(|input: In<R>, mut commands: Commands| {
         commands.insert_resource(input.0);
@@ -71,7 +73,8 @@ pub fn insert<R>() -> ActionSeed<R>
 /// ```
 #[inline(always)]
 pub fn remove<R>() -> ActionSeed
-    where R: Resource + 'static
+where
+    R: Resource + 'static,
 {
     once::run(|mut commands: Commands| {
         commands.remove_resource::<R>();
@@ -81,12 +84,11 @@ pub fn remove<R>() -> ActionSeed
 
 #[cfg(test)]
 mod tests {
+    use crate::action::once::res;
+    use crate::prelude::Reactor;
+    use crate::tests::{test_app, TestResource};
     use bevy::app::{First, Startup};
     use bevy::prelude::Commands;
-
-    use crate::action::once::res;
-    use crate::reactor::Reactor;
-    use crate::tests::{test_app, TestResource};
 
     #[test]
     fn init_resource() {

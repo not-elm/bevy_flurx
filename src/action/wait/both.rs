@@ -2,7 +2,7 @@ use bevy::prelude::World;
 
 use crate::action::Action;
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner};
+use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs};
 use crate::runner::macros::output_combine;
 
 /// Run until both tasks done.
@@ -61,12 +61,14 @@ impl<O1, O2> Runner for BothRunner<O1, O2>
         O1: 'static,
         O2: 'static
 {
-    fn run(&mut self, world: &mut World, token: &CancellationToken) -> bool {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if self.o1.is_none() {
-            self.r1.run(world, token);
+            if let RunnerIs::Canceled = self.r1.run(world, token) {
+                return RunnerIs::Canceled;
+            }
         }
-        if self.o2.is_none() {
-            self.r2.run(world, token);
+        if self.o2.is_none() && self.r2.run(world, token).is_cancel(){
+            return RunnerIs::Canceled;
         }
         output_combine!(&self.o1, &self.o2, self.output)
     }

@@ -21,7 +21,6 @@ use bevy::utils::default;
 use bevy::DefaultPlugins;
 use bevy_egui::egui::{Color32, RichText};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-
 use bevy_flurx::actions;
 use bevy_flurx::prelude::*;
 
