@@ -1,4 +1,4 @@
-//! [`wait`] creates a task that run the until the condition is met.
+//!  The [wait] module defines actions that continue to execute every frame according to specified conditions.
 //!
 //! actions
 //!
