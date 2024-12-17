@@ -10,9 +10,8 @@
 
 use bevy::app::{App, PostUpdate, Update};
 use bevy::prelude::{Commands, Event, EventReader};
-
 use crate::action::record;
-use crate::prelude::{Flow, Omit, Reactor, Then};
+use crate::prelude::{Reactor, Omit, Then};
 
 /// Represents a request `undo` operations.
 ///
@@ -84,7 +83,7 @@ where
         })
         .reduce(|r1, r2| r1.then(r2))
     {
-        commands.spawn(Flow::schedule(|task| async move {
+        commands.spawn(Reactor::schedule(|task| async move {
             task.will(Update, actions).await;
         }));
     }
@@ -104,7 +103,7 @@ where
         })
         .reduce(|r1, r2| r1.then(r2))
     {
-        commands.spawn(Flow::schedule(|task| async move {
+        commands.spawn(Reactor::schedule(|task| async move {
             task.will(Update, actions).await;
         }));
     }
@@ -121,14 +120,14 @@ mod tests {
 
     use crate::action::record::tests::push_undo_increment;
     use crate::prelude::record::tests::push_num_act;
-    use crate::prelude::{Flow, RequestRedo, RequestUndo, Then};
+    use crate::prelude::{Reactor, RequestRedo, RequestUndo, Then};
     use crate::tests::{test_app, NumAct, TestAct};
 
     #[test]
     fn test_request_undo_once() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push_undo_increment()).await.unwrap();
             }));
         });
@@ -144,7 +143,7 @@ mod tests {
     fn test_request_undo_index_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -167,7 +166,7 @@ mod tests {
     fn test_request_undo_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
@@ -187,7 +186,7 @@ mod tests {
     fn test_request_undo_all() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -210,7 +209,7 @@ mod tests {
     fn test_request_redo_once() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -239,7 +238,7 @@ mod tests {
     fn test_request_redo_index_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_undo_increment()
@@ -268,7 +267,7 @@ mod tests {
     fn test_request_redo_to() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
@@ -294,7 +293,7 @@ mod tests {
     fn test_request_redo_all() {
         let mut app = test_app();
         app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),

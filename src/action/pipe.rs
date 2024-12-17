@@ -8,7 +8,7 @@ use bevy::prelude::World;
 
 use crate::action::remake::Remake;
 use crate::prelude::seed::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner, RunnerStatus};
+use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs};
 
 /// Provides the mechanism to pipe the actions.
 pub trait Pipe<I1, O1, O2, A> {
@@ -26,7 +26,7 @@ pub trait Pipe<I1, O1, O2, A> {
     /// #[derive(Event, Clone)]
     /// struct PlayerHit(Entity);
     ///
-    /// Flow::schedule(|task| async move{
+    /// Reactor::schedule(|task| async move{
     ///     task.will(Update, {
     ///         wait::event::read::<PlayerHit>()
     ///             .pipe(once::run(|In(PlayerHit(entity)): In<PlayerHit>, mut players: Query<&mut Hp>|{
@@ -90,12 +90,12 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if !self.finished_r1 {
             match self.r1.run(world, token) {
-                RunnerStatus::Cancel => return RunnerStatus::Cancel,
-                RunnerStatus::Pending => return RunnerStatus::Pending,
-                RunnerStatus::Ready => {}
+                RunnerIs::Canceled => return RunnerIs::Canceled,
+                RunnerIs::Running => return RunnerIs::Running,
+                RunnerIs::Completed => {}
             };
         }
 
@@ -104,7 +104,7 @@ where
             r2.run(world, token)
         } else {
             // unreachable
-            RunnerStatus::Cancel
+            RunnerIs::Canceled
         }
     }
 }
@@ -112,7 +112,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{delay, once};
-    use crate::prelude::{Flow, Map, Pipe, Then, Through};
+    use crate::prelude::{Reactor, Map, Pipe, Then, Through};
     use crate::test_util::test;
     use crate::tests::{increment_count, test_app};
     use bevy::app::{AppExit, Startup};
@@ -126,7 +126,7 @@ mod tests {
     fn not_occur_unwrap_panic() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     delay::frames()
@@ -152,7 +152,7 @@ mod tests {
     fn r2_no_run_after_r1_cancelled() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, test::cancel().pipe(increment_count()))
                     .await;
             }));

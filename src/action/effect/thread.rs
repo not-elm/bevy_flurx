@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::World;
 
-use crate::prelude::{ActionSeed, CancellationToken, RunnerStatus};
+use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
 
 
@@ -25,7 +25,7 @@ use crate::runner::{Output, Runner};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::run(||{
 ///             2
@@ -67,7 +67,7 @@ where
     O: Send + 'static,
     F: FnOnce(I) -> O + Send + 'static,
 {
-    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some((input, f)) = self.args.take() {
             let arc_out = self.arc_output.clone();
             self.handle.replace(std::thread::spawn(move || {
@@ -77,9 +77,9 @@ where
 
         if let Some(out) = self.arc_output.lock().unwrap().take() {
             self.output.set(out);
-            RunnerStatus::Ready
+            RunnerIs::Completed
         } else {
-            RunnerStatus::Pending
+            RunnerIs::Running
         }
     }
 }
@@ -88,7 +88,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::{Flow, Pipe};
+    use crate::prelude::{Reactor, Pipe};
     use crate::tests::test_app;
     use bevy::prelude::{Commands, In, ResMut, Startup, Update};
     use bevy_test_helper::resource::count::Count;
@@ -98,7 +98,7 @@ mod tests {
     fn thread_calc_2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     effect::thread::spawn(|_| {
                         1 + 1

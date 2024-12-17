@@ -8,8 +8,8 @@
 
 use crate::action::pipe::Pipe;
 use crate::action::seed::ActionSeed;
-use crate::prelude::{Action, CancellationToken};
-use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
+use crate::prelude::{Action, CancellationHandlers};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
 use bevy::prelude::World;
 
 /// This function is used when you want to insert some kind of action,
@@ -25,7 +25,7 @@ use bevy::prelude::World;
 /// #[derive(Event, Clone)]
 /// struct Damage(usize);
 ///
-/// Flow::schedule(|task|async move{
+/// Reactor::schedule(|task|async move{
 ///     task.will(Update, wait::event::read::<Damage>()
 ///         .pipe(through(delay::time().with(Duration::from_millis(500))))
 ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
@@ -64,7 +64,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// #[derive(Event, Clone)]
     /// struct Damage(usize);
     ///
-    /// Flow::schedule(|task|async move{
+    /// Reactor::schedule(|task|async move{
     ///     task.will(Update, wait::event::read::<Damage>()
     ///         .through(delay::time().with(Duration::from_millis(500)))
     ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
@@ -118,11 +118,11 @@ impl<V> Runner for ThroughRunner<V>
 where
     V: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         match self.inner.run(world, token) {
-            RunnerStatus::Ready => {
+            RunnerIs::Completed => {
                 self.output.set(self.value.take().unwrap());
-                RunnerStatus::Ready
+                RunnerIs::Completed
             }
             other => other
         }
@@ -134,7 +134,7 @@ mod tests {
     use crate::action::once;
     use crate::action::pipe::Pipe;
     use crate::action::through::Through;
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In, Resource};
@@ -147,7 +147,7 @@ mod tests {
     fn through_output_num1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|| 1usize)

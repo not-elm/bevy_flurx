@@ -14,7 +14,7 @@ use crate::action::record::{push_tracks, Record};
 use crate::action::record::{unlock_record, EditRecordResult};
 use crate::prelude::record::lock_record;
 use crate::prelude::{ActionSeed, Output, Track};
-use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner, RunnerStatus};
+use crate::runner::{BoxedRunner, CancellationId, CancellationHandlers, Runner, RunnerIs};
 
 /// Pops the last pushed `redo` action and execute it.
 /// After the `redo` action is executed, then the `undo` action that created it
@@ -33,7 +33,7 @@ use crate::runner::{BoxedRunner, CancellationId, CancellationToken, Runner, Runn
 ///
 /// struct Act;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, record::push().with(
 ///         Track{
 ///             act: Act,
@@ -135,11 +135,11 @@ where
     Act: Send + Sync + 'static,
 {
     //noinspection DuplicatedCode
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if self.cancellation_id.is_none() {
             if let Err(e) = lock_record::<Act>(world) {
                 self.output.set(Err(e));
-                return RunnerStatus::Ready;
+                return RunnerIs::Completed;
             }
             world.insert_non_send_resource(TracksStore::<Act>(Vec::new()));
             self.cancellation_id.replace(token.register(cleanup::<Act>));
@@ -162,12 +162,12 @@ where
                         token.unregister(id);
                     }
                     cleanup::<Act>(world);
-                    return RunnerStatus::Ready;
+                    return RunnerIs::Completed;
                 }
             }
 
             match self.redo_runner.as_mut().unwrap().run(world, token) {
-                RunnerStatus::Ready => {
+                RunnerIs::Completed => {
                     self.redo_runner.take();
                     self.redo_output.take();
                 }
@@ -200,8 +200,8 @@ mod tests {
 
     use crate::action::record::track::{Redo, Undo};
     use crate::action::{delay, once, record};
-    use crate::prelude::{ActionSeed, Flow, Omit, Record, RequestRedo, Rollback, Then, Track};
-    use crate::reactor::Reactor;
+    use crate::prelude::{ActionSeed, Reactor, Omit, Record, RequestRedo, Rollback, Then, Track};
+    use crate::reactor::NativeReactor;
     use crate::sequence;
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
@@ -210,7 +210,7 @@ mod tests {
     fn test_redo_once() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     record::push().with(Track {
@@ -274,7 +274,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push("1").then(push("2")).then(push("3")))
                     .await;
                 task.will(Update, record::undo::all::<TestAct>())
@@ -321,7 +321,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push(1).then(push(2)).then(push(3)).then(push(4)))
                     .await;
                 task.will(Update, record::undo::all::<Act>()).await.unwrap();
@@ -366,7 +366,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push(1).then(push(2)).then(push(3)).then(push(4)))
                     .await;
                 task.will(Update, record::undo::all::<Act>()).await.unwrap();
@@ -400,7 +400,7 @@ mod tests {
                     .omit()
             }
 
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push().then(push()).then(push())).await;
                 task.will(Update, record::undo::all::<TestAct>())
                     .await
@@ -423,7 +423,7 @@ mod tests {
     fn failed_in_progressing() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     sequence![record::push().with(Track {
@@ -482,7 +482,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(
-                |mut commands: Commands, reactor: Query<Entity, With<Reactor>>| {
+                |mut commands: Commands, reactor: Query<Entity, With<NativeReactor>>| {
                     commands.entity(reactor.single()).despawn();
                 },
             )
@@ -499,7 +499,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn((
                 R,
-                Flow::schedule(|task| async move {
+                Reactor::schedule(|task| async move {
                     task.will(Update, {
                         record::push()
                             .with(Track {

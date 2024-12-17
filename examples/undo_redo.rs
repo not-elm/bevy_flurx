@@ -66,7 +66,7 @@ fn spawn_mr_shape(mut commands: Commands) {
 }
 
 fn spawn_undo_redo_reactor(mut commands: Commands) {
-    commands.spawn(Flow::schedule(|task| async move {
+    commands.spawn(Reactor::schedule(|task| async move {
         loop {
             let either = task
                 .will(
@@ -118,7 +118,7 @@ fn show_record(
 }
 
 fn spawn_move_reactor(mut commands: Commands) {
-    commands.spawn(Flow::schedule(|task| async move {
+    commands.spawn(Reactor::schedule(|task| async move {
         loop {
             task.will(
                 Update,

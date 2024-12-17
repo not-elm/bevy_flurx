@@ -23,7 +23,7 @@ use crate::prelude::ActionSeed;
 ///     Second
 /// }
 ///
-/// Flow::schedule(|task| async move {
+/// Reactor::schedule(|task| async move {
 ///     task.will(Update, wait::state::becomes().with(Status::Second)).await;
 /// });
 /// ```
@@ -60,7 +60,7 @@ mod tests {
         app
             .init_state::<TestState>()
             .add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flow::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(First, wait::state::becomes().with(TestState::Phase2)).await;
                     task.will(Update, once::non_send::init::<AppExit>()).await;
                 }));

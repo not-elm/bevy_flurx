@@ -11,7 +11,7 @@
 //! use bevy::prelude::*;
 //! use bevy_flurx::prelude::*;
 //!
-//! Flow::schedule(|task| async move{
+//! Reactor::schedule(|task| async move{
 //!     // `process: 1`
 //!     task.will(Update, wait::until(|mut count: Local<usize>|{
 //!         *count += 1;
@@ -63,7 +63,7 @@ mod map;
 mod remake;
 
 
-/// Represents the system passed to [`ReactiveTask`](crate::task::ReactiveTask).
+/// Represents the system passed to [`ReactiveTask`](crate::task::ReactorTask).
 ///
 /// Please check [here](crate::action) for more details.
 #[derive(Reflect)]

@@ -4,7 +4,7 @@
 use bevy::app::{App, Startup};
 use bevy::core::TaskPoolPlugin;
 use bevy::prelude::{Commands, Local, Res, ResMut, Resource, Update};
-use bevy_flurx::prelude::{once, wait, Flow, Then};
+use bevy_flurx::prelude::{once, wait, Reactor, Then};
 use bevy_flurx::FlurxPlugin;
 use criterion::{criterion_group, criterion_main, Criterion};
 
@@ -26,7 +26,7 @@ fn with_flurx(count: usize, c: &mut Criterion) {
                 .init_resource::<Exit>()
                 .insert_resource(Limit(count))
                 .add_systems(Startup, |mut commands: Commands| {
-                    commands.spawn(Flow::schedule(|task| async move {
+                    commands.spawn(Reactor::schedule(|task| async move {
                         task.will(Update, {
                             wait::until(|mut local: Local<usize>, limit: Res<Limit>| {
                                 *local += 1;

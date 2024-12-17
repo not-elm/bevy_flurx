@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationToken, Output, Runner, RunnerStatus};
+use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs};
 
 /// Wait until the execution of one of the actions is completed.
 ///
@@ -19,7 +19,7 @@ use crate::runner::{BoxedRunner, CancellationToken, Output, Runner, RunnerStatus
 /// use bevy_flurx::prelude::*;
 /// use bevy::app::AppExit;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     // The output value is the index of the completed action.
 ///     let index: usize = task.will(Update, wait::any().with(actions![
 ///         wait::input::just_pressed().with(KeyCode::KeyB),
@@ -50,26 +50,26 @@ struct AnyRunner {
 }
 
 impl Runner for AnyRunner {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         let mut finished = None;
         for (i, runner) in self.runners.iter_mut().enumerate() {
             match runner.run(world, token) {
-                RunnerStatus::Ready => {
+                RunnerIs::Completed => {
                     finished.replace(i);
                     break;
                 }
-                RunnerStatus::Cancel => {
-                    return RunnerStatus::Cancel;
+                RunnerIs::Canceled => {
+                    return RunnerIs::Canceled;
                 }
-                RunnerStatus::Pending => continue
+                RunnerIs::Running => continue
             }
         }
         if let Some(finished_index) = finished {
             self.runners.clear();
             self.output.set(finished_index);
-            RunnerStatus::Ready
+            RunnerIs::Completed
         } else {
-            RunnerStatus::Pending
+            RunnerIs::Running
         }
     }
 }
@@ -78,7 +78,7 @@ impl Runner for AnyRunner {
 mod tests {
     use crate::action::{delay, once};
     use crate::actions;
-    use crate::prelude::{wait, Flow};
+    use crate::prelude::{wait, Reactor};
     use crate::tests::test_app;
     use bevy::app::{AppExit, Startup};
     use bevy::prelude::{Commands, Events, Update};
@@ -89,7 +89,7 @@ mod tests {
     fn return_1() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let index = task
                     .will(
                         Update,
@@ -111,7 +111,7 @@ mod tests {
     fn return_0() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let index = task
                     .will(
                         Update,

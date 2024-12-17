@@ -37,7 +37,7 @@ fn spawn_camera(mut commands: Commands) {
 }
 
 fn spawn_reactor(mut commands: Commands) {
-    commands.spawn(Flow::schedule(|task| async move {
+    commands.spawn(Reactor::schedule(|task| async move {
         loop {
             task.will(Update, {
                 wait::event::read::<RequestGet>()

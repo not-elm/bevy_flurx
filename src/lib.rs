@@ -1,14 +1,14 @@
 //! This library provides a mechanism for more sequential description of delays, character movement,
 //! waiting for user input, and other state waits.
 //!
-//! [`Reactor`] can be used partially.
+//! [`NativeReactor`] can be used partially.
 //! This means there is no need to rewrite existing applications to use this library.
 //! And I recommend using it partially.
-//! This is because the system that runs [`Reactor`] and the systems that are run by [`Reactor`] run on the main thread.
+//! This is because the system that runs [`NativeReactor`] and the systems that are run by [`NativeReactor`] run on the main thread.
 //! (Please check [`Switch`](crate::prelude::Switch) for multi thread operation.)
 
 #![allow(clippy::type_complexity)]
-use crate::reactor::Reactor;
+use crate::reactor::NativeReactor;
 use crate::runner::CallCancellationHandlers;
 use crate::world_ptr::WorldPtr;
 use bevy::app::{App, Last, Plugin, PostStartup};
@@ -40,9 +40,9 @@ pub mod prelude {
         action::Map,
         action::Remake,
         action::*,
-        reactor::{Flow, Reactor},
+        reactor::Reactor,
         runner::*,
-        task::ReactiveTask,
+        task::ReactorTask,
         FlurxPlugin,
     };
 }
@@ -71,14 +71,14 @@ impl Plugin for FlurxPlugin {
     }
 }
 
-fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut Reactor>) {
+fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut NativeReactor>) {
     let world_ptr = WorldPtr::new(world);
     for mut reactor in reactors.iter_mut(world) {
         if reactor.initialized {
             continue;
         }
         reactor.initialized = true;
-        reactor.run_sync(world_ptr);
+        reactor.run_sync(world_ptr.clone());
     }
 }
 
@@ -96,9 +96,10 @@ fn call_cancel_handlers(
     }
 }
 
-fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut Reactor)>) {
+fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut NativeReactor)>) {
     let world_ptr = WorldPtr::new(world);
     let mut entities = Vec::with_capacity(reactors.iter(world).len());
+    //  let mut entities = Vec::new();
     for (entity, mut reactor) in reactors.iter_mut(world) {
         if !reactor.initialized {
             if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {

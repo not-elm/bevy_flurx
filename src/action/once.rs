@@ -13,8 +13,8 @@
 //! - [`once::audio`](audio) (require feature flag `audio`)
 
 use crate::action::seed::ActionSeed;
-use crate::prelude::RunnerStatus;
-use crate::runner::{CancellationToken, Output, Runner};
+use crate::prelude::RunnerIs;
+use crate::runner::{CancellationHandlers, Output, Runner};
 pub use _no_op::{no_op, no_op_with_generics};
 use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
 
@@ -40,7 +40,7 @@ mod _no_op;
 /// use bevy::prelude::{World, Update, EventWriter};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
 ///         ew.send(AppExit::Success);
 ///     })).await;
@@ -74,14 +74,14 @@ where
     Sys: System  + 'static,
     Sys::Out: ,
 {
-    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         self.system.initialize(world);
         let Some(input) = self.input.take() else {
-            return RunnerStatus::Ready;
+            return RunnerIs::Completed;
         };
         let out = self.system.run(input, world);
         self.system.apply_deferred(world);
         self.output.set(out);
-        RunnerStatus::Ready
+        RunnerIs::Completed
     }
 }

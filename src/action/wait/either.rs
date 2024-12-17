@@ -1,8 +1,8 @@
 use bevy::prelude::World;
 
 use crate::action::Action;
-use crate::prelude::{ActionSeed, BoxedRunner, RunnerStatus};
-use crate::runner::{CancellationToken, Output, Runner};
+use crate::prelude::{ActionSeed, BoxedRunner, RunnerIs};
+use crate::runner::{CancellationHandlers, Output, Runner};
 
 /// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -39,7 +39,7 @@ impl<L, R> Either<L, R> {
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     let either = task.will(Update, wait::either(
 ///         wait::until(||false),
 ///         wait::event::read::<AppExit>()
@@ -90,24 +90,24 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
         match self.r1.run(world, token) {
-            RunnerStatus::Cancel => return RunnerStatus::Cancel,
-            RunnerStatus::Pending => {}
-            RunnerStatus::Ready => {
+            RunnerIs::Canceled => return RunnerIs::Canceled,
+            RunnerIs::Running => {}
+            RunnerIs::Completed => {
                 let lhs = self.o1.take().expect("An output value hasn't been set!!!");
                 self.output.set(Either::Left(lhs));
-                return RunnerStatus::Ready;
+                return RunnerIs::Completed;
             }
         }
 
         match self.r2.run(world, token) {
-            RunnerStatus::Cancel => RunnerStatus::Cancel,
-            RunnerStatus::Pending => RunnerStatus::Pending,
-            RunnerStatus::Ready => {
+            RunnerIs::Canceled => RunnerIs::Canceled,
+            RunnerIs::Running => RunnerIs::Running,
+            RunnerIs::Completed => {
                 let rhs = self.o2.take().expect("An output value hasn't been set!!!");
                 self.output.set(Either::Right(rhs));
-                RunnerStatus::Ready
+                RunnerIs::Completed
             }
         }
     }
@@ -117,7 +117,7 @@ where
 mod tests {
     use crate::action::wait::{output, until, Either};
     use crate::action::{once, wait};
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::tests::test_app;
     use crate::wait_all;
     use bevy::ecs::system::RunSystemOnce;
@@ -132,7 +132,7 @@ mod tests {
         struct Count(usize);
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Flow::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     let u1 = until(|mut count: Local<u32>| {
                         *count += 1;
                         *count == 3
@@ -170,7 +170,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Flow::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(
                         Update,
                         wait::either(

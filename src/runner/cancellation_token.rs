@@ -3,9 +3,9 @@ use bevy::utils::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// The cancellation handler id assigned by [`CancellationToken`].
+/// The cancellation handler id assigned by [`CancellationHandlers`].
 ///
-/// For unregister the handler, call [`CancellationToken::unregister`] with this id.
+/// For unregister the handler, call [`CancellationHandlers::unregister`] with this id.
 #[repr(transparent)]
 #[derive(Default, Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub struct CancellationId(u64);
@@ -13,13 +13,13 @@ pub struct CancellationId(u64);
 /// Structure for canceling a [`Reactor`](crate::prelude::Reactor).
 ///
 /// This is passed as argument in [`Runner::run`](crate::prelude::Runner::run),
-/// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by calling [`CancellationToken::cancel`]. 
+/// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by calling [`CancellationHandlers::cancel`].
 #[repr(transparent)]
 #[derive(Default, Component)]
-pub struct CancellationToken(pub(crate) HashMap<CancellationId, fn(&mut World)>);
+pub struct CancellationHandlers(pub(crate) HashMap<CancellationId, fn(&mut World)>);
 
-impl CancellationToken {
-    /// Register a function that will be called when [`CancellationToken`] is cancelled.
+impl CancellationHandlers {
+    /// Register a function that will be called when [`CancellationHandlers`] is cancelled.
     #[inline]
     pub fn register(&mut self, f: fn(&mut World)) -> CancellationId {
         static ID: AtomicU64 = AtomicU64::new(0);
@@ -33,15 +33,8 @@ impl CancellationToken {
     pub fn unregister(&mut self, id: &CancellationId) {
         self.0.remove(id);
     }
-
-    #[inline]
-    pub(crate) fn call_cancel_handles(&mut self, world: &mut World) {
-        for (_, handle) in std::mem::take(&mut self.0) {
-            handle(world);
-        }
-    }
 }
 
 #[repr(transparent)]
 #[derive(Event)]
-pub(crate) struct CallCancellationHandlers(pub(crate) CancellationToken);
+pub(crate) struct CallCancellationHandlers(pub(crate) CancellationHandlers);

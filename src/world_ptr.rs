@@ -1,13 +1,12 @@
-use std::ptr;
-
 use bevy::prelude::World;
+use std::ptr;
 
 #[repr(transparent)]
 #[derive(Clone, Copy)]
 pub struct WorldPtr(*mut World);
 
-unsafe impl Send for WorldPtr{}
-unsafe impl Sync for WorldPtr{}
+unsafe impl Send for WorldPtr {}
+unsafe impl Sync for WorldPtr {}
 
 impl WorldPtr {
     #[inline]

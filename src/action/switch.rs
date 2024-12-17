@@ -108,7 +108,7 @@ pub fn switch_just_turned_off<M>(
 ///         switch.off();
 ///     }).run_if(switch_is_on::<HeavyTask>))
 ///     .add_systems(Update, |mut commands: Commands|{
-///         commands.spawn(Flow::schedule(|task| async move{
+///         commands.spawn(Reactor::schedule(|task| async move{
 ///             task.will(Update, once::switch::on::<HeavyTask>()).await;
 ///             task.will(Update, wait::switch::off::<HeavyTask>()).await;
 ///         })); 

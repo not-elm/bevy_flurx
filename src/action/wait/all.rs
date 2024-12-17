@@ -1,5 +1,5 @@
 use crate::prelude::{ActionSeed, Output, Runner};
-use crate::runner::{BoxedRunner, CancellationToken, RunnerStatus};
+use crate::runner::{BoxedRunner, CancellationHandlers, RunnerIs};
 use bevy::prelude::World;
 
 /// Wait until all the actions are completed.
@@ -15,7 +15,7 @@ use bevy::prelude::World;
 /// use bevy_flurx::actions;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::all().with(actions![
 ///         once::run(||{}),
 ///         delay::time().with(Duration::from_millis(300)),
@@ -42,22 +42,22 @@ struct AllRunner {
 }
 
 impl Runner for AllRunner {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> crate::prelude::RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
         let runners = std::mem::take(&mut self.runners);
         for mut runner in runners {
             match runner.run(world, token) {
-                RunnerStatus::Cancel => return RunnerStatus::Cancel,
-                RunnerStatus::Ready => {}
-                RunnerStatus::Pending => {
+                RunnerIs::Canceled => return RunnerIs::Canceled,
+                RunnerIs::Completed => {}
+                RunnerIs::Running => {
                     self.runners.push(runner);
                 }
             }
         }
         if self.runners.is_empty() {
             self.output.set(());
-            RunnerStatus::Ready
+            RunnerIs::Completed
         } else {
-            RunnerStatus::Pending
+            RunnerIs::Running
         }
     }
 }
@@ -85,7 +85,7 @@ impl Runner for AllRunner {
 /// #[derive(Default, Clone, Event, PartialEq, Debug)]
 /// struct Event4;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     let (event1, event2, event3, event4) = task.will(Update, wait_all![
 ///         wait::event::read::<Event1>(),
 ///         wait::event::read::<Event2>(),
@@ -119,7 +119,7 @@ macro_rules! wait_all {
 pub mod private {
     use crate::action::Action;
     use crate::prelude::ActionSeed;
-    use crate::prelude::RunnerStatus;
+    use crate::prelude::RunnerIs;
     use crate::runner::macros::impl_tuple_runner;
     use crate::runner::{BoxedRunner, Output, Runner};
     use std::marker::PhantomData;
@@ -176,29 +176,29 @@ pub mod private {
                     O2: 'static,
             {
                 #[allow(non_snake_case)]
-                  fn run(&mut self, world: &mut bevy::prelude::World, token: &mut $crate::prelude::CancellationToken) -> RunnerStatus {
+                  fn run(&mut self, world: &mut bevy::prelude::World, token: &mut $crate::prelude::CancellationHandlers) -> RunnerIs {
                     if self.o1.is_none(){
                         match self.r1.run(world, token){
-                            RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                            RunnerIs::Canceled => return RunnerIs::Canceled,
                             _ => {}
                         }
                     }
                     if self.o2.is_none(){
                         match self.r2.run(world, token){
-                            RunnerStatus::Cancel => return RunnerStatus::Cancel,
+                            RunnerIs::Canceled => return RunnerIs::Canceled,
                             _ => {}
                         }
                     }
                     if let Some(($($lhs_out,)*)) = self.o1.take(){
                         if let Some(out2) = self.o2.take(){
                             self.output.set(($($lhs_out,)* out2));
-                            RunnerStatus::Ready
+                            RunnerIs::Completed
                         }else{
                             self.o1.set(($($lhs_out,)*));
-                            RunnerStatus::Pending
+                            RunnerIs::Running
                         }
                     }else{
-                        RunnerStatus::Pending
+                        RunnerIs::Running
                     }
                 }
             }
@@ -213,7 +213,7 @@ mod tests {
     use crate::action::delay;
     use crate::actions;
     use crate::prelude::{once, wait, Pipe, Then};
-    use crate::reactor::Flow;
+    use crate::reactor::Reactor;
     use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
@@ -226,7 +226,7 @@ mod tests {
     fn wai_all_actions() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     once::run(|| [increment_count(), increment_count(), decrement_count()])
                         .pipe(wait::all())
@@ -242,7 +242,7 @@ mod tests {
     fn with_delay_1frame() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     once::run(|| {
                         actions![
@@ -270,7 +270,7 @@ mod tests {
     fn wait_all() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let (event1, event2, ()) = task
                     .will(
                         Update,
@@ -313,7 +313,7 @@ mod tests {
     fn wait_all_with_once() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let (event1, ..) = task
                     .will(
                         Update,

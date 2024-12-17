@@ -1,7 +1,7 @@
 use bevy::prelude::World;
 
 use crate::action::effect::AsyncFunctor;
-use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus};
+use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner, RunnerIs};
 
 /// Spawns a future onto the bevy thread pool,
 /// and then wait until its completed.
@@ -11,13 +11,13 @@ use crate::prelude::{ActionSeed, CancellationToken, Output, Runner, RunnerStatus
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, effect::bevy_task::spawn(async move{
 ///
 ///     })).await;
 /// });
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
 ///             .pipe(effect::bevy_task::spawn(|num: usize| async move{
@@ -60,12 +60,12 @@ where
     Out: Send + 'static,
 {
     #[allow(clippy::async_yields_async)]
-    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some(out) = pollster::block_on(futures_lite::future::poll_once(&mut self.task)) {
             self.output.set(out);
-            RunnerStatus::Ready
+            RunnerIs::Completed
         } else {
-            RunnerStatus::Pending
+            RunnerIs::Running
         }
     }
 }
@@ -74,7 +74,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::{Flow, Pipe};
+    use crate::prelude::{Reactor, Pipe};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::core::TaskPoolPlugin;
@@ -90,7 +90,7 @@ mod tests {
             let mut app = test_app();
             app.add_plugins(TaskPoolPlugin::default());
             app.add_systems(Startup, |mut commands: Commands| {
-                commands.spawn(Flow::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, {
                         effect::bevy_task::spawn(async move {
                             Count(1 + 1)
@@ -112,7 +112,7 @@ mod test_tokio {
     use bevy::prelude::Commands;
 
     use crate::action::effect;
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::tests::test_app;
 
     #[test]
@@ -120,7 +120,7 @@ mod test_tokio {
         let mut app = test_app();
         app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     effect::bevy_task::spawn(async move {
                         tokio::time::sleep(std::time::Duration::new(1, 0)).await;

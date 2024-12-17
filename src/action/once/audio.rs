@@ -21,7 +21,7 @@ use crate::prelude::ActionSeed;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::audio::play().with("<audio_path>")).await;
 /// });
 /// ```

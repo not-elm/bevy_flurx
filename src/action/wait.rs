@@ -16,8 +16,8 @@
 //! - [`wait::any`]
 
 use crate::action::seed::ActionSeed;
-use crate::prelude::{wait, RunnerStatus};
-use crate::runner::{CancellationToken, Output, Runner};
+use crate::prelude::{wait, RunnerIs};
+use crate::runner::{CancellationHandlers, Output, Runner};
 pub use _any::any;
 pub use _both::both;
 pub use _either::*;
@@ -49,7 +49,7 @@ pub mod switch;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::output(||{
 ///         Some(())
 ///     })).await;
@@ -80,7 +80,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::until(|mut count: Local<usize>|{
 ///         *count += 1;
 ///         *count == 4
@@ -113,7 +113,7 @@ where
     Sys: System<Out=Option<O>>,
     SystemIn<'static, Sys>: Clone + 'static,
 {
-    fn run(&mut self, world: &mut World, _: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if !self.init {
             self.system.initialize(world);
             self.init = true;
@@ -123,9 +123,9 @@ where
         self.system.apply_deferred(world);
         if let Some(o) = out {
             self.output.set(o);
-            RunnerStatus::Ready
+            RunnerIs::Completed
         } else {
-            RunnerStatus::Pending
+            RunnerIs::Running
         }
     }
 }
@@ -134,7 +134,7 @@ where
 mod tests {
     use crate::action::wait::until;
     use crate::action::{once, wait};
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::tests::test_app;
     use bevy::app::{AppExit, PreUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
@@ -146,7 +146,7 @@ mod tests {
         let mut app = test_app();
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Flow::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(
                         Update,
                         until(|mut count: Local<u32>| {
@@ -175,7 +175,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut commands: Commands| {
-                commands.spawn(Flow::schedule(|task| async move {
+                commands.spawn(Reactor::schedule(|task| async move {
                     task.will(
                         Update,
                         until(|input: In<u32>, mut count: Local<u32>| {
@@ -203,7 +203,7 @@ mod tests {
     fn wait_event() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
                 task.will(Update, once::non_send::insert().with(event))
                     .await;
@@ -227,7 +227,7 @@ mod tests {
     fn both_read_event1_and_event2() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let t1 = wait::event::read::<TestEvent1>();
                 let t2 = wait::event::read::<TestEvent2>();
 

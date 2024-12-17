@@ -23,7 +23,7 @@ use crate::action::wait;
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::input::just_pressed().with(KeyCode::KeyB)).await;
 /// });
 /// ```
@@ -46,7 +46,7 @@ where
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::input::pressed().with(KeyCode::KeyB)).await;
 /// });
 /// ```
@@ -69,7 +69,7 @@ where
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::input::any_pressed().with(vec![KeyCode::KeyA, KeyCode::KeyB])).await;
 /// });
 /// ```
@@ -92,7 +92,7 @@ where
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::input::all_pressed().with(vec![KeyCode::KeyA, KeyCode::KeyB])).await;
 /// });
 /// ```
@@ -115,7 +115,7 @@ where
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::input::just_released().with(KeyCode::KeyA)).await;
 /// });
 /// ```
@@ -138,7 +138,7 @@ where
 /// use bevy::prelude::{KeyCode, World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, wait::input::any_just_released().with(vec![KeyCode::KeyA, KeyCode::KeyB])).await;
 /// });
 /// ```
@@ -157,7 +157,7 @@ where
 mod tests {
     use crate::action::sequence::Then;
     use crate::action::{once, wait};
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::sequence;
     use crate::tests::test_app;
     use bevy::app::{First, Startup};
@@ -171,7 +171,7 @@ mod tests {
     fn wait_until_pressed_a() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, wait::input::just_pressed().with(KeyCode::KeyA)
                     .then(wait::input::pressed().with(KeyA))
                     .then(once::run(|world: &mut World| {
@@ -193,7 +193,7 @@ mod tests {
     fn wait_until_any_pressed() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, sequence! {
                     wait::input::any_pressed().with(vec![KeyA, KeyB]),
                     once::run(|world: &mut World|{
@@ -230,7 +230,7 @@ mod tests {
     fn wait_until_all_pressed() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, sequence! {
                     wait::input::all_pressed().with(vec![KeyA, KeyB]),
                     once::run(|world: &mut World|{
@@ -256,7 +256,7 @@ mod tests {
     fn wait_until_just_released() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, sequence! {
                     wait::input::just_released().with(KeyA),
                     once::run(|world: &mut World|{
@@ -282,7 +282,7 @@ mod tests {
     fn wait_until_any_just_released() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, sequence! {
                     wait::input::any_just_released().with(vec![KeyCode::KeyA, KeyCode::KeyB]),
                     once::run(|world: &mut World|{

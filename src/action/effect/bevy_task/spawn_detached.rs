@@ -1,5 +1,5 @@
 use crate::action::effect::AsyncFunctor;
-use crate::prelude::{ActionSeed, CancellationToken, Output, RunnerStatus};
+use crate::prelude::{ActionSeed, CancellationHandlers, Output, RunnerIs};
 use crate::runner::Runner;
 use bevy::prelude::World;
 use bevy::tasks::AsyncComputeTaskPool;
@@ -20,13 +20,13 @@ use std::sync::{Arc, Mutex};
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, effect::bevy_task::spawn_detached(async move{
 ///
 ///     })).await;
 /// });
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
 ///             .pipe(effect::bevy_task::spawn_detached(|num: usize| async move{
@@ -69,7 +69,7 @@ where
     Functor: AsyncFunctor<I, O, M> + Send + 'static,
     M: Send + 'static,
 {
-    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some((input, f)) = self.args.take() {
             let o = self.arc_output.clone();
             AsyncComputeTaskPool::get()
@@ -82,9 +82,9 @@ where
 
         if let Some(out) = self.arc_output.lock().unwrap().take() {
             self.output.set(out);
-            RunnerStatus::Ready
+            RunnerIs::Completed
         } else {
-            RunnerStatus::Pending
+            RunnerIs::Running
         }
     }
 }
@@ -92,7 +92,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::{Flow, Pipe};
+    use crate::prelude::{Reactor, Pipe};
     use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::core::TaskPoolPlugin;
@@ -106,7 +106,7 @@ mod tests {
         let mut app = test_app();
         app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     effect::bevy_task::spawn_detached(async move {
                         Count(1 + 1)

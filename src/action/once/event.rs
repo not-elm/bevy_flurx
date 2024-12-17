@@ -6,7 +6,6 @@
 
 use bevy::app::AppExit;
 use bevy::prelude::{Event, EventWriter, In};
-
 use crate::action::seed::ActionSeed;
 use crate::action::{once, Action};
 
@@ -18,7 +17,7 @@ use crate::action::{once, Action};
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::event::send().with(AppExit::Success)).await;
 /// });
 /// ```
@@ -40,7 +39,7 @@ where
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::event::send_default::<AppExit>()).await;
 /// });
 /// ```
@@ -62,7 +61,7 @@ where
 /// use bevy::app::AppExit;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::event::app_exit_success()).await;
 /// });
 /// ```
@@ -75,7 +74,7 @@ pub fn app_exit_success() -> Action<AppExit, ()> {
 #[cfg(test)]
 mod tests {
     use crate::action::once;
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::tests::{came_event, test_app};
     use bevy::app::{AppExit, First, Startup};
     use bevy::prelude::Commands;
@@ -84,7 +83,7 @@ mod tests {
     fn send_event() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, once::event::send().with(AppExit::Success)).await;
             }));
         });
@@ -97,7 +96,7 @@ mod tests {
     fn send_default_event() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(First, once::event::send_default::<AppExit>()).await;
             }));
         });

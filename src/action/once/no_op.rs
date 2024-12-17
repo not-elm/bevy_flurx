@@ -1,4 +1,4 @@
-use crate::prelude::{ActionSeed, CancellationToken, Runner, RunnerStatus};
+use crate::prelude::{ActionSeed, CancellationHandlers, Runner, RunnerIs};
 use bevy::prelude::World;
 use crate::runner::Output;
 
@@ -12,7 +12,7 @@ use crate::runner::Output;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::no_op()).await;
 /// });
 /// ```
@@ -31,7 +31,7 @@ pub fn no_op() -> ActionSeed {
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::no_op_with_generics::<(), ()>()).await;
 /// });
 #[inline]
@@ -46,9 +46,9 @@ pub fn no_op_with_generics<I, O>() -> ActionSeed<I, O>
 struct NoOpRunner<O>(Output<O>);
 
 impl<O: Default> Runner for NoOpRunner<O> {
-    fn run(&mut self, _: &mut World, _: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         self.0.set(O::default());
-        RunnerStatus::Ready
+        RunnerIs::Completed
     }
 }
 
@@ -57,7 +57,7 @@ impl<O: Default> Runner for NoOpRunner<O> {
 mod tests {
     use crate::action::once;
     use crate::prelude::Then;
-    use crate::reactor::Flow;
+    use crate::reactor::Reactor;
     use crate::tests::{came_event, test_app};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::prelude::Commands;
@@ -66,7 +66,7 @@ mod tests {
     fn test_no_op() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     once::no_op_with_generics::<(), ()>()
                         .then(once::event::app_exit_success())

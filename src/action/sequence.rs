@@ -16,8 +16,8 @@
 use bevy::prelude::World;
 
 use crate::action::{Action, Remake};
-use crate::prelude::CancellationToken;
-use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
+use crate::prelude::CancellationHandlers;
+use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
 
 /// Create the action combined with the subsequent action.
 ///
@@ -36,7 +36,7 @@ pub trait Then<I1, O1, O2, ActionOrSeed> {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// Flow::schedule(|task| async move{
+    /// Reactor::schedule(|task| async move{
     ///     task.will(Update, {
     ///         wait::input::just_pressed().with(KeyCode::KeyR)
     ///             .then(once::event::app_exit_success())
@@ -88,7 +88,7 @@ where
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::sequence;
 ///
-/// Flow::schedule(|task|async move{
+/// Reactor::schedule(|task|async move{
 ///     let o = task.will(Update, sequence![
 ///         once::run(||{}),
 ///         once::run(||{}),
@@ -122,10 +122,10 @@ impl<O1> Runner for SequenceRunner<O1>
 where
     O1: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if self.o1.is_none() {
             match self.r1.run(world, token) {
-                RunnerStatus::Ready => {}
+                RunnerIs::Completed => {}
                 other => return other
             };
         }
@@ -143,7 +143,7 @@ mod tests {
 
     use crate::action::once;
     use crate::action::sequence::Then;
-    use crate::prelude::Flow;
+    use crate::prelude::Reactor;
     use crate::test_util::test;
     use crate::tests::{increment_count, test_app};
 
@@ -161,7 +161,7 @@ mod tests {
     fn two() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert().with(Mark1)),
                 ).await;
@@ -175,7 +175,7 @@ mod tests {
     fn three() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::run(|| {})
                     .then(once::res::insert().with(Mark1))
                     .then(once::res::insert().with(Mark2)),
@@ -192,7 +192,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let output = task.will(Update, once::run(|| {})
                     .then(once::res::insert().with(Mark1))
                     .then(once::res::insert().with(Mark2))
@@ -211,7 +211,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let output = task.will(Update, sequence![
                     once::run(|| {}),
                     once::res::insert().with(Mark1),
@@ -231,7 +231,7 @@ mod tests {
         let mut app = test_app();
 
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 let output = task.will(Update, {
                     once::run(|| {})
                         .then(once::res::insert().with(Mark1))
@@ -252,7 +252,7 @@ mod tests {
     fn r2_no_run_after_r1_cancelled() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, test::cancel()
                     .then(increment_count()),
                 ).await;

@@ -20,7 +20,7 @@ use std::time::Duration;
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, delay::time().with(Duration::from_secs(1))).await;
 /// });
 /// ```
@@ -45,7 +45,7 @@ pub fn time() -> ActionSeed<Duration> {
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///
-/// Flow::schedule(|task| async move{
+/// Reactor::schedule(|task| async move{
 ///     task.will(Update, delay::frames().with(30)).await;
 /// });
 /// ```
@@ -60,7 +60,7 @@ pub fn frames() -> ActionSeed<usize> {
 #[cfg(test)]
 mod tests {
     use crate::action::{delay, once};
-    use crate::prelude::{Flow, Then};
+    use crate::prelude::{Reactor, Then};
     use crate::tests::test_app;
     use bevy::app::{AppExit, First, Startup};
     use bevy::prelude::{Commands, Events};
@@ -71,7 +71,7 @@ mod tests {
     fn delay_1frame() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     First,
                     delay::frames()
@@ -93,7 +93,7 @@ mod tests {
     fn delay_2frames() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     First,
                     delay::frames()

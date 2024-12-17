@@ -7,8 +7,8 @@
 use bevy::prelude::World;
 
 use crate::action::Action;
-use crate::prelude::{ActionSeed, CancellationToken};
-use crate::runner::{BoxedRunner, Output, Runner, RunnerStatus};
+use crate::prelude::{ActionSeed, CancellationHandlers};
+use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
 
 /// [`Omit`] provides a mechanism to omit both input and output types from an action.
 pub trait Omit {
@@ -142,13 +142,13 @@ struct OmitRunner {
 }
 
 impl Runner for OmitRunner {
-    fn run(&mut self, world: &mut World, token: &mut CancellationToken) -> RunnerStatus {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         match self.r1.run(world, token) {
-            RunnerStatus::Cancel => RunnerStatus::Cancel,
-            RunnerStatus::Pending => RunnerStatus::Pending,
-            RunnerStatus::Ready => {
+            RunnerIs::Canceled => RunnerIs::Canceled,
+            RunnerIs::Running => RunnerIs::Running,
+            RunnerIs::Completed => {
                 self.output.set(());
-                RunnerStatus::Ready
+                RunnerIs::Completed
             }
         }
     }
@@ -158,7 +158,7 @@ impl Runner for OmitRunner {
 mod tests {
     use crate::action::omit::{Omit, OmitInput, OmitOutput};
     use crate::action::{once, wait};
-    use crate::prelude::{ActionSeed, Flow, Pipe};
+    use crate::prelude::{ActionSeed, Reactor, Pipe};
     use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
@@ -169,7 +169,7 @@ mod tests {
     fn omit_input() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|In(num): In<usize>| num)
@@ -191,7 +191,7 @@ mod tests {
     fn omit_output() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn(Flow::schedule(|task| async move {
+            commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
                     once::run(|In(num): In<usize>| num)
