@@ -34,7 +34,11 @@ type StartAndEndPos = (Vec3, Vec3);
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, EguiPlugin, FlurxPlugin))
+        .add_plugins((
+            DefaultPlugins,
+            EguiPlugin,
+            FlurxPlugin,
+        ))
         .init_resource::<Record<MoveAct>>()
         .add_record_events::<MoveAct>()
         .add_systems(
@@ -137,7 +141,7 @@ fn spawn_move_reactor(mut commands: Commands) {
                     .pipe(move_action::<1000>())
                     .pipe(push_move_track()),
             )
-            .await;
+                .await;
         }
     }));
 }
@@ -191,7 +195,7 @@ fn push_move_track() -> ActionSeed<StartAndEndPos> {
             ),
         })
     })
-    .omit_output()
+        .omit_output()
 }
 
 //noinspection DuplicatedCode

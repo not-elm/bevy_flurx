@@ -4,8 +4,12 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
 
-This library provides a mechanism for more sequential description of delays, character movement,
-waiting for user input, and other state waits.
+This library offers a mechanism for more sequential descriptions of delays, character movement, waiting for user input,
+and other state waits.  
+Reactor can be used incrementally, meaning there's no need to rewrite existing applications to incorporate it.   
+I recommend this partial usage since the system that runs Reactor and the systems executed by Reactor operate on the
+main thread.   
+For multithreaded operation, please check the Switch.
 
 As an example, here is an example of a cut-in effect that involves waiting for user input, a slight delay, and a sprite
 to move.
@@ -48,9 +52,9 @@ All examples are [`here`](./examples).
 
 | flag name | short description              | default |
 |-----------|--------------------------------|---------|
-| audio     | audio actions                  | true    |
-| record    | undo/redo actions and events   | true    | 
-| effect    | thread/async side effects      | true    |
+| audio     | audio actions                  | false   |
+| record    | undo/redo actions and events   | false   | 
+| effect    | thread/async side effects      | false   |
 | tokio     | async-compat and async actions | false   | 
 
 ### audio
@@ -81,13 +85,11 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
 ## Compatible Bevy versions
 
-| bevy_flurx    | bevy   |
-|---------------|--------|
-| 0.3.0         | 0.13.0 |
-| 0.3.1         | 0.13.1 |
-| 0.3.2 ~ 0.5.3 | 0.13.2 | 
-| 0.6.0         | 0.14.1 | 
-| 0.7.0         | 0.15   | 
+| bevy_flurx | bevy   |
+|------------|--------|
+| 0.3.0 ~    | 0.13.0 |
+| 0.6.0 ~    | 0.14.1 | 
+| 0.7.0 ~    | 0.15   | 
 
 ## License
 

@@ -1,6 +1,6 @@
-/// Selector defines what a task created by [`ReactiveTask`] will do.
+/// Selector defines what a task created by [`ReactorTask`] will do.
 ///
-/// [`ReactiveTask`]: crate::prelude::ReactiveTask
+/// [`ReactorTask`]: crate::prelude::ReactiveTask
 pub trait Selector<State> {
     type Output;
 

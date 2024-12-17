@@ -1,11 +1,8 @@
-//! This library provides a mechanism for more sequential description of delays, character movement,
-//! waiting for user input, and other state waits.
-//!
-//! [`NativeReactor`] can be used partially.
-//! This means there is no need to rewrite existing applications to use this library.
-//! And I recommend using it partially.
-//! This is because the system that runs [`NativeReactor`] and the systems that are run by [`NativeReactor`] run on the main thread.
-//! (Please check [`Switch`](crate::prelude::Switch) for multi thread operation.)
+//! This library offers a mechanism for more sequential descriptions of delays, character movement, waiting for user input, and other state waits.
+//! [Reactor](prelude::Reactor) can be used incrementally, meaning there's no need to rewrite existing applications to incorporate it.
+//! I recommend this partial usage since the system that runs [Reactor](prelude::Reactor) and the systems executed by [Reactor](prelude::Reactor) operate on the main thread.
+//! For multithreaded operation, please check the  [`Switch`](prelude::Switch).
+
 
 #![allow(clippy::type_complexity)]
 use crate::reactor::NativeReactor;
