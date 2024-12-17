@@ -7,6 +7,7 @@ use bevy::prelude::{Component, Entity, ReflectComponent};
 use bevy::reflect::Reflect;
 use std::future::Future;
 use std::marker::PhantomData;
+use crate::core::scheduler::CoreScheduler;
 
 /// [`NativeReactor`] represents the asynchronous processing flow.
 ///
@@ -102,7 +103,7 @@ where
 /// and it's children will be despawn.
 #[derive(Component)]
 pub(crate) struct NativeReactor {
-    pub(crate) scheduler: flurx::Scheduler<WorldPtr>,
+    pub(crate) scheduler: CoreScheduler<WorldPtr>,
     pub(crate) initialized: bool,
 }
 
@@ -134,7 +135,7 @@ impl NativeReactor {
     where
         F: Future + Send + Sync,
     {
-        let mut scheduler = flurx::Scheduler::new();
+        let mut scheduler = CoreScheduler::new();
         scheduler.schedule(move |task| async move {
             f(ReactorTask {
                 task,

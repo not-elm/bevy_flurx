@@ -3,10 +3,9 @@ use crate::runner::{initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::Entity;
-use flurx::selector::Selector;
 use std::marker::PhantomData;
 use std::sync::Mutex;
-
+use crate::core::selector::Selector;
 
 pub(crate) struct WorldSelector<Label, In, Out> {
     action: Mutex<Option<(Entity, Action<In, Out>)>>,

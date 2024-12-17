@@ -1,6 +1,7 @@
 //! Create a task that runs the system until certain conditions are met.
 
 use crate::action::Action;
+use crate::core::task::CoreTask;
 use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
@@ -11,7 +12,7 @@ use std::future::Future;
 /// Create a task that runs the system until certain conditions are met.
 #[derive(Clone)]
 pub struct ReactorTask {
-    pub(crate) task: flurx::task::ReactiveTask<WorldPtr>,
+    pub(crate) task: CoreTask<WorldPtr>,
     pub(crate) entity: Entity,
 }
 

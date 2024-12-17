@@ -54,6 +54,7 @@ mod world_ptr;
 /// Define utilities for testing.
 #[cfg(test)]
 mod test_util;
+mod core;
 
 /// Provides the async systems.
 pub struct FlurxPlugin;
