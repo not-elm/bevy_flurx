@@ -14,15 +14,15 @@ repository = "https://github.com/not-elm/bevy_flurx"
 name = "cmp_countup"
 path = "benches/cmp_countup.rs"
 harness = false
-#
-# [[example]]
-# name = "effect"
-# path = "examples/effect.rs"
-# required-features = ["tokio"]
-#
-#[[example]]
-#name = "switch_just_change"
-#path = "examples/bug_check/switch_just_change.rs"
+
+ [[example]]
+ name = "effect"
+ path = "examples/effect.rs"
+ required-features = ["tokio", "effect"]
+
+[[example]]
+name = "switch_just_change"
+path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
 bevy = { version = "0.15.0", default-features = false, features = [] }
@@ -44,7 +44,7 @@ criterion = { version = "0.5.1", features = ["plotters", "html_reports"] }
 bevy_egui = "0.31.1"
 
 [features]
-default = ["audio", "record", "effect"]
+default = []
 audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
 tokio = ["dep:tokio", "dep:async-compat"]
 record = []

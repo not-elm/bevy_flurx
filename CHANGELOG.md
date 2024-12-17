@@ -1,3 +1,7 @@
+## v0.8.0
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/untagged-1d80822597d4adcc896d)
+- Significant improvements have been made regarding thread safety.
+
 ## v0.7.0
 
 - Support bevy0.15.0
