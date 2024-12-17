@@ -5,7 +5,6 @@ pub use crate::runner::cancellation_token::{CancellationHandlers, CancellationId
 use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Entity, EventWriter, NonSendMut, Observer, OnRemove, Schedule, Schedules, Trigger, World};
-use bevy::utils::HashMap;
 pub(crate) use cancellation_token::CallCancellationHandlers;
 pub use output::Output;
 use std::marker::PhantomData;
@@ -13,14 +12,16 @@ use std::marker::PhantomData;
 mod output;
 mod cancellation_token;
 
+
+/// The current state of the [Runner].
 pub enum RunnerIs {
-    /// The runner is running.
+    /// The runner's process is not yet complete.
     Running,
-    /// The runner just completes.
+    /// The runner is complete.
     ///
-    /// The runner in this state will be deleted.
+    /// The runner will be deleted and will not run again in the future.
     Completed,
-    /// This will cancel the runner and the processing of the reactor it belongs to.
+    /// Interrupts the process of the reactor this runner belongs to, as well as the runner itself.
     Canceled,
 }
 
@@ -80,11 +81,11 @@ impl Runner for BoxedRunner {
 }
 
 #[repr(transparent)]
-struct ReactorMap<L: Send + Sync>(pub HashMap<Entity, (Vec<BoxedRunner>, CancellationHandlers)>, PhantomData<L>);
+struct ReactorMap<L: Send + Sync>(Vec<(Entity, Vec<BoxedRunner>, CancellationHandlers)>, PhantomData<L>);
 
 impl<L: Send + Sync> Default for ReactorMap<L> {
     fn default() -> Self {
-        Self(HashMap::new(), PhantomData)
+        Self(Vec::new(), PhantomData)
     }
 }
 
@@ -98,15 +99,15 @@ where
     Label: ScheduleLabel,
 {
     if let Some(mut map) = world.get_non_send_resource_mut::<ReactorMap<Label>>() {
-        if let Some((runners, _)) = map.0.get_mut(&entity) {
+        if let Some((_, runners, _)) = map.0.iter_mut().find(|(e, ..)| e == &entity) {
             runners.push(runner);
         } else {
-            map.0.insert(entity, (vec![runner], CancellationHandlers::default()));
+            map.0.push((entity, vec![runner], CancellationHandlers::default()));
         }
     } else {
         observe_remove_reactor::<Label>(entity, world);
         let mut reactor_map = ReactorMap::<Label>::default();
-        reactor_map.0.insert(entity, (vec![runner], CancellationHandlers::default()));
+        reactor_map.0.push((entity, vec![runner], CancellationHandlers::default()));
         world.insert_non_send_resource(reactor_map);
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
@@ -119,9 +120,11 @@ where
 fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut World) {
     let mut observer = Observer::new(
         move |_: Trigger<OnRemove, NativeReactor>, mut reactor_map: NonSendMut<ReactorMap<Label>>, mut ew: EventWriter<CallCancellationHandlers>| {
-            if let Some((_, token)) = reactor_map.0.remove(&entity) {
-                ew.send(CallCancellationHandlers(token));
-            }
+            let Some(i) = reactor_map.0.iter().position(|(e, ..)| e == &entity) else {
+                return;
+            };
+            let (.., cancellation_handlers) = reactor_map.0.remove(i);
+            ew.send(CallCancellationHandlers(cancellation_handlers));
         });
     observer.watch_entity(entity);
     world.commands().spawn(observer);
@@ -140,7 +143,7 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     let Some(mut reactor_map) = world.remove_non_send_resource::<ReactorMap<L>>() else {
         return;
     };
-    for (entity, (runners, token)) in reactor_map.0.iter_mut() {
+    for (entity, runners, token) in reactor_map.0.iter_mut() {
         let mut request_cancel = false;
         runners.retain_mut(|runner| {
             if request_cancel {
@@ -218,14 +221,14 @@ pub(crate) mod macros {
 mod tests {
     use crate::action::wait;
     use crate::prelude::{ActionSeed, CancellationHandlers, Reactor};
-    use crate::runner::{RunnerIs, Runner};
+    use crate::reactor::NativeReactor;
+    use crate::runner::{Runner, RunnerIs};
     use crate::test_util::test;
     use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, ResMut, Update, World};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-    use crate::reactor::NativeReactor;
 
     struct TestCancelRunner {
         limit: usize,

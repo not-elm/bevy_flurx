@@ -6,7 +6,6 @@
 
 use bevy::prelude::*;
 use bevy::DefaultPlugins;
-
 use bevy_flurx::prelude::*;
 
 #[derive(Component)]

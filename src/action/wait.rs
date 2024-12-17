@@ -113,6 +113,7 @@ where
     Sys: System<Out=Option<O>>,
     SystemIn<'static, Sys>: Clone + 'static,
 {
+    #[inline]
     fn run(&mut self, world: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if !self.init {
             self.system.initialize(world);

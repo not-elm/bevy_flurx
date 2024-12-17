@@ -1,6 +1,6 @@
-use std::future::Future;
 use crate::core::selector::Selector;
 use crate::core::task::future::TaskFuture;
+use std::future::Future;
 
 pub mod future;
 
@@ -38,12 +38,12 @@ impl<State> CoreTask<State> {
     /// });
     /// ```
     #[inline]
-    pub fn will<Out, Sel>(&self, selector: Sel) -> impl Future<Output = Out> + 'static
+    pub fn will<Out, Sel>(&self, selector: Sel) -> impl Future<Output=Out> + 'static
     where
-        Sel: Selector<State, Output = Out> + 'static,
+        Sel: Selector<State, Output=Out> + 'static,
         State: Copy + 'static,
     {
-        TaskFuture::<State, Sel, false> {
+        TaskFuture::<State, Sel> {
             state: self.state,
             selector,
         }

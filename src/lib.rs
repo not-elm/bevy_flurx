@@ -79,7 +79,7 @@ fn initialize_reactors(world: &mut World, reactors: &mut QueryState<&mut NativeR
             continue;
         }
         reactor.initialized = true;
-        reactor.run_sync(world_ptr.clone());
+        reactor.run_sync(world_ptr);
     }
 }
 
@@ -100,7 +100,7 @@ fn call_cancel_handlers(
 fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut NativeReactor)>) {
     let world_ptr = WorldPtr::new(world);
     let mut entities = Vec::with_capacity(reactors.iter(world).len());
-    //  let mut entities = Vec::new();
+
     for (entity, mut reactor) in reactors.iter_mut(world) {
         if !reactor.initialized {
             if reactor.run_sync(world_ptr) || reactor.run_sync(world_ptr) {

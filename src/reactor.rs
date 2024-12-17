@@ -1,4 +1,4 @@
-use crate::runner::CancellationHandlers;
+use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::component::{ComponentHooks, StorageType};
@@ -7,13 +7,12 @@ use bevy::prelude::{Component, Entity, ReflectComponent};
 use bevy::reflect::Reflect;
 use std::future::Future;
 use std::marker::PhantomData;
-use crate::core::scheduler::CoreScheduler;
 
-/// [`NativeReactor`] represents the asynchronous processing flow.
+/// [`Reactor`] represents the asynchronous processing flow.
 ///
-/// This structure is created by [`NativeReactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
+/// This structure is created by [`Reactor::schedule`].
 ///
-/// Remove this component if you want to interrupt the processing flow.
+/// Despawn the entity attached this component if you want to interrupt the processing flow.
 ///
 /// After all scheduled processes have completed, the entity attached to this component
 /// and it's children will be despawn.
@@ -33,15 +32,9 @@ where
     F: FnOnce(ReactorTask) -> Fut + Send + Sync + 'static,
     Fut: Future + Send + Sync + 'static,
 {
-    /// Create new [`NativeReactor`].
+    /// Create new [`Reactor`].
     ///
-    /// The scheduled [`NativeReactor`] will be run and initialized at `RunReactor` schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
-    ///
-    /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
-    /// to reduce the delay until initialization.
-    ///
-    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel),
-    /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor).
+    /// The scheduled [`Reactor`] will be run and initialized at [Last](bevy::prelude::Last) schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
     ///
     /// ## Examples
     ///
@@ -84,23 +77,11 @@ where
                     };
                     f
                 };
-                world.commands().entity(entity).insert((
-                    NativeReactor::schedule(entity, f),
-                    CancellationHandlers::default(),
-                ));
+                world.commands().entity(entity).insert(NativeReactor::schedule(entity, f));
             });
     }
 }
 
-
-/// [`NativeReactor`] represents the asynchronous processing flow.
-///
-/// This structure is created by [`NativeReactor::schedule`] or [`ScheduleReactor`](crate::prelude::ScheduleReactor).
-///
-/// Remove this component if you want to interrupt the processing flow.
-///
-/// After all scheduled processes have completed, the entity attached to this component
-/// and it's children will be despawn.
 #[derive(Component)]
 pub(crate) struct NativeReactor {
     pub(crate) scheduler: CoreScheduler<WorldPtr>,
@@ -108,35 +89,11 @@ pub(crate) struct NativeReactor {
 }
 
 impl NativeReactor {
-    /// Create new [`NativeReactor`].
-    ///
-    /// The scheduled [`NativeReactor`] will be run and initialized at `RunReactor` schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
-    ///
-    /// It is recommended to spawn this structure at [`Update`](bevy::prelude::Update) or [`Startup`](bevy::prelude::Startup)
-    /// to reduce the delay until initialization.
-    ///
-    /// If you spawn on another [`ScheduleLabel`](bevy::ecs::schedule::ScheduleLabel),
-    /// you can spawn and initialize at the same time by using [`ScheduleReactor`](crate::prelude::ScheduleReactor).
-    ///
-    /// ## Examples
-    ///
-    /// ```no_run
-    /// use bevy::app::AppExit;
-    /// use bevy::prelude::*;
-    /// use bevy_flurx::prelude::*;
-    ///
-    /// Reactor::schedule(|task| async move{
-    ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
-    ///         ew.send(AppExit::Success);
-    ///     })).await;
-    /// });
-    /// ```
-    pub fn schedule<F>(entity: Entity, f: impl FnOnce(ReactorTask) -> F + Send + Sync + 'static) -> NativeReactor
+    fn schedule<F>(entity: Entity, f: impl FnOnce(ReactorTask) -> F + Send + Sync + 'static) -> NativeReactor
     where
         F: Future + Send + Sync,
     {
-        let mut scheduler = CoreScheduler::new();
-        scheduler.schedule(move |task| async move {
+        let scheduler = CoreScheduler::schedule(move |task| async move {
             f(ReactorTask {
                 task,
                 entity,
@@ -159,7 +116,7 @@ impl NativeReactor {
         {
             pollster::block_on(self.scheduler.run(world));
         }
-        self.scheduler.not_exists_reactor()
+        self.scheduler.finished
     }
 }
 

@@ -5,10 +5,8 @@
 
 use std::f32::consts::PI;
 use std::time::Duration;
-
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-
 use bevy_flurx::prelude::*;
 
 #[derive(Component)]
