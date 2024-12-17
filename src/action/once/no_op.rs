@@ -3,7 +3,9 @@ use bevy::prelude::World;
 use crate::runner::Output;
 
 /// Creates a no-op action.
-/// 
+///
+/// This action can be useful for the null-object-pattern.
+///
 /// This is also the [Default] action for [Action] and [`ActionSeed`].
 /// 
 /// ## Examples
@@ -22,6 +24,8 @@ pub fn no_op() -> ActionSeed {
 }
 
 /// Creates a no-op action with input and output types.
+///
+/// This action can be useful for the null-object-pattern.
 ///
 /// This is also the [Default] action for [Action] and [`ActionSeed`].
 /// 
