@@ -20,6 +20,12 @@ harness = false
  path = "examples/effect.rs"
  required-features = ["tokio", "effect"]
 
+ [[example]]
+ name = "undo_redo"
+ path = "examples/undo_redo.rs"
+ required-features = ["record"]
+
+
 [[example]]
 name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"

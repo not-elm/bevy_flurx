@@ -7,22 +7,13 @@
 //! - Z : Undo
 //! - X : Redo
 
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::time::Duration;
-
-use bevy::app::{App, Startup, Update};
-use bevy::math::{Vec2, Vec3};
-use bevy::prelude::{
-    Camera2d, Color, Commands, Component, EventWriter, In, KeyCode, LinearRgba,
-    Local, Query, Res, Sprite, Transform, With,
-};
-use bevy::time::Time;
-use bevy::utils::default;
-use bevy::DefaultPlugins;
+use bevy::prelude::*;
 use bevy_egui::egui::{Color32, RichText};
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
-use bevy_flurx::actions;
 use bevy_flurx::prelude::*;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::time::Duration;
+use bevy_flurx::actions;
 
 #[derive(Component)]
 struct MrShape;
