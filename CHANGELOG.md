@@ -1,5 +1,13 @@
+## v0.8.1
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.1)
+
+- Refactor doc.rs and example/simple.rs.
+
 ## v0.8.0
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.0)
+
 - Significant improvements have been made regarding thread safety.
 
 ## v0.7.0
@@ -39,7 +47,7 @@ Fixed a bug where the execution run condition switch_just_* was not working corr
 
 ## v0.4.0
 
-Added effect actions. 
+Added effect actions.
 
 - [v0.4.0](https://github.com/not-elm/bevy_flurx/pull/42)
 
@@ -77,20 +85,23 @@ In this version, fixed actions related to events.
 
 ### Bug fix
 
-- [Fixed an issue where the return value type of some functions such as `once::res::insert` was `impl Action`.](https://github.com/not-elm/bevy_flurx/pull/10)
+- [Fixed an issue where the return value type of some functions such as `once::res::insert` was
+  `impl Action`.](https://github.com/not-elm/bevy_flurx/pull/10)
 
 ## v0.3.2-beta.0
 
 ### Features
 
 - It is no longer necessary to implement the `Clone` trait on the value passed to `once`.
-- Added `Sequence`, `Pipe`, `Switch` and `Reactor`. please see this [pull request](https://github.com/not-elm/bevy_flurx/pull/9)
+- Added `Sequence`, `Pipe`, `Switch` and `Reactor`. please see
+  this [pull request](https://github.com/not-elm/bevy_flurx/pull/9)
 
 ### Breaking changes
 
 - Rename `Select` to `Either`, and `wait::select` to `wait::either`
 - Changed the schedule label for the reactor to run back to `PostUpdate`.
-- Due to major internal changes, various modules were moved. if it has been importing via prelude, it probably has no effect.
+- Due to major internal changes, various modules were moved. if it has been importing via prelude, it probably has no
+  effect.
 
 ## v0.3.1
 
