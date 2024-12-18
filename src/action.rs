@@ -37,17 +37,16 @@ pub mod through;
 pub mod pipe;
 pub mod sequence;
 pub mod omit;
+#[path = "action/tuple.rs"]
+mod _tuple;
+mod map;
+mod remake;
 #[cfg(feature = "effect")]
 #[cfg_attr(docsrs, doc(cfg(feature = "effect")))]
 pub mod effect;
 #[cfg(feature = "record")]
 #[cfg_attr(docsrs, doc(cfg(feature = "record")))]
 pub mod record;
-#[path = "action/tuple.rs"]
-mod _tuple;
-mod map;
-mod remake;
-
 
 /// Represents the system passed to [`ReactorTask`](crate::task::ReactorTask).
 ///

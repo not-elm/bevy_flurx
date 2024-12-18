@@ -84,8 +84,8 @@ All examples are [`here`](./examples).
 
 Provides the actions that perform simple audio playback and waiting using bevy's default audio functionality.
 
-- once::audio
-- wait::audio
+- [`once::audio`](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/once/audio)
+- [`wait::audio`](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/wait/audio)
 
 ### record
 

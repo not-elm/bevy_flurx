@@ -10,14 +10,14 @@ pub mod event;
 pub mod non_send;
 pub mod res;
 pub mod switch;
+#[path = "once/no_op.rs"]
+mod _no_op;
 #[cfg(feature = "audio")]
 #[cfg_attr(docsrs, doc(cfg(feature = "audio")))]
 pub mod audio;
 #[cfg(feature = "state")]
 #[cfg_attr(docsrs, doc(cfg(feature = "state")))]
 pub mod state;
-#[path = "once/no_op.rs"]
-mod _no_op;
 
 /// Once run a system.
 ///
@@ -41,7 +41,7 @@ pub fn run<Sys, I, Out, M>(system: Sys) -> ActionSeed<I::Inner<'static>, Out>
 where
     Sys: IntoSystem<I, Out, M> + 'static + Send + Sync,
     I: SystemInput + 'static,
-    Out:  'static,
+    Out: 'static,
 {
     ActionSeed::new(move |input, output| OnceRunner {
         input: Some(input),
@@ -61,8 +61,8 @@ where
 
 impl<Sys> Runner for OnceRunner<Sys>
 where
-    Sys: System  + 'static,
-    Sys::Out: ,
+    Sys: System + 'static,
+    Sys::Out:,
 {
     fn run(&mut self, world: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         self.system.initialize(world);
