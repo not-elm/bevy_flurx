@@ -3,13 +3,12 @@
 
 use std::future::Future;
 
-
 #[cfg(feature = "tokio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 pub mod tokio;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod thread;
 pub mod bevy_task;
-
 
 /// This trait is implemented for functions that return future or future.
 pub trait AsyncFunctor<I, Out, M> {

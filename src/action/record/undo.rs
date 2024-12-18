@@ -1,16 +1,8 @@
 //! Define the actions related to `undo` operations.
 //!
 //! To perform these the actions, you must call the [`record::push`](crate::prelude::record::push) beforehand.
-//!
-//!
-//! actions
-//! - [`record::undo::once`](crate::prelude::record::undo::once)
-//! - [`record::undo::index_to`](crate::prelude::record::undo::index_to)
-//! - [`record::undo::to`](crate::prelude::record::undo::to)
-//! - [`record::undo::all`](crate::prelude::record::undo::all)
 
 use bevy::prelude::World;
-
 use crate::action::record::EditRecordResult;
 use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};

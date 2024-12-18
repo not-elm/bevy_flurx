@@ -1,10 +1,6 @@
 //! [`wait::state`] creates a task related to waiting to state update.
-//!
-//! - [`wait::state::becomes`]
-
 
 use bevy::prelude::{In, Res, State, States};
-
 use crate::action::wait;
 use crate::prelude::ActionSeed;
 

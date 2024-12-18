@@ -1,5 +1,4 @@
 use std::marker::PhantomData;
-
 use crate::action::{Action, Map};
 use crate::prelude::{ActionSeed, Omit, OmitInput};
 use crate::runner::{BoxedRunner, Output};

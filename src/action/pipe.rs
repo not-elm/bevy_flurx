@@ -1,8 +1,4 @@
 //! Provides the mechanism to pipe the actions.
-//!
-//! trait
-//!
-//! [`Pipe`]
 
 use bevy::prelude::World;
 

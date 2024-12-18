@@ -77,6 +77,7 @@ All examples are [`here`](./examples).
 | audio     | audio actions                  | false   |
 | record    | undo/redo actions and events   | false   | 
 | effect    | thread/async side effects      | false   |
+| state     | state actions                  | false   | 
 | tokio     | async-compat and async actions | false   | 
 
 ### audio

@@ -1,28 +1,12 @@
 //! Manages the history of operations, and it allows you to use `undo` or `redo` of operations.
-//!
-//! structs
-//! - [`Record`]
-//! - [`Track`]
-//! - [`Rollback`]
-//! - [`Undo`]
-//! - [`Redo`]
-//! - [`RedoAction`]
-//!
-//! actions
-//! - [`record::push`](crate::prelude::record::push)
-//! - [`record::undo`](crate::prelude::record::undo)
-//! - [`record::redo`](crate::prelude::record::redo)
-
-use std::error::Error;
-use std::fmt::{Display, Formatter};
-
-use bevy::prelude::{NonSendMut, Resource, World};
-
-pub use _push::push;
-pub use track::*;
 
 use crate::action::once;
 use crate::prelude::ActionSeed;
+pub use _push::push;
+use bevy::prelude::{NonSendMut, Resource, World};
+use std::error::Error;
+use std::fmt::{Display, Formatter};
+pub use track::*;
 
 pub mod undo;
 pub mod redo;
@@ -186,7 +170,7 @@ fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, 
 mod tests {
     use crate::action::record::track::Track;
     use crate::action::{record, wait, Action};
-    use crate::prelude::{ActionSeed, EditRecordResult, Reactor, Omit, Record, Redo, Rollback, Then, Undo};
+    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
     use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
     use bevy::app::{Startup, Update};
     use bevy::prelude::Commands;

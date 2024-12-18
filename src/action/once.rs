@@ -1,16 +1,4 @@
 //! `once` creates a task that only once run system.
-//!
-//! actions
-//!
-//! - [`once::run`](run)
-//! - [`once::no_op`](no_op)
-//! - [`once::no_op_with_generics`](no_op_with_generics)
-//! - [`once::res`](res)
-//! - [`once::non_send`](res)
-//! - [`once::event`](res)
-//! - [`once::state`](res)
-//! - [`once::switch`](switch)
-//! - [`once::audio`](audio) (require feature flag `audio`)
 
 use crate::action::seed::ActionSeed;
 use crate::prelude::RunnerIs;
@@ -23,8 +11,10 @@ pub mod non_send;
 pub mod res;
 pub mod switch;
 #[cfg(feature = "audio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "audio")))]
 pub mod audio;
 #[cfg(feature = "state")]
+#[cfg_attr(docsrs, doc(cfg(feature = "state")))]
 pub mod state;
 #[path = "once/no_op.rs"]
 mod _no_op;

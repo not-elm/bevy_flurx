@@ -20,29 +20,13 @@
 //!     // `process: 2`
 //! });
 //! ```
-//!
-//! actions
-//!
-//! - [`once`]
-//! - [`wait`]
-//! - [`delay`]
-//! - [`pipe`]
-//! - [`sequence`]
-//! - [`switch`]
-//! - [`through`]
-//! - [`tuple()`]
-//! - [`omit`]
-//! - [`map::Map`]
-//! - [`remake::Remake`]
-//! - [`effect`]
 
+use crate::prelude::ActionSeed;
+use crate::runner::{BoxedRunner, Output};
 pub use _tuple::tuple;
 use bevy::prelude::Reflect;
 pub use map::Map;
 pub use remake::Remake;
-
-use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, Output};
 
 pub mod once;
 pub mod wait;
@@ -54,8 +38,10 @@ pub mod pipe;
 pub mod sequence;
 pub mod omit;
 #[cfg(feature = "effect")]
+#[cfg_attr(docsrs, doc(cfg(feature = "effect")))]
 pub mod effect;
 #[cfg(feature = "record")]
+#[cfg_attr(docsrs, doc(cfg(feature = "record")))]
 pub mod record;
 #[path = "action/tuple.rs"]
 mod _tuple;

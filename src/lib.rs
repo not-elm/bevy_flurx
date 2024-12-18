@@ -3,8 +3,9 @@
 //! I recommend this partial usage since the system that runs [Reactor](prelude::Reactor) and the systems executed by [Reactor](prelude::Reactor) operate on the main thread.
 //! For multithreaded operation, please check the  [`Switch`](prelude::Switch).
 
-
+#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::type_complexity)]
+
 use crate::reactor::NativeReactor;
 use crate::runner::CallCancellationHandlers;
 use crate::world_ptr::WorldPtr;
