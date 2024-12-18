@@ -13,7 +13,7 @@ pub struct CancellationId(u64);
 /// Structure for canceling a [`Reactor`](crate::prelude::Reactor).
 ///
 /// This is passed as argument in [`Runner::run`](crate::prelude::Runner::run),
-/// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by calling [`CancellationHandlers::cancel`].
+/// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by despawning the entity to which it is attached.
 #[repr(transparent)]
 #[derive(Default, Component)]
 pub struct CancellationHandlers(pub(crate) HashMap<CancellationId, fn(&mut World)>);

@@ -1,19 +1,4 @@
 //!  The [wait] module defines actions that continue to execute every frame according to specified conditions.
-//!
-//! actions
-//!
-//! - [`wait::output`]
-//! - [`wait::both`]
-//! - [`wait::until`]
-//! - [`wait::all`](crate::prelude::wait::all())
-//! - [`wait_all!`](crate::wait_all)
-//! - [`wait::either`]
-//! - [`wait::event`]
-//! - [`wait::state`]
-//! - [`wait::switch`]
-//! - [`wait::input`]
-//! - [`wait::audio`] (require feature flag `audio`)
-//! - [`wait::any`]
 
 use crate::action::seed::ActionSeed;
 use crate::prelude::{wait, RunnerIs};
@@ -32,10 +17,12 @@ mod _both;
 mod _either;
 mod all;
 #[cfg(feature = "audio")]
+#[cfg_attr(docsrs, doc(cfg(feature = "audio")))]
 pub mod audio;
 pub mod event;
 pub mod input;
 #[cfg(feature = "state")]
+#[cfg_attr(docsrs, doc(cfg(feature = "state")))]
 pub mod state;
 pub mod switch;
 

@@ -1,11 +1,6 @@
 //! [`wait::switch`] creates a task related to waiting [`Switch`]
-//!
-//! - [`wait::switch::on`]
-//! - [`wait::switch::off`]
-
 
 use bevy::prelude::Res;
-
 use crate::action::switch::Switch;
 use crate::action::wait;
 use crate::prelude::ActionSeed;

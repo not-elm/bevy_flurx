@@ -1,9 +1,4 @@
 //! `delay` creates a task that delay the application.
-//!
-//! actions
-//!
-//! - [`delay::time`](crate::prelude::delay::time)
-//! - [`delay::frames`](crate::prelude::delay::frames)
 
 use crate::action::wait;
 use crate::prelude::ActionSeed;

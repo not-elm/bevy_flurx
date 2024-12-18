@@ -1,11 +1,6 @@
 //! Provides the mechanisms  to omit input and/or output types from an action.
-//!
-//! - [`Omit`]
-//! - [`OmitInput`]
-//! - [`OmitOutput`]
 
 use bevy::prelude::World;
-
 use crate::action::Action;
 use crate::prelude::{ActionSeed, CancellationHandlers};
 use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};

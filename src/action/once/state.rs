@@ -1,11 +1,8 @@
-//! [`once::state`] creates a task that only once run system related to [`States`].
-//!
-//! - [`once::state::set`]
+//! [`once::state`] creates a task that only once run system related to [States](bevy::prelude::States).
 
 
 use bevy::prelude::{In, NextState, ResMut};
 use bevy::state::state::FreelyMutableState;
-
 use crate::action::once;
 use crate::prelude::ActionSeed;
 

@@ -4,17 +4,8 @@
 //! in method chains like `once::run(||{}).then(once::run(||{}))` 
 //!
 //! It also provides the [`sequence!`](crate::sequence) macro. The behavior itself is the same as [`Then`].
-//!
-//! trait 
-//!
-//! [`Then`]
-//!
-//! macro
-//!
-//! [`sequence!`](crate::sequence)
 
 use bevy::prelude::World;
-
 use crate::action::{Action, Remake};
 use crate::prelude::CancellationHandlers;
 use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};

@@ -1,4 +1,4 @@
-//!  Here are some basic [once], [wait] and [delay] actions.
+//! Here are some basic [once], [wait] and [delay] actions.
 //!
 //! For details on all actions, please check [here](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/index.html).
 //!
@@ -7,6 +7,7 @@
 //! [delay]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/delay/index.html
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
+
 fn main() {
     App::new()
         .insert_resource(Count(0))
@@ -31,6 +32,14 @@ fn spawn_reactor(mut commands: Commands) {
             count.0
         })).await;
         assert_eq!(current_count, 1);
+
+        // ActionSeed and Action have input and output the generic types.
+        // You can call `ActionSeed::with(<input>)` to pass the input to action seed.
+        let result: usize = task.will(Update, once::run(|In(num): In<usize>| {
+            num + 3
+        }).with(3)).await;
+        assert_eq!(result, 6);
+
         // The wait module defines actions that continue to execute every frame according to specified conditions.
         // For example, wait::until takes a system that returns a bool value and continues to execute it until it returns true.
         // other wait actions: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/wait/index.html
@@ -39,6 +48,7 @@ fn spawn_reactor(mut commands: Commands) {
             info!("current count: {}", count.0);
             count.0 == 4
         })).await;
+
         // delay module defines the actions that perform delay processing.
         // `then` is also an action that continues to execute another action.
         task.will(Update, {

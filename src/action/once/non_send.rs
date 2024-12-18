@@ -1,11 +1,6 @@
 //! [`once::non_send`] creates a task that only once run system related to [`non-send resources`](bevy::prelude::NonSend).
-//!
-//! - [`once::non_send::init`]
-//! - [`once::non_send::insert`]
-//! - [`once::non_send::remove`]
 
 use bevy::prelude::{In, World};
-
 use crate::action::once;
 use crate::action::seed::ActionSeed;
 

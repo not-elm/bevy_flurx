@@ -6,7 +6,7 @@ use crate::runner::Output;
 ///
 /// This action can be useful for the null-object-pattern.
 ///
-/// This is also the [Default] action for [Action] and [`ActionSeed`].
+/// This is also the [Default] action for [Action](crate::prelude::Action) and [`ActionSeed`].
 /// 
 /// ## Examples
 /// 
@@ -27,7 +27,7 @@ pub fn no_op() -> ActionSeed {
 ///
 /// This action can be useful for the null-object-pattern.
 ///
-/// This is also the [Default] action for [Action] and [`ActionSeed`].
+/// This is also the [Default] action for [Action](crate::prelude::Action) and [`ActionSeed`].
 /// 
 /// ## Examples
 /// 

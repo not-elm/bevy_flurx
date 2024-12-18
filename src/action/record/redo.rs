@@ -1,15 +1,7 @@
 //! Define the actions related to `redo` operations.
 //! To perform these the actions, you must call the one of the [`record::undo`](crate::prelude::record::undo) actions beforehand.
-//!
-//!
-//! actions
-//! - [`record::redo::once`](crate::prelude::record::redo::once)
-//! - [`record::redo::index_to`](crate::prelude::record::redo::index_to)
-//! - [`record::redo::to`](crate::prelude::record::redo::to)
-//! - [`record::redo::all`](crate::prelude::record::redo::all)
 
 use bevy::prelude::World;
-
 use crate::action::record::{push_tracks, Record};
 use crate::action::record::{unlock_record, EditRecordResult};
 use crate::prelude::record::lock_record;
