@@ -2,25 +2,6 @@
 //!
 //! This is to solve the problem that systems created from `Reactors`
 //! cannot run except on the main thread.
-//!
-//! Resource
-//!
-//! - [`Switch`]
-//!
-//! run conditions
-//!
-//! - [`switch_is_on`]
-//! - [`switch_is_off`]
-//! - [`switch_just_turned_on`]
-//! - [`switch_just_turned_off`]
-//!
-//! actions 
-//!
-//! - [`once::switch::on`](crate::prelude::once::switch::on)
-//! - [`once::switch::off`](crate::prelude::once::switch::off)
-//! - [`wait::switch::on`](crate::prelude::wait::switch::on)
-//! - [`wait::switch::off`](crate::prelude::wait::switch::off)
-
 
 use std::marker::PhantomData;
 

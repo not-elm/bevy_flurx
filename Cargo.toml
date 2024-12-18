@@ -67,3 +67,8 @@ semicolon_if_nothing_returned = "warn"
 
 [lints.rust]
 missing_docs = "warn"
+
+[package.metadata.docs.rs]
+all-features = true
+no-default-features = true
+rustdoc-args = ["--cfg", "docsrs"]

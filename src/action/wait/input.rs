@@ -1,17 +1,9 @@
 //! [`wait::input`] creates a task related to waiting to keycode inputs.
-//!
-//! - [`wait::input::just_pressed`]
-//! - [`wait::input::pressed`]
-//! - [`wait::input::all_pressed`]
-//! - [`wait::input::any_pressed`]
-//! - [`wait::input::just_released`]
-//! - [`wait::input::any_just_released`]
 
 use std::hash::Hash;
 
 use bevy::input::ButtonInput;
 use bevy::prelude::{In, Res};
-
 use crate::action::seed::ActionSeed;
 use crate::action::wait;
 

@@ -1,12 +1,5 @@
 //! Allows undo and redo requests to be made using [`RequestUndo`] and [`RequestRedo`]
 //! from outside [`Reactor`].
-//!
-//! events
-//! - [`RequestUndo`]
-//! - [`RequestRedo`]
-//!
-//! traits
-//! - [`RecordExtension`]
 
 use bevy::app::{App, PostUpdate, Update};
 use bevy::prelude::{Commands, Event, EventReader};

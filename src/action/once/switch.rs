@@ -1,11 +1,7 @@
 //! [`once::switch`] creates a task that only once run system related to [`Switch`].
-//!
-//! - [`once::switch::on`]
-//! - [`once::switch::off`]
 
 
 use bevy::prelude::World;
-
 use crate::action::once;
 use crate::action::seed::ActionSeed;
 use crate::action::switch::Switch;

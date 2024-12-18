@@ -1,11 +1,7 @@
 //! [`wait::event`] creates a task related to waiting to receive events.
-//!
-//! - [`wait::event::comes`]
-//! - [`wait::event::read`]
 
 use bevy::ecs::event::EventCursor;
 use bevy::prelude::{Event, Events, Local, ResMut};
-
 use crate::prelude::seed::ActionSeed;
 use crate::prelude::wait;
 

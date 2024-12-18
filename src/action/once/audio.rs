@@ -1,11 +1,8 @@
 //! [`once::audio`] creates a task that only once run system related to audio.
-//!
-//! - [`once::audio::play`]
 
 use bevy::asset::{AssetPath, AssetServer};
 use bevy::audio::{AudioPlayer, AudioSource};
 use bevy::prelude::{Commands, Entity, In, Res};
-
 use crate::action::once;
 use crate::prelude::ActionSeed;
 
