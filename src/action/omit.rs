@@ -1,9 +1,9 @@
 //! Provides the mechanisms  to omit input and/or output types from an action.
 
-use bevy::prelude::World;
 use crate::action::Action;
 use crate::prelude::{ActionSeed, CancellationHandlers};
 use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
+use bevy::prelude::World;
 
 /// [`Omit`] provides a mechanism to omit both input and output types from an action.
 pub trait Omit {
@@ -151,9 +151,9 @@ impl Runner for OmitRunner {
 
 #[cfg(test)]
 mod tests {
-    use crate::action::omit::{Omit, OmitInput, OmitOutput};
-    use crate::action::{once, wait};
-    use crate::prelude::{ActionSeed, Reactor, Pipe};
+    use crate::action::omit::{OmitInput, OmitOutput};
+    use crate::action::once;
+    use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
@@ -202,12 +202,5 @@ mod tests {
 
         app.update();
         app.assert_resource_eq(Count(3));
-    }
-
-    fn _omit_action_seed() -> ActionSeed {
-        once::audio::play()
-            .with("tmp.ogg")
-            .pipe(wait::audio::finished())
-            .omit()
     }
 }

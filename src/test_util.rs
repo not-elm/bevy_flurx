@@ -4,10 +4,11 @@ use bevy::app::{App, Startup};
 use bevy::prelude::Commands;
 use std::future::Future;
 
+#[allow(unused)]
 pub trait SpawnReactor {
     fn spawn_reactor<F>(&mut self, f: fn(ReactorTask) -> F)
     where
-        F: Future + Send + Sync  + 'static;
+        F: Future + Send + Sync + 'static;
 }
 
 impl SpawnReactor for App {

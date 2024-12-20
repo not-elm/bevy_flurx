@@ -97,7 +97,7 @@ fn call_cancel_handlers(
 
 fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut NativeReactor)>) {
     let world_ptr = WorldPtr::new(world);
-    let mut entities = Vec::with_capacity(reactors.iter(world).len());
+    let mut entities = Vec::new();
 
     for (entity, mut reactor) in reactors.iter_mut(world) {
         if !reactor.initialized {
@@ -119,7 +119,7 @@ fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut Nativ
 #[cfg(test)]
 mod tests {
     use crate::action::once;
-    use crate::prelude::{ActionSeed, Record, RecordExtension};
+    use crate::prelude::ActionSeed;
     use crate::FlurxPlugin;
     use bevy::app::{App, AppExit};
     use bevy::ecs::event::EventCursor;
@@ -164,9 +164,13 @@ mod tests {
             FrameCountPlugin,
             StatesPlugin,
         ));
-        app.add_record_events::<NumAct>();
-        app.add_record_events::<TestAct>();
-        app.init_resource::<Record<TestAct>>();
+        #[cfg(feature = "record")]
+        {
+            use crate::prelude::{Record, RecordExtension};
+            app.add_record_events::<NumAct>();
+            app.add_record_events::<TestAct>();
+            app.init_resource::<Record<TestAct>>();
+        }
         app
     }
 

@@ -69,6 +69,7 @@ impl Runner for BoxedRunner {
         if let Some(mut runner) = self.0.take() {
             match runner.run(world, cancellation_handlers) {
                 RunnerIs::Completed => RunnerIs::Completed,
+                RunnerIs::Canceled => RunnerIs::Canceled,
                 status => {
                     self.0.replace(runner);
                     status
@@ -88,7 +89,6 @@ impl<L: Send + Sync> Default for ReactorMap<L> {
         Self(Vec::new(), PhantomData)
     }
 }
-
 
 #[derive(Component, Reflect)]
 #[reflect(Component)]
@@ -129,11 +129,11 @@ where
 fn observer_already_exists<Label: ScheduleLabel>(
     world: &mut World,
     reactor_entity: &Entity,
-) -> bool{
+) -> bool {
     world
         .query_filtered::<&ReactorEntity, With<ReactorScheduleLabel<Label>>>()
         .iter(world)
-        .any(|target|{
+        .any(|target| {
             &target.0 == reactor_entity
         })
 }
