@@ -85,7 +85,8 @@ where
             RunnerIs::Running => RunnerIs::Running,
             RunnerIs::Completed => {
                 let o = self.o1.take().expect("The output value has not been set!!!");
-                self.output.set(self.map.take().unwrap()(o));
+                let map_fn = self.map.take().expect("Failed to take the map function");
+                self.output.set(map_fn(o));
                 RunnerIs::Completed
             }
         }

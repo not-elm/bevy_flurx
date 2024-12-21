@@ -32,7 +32,7 @@ use crate::runner::RunnerIs;
 ///             }))
 ///         }))
 ///         .await
-///         .unwrap();
+///         .expect("An error will be returned if undo or redo is operating.");
 /// });
 /// ```
 pub fn push<Act>() -> ActionSeed<Track<Act>, EditRecordResult>

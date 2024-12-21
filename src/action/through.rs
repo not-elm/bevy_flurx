@@ -121,7 +121,7 @@ where
     fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         match self.inner.run(world, token) {
             RunnerIs::Completed => {
-                self.output.set(self.value.take().unwrap());
+                self.output.set(self.value.take().expect("Failed to take the action runner's output value in `ThroughRunner`!"));
                 RunnerIs::Completed
             }
             other => other

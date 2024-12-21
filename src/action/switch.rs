@@ -4,7 +4,6 @@
 //! cannot run except on the main thread.
 
 use std::marker::PhantomData;
-
 use bevy::prelude::{Local, Mut, Res, Resource, World};
 
 /// A Condition-satisfying system that returns true if the switch has been turned on.
@@ -84,7 +83,7 @@ pub fn switch_just_turned_off<M>(
 /// App::new()
 ///     .add_systems(Update, (|mut switch: ResMut<Switch<HeavyTask>>|{
 ///         // heavy task
-///         //..
+///         //...
 ///         
 ///         switch.off();
 ///     }).run_if(switch_is_on::<HeavyTask>))
@@ -97,9 +96,7 @@ pub fn switch_just_turned_off<M>(
 /// ```
 #[derive(Debug, Eq, PartialEq)]
 pub struct Switch<M> {
-    just_change: bool,
-    turned_on: bool,
-    checked: bool,
+    is_on: bool,
     _m: PhantomData<M>,
 }
 
@@ -112,11 +109,9 @@ impl<M> Switch<M>
 {
     /// Create new Switch with initial status.
     #[inline(always)]
-    const fn new(turn_on: bool) -> Switch<M> {
+    pub const fn new(turn_on: bool) -> Switch<M> {
         Self {
-            just_change: true,
-            turned_on: turn_on,
-            checked: false,
+            is_on: turn_on,
             _m: PhantomData,
         }
     }
@@ -124,13 +119,13 @@ impl<M> Switch<M>
     /// Returns true if switch is on.
     #[inline(always)]
     pub const fn is_on(&self) -> bool {
-        self.turned_on
+        self.is_on
     }
 
     /// Returns true if switch is off.
     #[inline(always)]
     pub const fn is_off(&self) -> bool {
-        !self.turned_on
+        !self.is_on
     }
 
     /// Sets turn on or off.
@@ -146,17 +141,15 @@ impl<M> Switch<M>
     #[inline(always)]
     pub fn on(&mut self) {
         if self.is_off() {
-            self.just_change = true;
-            self.turned_on = true;
+            self.is_on = true;
         }
     }
 
     /// Turn off the switch.
     #[inline(always)]
     pub fn off(&mut self) {
-        if self.turned_on {
-            self.just_change = true;
-            self.turned_on = false;
+        if self.is_on {
+            self.is_on = false;
         }
     }
 
@@ -174,7 +167,6 @@ impl<M> Default for Switch<M>
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::prelude::Switch;
@@ -184,22 +176,16 @@ mod tests {
     #[test]
     fn off() {
         let mut s = Switch::<T>::new(true);
-        assert!(s.just_change);
-        assert!(s.turned_on);
-        s.just_change = false;
+        assert!(s.is_on);
         s.off();
-        assert!(s.just_change);
         assert!(s.is_off());
     }
 
     #[test]
     fn on() {
         let mut s = Switch::<T>::new(false);
-        assert!(s.just_change);
         assert!(s.is_off());
-        s.just_change = false;
         s.on();
-        assert!(s.just_change);
         assert!(s.is_on());
     }
 }
