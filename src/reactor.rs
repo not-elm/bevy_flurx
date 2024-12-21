@@ -2,8 +2,9 @@ use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::component::{ComponentHooks, StorageType};
+use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
-use bevy::prelude::{Component, Entity, ReflectComponent};
+use bevy::prelude::{Component, Entity, ReflectComponent, Resource, World};
 use bevy::reflect::Reflect;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -77,15 +78,16 @@ where
                     };
                     f
                 };
-                world.commands().entity(entity).insert(NativeReactor::schedule(entity, f));
+                world.commands().entity(entity).insert((
+                    UnInitialized,
+                    NativeReactor::schedule(entity, f)
+                ));
             });
     }
 }
 
-#[derive(Component)]
 pub(crate) struct NativeReactor {
     pub(crate) scheduler: CoreScheduler<WorldPtr>,
-    pub(crate) initialized: bool,
 }
 
 impl NativeReactor {
@@ -101,12 +103,15 @@ impl NativeReactor {
         });
         Self {
             scheduler,
-            initialized: false,
         }
     }
 
     #[inline(always)]
     pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool {
+        if self.scheduler.finished {
+            return true;
+        }
+
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
@@ -120,6 +125,26 @@ impl NativeReactor {
     }
 }
 
+impl Component for NativeReactor {
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks
+            .on_add(|mut world: DeferredWorld, entity, _| {
+                world.commands().queue(move |world: &mut World| {
+                    let system_id = *world.resource::<InitializeReactorsSystemId>();
+                    let _ = world.run_system(system_id.0);
+                    world.commands().entity(entity).remove::<UnInitialized>();
+                });
+            });
+    }
+}
+
+#[derive(Resource, Copy, Clone)]
+pub(crate) struct InitializeReactorsSystemId(pub(crate) SystemId);
+
+#[derive(Component, Reflect)]
+pub(crate) struct UnInitialized;
 
 #[cfg(test)]
 mod tests {

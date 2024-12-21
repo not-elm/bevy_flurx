@@ -9,15 +9,20 @@ This library offers a mechanism for more sequential descriptions of delays, char
 For multithreaded operation, please check the [Switch](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/switch/struct.Switch.html).
 
 ```rust
-//! Here are some basic [once], [wait] and [delay] actions.
+//! Here are some basic [once], [wait], [delay], [then], [pipe] and [through] actions.
 //!
 //! For details on all actions, please check [here](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/index.html).
 //!
 //! [once]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/once/index.html
 //! [wait]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/wait/index.html
 //! [delay]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/delay/index.html
+//! [then]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/sequence/trait.Then.html#tymethod.then
+//! [pipe]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/pipe/trait.Pipe.html#tymethod.pipe
+//! [through]: https://docs.rs/bevy_flurx/latest/bevy_flurx/action/through/fn.through.html
+
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
+use std::time::Duration;
 
 fn main() {
     App::new()
@@ -61,14 +66,25 @@ fn spawn_reactor(mut commands: Commands) {
         })).await;
 
         // delay module defines the actions that perform delay processing.
-        // `then` is also an action that continues to execute another action.
-        task.will(Update, {
-            delay::time().with(std::time::Duration::from_secs(1))
-                .then(once::run(|| {
-                    info!("Done!");
+        task.will(Update, delay::time().with(std::time::Duration::from_secs(1))).await;
+
+        // `then`, `pipe` and through`  are also actions that continues to execute another action.
+        let message = task.will(Update, {
+            delay::frames().with(30)
+                .then(once::run(|count: Res<Count>| {
+                    count.0
                 }))
-                .then(once::event::app_exit_success())
+                // Pipes the output of an action to the input of the next action.
+                .pipe(once::run(|In(count): In<usize>| {
+                    format!("count is {count}")
+                }))
+                // Executes the next while keeping the output of the previous action.
+                .through(delay::time().with(Duration::from_secs(1)))
         }).await;
+        assert_eq!(message, "count is 4");
+
+        info!("Done!");
+        task.will(Update, once::event::app_exit_success()).await;
     }));
 }
 ```

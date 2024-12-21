@@ -1,3 +1,9 @@
+## v0.8.2
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.2)
+
+- Fix issues related to the reactor cancellation.
+
 ## v0.8.1
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.1)

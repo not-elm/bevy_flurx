@@ -21,9 +21,10 @@ fn spawn_reactor(mut commands: Commands) {
         task.will(Update, {
             effect::tokio::spawn(async move {
                 tokio::time::sleep(Duration::from_secs(3)).await;
+                "Done!"
             })
-                .then(once::run(|| {
-                    info!("Done!");
+                .pipe(effect::tokio::spawn(|message| async move {
+                    info!("{message}");
                 }))
                 .then(once::event::app_exit_success())
         }).await;

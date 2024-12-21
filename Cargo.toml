@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2021"
 authors = ["notelm"]
 categories = ["asynchronous", "game-development"]
@@ -16,15 +16,14 @@ path = "benches/cmp_countup.rs"
 harness = false
 
  [[example]]
- name = "effect"
- path = "examples/effect.rs"
+ name = "side_effect"
+ path = "examples/side_effect.rs"
  required-features = ["tokio", "effect"]
 
  [[example]]
  name = "undo_redo"
  path = "examples/undo_redo.rs"
  required-features = ["record"]
-
 
 [[example]]
 name = "switch_just_change"

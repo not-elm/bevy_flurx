@@ -1,16 +1,16 @@
 //! `Runner` defines what does the actual processing of the action.
 
 use crate::reactor::NativeReactor;
-pub use crate::runner::cancellation_token::{CancellationHandlers, CancellationId};
+pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::{Component, Entity, EventWriter, NonSendMut, Observer, OnRemove, Reflect, ReflectComponent, Schedule, Schedules, Trigger, With, World};
-pub(crate) use cancellation_token::CallCancellationHandlers;
+pub(crate) use cancellation_handlers::CallCancellationHandlers;
 pub use output::Output;
 use std::marker::PhantomData;
 
 mod output;
-mod cancellation_token;
+mod cancellation_handlers;
 
 
 /// The current state of the [Runner].
