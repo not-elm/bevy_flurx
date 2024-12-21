@@ -23,12 +23,11 @@ use std::time::Duration;
 pub fn time() -> ActionSeed<Duration> {
     wait::until(
         move |In(duration): In<Duration>, mut timer: Local<Option<Timer>>, time: Res<Time>| {
-            if timer.is_none() {
-                timer.replace(Timer::new(duration, TimerMode::Once));
-            }
-
-            timer.as_mut().unwrap().tick(time.delta()).just_finished()
-        },
+            timer
+                .get_or_insert_with(|| Timer::new(duration, TimerMode::Once))
+                .tick(time.delta())
+                .just_finished()
+        }
     )
 }
 

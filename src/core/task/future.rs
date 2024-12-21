@@ -19,11 +19,14 @@ where
 
     #[inline(always)]
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        let state = self.state.unwrap();
+        let Some(state) = self.state else {
+            cx.waker().wake_by_ref();
+            return Poll::Pending;
+        };
         if let Some(output) = self
             .as_mut()
             .selector
-            .select(state) {
+            .select(*state) {
             Poll::Ready(output)
         } else {
             cx.waker().wake_by_ref();

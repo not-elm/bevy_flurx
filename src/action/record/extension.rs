@@ -1,10 +1,10 @@
 //! Allows undo and redo requests to be made using [`RequestUndo`] and [`RequestRedo`]
 //! from outside [`Reactor`].
 
+use crate::action::record;
+use crate::prelude::{Omit, Reactor, Then};
 use bevy::app::{App, PostUpdate, Update};
 use bevy::prelude::{Commands, Event, EventReader};
-use crate::action::record;
-use crate::prelude::{Reactor, Omit, Then};
 
 /// Represents a request `undo` operations.
 ///
@@ -56,7 +56,8 @@ impl RecordExtension for App {
     where
         Act: Clone + PartialEq + Send + Sync + 'static,
     {
-        self.add_event::<RequestUndo<Act>>()
+        self
+            .add_event::<RequestUndo<Act>>()
             .add_event::<RequestRedo<Act>>()
             .add_systems(PostUpdate, (request_undo::<Act>, request_redo::<Act>))
     }

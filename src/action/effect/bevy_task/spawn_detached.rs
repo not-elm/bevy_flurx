@@ -80,7 +80,7 @@ where
                 .detach();
         }
 
-        if let Some(out) = self.arc_output.lock().unwrap().take() {
+        if let Some(out) = self.arc_output.try_lock().ok().and_then(|mut o| o.take()) {
             self.output.set(out);
             RunnerIs::Completed
         } else {
@@ -92,7 +92,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{effect, once};
-    use crate::prelude::{Reactor, Pipe};
+    use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::core::TaskPoolPlugin;

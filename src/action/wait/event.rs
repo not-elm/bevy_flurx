@@ -1,9 +1,9 @@
 //! [`wait::event`] creates a task related to waiting to receive events.
 
-use bevy::ecs::event::EventCursor;
-use bevy::prelude::{Event, Events, Local, ResMut};
 use crate::prelude::seed::ActionSeed;
 use crate::prelude::wait;
+use bevy::ecs::event::EventCursor;
+use bevy::prelude::{Event, Events, Local, ResMut};
 
 /// Waits until the specified event is sent
 ///
@@ -70,9 +70,11 @@ where
                     events.clear();
                     return Some(event);
                 }
-                er.replace(events.get_cursor_current());
             }
-            if let Some(event) = er.as_mut().unwrap().read(&events).last().cloned() {
+            let er = er.get_or_insert_with(|| {
+                events.get_cursor_current()
+            });
+            if let Some(event) = er.read(&events).last().cloned() {
                 events.clear();
                 Some(event)
             } else {
@@ -85,7 +87,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{once, wait};
-    use crate::prelude::{Either, Reactor, Pipe, Then};
+    use crate::prelude::{Either, Pipe, Reactor, Then};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, EventWriter, Events, In};

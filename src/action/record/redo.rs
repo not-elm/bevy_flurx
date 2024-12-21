@@ -32,9 +32,9 @@ use crate::runner::{BoxedRunner, CancellationId, CancellationHandlers, Runner, R
 ///             rollback: Rollback::undo(|| once::run(||{})),
 ///         }))
 ///         .await
-///         .unwrap();
-///     task.will(Update, record::undo::once::<Act>()).await.unwrap();
-///     task.will(Update, record::redo::once::<Act>()).await.unwrap();
+///         .expect("An error will be returned if undo or redo is operating.");
+///     task.will(Update, record::undo::once::<Act>()).await.expect("An error will be returned if undo or redo is operating.");
+///     task.will(Update, record::redo::once::<Act>()).await.expect("An error will be returned if undo or redo is operating.");
 /// });
 /// ```
 pub fn once<Act>() -> ActionSeed<(), EditRecordResult>
