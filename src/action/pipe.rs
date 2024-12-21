@@ -86,6 +86,7 @@ where
     O1: 'static,
     O2: 'static,
 {
+    #[inline]
     fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if !self.finished_r1 {
             match self.r1.run(world, token) {
@@ -108,7 +109,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{delay, once};
-    use crate::prelude::{Reactor, Map, Pipe, Then, Through};
+    use crate::prelude::{Map, Pipe, Reactor, Then, Through};
     use crate::test_util::test;
     use crate::tests::{increment_count, test_app};
     use bevy::app::{AppExit, Startup};

@@ -113,14 +113,15 @@ impl<O1> Runner for SequenceRunner<O1>
 where
     O1: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
+    #[inline]
+    fn run(&mut self, world: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs {
         if self.o1.is_none() {
-            match self.r1.run(world, token) {
+            match self.r1.run(world, cancellation_handlers) {
                 RunnerIs::Completed => {}
                 other => return other
             };
         }
-        self.r2.run(world, token)
+        self.r2.run(world, cancellation_handlers)
     }
 }
 
