@@ -1,5 +1,5 @@
 name: CI
-run-name: ${{ github.actor }} is testing
+run-name: Test CI
 on:
   push:
   workflow_dispatch:
