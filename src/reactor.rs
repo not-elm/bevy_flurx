@@ -2,9 +2,8 @@ use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::component::{ComponentHooks, StorageType};
-use bevy::ecs::system::SystemId;
 use bevy::ecs::world::DeferredWorld;
-use bevy::prelude::{Component, Entity, ReflectComponent, Resource, World};
+use bevy::prelude::{Component, Entity, ReflectComponent};
 use bevy::reflect::Reflect;
 use std::future::Future;
 use std::marker::PhantomData;
@@ -78,16 +77,15 @@ where
                     };
                     f
                 };
-                world.commands().entity(entity).insert((
-                    UnInitialized,
-                    NativeReactor::schedule(entity, f)
-                ));
+                world.commands().entity(entity).insert(NativeReactor::schedule(entity, f));
             });
     }
 }
 
+#[derive(Component)]
 pub(crate) struct NativeReactor {
     pub(crate) scheduler: CoreScheduler<WorldPtr>,
+    pub(crate) initialized: bool,
 }
 
 impl NativeReactor {
@@ -103,6 +101,7 @@ impl NativeReactor {
         });
         Self {
             scheduler,
+            initialized: false,
         }
     }
 
@@ -125,30 +124,9 @@ impl NativeReactor {
     }
 }
 
-impl Component for NativeReactor {
-    const STORAGE_TYPE: StorageType = StorageType::Table;
-
-    fn register_component_hooks(hooks: &mut ComponentHooks) {
-        hooks
-            .on_add(|mut world: DeferredWorld, entity, _| {
-                world.commands().queue(move |world: &mut World| {
-                    let system_id = *world.resource::<InitializeReactorsSystemId>();
-                    let _ = world.run_system(system_id.0);
-                    world.commands().entity(entity).remove::<UnInitialized>();
-                });
-            });
-    }
-}
-
-#[derive(Resource, Copy, Clone)]
-pub(crate) struct InitializeReactorsSystemId(pub(crate) SystemId);
-
-#[derive(Component, Reflect)]
-pub(crate) struct UnInitialized;
-
 #[cfg(test)]
 mod tests {
-    use crate::action::{delay, wait};
+    use crate::action::{delay, once, wait};
     use crate::prelude::Reactor;
     use crate::reactor::NativeReactor;
     use crate::tests::test_app;
@@ -210,5 +188,29 @@ mod tests {
             .query::<&NativeReactor>()
             .get_single(app.world())
             .is_err());
+    }
+
+    #[test]
+    fn not_overwrite_schedule_label() {
+        let mut app = test_app();
+        #[derive(Debug, Copy, Clone, Resource, Eq, PartialEq)]
+        struct Bool2(bool);
+
+        app.insert_resource(Count(0));
+        app.insert_resource(Bool2(false));
+
+        app.add_systems(Update, (
+            |mut count: ResMut<Count>| count.0 += 1,
+            |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(Update, once::res::insert().with(Bool2(true))).await;
+                }));
+            }
+        ));
+
+        app.update();
+        app.update();
+        app.assert_resource_eq(Count(2));
+        app.assert_resource_eq(Bool2(true));
     }
 }
