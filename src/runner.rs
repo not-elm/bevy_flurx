@@ -2,9 +2,8 @@
 
 use crate::reactor::NativeReactor;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
-use bevy::ecs::intern::Interned;
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Component, Entity, EventWriter, NonSendMut, Observer, OnRemove, Reflect, ReflectComponent, Schedule, Schedules, Trigger, With, World};
+use bevy::prelude::{Component, Entity, EventWriter, NonSendMut, Observer, OnRemove, Reflect, ReflectComponent, Schedules, Trigger, With, World};
 pub(crate) use cancellation_handlers::CallCancellationHandlers;
 pub use output::Output;
 use std::marker::PhantomData;
@@ -118,11 +117,11 @@ where
         let mut reactor_map = ReactorMap::<Label>::default();
         reactor_map.0.push((entity, vec![runner], CancellationHandlers::default()));
         world.insert_non_send_resource(reactor_map);
+
         let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
             return;
         };
-        let schedule = initialize_schedule(&mut schedules, label.intern());
-        schedule.add_systems(run_runners::<Label>);
+        schedules.add_systems(label.intern(), run_runners::<Label>);
     }
 }
 
@@ -159,15 +158,6 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
         ReactorEntity(entity),
         observer
     ));
-}
-
-#[inline]
-pub(crate) fn initialize_schedule(schedules: &mut Schedules, schedule_label: Interned<dyn ScheduleLabel>) -> &mut Schedule {
-    if schedules.get(schedule_label).is_none() {
-        schedules.insert(Schedule::new(schedule_label));
-    }
-
-    schedules.get_mut(schedule_label).unwrap()
 }
 
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {

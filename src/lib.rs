@@ -6,13 +6,13 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::type_complexity)]
 
-use crate::reactor::{InitializeReactorsSystemId, NativeReactor, UnInitialized};
+use crate::reactor::NativeReactor;
 use crate::runner::CallCancellationHandlers;
 use crate::world_ptr::WorldPtr;
-use bevy::app::{App, Last, Plugin};
+use bevy::app::{App, Last, Plugin, PostStartup};
 use bevy::ecs::system::SystemState;
 use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{Entity, EventReader, IntoSystemConfigs, QueryState, With, World};
+use bevy::prelude::{Entity, EventReader, IntoSystemConfigs, QueryState, World};
 
 pub mod action;
 pub mod runner;
@@ -60,11 +60,9 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        let system_id = app.world_mut().register_system_cached(initialize_reactors);
-        app.insert_resource(InitializeReactorsSystemId(system_id));
-
         app
             .add_event::<CallCancellationHandlers>()
+            .add_systems(PostStartup, initialize_reactors)
             .add_systems(Last, (
                 call_cancel_handlers.run_if(bevy::prelude::on_event::<CallCancellationHandlers>),
                 run_reactors,
@@ -74,11 +72,12 @@ impl Plugin for FlurxPlugin {
 
 fn initialize_reactors(
     world: &mut World,
-    reactors: &mut QueryState<&mut NativeReactor, With<UnInitialized>>,
+    reactors: &mut QueryState<&mut NativeReactor>,
 ) {
     let world_ptr = WorldPtr::new(world);
-    for mut reactor in reactors.iter_mut(world) {
+    for mut reactor in reactors.iter_mut(world).filter(|r| !r.initialized) {
         reactor.run_sync(world_ptr);
+        reactor.initialized = true;
     }
 }
 
@@ -101,6 +100,10 @@ fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut Nativ
     let mut entities = Vec::new();
 
     for (entity, mut reactor) in reactors.iter_mut(world) {
+        if !reactor.initialized {
+            reactor.run_sync(world_ptr);
+            reactor.initialized = true;
+        }
         if reactor.run_sync(world_ptr) {
             entities.push(entity);
         }
