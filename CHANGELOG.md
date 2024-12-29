@@ -1,3 +1,9 @@
+## v0.8.3
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.3)
+
+- Fixed regression that had occurred since v0.8.2.
+
 ## v0.8.2
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.2)
