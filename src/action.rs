@@ -35,6 +35,7 @@ pub mod switch;
 pub mod seed;
 pub mod through;
 pub mod pipe;
+pub mod inspect;
 pub mod sequence;
 pub mod omit;
 #[path = "action/tuple.rs"]

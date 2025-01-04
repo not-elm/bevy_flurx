@@ -1,3 +1,7 @@
+## Unreleased
+
+- Added the `inspect` module, providing utilities for auxiliary side-effect handling (e.g., logging or debugging) with the `inspect` function and `Inspect` trait.
+
 ## v0.8.3
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.8.3)

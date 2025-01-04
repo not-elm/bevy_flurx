@@ -34,6 +34,7 @@ pub mod prelude {
         action::sequence::Then,
         action::switch::*,
         action::through::{through, Through},
+        action::inspect::{inspect, Inspect},
         action::wait::Either,
         action::Map,
         action::Remake,
