@@ -92,12 +92,9 @@
 //! - Collecting metrics or telemetry.
 //! - Triggering auxiliary behaviors based on input values without altering the main flow.
 
-use bevy::ecs::system::In;
-
-use crate::action::once;
 use crate::action::pipe::Pipe;
 use crate::action::seed::ActionSeed;
-use crate::action::sequence::Then;
+use crate::action::Map;
 
 /// Creates an [`ActionSeed`] that clones its input, passing one clone to the provided
 /// `seed` for further processing while forwarding the original input as the output.
@@ -159,13 +156,7 @@ where
     I: Clone + Send + Sync + 'static,
     O: 'static,
 {
-    ActionSeed::define(|i: I| {
-        let mut i_clone = Some(i.clone());
-        once::run(|In(i): In<I>| i)
-            .with(i)
-            .pipe(seed)
-            .then(once::run(move || i_clone.take().unwrap()))
-    })
+    ActionSeed::define(|i: I| seed.with(i.clone()).overwrite(i))
 }
 
 /// A trait providing the `inspect` functionality for [`ActionSeed`]s, enabling
