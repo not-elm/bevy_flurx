@@ -53,13 +53,28 @@ pub mod record;
 ///
 /// Please check [here](crate::action) for more details.
 #[derive(Reflect)]
-pub struct Action<I = (), O = ()>(pub(crate) I, pub(crate) ActionSeed<I, O>);
+pub struct Action<I = (), O = ()>(pub I, pub ActionSeed<I, O>);
 
 impl<I1, O1> Action<I1, O1>
 where
     I1: 'static,
     O1: 'static,
 {
+    /// Splits itself into an input value and an action seed.
+    /// 
+    /// ## Examples
+    /// 
+    /// ```no_run
+    /// use bevy_flurx::prelude::*;
+    /// 
+    /// let action: Action<usize> = delay::frames().with(10);
+    /// let (_input, _seed): (usize, ActionSeed<usize>) = action.split();
+    /// ```
+    #[inline]
+    pub fn split(self) -> (I1, ActionSeed<I1, O1>) {
+        (self.0, self.1)
+    }
+
     /// Creates the [`BoxedRunner`].
     ///
     /// This method is mainly useful for creating custom runners.
@@ -127,9 +142,8 @@ macro_rules! actions {
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use crate::action::{delay, once, wait};
+    use std::time::Duration;
 
     #[test]
     fn length_is_0() {

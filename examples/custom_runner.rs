@@ -67,7 +67,6 @@ impl Runner for DelayedLogRunner {
     }
 }
 
-
 /// Finally, we create a function that returns an action.
 /// 
 /// It is recommended that the action's input is passed by the [`ActionSeed::with`] instead of the argument of this function.
