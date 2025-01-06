@@ -1,6 +1,7 @@
 ## Unreleased
 
 - Added the `inspect` module, providing utilities for auxiliary side-effect handling (e.g., logging or debugging) with the `inspect` function and `Inspect` trait.
+- Added `Action::split` method to split an action into an input value and a seed. 
 - Changed access modifier for `ActionSeed::create_runner` and `Action::create_runner` to pub.
 
 ## v0.8.3
