@@ -4,6 +4,10 @@ on:
   push:
   workflow_dispatch:
 
+env:
+  RUSTFLAGS: '-D warnings'
+  RUSTDOCFLAGS: '--cfg docsrs -D warnings'
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -14,24 +18,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-
       - name: Toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 'nightly'
+          components: 'clippy,rust-docs'
       - name: Install alsa and udev
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
         if: runner.os == 'linux'
+
+      - name: Rust cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Clippy all features
         run: cargo clippy --all --all-features --tests -- -D warnings
 
       - name: Test all features
         run: cargo test --all-features --all
+
+      - name: Doc lint
+        run: cargo +nightly doc --all-features --no-deps
+
+
 
