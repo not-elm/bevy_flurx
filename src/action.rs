@@ -60,8 +60,12 @@ where
     I1: 'static,
     O1: 'static,
 {
-    #[inline(always)]
-    pub(crate) fn into_runner(self, output: Output<O1>) -> BoxedRunner {
+    /// Creates the [`BoxedRunner`].
+    ///
+    /// This method is mainly useful for creating custom runners.
+    /// For example, when creating a new runner that extends an existing one.
+    #[inline]
+    pub fn create_runner(self, output: Output<O1>) -> BoxedRunner {
         self.1.create_runner(self.0, output)
     }
 }

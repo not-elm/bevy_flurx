@@ -30,7 +30,7 @@ where
     ActionSeed::new(|actions: Actions, output| AllRunner {
         runners: actions
             .into_iter()
-            .map(|seed| seed.with(()).into_runner(Output::default()))
+            .map(|seed| seed.with(()).create_runner(Output::default()))
             .collect(),
         output,
     })
@@ -157,8 +157,8 @@ pub mod private {
                         let o2 = Output::default();
                         Self {
                             output,
-                            r1: s1.with(input.0).into_runner(o1.clone()),
-                            r2: s2.with(input.1).into_runner(o2.clone()),
+                            r1: s1.with(input.0).create_runner(o1.clone()),
+                            r2: s2.with(input.1).create_runner(o2.clone()),
                             o1,
                             o2,
                             _m: PhantomData

@@ -97,7 +97,7 @@ where
 {
     #[inline]
     fn omit_input(self) -> ActionSeed<(), O> {
-        ActionSeed::from(|_, output| self.into().into_runner(output))
+        ActionSeed::from(|_, output| self.into().create_runner(output))
     }
 }
 

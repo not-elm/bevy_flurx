@@ -34,7 +34,7 @@ where
     ActionSeed::new(move |actions: Actions, output| {
         let runners = actions
             .into_iter()
-            .map(|action| action.with(()).into_runner(Output::default()))
+            .map(|action| action.with(()).create_runner(Output::default()))
             .collect::<Vec<_>>();
         if runners.is_empty() {
             panic!("The length of actions passed to `wait::any` must be greater than 0.")

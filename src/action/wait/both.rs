@@ -1,8 +1,8 @@
-use bevy::prelude::World;
 use crate::action::Action;
 use crate::prelude::ActionSeed;
-use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs};
 use crate::runner::macros::output_combine;
+use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs};
+use bevy::prelude::World;
 
 /// Run until both tasks done.
 ///
@@ -37,8 +37,8 @@ pub fn both<LI, LO, RI, RO>(
         let o2 = Output::default();
 
         BothRunner {
-            r1: s1.with(input.0).into_runner(o1.clone()),
-            r2: s2.with(input.1).into_runner(o2.clone()),
+            r1: s1.with(input.0).create_runner(o1.clone()),
+            r2: s2.with(input.1).create_runner(o2.clone()),
             o1,
             o2,
             output
