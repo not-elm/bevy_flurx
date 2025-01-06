@@ -76,7 +76,7 @@ where
                 return;
             };
             let action = seed.with(o1);
-            self.r2.replace(action.into_runner(self.output.clone()));
+            self.r2.replace(action.create_runner(self.output.clone()));
         }
     }
 }

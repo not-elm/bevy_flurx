@@ -5,10 +5,10 @@
 //!
 //! It also provides the [`sequence!`](crate::sequence) macro. The behavior itself is the same as [`Then`].
 
-use bevy::prelude::World;
 use crate::action::{Action, Remake};
 use crate::prelude::CancellationHandlers;
 use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
+use bevy::prelude::World;
 
 /// Create the action combined with the subsequent action.
 ///
@@ -54,7 +54,7 @@ where
         self.remake(|r1, o1, output| {
             SequenceRunner {
                 r1,
-                r2: action.into().into_runner(output),
+                r2: action.into().create_runner(output),
                 o1,
             }
         })

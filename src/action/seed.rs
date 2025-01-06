@@ -55,7 +55,7 @@ where
         I2: 'static,
         A: Into<Action<I2, O>>,
     {
-        ActionSeed::from(|input, output| f(input).into().into_runner(output))
+        ActionSeed::from(|input, output| f(input).into().create_runner(output))
     }
 
     /// Into [`Action`] with `input`.
@@ -66,8 +66,12 @@ where
         Action(input, self)
     }
 
-    #[inline(always)]
-    pub(crate) fn create_runner(self, input: I, output: Output<O>) -> BoxedRunner {
+    /// Creates the [`BoxedRunner`].
+    ///
+    /// This method is mainly useful for creating custom runners.
+    /// For example, when creating a new runner that extends an existing one.
+    #[inline]
+    pub fn create_runner(self, input: I, output: Output<O>) -> BoxedRunner {
         self.0(input, output)
     }
 }

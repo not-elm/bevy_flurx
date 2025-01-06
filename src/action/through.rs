@@ -44,7 +44,7 @@ where
     ActionSeed::new(|input, output| ThroughRunner {
         value: Some(input),
         output,
-        inner: action.into().into_runner(Output::default()),
+        inner: action.into().create_runner(Output::default()),
     })
 }
 

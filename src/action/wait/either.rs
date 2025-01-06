@@ -1,7 +1,7 @@
-use bevy::prelude::World;
 use crate::action::Action;
 use crate::prelude::{ActionSeed, BoxedRunner, RunnerIs};
 use crate::runner::{CancellationHandlers, Output, Runner};
+use bevy::prelude::World;
 
 /// This enum represents the result of [`wait::either`](crate::prelude::wait::either).
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -66,8 +66,8 @@ where
         let o1 = Output::default();
         let o2 = Output::default();
         EitherRunner {
-            r1: ls.with(input.0).into_runner(o1.clone()),
-            r2: rs.with(input.1).into_runner(o2.clone()),
+            r1: ls.with(input.0).create_runner(o1.clone()),
+            r2: rs.with(input.1).create_runner(o2.clone()),
             o1,
             o2,
             output,

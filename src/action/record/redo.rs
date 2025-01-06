@@ -1,12 +1,12 @@
 //! Define the actions related to `redo` operations.
 //! To perform these the actions, you must call the one of the [`record::undo`](crate::prelude::record::undo) actions beforehand.
 
-use bevy::prelude::World;
 use crate::action::record::{push_tracks, Record};
 use crate::action::record::{unlock_record, EditRecordResult};
 use crate::prelude::record::lock_record;
 use crate::prelude::{ActionSeed, Output, Track};
-use crate::runner::{BoxedRunner, CancellationId, CancellationHandlers, Runner, RunnerIs};
+use crate::runner::{BoxedRunner, CancellationHandlers, CancellationId, Runner, RunnerIs};
+use bevy::prelude::World;
 
 /// Pops the last pushed `redo` action and execute it.
 /// After the `redo` action is executed, then the `undo` action that created it
@@ -142,7 +142,7 @@ where
         loop {
             if self.redo_runner.is_none() {
                 if let Some((track, redo)) = self.tracks.pop() {
-                    let runner = redo.with(()).into_runner(self.redo_output.clone());
+                    let runner = redo.with(()).create_runner(self.redo_output.clone());
                     self.redo_runner.replace(runner);
                     world
                         .non_send_resource_mut::<TracksStore<Act>>()
@@ -192,7 +192,7 @@ mod tests {
 
     use crate::action::record::track::{Redo, Undo};
     use crate::action::{delay, once, record};
-    use crate::prelude::{ActionSeed, Reactor, Omit, Record, RequestRedo, Rollback, Then, Track};
+    use crate::prelude::{ActionSeed, Omit, Reactor, Record, RequestRedo, Rollback, Then, Track};
     use crate::reactor::NativeReactor;
     use crate::sequence;
     use crate::test_util::SpawnReactor;

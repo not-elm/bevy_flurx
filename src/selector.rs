@@ -1,10 +1,10 @@
 use crate::action::Action;
+use crate::core::selector::Selector;
 use crate::runner::{initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::Entity;
 use std::marker::PhantomData;
-use crate::core::selector::Selector;
 
 pub(crate) struct WorldSelector<Label, In, Out> {
     action: Option<(Entity, Action<In, Out>)>,
@@ -41,7 +41,7 @@ where
     #[inline(always)]
     fn select(&mut self, world: WorldPtr) -> Option<Self::Output> {
         if let Some((entity, action)) = self.action.take() {
-            let runner = action.into_runner(self.output.clone());
+            let runner = action.create_runner(self.output.clone());
             initialize_runner(world.as_mut(), &self.label, entity, runner);
             None
         } else {

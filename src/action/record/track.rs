@@ -1,7 +1,7 @@
-use std::marker::PhantomData;
 use crate::action::{Action, Map};
 use crate::prelude::{ActionSeed, Omit, OmitInput};
 use crate::runner::{BoxedRunner, Output};
+use std::marker::PhantomData;
 
 /// Represents the track of act.
 pub struct Track<Act> {
@@ -19,7 +19,7 @@ where
 {
     #[inline]
     pub(crate) fn create_runner(&self, output: Output<Option<ActionSeed>>) -> BoxedRunner {
-        (self.rollback.0)().into_runner(output)
+        (self.rollback.0)().create_runner(output)
     }
 }
 
