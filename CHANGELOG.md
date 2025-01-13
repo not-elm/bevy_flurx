@@ -1,4 +1,6 @@
-## Unreleased
+## v0.9.0
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.9.0)
 
 - Added the `inspect` module, providing utilities for auxiliary side-effect handling (e.g., logging or debugging) with the `inspect` function and `Inspect` trait.
 - Added `Action::split` method to split an action into an input value and a seed. 
