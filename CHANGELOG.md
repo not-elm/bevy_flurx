@@ -1,8 +1,14 @@
-## UnReleased
+## v0.9.1
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.9.1)
+
+### Improvements
 
 - To support a wider range of versions, the dependency libraries are now specified by their major version.
 - Rename `effect` module to `side_effect`.
   - The original name is also retained for compatibility but will be removed in 0.10.
+- Added `Functor` trait.
+  - This allows you to pass a function without arguments to `side_effect::thread::spawn`.
 
 ## v0.9.0
 
