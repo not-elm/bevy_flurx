@@ -34,7 +34,7 @@ fn spawn_reactor(mut commands: Commands) {
                 }))
         }).await;
 
-        // By turning on the `side_effect` feature flag, 
+        // By turning on the `side_effect` and `tokio` feature flags, 
         // you can also write asynchronous functions depend on tokio directly in the reactor.
         tokio::time::sleep(Duration::from_secs(1)).await;
 
