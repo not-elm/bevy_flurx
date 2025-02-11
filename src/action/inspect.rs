@@ -198,7 +198,7 @@ where
 /// ```
 ///
 /// In this example:
-/// - The `inspect` method enables the side side_effect to print the input (`Damage(_)`).
+/// - The `inspect` method enables the side effect to print the input (`Damage(_)`).
 /// - The original input is preserved and passed along to the next step in the chain to harm the
 ///   players.
 pub trait Inspect<I, O, V> {
