@@ -1,3 +1,7 @@
+## UnReleased
+
+- To support a wider range of versions, the dependency libraries are now specified by their major version.
+
 ## v0.9.0
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.9.0)
