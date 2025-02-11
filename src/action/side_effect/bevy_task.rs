@@ -2,9 +2,8 @@
 //!
 //! actions
 //!
-//! - [`effect::bevy_task::spawn`](crate::prelude::effect::bevy_task::spawn)
-//! - [`effect::bevy_task::spawn_detached`](crate::prelude::effect::bevy_task::spawn_detached)
-
+//! - [`side_effect::bevy_task::spawn`](crate::prelude::side_effect::bevy_task::spawn)
+//! - [`side_effect::bevy_task::spawn_detached`](crate::prelude::side_effect::bevy_task::spawn_detached)
 
 pub use _spawn::spawn;
 pub use _spawn_detached::spawn_detached;

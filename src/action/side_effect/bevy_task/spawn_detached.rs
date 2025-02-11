@@ -1,4 +1,4 @@
-use crate::action::effect::AsyncFunctor;
+use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, Output, RunnerIs};
 use crate::runner::Runner;
 use bevy::prelude::World;
@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 /// Spawns a future onto the bevy thread pool, 
 /// and then wait until its completed.
 ///
-/// Unlike [`effect::bevy_task::spawn`](crate::prelude::effect::bevy_task::spawn_detached),
+/// Unlike [`side_effect::bevy_task::spawn`](crate::prelude::side_effect::bevy_task::spawn_detached),
 /// a spawned task is detached and continues to run in the background.
 ///
 /// Note that tasks created from this function will continue to run even if [`Reactor`](crate::prelude::Reactor) is canceled.
@@ -21,7 +21,7 @@ use std::sync::{Arc, Mutex};
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, effect::bevy_task::spawn_detached(async move{
+///     task.will(Update, side_effect::bevy_task::spawn_detached(async move{
 ///
 ///     })).await;
 /// });
@@ -29,7 +29,7 @@ use std::sync::{Arc, Mutex};
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
-///             .pipe(effect::bevy_task::spawn_detached(|num: usize| async move{
+///             .pipe(side_effect::bevy_task::spawn_detached(|num: usize| async move{
 ///                 num + 1
 ///             }))
 ///             .pipe(once::run(|In(num): In<usize>|{
@@ -91,7 +91,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::action::{effect, once};
+    use crate::action::{once, side_effect};
     use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::Startup;
@@ -108,7 +108,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    effect::bevy_task::spawn_detached(async move {
+                    side_effect::bevy_task::spawn_detached(async move {
                         Count(1 + 1)
                     })
                         .pipe(once::res::insert())

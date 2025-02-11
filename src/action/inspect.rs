@@ -103,7 +103,7 @@ use crate::action::Map;
 /// (like logging or metrics) without altering the main input-output chain.
 ///
 /// # Parameters
-/// - `seed`: An [`ActionSeed`] that defines a transformation or side-effect to
+/// - `seed`: An [`ActionSeed`] that defines a transformation or side-side_effect to
 ///   perform on a clone of the input data. The result of this transformation is
 ///   discarded by `inspect`, but any side-effects in `seed` will still occur.
 ///
@@ -164,7 +164,7 @@ where
 /// the original input flow.
 ///
 /// The `inspect` method is particularly useful when you want to observe or
-/// inspect an action's input by executing a side-effect (like logging or metrics)
+/// inspect an action's input by executing a side-side_effect (like logging or metrics)
 /// without altering the main input-output chain.
 ///
 /// # Type Parameters
@@ -198,7 +198,7 @@ where
 /// ```
 ///
 /// In this example:
-/// - The `inspect` method enables the side effect to print the input (`Damage(_)`).
+/// - The `inspect` method enables the side side_effect to print the input (`Damage(_)`).
 /// - The original input is preserved and passed along to the next step in the chain to harm the
 ///   players.
 pub trait Inspect<I, O, V> {
@@ -207,11 +207,11 @@ pub trait Inspect<I, O, V> {
     ///
     /// # Parameters
     /// - `seed`: The auxiliary [`ActionSeed`] that performs a transformation
-    ///   or side-effect on a cloned version of the input.
+    ///   or side-side_effect on a cloned version of the input.
     ///
     /// # Returns
     /// A new [`ActionSeed`] that preserves the original input flow while executing
-    /// the side-effect defined by the provided auxiliary seed.
+    /// the side-side_effect defined by the provided auxiliary seed.
     fn inspect(self, seed: ActionSeed<V, O>) -> ActionSeed<I, V>;
 }
 
