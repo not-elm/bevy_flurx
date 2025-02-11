@@ -4,9 +4,9 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
 
-This library offers a mechanism for more sequential descriptions of delays, character movement, waiting for user input, and other state waits. 
-[Reactor](https://docs.rs/bevy_flurx/latest/bevy_flurx/prelude/struct.Reactor.html) can be used incrementally, meaning there’s no need to rewrite existing applications to incorporate it. I recommend this partial usage since the system that runs Reactor and the systems executed by Reactor operate on the main thread. 
-For multithreaded operation, please check the [Switch](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/switch/struct.Switch.html).
+This library provides functionality similar to coroutines, allowing you to write sequential processing for delays, user input, animations, and more.
+
+[Reactor](https://docs.rs/bevy_flurx/latest/bevy_flurx/prelude/struct.Reactor.html) can be used incrementally, meaning there’s no need to rewrite existing applications to incorporate it.
 
 ```rust
 //! Here are some basic [once], [wait], [delay], [then], [pipe] and [through] actions.
