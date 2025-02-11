@@ -2,7 +2,7 @@
 //!
 //! actions
 //!
-//! - [`effect::thread::spawn`](crate::prelude::effect::thread::spawn)
+//! - [`side_effect::thread::spawn`](crate::prelude::side_effect::thread::spawn)
 
 use std::sync::{Arc, Mutex};
 
@@ -30,7 +30,7 @@ use crate::runner::{Output, Runner};
 ///         once::run(||{
 ///             2
 ///         })
-///             .pipe(effect::thread::spawn(|num: usize|{
+///             .pipe(side_effect::thread::spawn(|num: usize|{
 ///                 num + 3
 ///             }))
 ///             .pipe(once::run(|In(num): In<usize>|{
@@ -87,7 +87,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::action::{effect, once};
+    use crate::action::{once, side_effect};
     use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::prelude::{Commands, In, ResMut, Startup, Update};
@@ -100,7 +100,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    effect::thread::spawn(|_| {
+                    side_effect::thread::spawn(|_| {
                         1 + 1
                     })
                         .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {

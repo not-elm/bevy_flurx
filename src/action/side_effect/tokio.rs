@@ -2,7 +2,7 @@
 //!
 //! action
 //!
-//! - [`effect::tokio::spawn`](crate::prelude::effect::tokio::spawn)
+//! - [`side_effect::tokio::spawn`](crate::prelude::side_effect::tokio::spawn)
 
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -11,7 +11,7 @@ use async_compat::CompatExt;
 use bevy::prelude::World;
 use tokio::task::JoinHandle;
 
-use crate::action::effect::AsyncFunctor;
+use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
 
@@ -29,7 +29,7 @@ use crate::runner::{Output, Runner};
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         once::run(|| 2)
-///             .pipe(effect::tokio::spawn(|num: usize| async move{
+///             .pipe(side_effect::tokio::spawn(|num: usize| async move{
 ///                 num + 3
 ///             }))
 ///             .pipe(once::run(|In(num): In<usize>|{
@@ -107,9 +107,9 @@ mod tests {
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::time::Duration;
 
-    use crate::action::{delay, effect, once, wait};
+    use crate::action::{delay, once, side_effect, wait};
     use crate::actions;
-    use crate::prelude::{Reactor, Pipe, Then};
+    use crate::prelude::{Pipe, Reactor, Then};
     use crate::tests::{exit_reader, test_app};
     use bevy::app::Startup;
     use bevy::prelude::{Commands, In, ResMut, Update};
@@ -122,7 +122,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, effect::tokio::spawn(|_| async move { 1 + 1 })
+                task.will(Update, side_effect::tokio::spawn(|_| async move { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
                         count.0 = num;
                     })),
@@ -140,7 +140,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, effect::tokio::spawn(async move { 1 + 1 })
+                task.will(Update, side_effect::tokio::spawn(async move { 1 + 1 })
                     .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
                         count.0 = num;
                     })),
@@ -163,7 +163,7 @@ mod tests {
                 task.will(Update, {
                     wait::either(
                         once::run(|| {}),
-                        effect::tokio::spawn(|_| async move {
+                        side_effect::tokio::spawn(|_| async move {
                             tokio::time::sleep(Duration::from_millis(100)).await;
                             TASK_FINISHED.store(true, Ordering::Relaxed);
                         })
@@ -192,7 +192,7 @@ mod tests {
                     wait::any().with(actions![
                         once::run(|| {}),
                         once::run(|| {}),
-                        effect::tokio::spawn(|_| async move {
+                        side_effect::tokio::spawn(|_| async move {
                             tokio::time::sleep(Duration::from_millis(100)).await;
                             TASK_FINISHED.store(true, Ordering::Relaxed);
                         })

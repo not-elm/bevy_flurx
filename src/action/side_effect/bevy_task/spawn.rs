@@ -1,6 +1,6 @@
 use bevy::prelude::World;
 
-use crate::action::effect::AsyncFunctor;
+use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner, RunnerIs};
 
 /// Spawns a future onto the bevy thread pool,
@@ -12,7 +12,7 @@ use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner, RunnerIs}
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, effect::bevy_task::spawn(async move{
+///     task.will(Update, side_effect::bevy_task::spawn(async move{
 ///
 ///     })).await;
 /// });
@@ -20,7 +20,7 @@ use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner, RunnerIs}
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, {
 ///         wait::output(|| Some(1))
-///             .pipe(effect::bevy_task::spawn(|num: usize| async move{
+///             .pipe(side_effect::bevy_task::spawn(|num: usize| async move{
 ///                 num + 1
 ///             }))
 ///             .pipe(once::run(|In(num): In<usize>|{
@@ -73,7 +73,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::action::{effect, once};
+    use crate::action::{once, side_effect};
     use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
@@ -93,7 +93,7 @@ mod tests {
             app.add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, {
-                        effect::bevy_task::spawn(async move {
+                        side_effect::bevy_task::spawn(async move {
                             Count(1 + 1)
                         })
                             .pipe(once::res::insert())
@@ -114,7 +114,7 @@ mod test_tokio {
     use bevy::core::TaskPoolPlugin;
     use bevy::prelude::Commands;
 
-    use crate::action::effect;
+    use crate::action::side_effect;
     use crate::prelude::Reactor;
     use crate::tests::test_app;
 
@@ -125,7 +125,7 @@ mod test_tokio {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    effect::bevy_task::spawn(async move {
+                    side_effect::bevy_task::spawn(async move {
                         tokio::time::sleep(std::time::Duration::new(1, 0)).await;
                     })
                 }).await;

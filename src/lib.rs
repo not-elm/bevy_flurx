@@ -20,21 +20,21 @@ pub mod task;
 
 #[allow(missing_docs)]
 pub mod prelude {
-    #[cfg(feature = "effect")]
-    pub use crate::action::effect::AsyncFunctor;
     #[cfg(feature = "record")]
     pub use crate::action::record::{
         extension::{RecordExtension, RequestRedo, RequestUndo},
         EditRecordResult, Record, Redo, RedoAction, Rollback, Track, Undo, UndoRedoInProgress,
     };
+    #[cfg(feature = "effect")]
+    pub use crate::action::side_effect::AsyncFunctor;
     pub use crate::{
+        action::inspect::{inspect, Inspect},
         action::omit::*,
         action::pipe::Pipe,
         action::seed::ActionSeed,
         action::sequence::Then,
         action::switch::*,
         action::through::{through, Through},
-        action::inspect::{inspect, Inspect},
         action::wait::Either,
         action::Map,
         action::Remake,

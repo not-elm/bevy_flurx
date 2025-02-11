@@ -95,13 +95,13 @@ All examples are [`here`](./examples).
 
 ## Feature flags
 
-| flag name | short description              | default |
-|-----------|--------------------------------|---------|
-| audio     | audio actions                  | false   |
-| record    | undo/redo actions and events   | false   | 
-| effect    | thread/async side effects      | false   |
-| state     | state actions                  | false   | 
-| tokio     | async-compat and async actions | false   | 
+| flag name | short description                                                                  | default |
+|-----------|------------------------------------------------------------------------------------|---------|
+| audio     | audio actions                                                                      | false   |
+| record    | undo/redo actions and events                                                       | false   | 
+| effect    | thread/async side effects                                                          | false   |
+| state     | state actions                                                                      | false   | 
+| tokio     | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
 
 ### audio
 
