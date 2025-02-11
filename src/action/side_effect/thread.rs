@@ -8,6 +8,7 @@ use std::sync::{Arc, Mutex};
 
 use bevy::prelude::World;
 
+use crate::prelude::side_effect::Functor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
 
@@ -39,7 +40,7 @@ use crate::runner::{Output, Runner};
 ///     }).await;
 /// });
 /// ```
-pub fn spawn<I, O>(f: impl FnOnce(I) -> O + Send + Sync + 'static) -> ActionSeed<I, O>
+pub fn spawn<I, O, M>(f: impl Functor<I, O, M> + Send + Sync + 'static) -> ActionSeed<I, O>
 where
     I: Send + 'static,
     O: Send + 'static,
@@ -47,31 +48,30 @@ where
     ActionSeed::new(|input, output: Output<O>| {
         ThreadRunner {
             arc_output: Arc::new(Mutex::new(None)),
-            args: Some((input, f)),
+            args: Some(f.functor(input)),
             output,
             handle: None,
         }
     })
 }
 
-struct ThreadRunner<I, O, F> {
+struct ThreadRunner<O, F> {
     arc_output: Arc<Mutex<Option<O>>>,
-    args: Option<(I, F)>,
+    args: Option<F>,
     output: Output<O>,
     handle: Option<std::thread::JoinHandle<()>>,
 }
 
-impl<I, O, F> Runner for ThreadRunner<I, O, F>
+impl<O, F> Runner for ThreadRunner<O, F>
 where
-    I: Send + 'static,
     O: Send + 'static,
-    F: FnOnce(I) -> O + Send + 'static,
+    F: FnOnce() -> O + Send + 'static,
 {
     fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
-        if let Some((input, f)) = self.args.take() {
+        if let Some(f) = self.args.take() {
             let arc_out = self.arc_output.clone();
             self.handle.replace(std::thread::spawn(move || {
-                arc_out.lock().unwrap().replace(f(input));
+                arc_out.lock().unwrap().replace(f());
             }));
         }
 
@@ -101,6 +101,27 @@ mod tests {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     side_effect::thread::spawn(|_| {
+                        1 + 1
+                    })
+                        .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
+                            count.0 = num;
+                        }))
+                }).await;
+            }));
+        });
+        app.update();
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        app.update();
+        app.assert_resource_eq(Count(2));
+    }
+
+    #[test]
+    fn spawn_thread_without_input() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, {
+                    side_effect::thread::spawn(|| {
                         1 + 1
                     })
                         .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {

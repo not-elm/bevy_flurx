@@ -30,11 +30,11 @@ impl<I, F, Fut> AsyncFunctor<I, <Fut as Future>::Output, ()> for F
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
-            (self)(input).compat()
+            self(input).compat()
         }
         #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
         {
-            (self)(input)
+            self(input)
         }
     }
 }
@@ -59,3 +59,33 @@ impl<I, Fut> AsyncFunctor<I, <Fut as Future>::Output, bool> for Fut
     }
 }
 
+/// This tray is used in the action argument and does not need to be implemented explicitly by the user
+pub trait Functor<I, O, M>{
+    /// Returns a new function input.
+    fn functor(self, input: I) -> impl FnOnce() -> O + Send + 'static;
+}
+
+impl<I, O, F> Functor<I, O, ()> for F
+where
+    I: Send + 'static,
+    F: FnOnce(I) -> O + Send + 'static,
+{
+    #[inline]
+    fn functor(self, input: I) -> impl FnOnce() -> O + Send + 'static {
+        move ||{
+            self(input)
+        }
+    }
+}
+
+impl<O, F> Functor<(), O, bool> for F
+where
+    F: FnOnce() -> O + Send + 'static,
+{
+    #[inline]
+    fn functor(self, _input: ()) -> impl FnOnce() -> O + Send + 'static {
+        ||{
+            self()
+        }
+    }
+}
