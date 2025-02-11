@@ -2,7 +2,7 @@
 //!
 //! ## Notes
 //! 
-//! You need to enable the `side_effect` and `tokio` feature flag to use this feature.
+//! You need to enable the `effect` and `tokio` feature flags to use this feature.
 
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
@@ -34,8 +34,8 @@ fn spawn_reactor(mut commands: Commands) {
                 }))
         }).await;
 
-        // By turning on feature flag `tokio`, 
-        // you can also write asynchronous functions depend on tokio directly in the reactor.
+        // By turning on feature flag `tokio`,
+        // you can also directly write asynchronous functions depending on tokio's runtime in the reactor.
         tokio::time::sleep(Duration::from_secs(1)).await;
 
         info!("Done!");

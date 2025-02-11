@@ -59,7 +59,7 @@ impl<I, Fut> AsyncFunctor<I, <Fut as Future>::Output, bool> for Fut
     }
 }
 
-/// This tray is used in the action argument and does not need to be implemented explicitly by the user
+/// This trait is used in the action argument and does not need to be implemented explicitly by the user
 pub trait Functor<I, O, M>{
     /// Returns a new function input.
     fn functor(self, input: I) -> impl FnOnce() -> O + Send + 'static;
