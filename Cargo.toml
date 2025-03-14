@@ -11,8 +11,13 @@ readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
 
 [[bench]]
-name = "cmp_countup"
-path = "benches/cmp_countup.rs"
+name = "single"
+path = "benches/single.rs"
+harness = false
+
+[[bench]]
+name = "repeat"
+path = "benches/repeat.rs"
 harness = false
 
 [[example]]
