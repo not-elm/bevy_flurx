@@ -16,9 +16,8 @@ pub trait Omit {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// fn play_audio() -> ActionSeed{
-    ///     once::audio::play().with("example.ogg")
-    ///         .pipe(wait::audio::finished())
+    /// fn omit() -> ActionSeed{
+    ///     once::run(|In(num): In<usize>| num).with(1)
     ///         .omit()
     /// }
     /// ```
@@ -59,10 +58,8 @@ pub trait OmitInput<I, O> {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// fn play_audio() -> ActionSeed<(), usize>{
-    ///     once::audio::play().with("example.ogg")
-    ///         .pipe(wait::audio::finished())
-    ///         .then(once::run(||{1}))
+    /// fn omit_input() -> ActionSeed<(), usize>{
+    ///     once::run(|In(num): In<usize>| num).with(1)
     ///         .omit_input()
     /// }
     /// ```

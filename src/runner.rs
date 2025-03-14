@@ -3,8 +3,7 @@
 use crate::reactor::NativeReactor;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Component, Entity, EventWriter, NonSendMut, Observer, OnRemove, Reflect, ReflectComponent, Schedules, Trigger, With, World};
-pub(crate) use cancellation_handlers::CallCancellationHandlers;
+use bevy::prelude::{Commands, Component, Entity, Observer, OnRemove, Reflect, ReflectComponent, Schedules, Trigger, With, World};
 pub use output::Output;
 use std::marker::PhantomData;
 
@@ -80,6 +79,7 @@ impl Runner for BoxedRunner {
     }
 }
 
+
 #[repr(transparent)]
 struct ReactorMap<L: Send + Sync>(Vec<(Entity, Vec<BoxedRunner>, CancellationHandlers)>, PhantomData<L>);
 
@@ -144,12 +144,20 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
     if observer_already_exists::<Label>(world, &entity) {
         return;
     }
-    let mut observer = Observer::new(move |_: Trigger<OnRemove, NativeReactor>, mut reactor_map: NonSendMut<ReactorMap<Label>>, mut ew: EventWriter<CallCancellationHandlers>| {
-        let Some(i) = reactor_map.0.iter().position(|(e, ..)| e == &entity) else {
-            return;
-        };
-        let (.., cancellation_handlers) = reactor_map.0.remove(i);
-        ew.send(CallCancellationHandlers(cancellation_handlers));
+    let mut observer = Observer::new(move |_: Trigger<OnRemove, NativeReactor>, mut commands: Commands| {
+        commands.queue(move |world: &mut World|{
+            let Some(mut reactors) = world.remove_non_send_resource::<ReactorMap<Label>>() else{
+                return;
+            };
+            let Some(i) = reactors.0.iter().position(|(e, ..)| e == &entity) else {
+                return;
+            };
+            let (.., cancellation_handlers) = reactors.0.remove(i);
+            for handler in cancellation_handlers.0.values() {
+                handler(world);
+            }
+            world.insert_non_send_resource(reactors);
+        });
     });
     observer.watch_entity(entity);
 

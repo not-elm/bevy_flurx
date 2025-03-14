@@ -1,4 +1,4 @@
-use bevy::prelude::{Component, Event, World};
+use bevy::prelude::{Component, Reflect, World};
 use bevy::utils::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicU64, Ordering};
@@ -7,7 +7,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 ///
 /// For unregister the handler, call [`CancellationHandlers::unregister`] with this id.
 #[repr(transparent)]
-#[derive(Default, Debug, Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Default, Debug, Eq, PartialEq, Hash, Copy, Clone, Reflect)]
 pub struct CancellationId(u64);
 
 /// Structure for canceling a [`Reactor`](crate::prelude::Reactor).
@@ -15,7 +15,7 @@ pub struct CancellationId(u64);
 /// This is passed as argument in [`Runner::run`](crate::prelude::Runner::run),
 /// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by despawning the entity to which it is attached.
 #[repr(transparent)]
-#[derive(Default, Component)]
+#[derive(Default, Component, Reflect)]
 pub struct CancellationHandlers(pub(crate) HashMap<CancellationId, fn(&mut World)>);
 
 impl CancellationHandlers {
@@ -34,7 +34,3 @@ impl CancellationHandlers {
         self.0.remove(id);
     }
 }
-
-#[repr(transparent)]
-#[derive(Event)]
-pub(crate) struct CallCancellationHandlers(pub(crate) CancellationHandlers);
