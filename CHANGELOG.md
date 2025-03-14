@@ -1,3 +1,9 @@
+## Unreleased
+
+### Improvements
+
+- Improved the delay until the callback is invoked when the reactor is canceled
+
 ## v0.9.1
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.9.1)
