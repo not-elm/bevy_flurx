@@ -2,7 +2,7 @@
 //!
 //! ## Notes
 //! 
-//! You need to enable the `effect` and `tokio` feature flags to use this feature.
+//! You need to enable the `side-effect` and `tokio` feature flags to use this feature.
 
 use bevy::log::LogPlugin;
 use bevy::prelude::*;

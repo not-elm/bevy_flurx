@@ -42,23 +42,9 @@ pub mod omit;
 mod _tuple;
 mod map;
 mod remake;
-#[cfg(feature = "effect")]
-#[cfg_attr(docsrs, doc(cfg(feature = "effect")))]
+#[cfg(feature = "side-effect")]
+#[cfg_attr(docsrs, doc(cfg(feature = "side-effect")))]
 pub mod side_effect;
-
-#[allow(deprecated)]
-#[cfg(feature = "effect")]
-#[deprecated(
-    since = "0.9.1",
-    note = r#"
-    `effect` has been renamed to `side_effect` and this module will be removed in the `0.10`.
-    The name of the feature flag will also be `side_effect`.
-    "#
-)]
-/// Convert the operations with side effects such as asynchronous runtime or thread into the referential-transparent actions.
-pub mod effect{
-    pub use super::side_effect::*;
-}
 
 #[cfg(feature = "record")]
 #[cfg_attr(docsrs, doc(cfg(feature = "record")))]

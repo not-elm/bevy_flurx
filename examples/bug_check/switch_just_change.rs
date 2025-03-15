@@ -30,7 +30,8 @@ fn setup(
                 .then(once::switch::on::<S>())
                 .then(delay::frames().with(1))
                 .then(wait::input::just_pressed().with(KeyCode::KeyT))
-                .then(once::switch::off::<S>()),
+                .then(once::switch::off::<S>())
+                .then(delay::frames().with(1)),
             ).await;
         }
     }));

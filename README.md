@@ -95,13 +95,13 @@ All examples are [`here`](./examples).
 
 ## Feature flags
 
-| flag name | short description                                                                  | default |
-|-----------|------------------------------------------------------------------------------------|---------|
-| audio     | audio actions                                                                      | false   |
-| record    | undo/redo actions and events                                                       | false   | 
-| effect    | thread/async side effects                                                          | false   |
-| state     | state actions                                                                      | false   | 
-| tokio     | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
+| flag name   | short description                                                                  | default |
+|-------------|------------------------------------------------------------------------------------|---------|
+| audio       | audio actions                                                                      | false   |
+| record      | undo/redo actions and events                                                       | false   | 
+| side-effect | thread/async side effects                                                          | false   |
+| state       | state actions                                                                      | false   | 
+| tokio       | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
 
 ### audio
 
@@ -118,7 +118,7 @@ Provides `Record` to manage operation history.
 
 ![undo_redo](examples/undo_redo.gif)
 
-### effect
+### side-effect
 
 [doc.rs](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/effect/index.html)
 

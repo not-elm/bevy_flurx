@@ -59,7 +59,7 @@ default = []
 audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
 tokio = ["dep:tokio", "dep:async-compat"]
 record = []
-effect = []
+side-effect = []
 state = ["bevy/bevy_state"]
 
 [lints.clippy]
