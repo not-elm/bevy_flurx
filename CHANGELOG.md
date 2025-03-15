@@ -1,4 +1,6 @@
-## Unreleased
+## v0.10.0
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.10.0)
 
 ### Features
 
@@ -8,6 +10,8 @@
 
 - The reactor now steps immediately when each runner completes processing.
 - From this version onward, if you invoke asynchronous processing other than an Action within the reactor’s async block as shown below, you will need to manually advance the reactor by triggering either StepAllReactors or StepReactor.
+- Renamed feature flag `effect` to `side-effect`
+- Deleted `effect` module path; please use `side_effect` instead.
 
 ### Improvements
 
