@@ -2,10 +2,10 @@
 
 use std::hash::Hash;
 
-use bevy::input::ButtonInput;
-use bevy::prelude::{In, Res};
 use crate::action::seed::ActionSeed;
 use crate::action::wait;
+use bevy::input::ButtonInput;
+use bevy::prelude::{In, Res};
 
 /// Waits until item has just been pressed.
 ///
@@ -152,7 +152,7 @@ mod tests {
     use crate::prelude::Reactor;
     use crate::sequence;
     use crate::tests::test_app;
-    use bevy::app::{First, Startup};
+    use bevy::app::{First, Startup, Update};
     use bevy::input::ButtonInput;
     use bevy::prelude::KeyCode::{KeyA, KeyB, KeyC, KeyD};
     use bevy::prelude::{Commands, KeyCode, World};
@@ -186,14 +186,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, sequence! {
+                task.will(Update, sequence! {
                     wait::input::any_pressed().with(vec![KeyA, KeyB]),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
                     })
                 }).await;
-                task.will(First, sequence! {
-                    wait::input::any_pressed().with(vec![KeyA, KeyD]),
+
+                task.will(Update, sequence! {
+                    wait::input::any_pressed().with(vec![KeyC, KeyD]),
                     once::run(|world: &mut World|{
                         world.set_bool(true);
                     })
@@ -208,12 +209,13 @@ mod tests {
         app.update();
         assert!(app.is_bool_false());
 
+        app.resource_mut::<ButtonInput<KeyCode>>().release(KeyC);
         app.resource_mut::<ButtonInput<KeyCode>>().press(KeyA);
         app.update();
         assert!(app.is_bool_true());
 
         app.set_bool(false);
-        app.resource_mut::<ButtonInput<KeyCode>>().press(KeyD);
+        app.resource_mut::<ButtonInput<KeyCode>>().press(KeyC);
         app.update();
         assert!(app.is_bool_true());
     }

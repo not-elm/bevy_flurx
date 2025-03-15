@@ -1,8 +1,18 @@
 ## Unreleased
 
+### Features
+
+- Added `StepAllReactors` and `StepReactor` trigger events to step the reactor manually; please see this [example](./examples/side_effect.rs)
+
+### Breaking Changes
+
+- The reactor now steps immediately when each runner completes processing.
+- From this version onward, if you invoke asynchronous processing other than an Action within the reactor’s async block as shown below, you will need to manually advance the reactor by triggering either StepAllReactors or StepReactor.
+
 ### Improvements
 
 - Improved the delay until the callback is invoked when the reactor is canceled
+- Significantly improved performance.
 
 ## v0.9.1
 

@@ -17,8 +17,11 @@ fn main() {
             FlurxPlugin,
         ))
         .add_systems(Startup, spawn_reactor)
+        .add_systems(Update, step_reactors.run_if(switch_is_on::<TokioTaskRunning>))
         .run();
 }
+
+struct TokioTaskRunning;
 
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
@@ -34,12 +37,21 @@ fn spawn_reactor(mut commands: Commands) {
                 }))
         }).await;
 
+        task.will(Update, once::switch::on::<TokioTaskRunning>()).await;
+        
         // By turning on feature flag `tokio`,
         // you can also directly write asynchronous functions depending on tokio's runtime in the reactor.
+        // However, you need to manually advance the reactor.
         tokio::time::sleep(Duration::from_secs(1)).await;
+        task.will(Update, once::switch::off::<TokioTaskRunning>()).await;
 
         info!("Done!");
         task.will(Update, once::event::app_exit_success()).await;
     }));
 }
 
+fn step_reactors(
+    mut commands: Commands,
+){
+    commands.trigger(StepAllReactors);
+}

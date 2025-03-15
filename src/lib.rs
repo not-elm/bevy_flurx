@@ -7,11 +7,9 @@
 #![allow(clippy::type_complexity)]
 
 
-use crate::reactor::NativeReactor;
-use crate::world_ptr::WorldPtr;
-use bevy::app::{App, Last, Plugin, PostStartup};
-use bevy::hierarchy::DespawnRecursiveExt;
-use bevy::prelude::{Entity, QueryState, World};
+use crate::reactor::ReactorPlugin;
+use crate::runner::RunnerPlugin;
+use bevy::app::{App, Plugin};
 
 pub mod action;
 pub mod runner;
@@ -38,7 +36,7 @@ pub mod prelude {
         action::Map,
         action::Remake,
         action::*,
-        reactor::Reactor,
+        reactor::*,
         runner::*,
         task::ReactorTask,
         FlurxPlugin,
@@ -60,39 +58,10 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        app
-            .add_systems(PostStartup, initialize_reactors)
-            .add_systems(Last, run_reactors);
-    }
-}
-
-fn initialize_reactors(
-    world: &mut World,
-    reactors: &mut QueryState<&mut NativeReactor>,
-) {
-    let world_ptr = WorldPtr::new(world);
-    for mut reactor in reactors.iter_mut(world).filter(|r| !r.initialized) {
-        reactor.run_sync(world_ptr);
-        reactor.initialized = true;
-    }
-}
-
-fn run_reactors(world: &mut World, reactors: &mut QueryState<(Entity, &mut NativeReactor)>) {
-    let world_ptr = WorldPtr::new(world);
-    let mut entities = Vec::new();
-
-    for (entity, mut reactor) in reactors.iter_mut(world) {
-        if !reactor.initialized {
-            reactor.run_sync(world_ptr);
-            reactor.initialized = true;
-        }
-        if reactor.run_sync(world_ptr) {
-            entities.push(entity);
-        }
-    }
-
-    for entity in entities {
-        world.entity_mut(entity).despawn_recursive();
+        app.add_plugins((
+            ReactorPlugin,
+            RunnerPlugin,
+        ));
     }
 }
 
@@ -105,9 +74,9 @@ mod tests {
     use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
-    use bevy::prelude::{Event, EventReader, FrameCountPlugin, ResMut, Resource};
+    use bevy::prelude::{Event, EventReader, ResMut, Resource};
     use bevy::state::app::StatesPlugin;
-    use bevy::time::TimePlugin;
+    use bevy::MinimalPlugins;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::BevyTestHelperPlugin;
 
@@ -137,12 +106,11 @@ mod tests {
     pub fn test_app() -> App {
         let mut app = App::new();
         app.add_plugins((
+            MinimalPlugins,
+            InputPlugin,
+            StatesPlugin,
             BevyTestHelperPlugin,
             FlurxPlugin,
-            InputPlugin,
-            TimePlugin,
-            FrameCountPlugin,
-            StatesPlugin,
         ));
         #[cfg(feature = "record")]
         {
@@ -151,6 +119,7 @@ mod tests {
             app.add_record_events::<TestAct>();
             app.init_resource::<Record<TestAct>>();
         }
+        
         app
     }
 

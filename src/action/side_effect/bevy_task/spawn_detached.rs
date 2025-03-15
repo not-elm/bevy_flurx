@@ -95,7 +95,6 @@ mod tests {
     use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::Startup;
-    use bevy::core::TaskPoolPlugin;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -104,7 +103,6 @@ mod tests {
     #[test]
     fn test_simple_spawn_detached() {
         let mut app = test_app();
-        app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {

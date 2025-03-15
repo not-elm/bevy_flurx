@@ -120,7 +120,6 @@ mod tests {
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
-        app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 }

@@ -106,9 +106,9 @@ where
 //noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
-    use bevy::app::{PreStartup, Startup, Update};
+    use bevy::app::{Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter};
+    use bevy::prelude::{Commands, EventWriter, IntoSystemConfigs};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -120,7 +120,7 @@ mod tests {
     #[test]
     fn test_request_undo_once() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, push_undo_increment()).await.unwrap();
             }));
@@ -136,7 +136,7 @@ mod tests {
     #[test]
     fn test_request_undo_index_to() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -159,7 +159,7 @@ mod tests {
     #[test]
     fn test_request_undo_to() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -179,7 +179,7 @@ mod tests {
     #[test]
     fn test_request_undo_all() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -202,7 +202,7 @@ mod tests {
     #[test]
     fn test_request_redo_once() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -231,7 +231,7 @@ mod tests {
     #[test]
     fn test_request_redo_index_to() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -260,7 +260,7 @@ mod tests {
     #[test]
     fn test_request_redo_to() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
+        app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
@@ -286,18 +286,21 @@ mod tests {
     #[test]
     fn test_request_redo_all() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
-                task.will(
-                    Update,
-                    push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
-                )
-                    .await;
-            }));
-        });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
-            ew.send(RequestUndo::All);
-        });
+
+        app.add_systems(Startup, (
+            |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(
+                        Update,
+                        push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
+                    )
+                        .await;
+                }));
+            },
+            |mut ew: EventWriter<RequestUndo<NumAct>>| {
+                ew.send(RequestUndo::All);
+            }
+        ).chain());
         app.update();
         app.world_mut()
             .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {

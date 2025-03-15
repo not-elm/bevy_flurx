@@ -231,13 +231,7 @@ mod tests {
                     .unwrap();
             }));
         });
-        let mut er = exit_reader();
-        app.update();
-        app.assert_event_not_comes(&mut er);
-
-        app.update();
-        app.assert_resource_eq(Count(1));
-
+       
         app.update();
         app.assert_resource_eq(Count(0));
     }
@@ -278,10 +272,6 @@ mod tests {
             }));
         });
 
-        app.update();
-        app.assert_resource_eq(Mark(vec![]));
-        app.update();
-        app.assert_resource_eq(Mark(vec![]));
         app.update();
         app.assert_resource_eq(Mark(vec!["1", "2"]));
     }
@@ -324,10 +314,6 @@ mod tests {
         });
 
         app.update();
-        app.assert_resource_eq(Mark(vec![]));
-        app.update();
-        app.assert_resource_eq(Mark(vec![]));
-        app.update();
         app.assert_resource_eq(Mark(vec![1, 2, 3, 4]));
     }
 
@@ -369,10 +355,6 @@ mod tests {
         });
 
         app.update();
-        app.assert_resource_eq(Mark(vec![]));
-        app.update();
-        app.assert_resource_eq(Mark(vec![]));
-        app.update();
         app.assert_resource_eq(Mark(vec![1, 2]));
     }
 
@@ -403,10 +385,6 @@ mod tests {
             }));
         });
 
-        app.update();
-        app.assert_resource_eq(Count(0));
-        app.update();
-        app.assert_resource_eq(Count(0));
         app.update();
         app.assert_resource_eq(Count(3));
     }

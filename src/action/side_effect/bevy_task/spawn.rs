@@ -111,7 +111,6 @@ mod tests {
 #[cfg(all(test, feature = "tokio"))]
 mod test_tokio {
     use bevy::app::{Startup, Update};
-    use bevy::core::TaskPoolPlugin;
     use bevy::prelude::Commands;
 
     use crate::action::side_effect;
@@ -121,7 +120,6 @@ mod test_tokio {
     #[test]
     fn not_failed_with_tokio_task() {
         let mut app = test_app();
-        app.add_plugins(TaskPoolPlugin::default());
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
