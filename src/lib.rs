@@ -22,7 +22,7 @@ pub mod prelude {
         extension::{RecordExtension, RequestRedo, RequestUndo},
         EditRecordResult, Record, Redo, RedoAction, Rollback, Track, Undo, UndoRedoInProgress,
     };
-    #[cfg(feature = "effect")]
+    #[cfg(feature = "side-effect")]
     pub use crate::action::side_effect::AsyncFunctor;
     pub use crate::{
         action::inspect::{inspect, Inspect},
