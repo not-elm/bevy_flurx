@@ -119,6 +119,7 @@ mod tests {
     use crate::prelude::Reactor;
     use crate::tests::test_app;
     use crate::wait_all;
+    use bevy::app::Startup;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::ButtonInput;
     use bevy::prelude::{Commands, KeyCode, Local, ResMut, Resource, Update};
@@ -127,6 +128,8 @@ mod tests {
     #[test]
     fn wait_either() {
         let mut app = test_app();
+        app.finish();
+        
         #[derive(Clone)]
         struct Count(usize);
         app.world_mut()
@@ -153,9 +156,6 @@ mod tests {
         app.update();
         assert!(app.world().get_non_send_resource::<Count>().is_none());
         app.update();
-        assert!(app.world().get_non_send_resource::<Count>().is_none());
-
-        app.update();
         assert_eq!(app.world().non_send_resource::<Count>().0, 1);
     }
 
@@ -167,29 +167,28 @@ mod tests {
         let mut app = test_app();
         app.init_resource::<Count>();
 
-        app.world_mut()
-            .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(
-                        Update,
-                        wait::either(
-                            wait_all! {
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    Update,
+                    wait::either(
+                        wait_all! {
                                 wait::until(|mut count:ResMut<Count>| {
                                     count.0 += 1;
                                     false
                                 }),
                                 wait::until(|| { false })
                             },
-                            wait::input::pressed().with(KeyCode::KeyA),
-                        ),
-                    )
-                        .await;
-                    task.will(Update, wait::until(|| false)).await;
-                }));
-            })
-            .expect("Failed to run system");
+                        wait::input::pressed().with(KeyCode::KeyA),
+                    ),
+                )
+                    .await;
+                task.will(Update, wait::until(|| false)).await;
+            }));
+        });
 
-        app.resource_mut::<ButtonInput<KeyCode>>()
+        app
+            .resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyA);
         for _ in 0..100 {
             app.update();

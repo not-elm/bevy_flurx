@@ -132,25 +132,21 @@ mod tests {
     #[test]
     fn count_up() {
         let mut app = test_app();
-        app.world_mut()
-            .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(
-                        Update,
-                        until(|mut count: Local<u32>| {
-                            *count += 1;
-                            *count == 2
-                        }),
-                    )
-                        .await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    Update,
+                    until(|mut count: Local<u32>| {
+                        *count += 1;
+                        *count == 2
+                    }),
+                )
+                    .await;
 
-                    task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
-                }));
-            })
-            .expect("Failed to run system");
+                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
+            }));
+        });
 
-        app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
@@ -161,26 +157,22 @@ mod tests {
     fn count_up_until_with_input() {
         let mut app = test_app();
 
-        app.world_mut()
-            .run_system_once(|mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(
-                        Update,
-                        until(|input: In<u32>, mut count: Local<u32>| {
-                            *count += 1 + input.0;
-                            *count == 4
-                        })
-                            .with(1),
-                    )
-                        .await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    Update,
+                    until(|input: In<u32>, mut count: Local<u32>| {
+                        *count += 1 + input.0;
+                        *count == 4
+                    })
+                        .with(1),
+                )
+                    .await;
 
-                    task.will(Update, once::non_send::insert().with(AppExit::Success))
-                        .await;
-                }));
-            })
-            .expect("Failed to run system");
-        app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
+                task.will(Update, once::non_send::insert().with(AppExit::Success))
+                    .await;
+            }));
+        });
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
         app.update();
@@ -204,9 +196,6 @@ mod tests {
         app.world_mut()
             .run_system_once(|mut w: EventWriter<AppExit>| w.send(AppExit::Success))
             .expect("Failed to run system");
-        app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
-
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
@@ -238,9 +227,6 @@ mod tests {
         app.world_mut()
             .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2))
             .expect("Failed to run system");
-        app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
-
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }

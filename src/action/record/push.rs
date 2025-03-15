@@ -1,9 +1,9 @@
-use bevy::prelude::World;
 use crate::action::record::push_track;
 use crate::prelude::record::EditRecordResult;
 use crate::prelude::record::Track;
 use crate::prelude::{ActionSeed, CancellationHandlers, Output, Runner};
 use crate::runner::RunnerIs;
+use bevy::prelude::World;
 
 /// Push the [`Track`](crate::prelude::Track) onto the [`Record`](crate::prelude::Record).
 ///
@@ -70,7 +70,7 @@ where
 mod tests {
     use crate::action::record::{Record, Track};
     use crate::action::{once, record};
-    use crate::prelude::{ActionSeed, Reactor, Omit, Rollback};
+    use crate::prelude::{ActionSeed, Omit, Reactor, Rollback};
     use crate::tests::test_app;
     use bevy::app::Startup;
     use bevy::prelude::{Commands, Update};
@@ -104,8 +104,6 @@ mod tests {
             }));
         });
         app.update();
-        app.assert_resource(1, |h: &Record<H1>| h.tracks.len());
-        app.update();
         app.assert_resource(2, |h: &Record<H1>| h.tracks.len());
     }
 
@@ -120,12 +118,6 @@ mod tests {
                 task.will(Update, push(H1)).await;
             }));
         });
-        app.update();
-        app.assert_resource(1, |h: &Record<H1>| h.tracks.len());
-        app.assert_resource(0, |h: &Record<H2>| h.tracks.len());
-        app.update();
-        app.assert_resource(1, |h: &Record<H1>| h.tracks.len());
-        app.assert_resource(1, |h: &Record<H2>| h.tracks.len());
         app.update();
         app.assert_resource(2, |h: &Record<H1>| h.tracks.len());
         app.assert_resource(1, |h: &Record<H2>| h.tracks.len());

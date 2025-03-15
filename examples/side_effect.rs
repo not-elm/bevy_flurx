@@ -17,6 +17,7 @@ fn main() {
             FlurxPlugin,
         ))
         .add_systems(Startup, spawn_reactor)
+        .add_systems(Update, step_reactors)
         .run();
 }
 
@@ -34,6 +35,7 @@ fn spawn_reactor(mut commands: Commands) {
                 }))
         }).await;
 
+        // *1
         // By turning on feature flag `tokio`,
         // you can also directly write asynchronous functions depending on tokio's runtime in the reactor.
         tokio::time::sleep(Duration::from_secs(1)).await;
@@ -43,3 +45,10 @@ fn spawn_reactor(mut commands: Commands) {
     }));
 }
 
+/// If you perform asynchronous processing other than actions in the reactor (in this example, *1), 
+/// you need to manually update the reactor.
+fn step_reactors(
+    mut commands: Commands,
+){
+    commands.trigger(StepAllReactors);
+}

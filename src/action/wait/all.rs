@@ -303,9 +303,6 @@ mod tests {
             .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2))
             .expect("Failed to run system");
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
-
-        app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }
 
@@ -328,9 +325,6 @@ mod tests {
                     .await;
             }));
         });
-        app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
-
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());
     }

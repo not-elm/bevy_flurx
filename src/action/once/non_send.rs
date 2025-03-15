@@ -1,8 +1,8 @@
 //! [`once::non_send`] creates a task that only once run system related to [`non-send resources`](bevy::prelude::NonSend).
 
-use bevy::prelude::{In, World};
 use crate::action::once;
 use crate::action::seed::ActionSeed;
+use bevy::prelude::{In, World};
 
 /// Once init a non-send resource.
 ///
@@ -79,10 +79,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::action::delay;
     use crate::action::once::non_send;
-    use crate::prelude::Reactor;
+    use crate::prelude::{Reactor, Then};
     use crate::tests::{test_app, TestResource};
     use bevy::app::{AppExit, First, PostUpdate, PreUpdate, Startup, Update};
+    use bevy::log::debug;
     use bevy::prelude::Commands;
 
     #[test]
@@ -140,50 +142,49 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, non_send::insert().with(AppExit::Success))
+                let action = || {
+                    non_send::insert().with(AppExit::Success)
+                        .then(delay::frames().with(1))
+                };
+                task.will(First, action())
                     .await;
-                println!("First finished");
-                task.will(PreUpdate, non_send::insert().with(AppExit::Success))
+                debug!("First finished");
+                task.will(PreUpdate, action())
                     .await;
-                println!("PreUpdate finished");
-                task.will(Update, non_send::insert().with(AppExit::Success))
+                debug!("PreUpdate finished");
+                task.will(Update, action())
                     .await;
-                println!("Update finished");
-                task.will(PostUpdate, non_send::insert().with(AppExit::Success))
+                debug!("Update finished");
+                task.will(PostUpdate, action())
                     .await;
-                println!("PostUpdate finished");
+                debug!("PostUpdate finished");
             }));
         });
 
-        println!("First");
         app.update();
         assert!(app
             .world_mut()
             .remove_non_send_resource::<AppExit>()
             .is_some());
 
-        println!("PreUpdate");
         app.update();
         assert!(app
             .world_mut()
             .remove_non_send_resource::<AppExit>()
             .is_some());
 
-        println!("Update");
         app.update();
         assert!(app
             .world_mut()
             .remove_non_send_resource::<AppExit>()
             .is_some());
 
-        println!("PostUpdate");
         app.update();
         assert!(app
             .world_mut()
             .remove_non_send_resource::<AppExit>()
             .is_some());
 
-        println!("After Reactor Finished");
         app.update();
         assert!(app
             .world_mut()

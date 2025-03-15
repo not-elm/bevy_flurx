@@ -1,15 +1,55 @@
 //! `Runner` defines what does the actual processing of the action.
 
-use crate::reactor::NativeReactor;
+use crate::reactor::{NativeReactor, StepReactor};
+use crate::runner::app_schedule_labels::AppScheduleLabels;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
-use bevy::ecs::schedule::ScheduleLabel;
-use bevy::prelude::{Commands, Component, Entity, Observer, OnRemove, Reflect, ReflectComponent, Schedules, Trigger, With, World};
+use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, ReservedRunner};
+use bevy::ecs::schedule::{InternedScheduleLabel, ScheduleLabel};
+use bevy::prelude::*;
+use bevy::utils::hashbrown::HashMap;
+use bevy::utils::HashSet;
 pub use output::Output;
+use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 mod output;
 mod cancellation_handlers;
+mod app_schedule_labels;
+mod reserve_register_runner;
 
+pub(crate) struct RunnerPlugin;
+
+impl Plugin for RunnerPlugin {
+    fn build(&self, app: &mut App) {
+        app
+            .register_type::<ReactorEntity>()
+            .init_resource::<CancellationHandlersRegistry>()
+            .add_plugins(ReserveRegisterRunnerPlugin)
+            .add_systems(PreStartup, setup.run_if(not(resource_exists::<AppScheduleLabels>)));
+    }
+
+    fn finish(&self, app: &mut App) {
+        let labels: HashSet<_> = app
+            .world()
+            .resource::<Schedules>()
+            .iter()
+            .map(|(_, s)| s.label())
+            .collect();
+        app.insert_resource(AppScheduleLabels(labels));
+    }
+}
+
+fn setup(
+    mut commands: Commands,
+    schedules: Res<Schedules>,
+) {
+    let mut labels: HashSet<_> = schedules
+        .iter()
+        .map(|(_, s)| s.label())
+        .collect();
+    labels.insert(PreStartup.intern());
+    commands.insert_resource(AppScheduleLabels(labels));
+}
 
 /// The current state of the [Runner].
 pub enum RunnerIs {
@@ -79,49 +119,95 @@ impl Runner for BoxedRunner {
     }
 }
 
+#[repr(transparent)]
+#[derive(Default, Resource, Deref, DerefMut)]
+struct CancellationHandlersRegistry(HashMap<Entity, CancellationHandlers>);
 
 #[repr(transparent)]
-struct ReactorMap<L: Send + Sync>(Vec<(Entity, Vec<BoxedRunner>, CancellationHandlers)>, PhantomData<L>);
+struct RunnersRegistry<L: Send + Sync>(HashMap<Entity, Vec<BoxedRunner>>, PhantomData<L>);
 
-impl<L: Send + Sync> Default for ReactorMap<L> {
+impl<L: Send + Sync> Default for RunnersRegistry<L> {
     fn default() -> Self {
-        Self(Vec::new(), PhantomData)
+        Self(HashMap::new(), PhantomData)
     }
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
+#[derive(Component, Reflect, Serialize, Deserialize)]
+#[reflect(Component, Serialize, Deserialize)]
 struct ReactorEntity(Entity);
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
+#[derive(Component, Reflect, Eq, PartialEq, Hash)]
 struct ReactorScheduleLabel<Label: ScheduleLabel>(PhantomData<Label>);
 
 pub(crate) fn initialize_runner<Label>(
     world: &mut World,
     label: &Label,
     entity: Entity,
-    runner: BoxedRunner,
+    mut runner: BoxedRunner,
 )
 where
     Label: ScheduleLabel,
 {
     observe_remove_reactor::<Label>(entity, world);
-    if let Some(mut map) = world.get_non_send_resource_mut::<ReactorMap<Label>>() {
-        if let Some((_, runners, _)) = map.0.iter_mut().find(|(e, ..)| e == &entity) {
-            runners.push(runner);
-        } else {
-            map.0.push((entity, vec![runner], CancellationHandlers::default()));
-        }
-    } else {
-        let mut reactor_map = ReactorMap::<Label>::default();
-        reactor_map.0.push((entity, vec![runner], CancellationHandlers::default()));
-        world.insert_non_send_resource(reactor_map);
-
-        let Some(mut schedules) = world.get_resource_mut::<Schedules>() else {
-            return;
+    let mut status = RunnerIs::Running;
+    world.resource_scope(|world, mut schedule_labels: Mut<AppScheduleLabels>| {
+        let label = label.intern();
+        let running_on_target = schedule_labels.current_running_on_target_schedule(label, world.resource::<Schedules>());
+        let mut cancellation_registry = world.remove_resource::<CancellationHandlersRegistry>().expect("CancellationHandlerRegistry was not found");
+        status = {
+            let handers = cancellation_registry.entry(entity).or_default();
+            if running_on_target {
+                runner.run(world, handers)
+            } else {
+                RunnerIs::Running
+            }
         };
-        schedules.add_systems(label.intern(), run_runners::<Label>);
+
+        if let Some(mut runner_registry) = world.get_non_send_resource_mut::<RunnersRegistry<Label>>() {
+            runner_registry.0.entry(entity).or_default().push(runner);
+        } else {
+            let mut schedules = world.remove_resource::<Schedules>().expect("Schedules was not found");
+            let mut registry = RunnersRegistry::<Label>::default();
+            if let Some(schedule) = schedules.get_mut(label) {
+                schedule.add_systems(run_runners::<Label>);
+            } else {
+                register_runner_system::<Label>(world, &mut schedules, label, &schedule_labels);
+            }
+
+            schedule_labels.insert(label);
+            registry.0.insert(entity, vec![runner]);
+            world.insert_non_send_resource(registry);
+            world.insert_resource(schedules);
+        }
+        world.insert_resource(cancellation_registry);
+    });
+
+    match status {
+        RunnerIs::Completed => {
+            world.trigger(StepReactor {
+                reactor: entity,
+            });
+        }
+        RunnerIs::Canceled => {
+            world.commands().entity(entity).despawn();
+        }
+        _ => {}
+    }
+}
+
+fn register_runner_system<L: ScheduleLabel>(
+    world: &mut World,
+    scheduels: &mut Schedules,
+    label: InternedScheduleLabel,
+    app_schedule_labels: &AppScheduleLabels,
+) {
+    if app_schedule_labels.contains(&label) {
+        world.commands().send_event(ReservedRunner {
+            label,
+            system: || Box::new(IntoSystem::into_system(run_runners::<L>)),
+        });
+    } else {
+        scheduels.add_systems(label, run_runners::<L>);
     }
 }
 
@@ -145,18 +231,22 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
         return;
     }
     let mut observer = Observer::new(move |_: Trigger<OnRemove, NativeReactor>, mut commands: Commands| {
-        commands.queue(move |world: &mut World|{
-            let Some(mut reactors) = world.remove_non_send_resource::<ReactorMap<Label>>() else{
+        commands.queue(move |world: &mut World| {
+            let Some(mut runner_registry) = world.remove_non_send_resource::<RunnersRegistry<Label>>() else {
                 return;
             };
-            let Some(i) = reactors.0.iter().position(|(e, ..)| e == &entity) else {
+            let Some(mut cancellation_registry) = world.remove_resource::<CancellationHandlersRegistry>() else {
                 return;
             };
-            let (.., cancellation_handlers) = reactors.0.remove(i);
+            runner_registry.0.remove(&entity);
+            let Some(cancellation_handlers) = cancellation_registry.remove(&entity) else {
+                return;
+            };
             for handler in cancellation_handlers.0.values() {
                 handler(world);
             }
-            world.insert_non_send_resource(reactors);
+            world.insert_non_send_resource(runner_registry);
+            world.insert_resource(cancellation_registry);
         });
     });
     observer.watch_entity(entity);
@@ -169,17 +259,27 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
 }
 
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
-    let Some(mut reactor_map) = world.remove_non_send_resource::<ReactorMap<L>>() else {
+    let Some(mut runners_registry) = world.remove_non_send_resource::<RunnersRegistry<L>>() else {
         return;
     };
-    for (entity, runners, token) in reactor_map.0.iter_mut() {
+    let Some(mut cancellation_registry) = world.remove_resource::<CancellationHandlersRegistry>() else {
+        return;
+    };
+    for (entity, runners) in runners_registry.0.iter_mut() {
+        let Some(cancellation_handlers) = cancellation_registry.get_mut(entity) else {
+            continue;
+        };
         let mut request_cancel = false;
+        let mut request_step = false;
         runners.retain_mut(|runner| {
             if request_cancel {
                 return false;
             }
-            match runner.run(world, token) {
-                RunnerIs::Completed => false,
+            match runner.run(world, cancellation_handlers) {
+                RunnerIs::Completed => {
+                    request_step = true;
+                    false
+                }
                 RunnerIs::Running => true,
                 RunnerIs::Canceled => {
                     request_cancel = true;
@@ -189,9 +289,14 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
         });
         if request_cancel {
             world.commands().entity(*entity).despawn();
+        } else if request_step {
+            world.commands().trigger(StepReactor {
+                reactor: *entity,
+            });
         }
     }
-    world.insert_non_send_resource(reactor_map);
+    world.insert_non_send_resource(runners_registry);
+    world.insert_resource(cancellation_registry);
 }
 
 pub(crate) mod macros {
@@ -254,10 +359,11 @@ mod tests {
     use crate::runner::{ReactorEntity, Runner, RunnerIs};
     use crate::test_util::test;
     use crate::tests::test_app;
-    use bevy::app::{PostUpdate, PreStartup, Startup};
+    use bevy::app::{PostUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Component, Entity, Observer, Query, ResMut, Update, World};
+    use bevy::prelude::{Commands, Component, Entity, IntoSystemConfigs, Observer, Query, ResMut, Update, World};
     use bevy::prelude::{Resource, With};
+    use bevy_test_helper::resource::bool::BoolExtension;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -334,22 +440,25 @@ mod tests {
     #[test]
     fn cancel_with_multiple_reactors() {
         let mut app = test_app();
-        app.add_systems(PreStartup, |mut commands: Commands| {
-            commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::no_op()).await;
-            }));
-        });
-        app.add_systems(Startup, |mut commands: Commands| {
-            commands.spawn((
-                Cancellable,
-                Reactor::schedule(|task| async move {
-                    task.will(Update, wait::until(|mut count: ResMut<Count>| {
-                        count.increment();
-                        false
-                    })).await;
-                })
-            ));
-        });
+        app.add_systems(Startup, (
+            |mut commands: Commands| {
+                commands.spawn(Reactor::schedule(|task| async move {
+                    task.will(Update, once::no_op()).await;
+                }));
+            },
+            |mut commands: Commands| {
+                commands.spawn((
+                    Cancellable,
+                    Reactor::schedule(|task| async move {
+                        task.will(Update, wait::until(|mut count: ResMut<Count>| {
+                            count.increment();
+                            false
+                        })).await;
+                    })
+                ));
+            }
+        ).chain());
+
         app.update();
         app.assert_resource_eq(Count(1));
 
@@ -383,9 +492,7 @@ mod tests {
                 })
             ));
         });
-        // start once::no_op
         app.update();
-        // start wait::until
         app.update();
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
@@ -401,7 +508,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, once::no_op()).await;
-                task.will(Update, once::no_op()).await;
+                task.will(Update, wait::until(|| false)).await;
             }));
         });
 
@@ -412,5 +519,36 @@ mod tests {
             .iter(app.world_mut())
             .len();
         assert_eq!(num_observer, 1);
+    }
+
+
+    struct CancelRunner;
+
+    impl Runner for CancelRunner {
+        fn run(&mut self, _: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs {
+            cancellation_handlers.register(|world| {
+                world.set_bool(true);
+            });
+            println!("DD");
+            RunnerIs::Canceled
+        }
+    }
+
+    fn cancel() -> ActionSeed {
+        ActionSeed::new(|_, _| CancelRunner)
+    }
+
+    #[test]
+    fn call_cancellation_handler_at_the_first_time() {
+        let mut app = test_app();
+        app.add_systems(Update, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, cancel()).await;
+            }));
+        });
+        app.set_bool(false);
+        app.update();
+
+        assert!(app.is_bool_true());
     }
 }

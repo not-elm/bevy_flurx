@@ -190,6 +190,7 @@ mod tests {
                     .then(once::res::insert().with(Mark2))
                     .then(once::run(|| { 1 + 1 })),
                 ).await;
+           
                 task.will(Update, once::res::insert().with(OutputUSize(output))).await;
             }));
         });

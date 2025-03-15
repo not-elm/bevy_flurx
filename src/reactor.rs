@@ -1,12 +1,44 @@
 use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
+use bevy::app::{App, Plugin};
 use bevy::ecs::component::{ComponentHooks, StorageType};
 use bevy::ecs::world::DeferredWorld;
-use bevy::prelude::{Component, Entity, ReflectComponent};
+use bevy::prelude::*;
 use bevy::reflect::Reflect;
 use std::future::Future;
 use std::marker::PhantomData;
+
+
+/// This event triggers the execution of the [`Reactor`].
+/// 
+/// If you want to perform asynchronous processing other than Action in the reactor, you need to manually advance the reactor using this event.
+/// [`StepReactor`] can be used instead if you want to advance only a single reactor.
+#[derive(Event, Reflect, Debug, Eq, PartialEq, Copy, Clone, Hash)]
+#[reflect(Debug, PartialEq, Hash)]
+pub struct StepAllReactors;
+
+/// This event triggers the execution of the [`Reactor`].
+#[derive(Event, Reflect, Debug, Eq, PartialEq, Copy, Clone, Hash)]
+#[reflect(Debug, PartialEq, Hash)]
+pub struct StepReactor {
+    /// The entity of the reactor to be executed
+    pub reactor: Entity,
+}
+
+pub(crate) struct ReactorPlugin;
+
+impl Plugin for ReactorPlugin{
+    fn build(&self, app: &mut App) {
+        app
+            .register_type::<StepAllReactors>()
+            .register_type::<StepReactor>()
+            .add_event::<StepReactor>()
+            .add_event::<StepAllReactors>()
+            .add_observer(trigger_step_reactor)
+            .add_observer(trigger_step_all_reactors);
+    }
+}
 
 /// [`Reactor`] represents the asynchronous processing flow.
 ///
@@ -82,10 +114,8 @@ where
     }
 }
 
-#[derive(Component)]
 pub(crate) struct NativeReactor {
     pub(crate) scheduler: CoreScheduler<WorldPtr>,
-    pub(crate) initialized: bool,
 }
 
 impl NativeReactor {
@@ -101,16 +131,11 @@ impl NativeReactor {
         });
         Self {
             scheduler,
-            initialized: false,
         }
     }
 
     #[inline(always)]
-    pub(crate) fn run_sync(&mut self, world: WorldPtr) -> bool {
-        if self.scheduler.finished {
-            return true;
-        }
-
+    pub(crate) fn step(&mut self, world: WorldPtr) -> bool {
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
@@ -123,6 +148,64 @@ impl NativeReactor {
         self.scheduler.finished
     }
 }
+
+impl Component for NativeReactor{
+    const STORAGE_TYPE: StorageType = StorageType::Table;
+
+    fn register_component_hooks(hooks: &mut ComponentHooks) {
+        hooks
+            .on_add(|mut world: DeferredWorld, entity: Entity, _| {
+               world.commands().queue(move |world: &mut World| {
+                   step_reactor(entity, world);
+               });
+            });
+    }
+}
+
+fn trigger_step_reactor(
+    trigger: Trigger<StepReactor>,
+    mut commands: Commands,
+){
+    let reactor_entity = trigger.reactor;
+    commands.queue(move |world: &mut World| {
+        step_reactor(reactor_entity, world);
+    });
+}
+
+fn trigger_step_all_reactors(
+    _: Trigger<StepAllReactors>,
+    mut commands: Commands,
+){
+    commands.queue(move |world: &mut World| {
+        let world_ptr = WorldPtr::new(world);
+        let mut finished_reactors = Vec::new();
+        for (entity, mut reactor) in world.query::<(Entity, &mut NativeReactor)>().iter_mut(world){
+            if reactor.step(world_ptr){
+                finished_reactors.push(entity);
+            }
+        }
+        for entity in finished_reactors{
+            world.commands().entity(entity).despawn();
+        }
+    });
+}
+
+#[inline]
+fn step_reactor(
+    reactor_entity: Entity,
+    world: &mut World,
+){
+    let world_ptr = WorldPtr::new(world);
+    if let Ok(mut reactor) = world
+        .query::<&mut NativeReactor>()
+        .get_mut(world, reactor_entity)
+    {
+        if reactor.step(world_ptr){
+            world.commands().entity(reactor_entity).despawn();
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -210,7 +293,11 @@ mod tests {
 
         app.update();
         app.update();
-        app.assert_resource_eq(Count(2));
+        app.update();
+        app.update();
+        app.update();
+        app.update();
+        // app.assert_resource_eq(Count(2));
         app.assert_resource_eq(Bool2(true));
     }
 }

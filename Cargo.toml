@@ -1,7 +1,7 @@
 [package]
 name = "bevy_flurx"
 version = "0.9.1"
-edition = "2024"
+edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development"]
 description = "Allows you to use coroutine in Bevy"
@@ -40,6 +40,8 @@ futures-polling = "0.1"
 futures-lite = "2"
 pollster = "0.4"
 pin-project = "1"
+itertools = "0.14.0"
+serde = { version = "1", features = ["derive"]}
 tokio = { version = "1", optional = true, features = ["sync", "time"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
