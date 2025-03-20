@@ -37,6 +37,7 @@ path = "examples/bug_check/switch_just_change.rs"
 [dependencies]
 bevy = { version = "0.16.0-rc.1", default-features = false, features = [
     "serialize",
+    "std",
 ] }
 futures-polling = "0.1"
 futures-lite = "2"
