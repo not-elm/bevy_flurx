@@ -2,7 +2,7 @@ use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
 use bevy::app::{App, Plugin};
-use bevy::ecs::component::{ComponentHooks, StorageType};
+use bevy::ecs::component::{ComponentHooks, HookContext, Mutable, StorageType};
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy::reflect::Reflect;
@@ -11,7 +11,7 @@ use std::marker::PhantomData;
 
 
 /// This event triggers the execution of the [`Reactor`].
-/// 
+///
 /// If you want to perform asynchronous processing other than Action in the reactor, you need to manually advance the reactor using this event.
 /// [`StepReactor`] can be used instead if you want to advance only a single reactor.
 #[derive(Event, Reflect, Debug, Eq, PartialEq, Copy, Clone, Hash)]
@@ -28,7 +28,7 @@ pub struct StepReactor {
 
 pub(crate) struct ReactorPlugin;
 
-impl Plugin for ReactorPlugin{
+impl Plugin for ReactorPlugin {
     fn build(&self, app: &mut App) {
         app
             .register_type::<StepAllReactors>()
@@ -66,7 +66,7 @@ where
 {
     /// Create new [`Reactor`].
     ///
-    /// The scheduled [`Reactor`] will be run and initialized at [Last](bevy::prelude::Last) schedule(and also initialized at [`PostStartup`](bevy::prelude::PostStartup)) ,
+    /// The scheduled [`Reactor`] will be run and initialized at [Last] schedule(and also initialized at [`PostStartup`]) ,
     ///
     /// ## Examples
     ///
@@ -77,7 +77,7 @@ where
     ///
     /// Reactor::schedule(|task| async move{
     ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
-    ///         ew.send(AppExit::Success);
+    ///         ew.write(AppExit::Success);
     ///     })).await;
     /// });
     /// ```
@@ -95,10 +95,12 @@ where
     Fut: Future + Send + Sync + 'static,
 {
     const STORAGE_TYPE: StorageType = StorageType::Table;
+    type Mutability = Mutable;
 
     fn register_component_hooks(hooks: &mut ComponentHooks) {
         hooks
-            .on_add(|mut world: DeferredWorld, entity: Entity, _| {
+            .on_add(|mut world: DeferredWorld, context: HookContext| {
+                let entity = context.entity;
                 let f = {
                     let mut entity_mut = world.entity_mut(entity);
                     let Some(mut flow) = entity_mut.get_mut::<Reactor<F, Fut>>() else {
@@ -149,15 +151,17 @@ impl NativeReactor {
     }
 }
 
-impl Component for NativeReactor{
+impl Component for NativeReactor {
     const STORAGE_TYPE: StorageType = StorageType::Table;
+    type Mutability = Mutable;
 
     fn register_component_hooks(hooks: &mut ComponentHooks) {
         hooks
-            .on_add(|mut world: DeferredWorld, entity: Entity, _| {
-               world.commands().queue(move |world: &mut World| {
-                   step_reactor(entity, world);
-               });
+            .on_add(|mut world: DeferredWorld, context: HookContext| {
+                let entity = context.entity;
+                world.commands().queue(move |world: &mut World| {
+                    step_reactor(entity, world);
+                });
             });
     }
 }
@@ -165,7 +169,7 @@ impl Component for NativeReactor{
 fn trigger_step_reactor(
     trigger: Trigger<StepReactor>,
     mut commands: Commands,
-){
+) {
     let reactor_entity = trigger.reactor;
     commands.queue(move |world: &mut World| {
         step_reactor(reactor_entity, world);
@@ -175,16 +179,16 @@ fn trigger_step_reactor(
 fn trigger_step_all_reactors(
     _: Trigger<StepAllReactors>,
     mut commands: Commands,
-){
+) {
     commands.queue(move |world: &mut World| {
         let world_ptr = WorldPtr::new(world);
         let mut finished_reactors = Vec::new();
-        for (entity, mut reactor) in world.query::<(Entity, &mut NativeReactor)>().iter_mut(world){
-            if reactor.step(world_ptr){
+        for (entity, mut reactor) in world.query::<(Entity, &mut NativeReactor)>().iter_mut(world) {
+            if reactor.step(world_ptr) {
                 finished_reactors.push(entity);
             }
         }
-        for entity in finished_reactors{
+        for entity in finished_reactors {
             world.commands().entity(entity).despawn();
         }
     });
@@ -194,13 +198,13 @@ fn trigger_step_all_reactors(
 fn step_reactor(
     reactor_entity: Entity,
     world: &mut World,
-){
+) {
     let world_ptr = WorldPtr::new(world);
     if let Ok(mut reactor) = world
         .query::<&mut NativeReactor>()
         .get_mut(world, reactor_entity)
     {
-        if reactor.step(world_ptr){
+        if reactor.step(world_ptr) {
             world.commands().entity(reactor_entity).despawn();
         }
     }
@@ -242,7 +246,7 @@ mod tests {
 
         app.world_mut()
             .run_system_once(|mut cmd: Commands, reactor: Query<Entity, With<NativeReactor>>| {
-                cmd.entity(reactor.single()).despawn();
+                cmd.entity(reactor.single().unwrap()).despawn();
             })
             .expect("Failed to run system");
         for _ in 0..10 {
@@ -263,13 +267,13 @@ mod tests {
         assert!(app
             .world_mut()
             .query::<&NativeReactor>()
-            .get_single(app.world())
+            .single(app.world())
             .is_ok());
         app.update();
         assert!(app
             .world_mut()
             .query::<&NativeReactor>()
-            .get_single(app.world())
+            .single(app.world())
             .is_err());
     }
 

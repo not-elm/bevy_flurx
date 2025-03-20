@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.10.0"
+version = "0.11.0-rc.1"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development"]
@@ -23,7 +23,7 @@ harness = false
 [[example]]
 name = "side_effect"
 path = "examples/side_effect.rs"
-required-features = ["tokio", "effect"]
+required-features = ["tokio", "side-effect"]
 
 [[example]]
 name = "undo_redo"
@@ -35,12 +35,14 @@ name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
-bevy = { version = "0.15", default-features = false, features = [] }
+bevy = { version = "0.16.0-rc.1", default-features = false, features = [
+    "serialize",
+] }
 futures-polling = "0.1"
 futures-lite = "2"
 pollster = "0.4"
 pin-project = "1"
-itertools = "0.14.0"
+itertools = "0.14"
 serde = { version = "1", features = ["derive"]}
 tokio = { version = "1", optional = true, features = ["sync", "time"] }
 
@@ -48,11 +50,10 @@ tokio = { version = "1", optional = true, features = ["sync", "time"] }
 async-compat = { version = "0.2", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.15" }
-bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.15.0" }
+bevy = { version = "0.16.0-rc.1" }
+bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.16" }
 futures = "0.3"
 criterion = { version = "0.5", features = ["plotters", "html_reports"] }
-bevy_egui = "0.32"
 
 [features]
 default = []

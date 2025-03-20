@@ -1,9 +1,9 @@
 //! [`once::event`] creates a task that only once run system related to [`Event`].
 
-use bevy::app::AppExit;
-use bevy::prelude::{Event, EventWriter, In};
 use crate::action::seed::ActionSeed;
 use crate::action::{once, Action};
+use bevy::app::AppExit;
+use bevy::prelude::{Event, EventWriter, In};
 
 /// Once send an event.
 ///
@@ -23,7 +23,7 @@ where
     E: Event,
 {
     once::run(|In(event): In<E>, mut w: EventWriter<E>| {
-        w.send(event);
+        w.write(event);
     })
 }
 
@@ -45,7 +45,7 @@ where
     E: Event + Default,
 {
     once::run(|mut w: EventWriter<E>| {
-        w.send(E::default());
+        w.write(E::default());
     })
 }
 

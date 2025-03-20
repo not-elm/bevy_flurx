@@ -2,9 +2,8 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, Startup};
-use bevy::core::TaskPoolPlugin;
-use bevy::prelude::{Commands, Resource, Update};
-use bevy_flurx::action::once;
+use bevy::prelude::{Commands, Resource, TaskPoolPlugin, Update};
+use bevy_flurx::action::{delay, once};
 use bevy_flurx::prelude::{wait, Reactor};
 use bevy_flurx::FlurxPlugin;
 use criterion::{criterion_group, criterion_main, Criterion};
@@ -26,6 +25,7 @@ fn with_flurx(c: &mut Criterion) {
                     commands.spawn(Reactor::schedule(|task| async move {
                         for _ in 0..10000 {
                             task.will(Update, wait::until(|| true)).await;
+                            task.will(Update, delay::frames().with(1)).await;
                         }
                         task.will(Update, once::res::insert().with(Exit(true))).await;
                     }));

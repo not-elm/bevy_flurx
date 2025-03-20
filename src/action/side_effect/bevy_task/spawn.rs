@@ -73,12 +73,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::action::{once, side_effect};
-    use crate::prelude::{Pipe, Reactor};
+    use crate::prelude::*;
     use crate::tests::test_app;
-    use bevy::app::{Startup, Update};
-    use bevy::core::TaskPoolPlugin;
-    use bevy::prelude::Commands;
+    use bevy::prelude::*;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 

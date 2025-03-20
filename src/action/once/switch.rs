@@ -60,7 +60,7 @@ mod tests {
     use crate::reactor::Reactor;
     use crate::tests::test_app;
     use bevy::app::{PostUpdate, Startup};
-    use bevy::prelude::{Commands, IntoSystemConfigs, ResMut, Update};
+    use bevy::prelude::{Commands, IntoScheduleConfigs, ResMut, Update};
     use bevy_test_helper::resource::bool::{Bool, BoolExtension};
 
     struct T;

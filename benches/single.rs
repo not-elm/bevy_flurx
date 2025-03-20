@@ -2,8 +2,7 @@
 #![allow(missing_docs)]
 
 use bevy::app::{App, Startup};
-use bevy::core::TaskPoolPlugin;
-use bevy::prelude::{Commands, Local, ResMut, Resource, Update};
+use bevy::prelude::{Commands, Local, ResMut, Resource, TaskPoolPlugin, Update};
 use bevy_flurx::prelude::{once, wait, Reactor, Then};
 use bevy_flurx::FlurxPlugin;
 use criterion::{criterion_group, criterion_main, Criterion};
