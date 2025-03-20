@@ -108,7 +108,7 @@ where
 mod tests {
     use bevy::app::{Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, IntoSystemConfigs};
+    use bevy::prelude::{Commands, EventWriter, IntoScheduleConfigs};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -126,7 +126,7 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
-            ew.send(RequestUndo::Once);
+            ew.write(RequestUndo::Once);
         });
         app.update();
         app.update();
@@ -149,7 +149,7 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
-            ew.send(RequestUndo::IndexTo(1));
+            ew.write(RequestUndo::IndexTo(1));
         });
         app.update();
         app.update();
@@ -169,7 +169,7 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
-            ew.send(RequestUndo::To(NumAct(1)));
+            ew.write(RequestUndo::To(NumAct(1)));
         });
         app.update();
         app.update();
@@ -192,7 +192,7 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
-            ew.send(RequestUndo::All);
+            ew.write(RequestUndo::All);
         });
         app.update();
         app.update();
@@ -215,12 +215,12 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
-            ew.send(RequestUndo::All);
+            ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
             .run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
-                ew.send(RequestRedo::Once);
+                ew.write(RequestRedo::Once);
             })
             .expect("Failed to run system");
         app.update();
@@ -244,12 +244,12 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
-            ew.send(RequestUndo::All);
+            ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
             .run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
-                ew.send(RequestRedo::IndexTo(1));
+                ew.write(RequestRedo::IndexTo(1));
             })
             .expect("Failed to run system");
         app.update();
@@ -270,12 +270,12 @@ mod tests {
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
-            ew.send(RequestUndo::All);
+            ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
             .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
-                ew.send(RequestRedo::To(NumAct(1)));
+                ew.write(RequestRedo::To(NumAct(1)));
             })
             .expect("Failed to run system");
         app.update();
@@ -298,13 +298,13 @@ mod tests {
                 }));
             },
             |mut ew: EventWriter<RequestUndo<NumAct>>| {
-                ew.send(RequestUndo::All);
+                ew.write(RequestUndo::All);
             }
         ).chain());
         app.update();
         app.world_mut()
             .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
-                ew.send(RequestRedo::All);
+                ew.write(RequestRedo::All);
             })
             .expect("Failed to run system");
         app.update();

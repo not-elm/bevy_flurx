@@ -73,7 +73,7 @@ fn cancel(
     input: Res<ButtonInput<KeyCode>>,
 ) {
     if input.just_pressed(KeyCode::Escape) {
-        if let Ok(entity) = reactor.get_single() {
+        if let Ok(entity) = reactor.single() {
             info!("Reactor has been cancelled");
             // Despawn the entity is attached the reactor to request cancel.
             commands.entity(entity).despawn();

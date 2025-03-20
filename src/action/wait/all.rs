@@ -294,13 +294,13 @@ mod tests {
         app.update();
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent1>| w.send(TestEvent1))
+            .run_system_once(|mut w: EventWriter<TestEvent1>| w.write(TestEvent1))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent2>| w.send(TestEvent2))
+            .run_system_once(|mut w: EventWriter<TestEvent2>| w.write(TestEvent2))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());

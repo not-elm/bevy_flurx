@@ -2,12 +2,12 @@
 //!
 //! To perform these the actions, you must call the [`record::push`](crate::prelude::record::push) beforehand.
 
-use bevy::prelude::World;
 use crate::action::record::EditRecordResult;
 use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};
 use crate::prelude::{ActionSeed, Output, Runner, Track};
-use crate::runner::{BoxedRunner, CancellationId, CancellationHandlers, RunnerIs};
+use crate::runner::{BoxedRunner, CancellationHandlers, CancellationId, RunnerIs};
+use bevy::prelude::World;
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -171,23 +171,21 @@ fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
 
 #[cfg(test)]
 mod tests {
+    use crate::action::record::tests::push_undo_increment;
+    use crate::action::record::EditRecordResult;
+    use crate::action::{delay, record};
+    use crate::prelude::{once, ActionSeed, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track};
+    use crate::reactor::NativeReactor;
+    use crate::test_util::SpawnReactor;
+    use crate::tests::{exit_reader, increment_count, test_app, TestAct};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::hierarchy::DespawnRecursiveExt;
     use bevy::prelude::{
-        on_event, Commands, Component, Entity, EventWriter, In, IntoSystemConfigs, Query, With,
+        on_event, Commands, Component, Entity, EventWriter, In, IntoScheduleConfigs, Query, With,
     };
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-
-    use crate::action::record::tests::push_undo_increment;
-    use crate::action::record::EditRecordResult;
-    use crate::action::{delay, record};
-    use crate::prelude::{once, ActionSeed, Reactor, Omit, Pipe, Record, RequestUndo, Rollback, Then, Track};
-    use crate::reactor::NativeReactor;
-    use crate::test_util::SpawnReactor;
-    use crate::tests::{exit_reader, increment_count, test_app, TestAct};
 
     #[test]
     fn pop_all() {
@@ -337,7 +335,7 @@ mod tests {
                     record::undo::all::<TestAct>().pipe(once::run(
                         |In(result): In<EditRecordResult>, mut ew: EventWriter<AppExit>| {
                             if result.is_err() {
-                                ew.send_default();
+                                ew.write_default();
                             }
                         },
                     )),
@@ -348,7 +346,7 @@ mod tests {
                     record::undo::all::<TestAct>().pipe(once::run(
                         |In(result): In<EditRecordResult>, mut ew: EventWriter<AppExit>| {
                             if result.is_err() {
-                                ew.send_default();
+                                ew.write_default();
                             }
                         },
                     )),
@@ -386,7 +384,7 @@ mod tests {
         app.world_mut()
             .run_system_once(
                 |mut commands: Commands, reactor: Query<Entity, With<NativeReactor>>| {
-                    commands.entity(reactor.single()).despawn();
+                    commands.entity(reactor.single().unwrap()).despawn();
                 },
             )
             .expect("Failed to run system");
@@ -423,7 +421,7 @@ mod tests {
         app.add_systems(
             Update,
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
-                commands.entity(reactor.single()).despawn_recursive();
+                commands.entity(reactor.single().unwrap()).despawn();
             })
             .run_if(on_event::<AppExit>),
         );

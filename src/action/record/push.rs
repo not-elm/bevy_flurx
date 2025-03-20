@@ -24,10 +24,10 @@ use bevy::prelude::World;
 ///         .with(Track{
 ///             act: MoveAct,
 ///             rollback: Rollback::undo_redo(|| once::run(|mut player: Query<&mut Transform>|{
-///                 let pos = player.single_mut().translation;
-///                 player.single_mut().translation = Vec3::Z;
+///                 let pos = player.single_mut().unwrap().translation;
+///                 player.single_mut().unwrap().translation = Vec3::Z;
 ///                 RedoAction::new(once::run(move |mut player: Query<&mut Transform>|{
-///                     player.single_mut().translation = pos;
+///                     player.single_mut().unwrap().translation = pos;
 ///                 }))
 ///             }))
 ///         }))

@@ -111,7 +111,7 @@ mod tests {
                         once::run(
                             |In(either): In<Either<(), ()>>, mut ew: EventWriter<TestEvent2>| {
                                 if either.is_right() {
-                                    ew.send_default();
+                                    ew.write_default();
                                 }
                             },
                         ),
@@ -146,7 +146,7 @@ mod tests {
                             |In(either): In<Either<TestEvent1, ()>>,
                              mut ew: EventWriter<TestEvent2>| {
                                 if either.is_right() {
-                                    ew.send_default();
+                                    ew.write_default();
                                 }
                             },
                         ),

@@ -5,9 +5,8 @@ use crate::runner::app_schedule_labels::AppScheduleLabels;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, ReservedRunner};
 use bevy::ecs::schedule::{InternedScheduleLabel, ScheduleLabel};
+use bevy::platform_support::collections::{HashMap, HashSet};
 use bevy::prelude::*;
-use bevy::utils::hashbrown::HashMap;
-use bevy::utils::HashSet;
 pub use output::Output;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
@@ -128,7 +127,7 @@ struct RunnersRegistry<L: Send + Sync>(HashMap<Entity, Vec<BoxedRunner>>, Phanto
 
 impl<L: Send + Sync> Default for RunnersRegistry<L> {
     fn default() -> Self {
-        Self(HashMap::new(), PhantomData)
+        Self(HashMap::<Entity, Vec<BoxedRunner>>::default(), PhantomData)
     }
 }
 
@@ -258,12 +257,13 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
     ));
 }
 
-fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
+fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
     let Some(mut runners_registry) = world.remove_non_send_resource::<RunnersRegistry<L>>() else {
-        return;
+        return Ok(());
     };
     let Some(mut cancellation_registry) = world.remove_resource::<CancellationHandlersRegistry>() else {
-        return;
+        world.insert_non_send_resource(runners_registry);
+        return Ok(());
     };
     for (entity, runners) in runners_registry.0.iter_mut() {
         let Some(cancellation_handlers) = cancellation_registry.get_mut(entity) else {
@@ -297,6 +297,7 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     }
     world.insert_non_send_resource(runners_registry);
     world.insert_resource(cancellation_registry);
+    Ok(())
 }
 
 pub(crate) mod macros {
@@ -361,7 +362,7 @@ mod tests {
     use crate::tests::test_app;
     use bevy::app::{PostUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Component, Entity, IntoSystemConfigs, Observer, Query, ResMut, Update, World};
+    use bevy::prelude::{Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World};
     use bevy::prelude::{Resource, With};
     use bevy_test_helper::resource::bool::BoolExtension;
     use bevy_test_helper::resource::count::Count;
@@ -463,7 +464,7 @@ mod tests {
         app.assert_resource_eq(Count(1));
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.get_single().unwrap()).despawn();
+            commands.entity(reactor.single().unwrap()).despawn();
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -496,7 +497,7 @@ mod tests {
         app.update();
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.get_single().unwrap()).despawn();
+            commands.entity(reactor.single().unwrap()).despawn();
         });
         app.update();
         app.assert_resource_eq(Count2(2));

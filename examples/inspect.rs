@@ -49,5 +49,5 @@ fn spawn_reactor(mut commands: Commands) {
 }
 
 fn hit(mut ew: EventWriter<Damage>) {
-    ew.send(Damage(10));
+    ew.write(Damage(10));
 }

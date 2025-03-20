@@ -180,16 +180,6 @@ fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
 //noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
-    use bevy::app::{AppExit, Startup, Update};
-    use bevy::ecs::system::RunSystemOnce;
-    use bevy::hierarchy::DespawnRecursiveExt;
-    use bevy::prelude::{
-        on_event, Commands, Component, Entity, IntoSystemConfigs, Query, ResMut, Resource, With,
-    };
-    use bevy_test_helper::event::DirectEvents;
-    use bevy_test_helper::resource::count::Count;
-    use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::record::track::{Redo, Undo};
     use crate::action::{delay, once, record};
     use crate::prelude::{ActionSeed, Omit, Reactor, Record, RequestRedo, Rollback, Then, Track};
@@ -197,6 +187,14 @@ mod tests {
     use crate::sequence;
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
+    use bevy::app::{AppExit, Startup, Update};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::{
+        on_event, Commands, Component, Entity, IntoScheduleConfigs, Query, ResMut, Resource, With,
+    };
+    use bevy_test_helper::event::DirectEvents;
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     #[test]
     fn test_redo_once() {
@@ -453,7 +451,7 @@ mod tests {
         app.world_mut()
             .run_system_once(
                 |mut commands: Commands, reactor: Query<Entity, With<NativeReactor>>| {
-                    commands.entity(reactor.single()).despawn();
+                    commands.entity(reactor.single().unwrap()).despawn();
                 },
             )
             .expect("Failed to run system");
@@ -498,7 +496,7 @@ mod tests {
         app.add_systems(
             Update,
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
-                commands.entity(reactor.single()).despawn_recursive();
+                commands.entity(reactor.single().unwrap()).despawn();
             })
                 .run_if(on_event::<AppExit>),
         );

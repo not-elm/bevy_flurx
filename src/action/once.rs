@@ -32,7 +32,7 @@ pub mod state;
 ///
 /// Reactor::schedule(|task| async move{
 ///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
-///         ew.send(AppExit::Success);
+///         ew.write(AppExit::Success);
 ///     })).await;
 /// });
 /// ```

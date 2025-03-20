@@ -1,7 +1,7 @@
 use bevy::app::{App, Last, Plugin};
 use bevy::ecs::schedule::InternedScheduleLabel;
 use bevy::ecs::system::BoxedSystem;
-use bevy::prelude::{on_event, Event, EventReader, IntoSystemConfigs, ResMut, Schedules};
+use bevy::prelude::{on_event, Event, EventReader, IntoScheduleConfigs, ResMut, Schedules};
 use itertools::Itertools;
 
 /// When the schedule to be registered is the same as the schedule currently being executed by the [`BoxedRunner`](crate::prelude::BoxedRunner),
@@ -19,7 +19,7 @@ impl Plugin for ReserveRegisterRunnerPlugin {
 #[derive(Event, Debug)]
 pub(crate) struct ReservedRunner {
     pub label: InternedScheduleLabel,
-    pub system: fn() -> BoxedSystem,
+    pub system: fn() -> BoxedSystem<(), bevy::prelude::Result>,
 }
 
 fn register_runner_system(

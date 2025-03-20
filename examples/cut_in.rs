@@ -3,11 +3,11 @@
 //! Cut-in will start by pressing the R key.
 #![allow(clippy::type_complexity)]
 
-use std::f32::consts::PI;
-use std::time::Duration;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_flurx::prelude::*;
+use std::f32::consts::PI;
+use std::time::Duration;
 
 #[derive(Component)]
 struct CutInBackground;
@@ -63,7 +63,7 @@ fn spawn_reactor(mut commands: Commands) {
 }
 
 fn setup(mut commands: Commands, window: Query<&Window, With<PrimaryWindow>>) {
-    let wh = &window.single().resolution;
+    let wh = &window.single().unwrap().resolution;
     let angle = (wh.height() / 2.).atan2(wh.width() / 2.);
     commands.spawn((
         Sprite {
@@ -89,7 +89,7 @@ fn spawn_ferris(
     const HEIGHT: f32 = 200.;
     const WIDTH: f32 = HEIGHT * 1.5;
 
-    let wh = &window.single().resolution;
+    let wh = &window.single().unwrap().resolution;
     let pos = Vec3::new(
         wh.width() / 2. + WIDTH / 2.,
         wh.height() / 2. + HEIGHT / 2.,
@@ -115,7 +115,7 @@ fn cut_in<M, const S: u64>(
 ) where
     M: Component,
 {
-    let mut t = target.single_mut();
+    let mut t = target.single_mut().unwrap();
     let end = Duration::from_millis(S).as_secs_f32();
     *tick = end.min(*tick + time.delta_secs());
     t.translation = t
@@ -135,7 +135,9 @@ fn cut_in_ferris(
     mut tick: Local<f32>,
     time: Res<Time>,
 ) {
-    let (mut t, StartPos(start)) = ferris.single_mut();
+    let Ok((mut t, StartPos(start))) = ferris.single_mut() else{
+        return;
+    };
     let end = Duration::from_millis(300).as_secs_f32();
     *tick = end.min(*tick + time.delta_secs());
     let d = *tick / end;
@@ -153,5 +155,5 @@ fn move_left_down<const SPEED: u16>(
     time: Res<Time>,
 ) {
     let d = time.delta_secs() * SPEED as f32;
-    ferris.single_mut().translation -= bg.single().rotation * Vec3::new(d, 0., 0.);
+    ferris.single_mut().unwrap().translation -= bg.single().unwrap().rotation * Vec3::new(d, 0., 0.);
 }
