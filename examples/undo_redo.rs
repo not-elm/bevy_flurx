@@ -14,15 +14,15 @@
 // use bevy_flurx::prelude::*;
 // use std::sync::atomic::{AtomicUsize, Ordering};
 // use std::time::Duration;
-// 
+//
 // #[derive(Component)]
 // struct MrShape;
-// 
+//
 // #[derive(Eq, PartialEq, Clone)]
 // struct MoveAct(usize, String);
-// 
+//
 // type StartAndEndPos = (Vec3, Vec3);
-// 
+//
 // fn main() {
 //     App::new()
 //         .add_plugins((
@@ -44,11 +44,11 @@
 //         .add_systems(Update, show_record)
 //         .run();
 // }
-// 
+//
 // fn spawn_camera(mut commands: Commands) {
 //     commands.spawn(Camera2d);
 // }
-// 
+//
 // fn spawn_mr_shape(mut commands: Commands) {
 //     commands.spawn((
 //         MrShape,
@@ -59,7 +59,7 @@
 //         },
 //     ));
 // }
-// 
+//
 // fn spawn_undo_redo_reactor(mut commands: Commands) {
 //     commands.spawn(Reactor::schedule(|task| async move {
 //         loop {
@@ -80,7 +80,7 @@
 //         }
 //     }));
 // }
-// 
+//
 // fn show_record(
 //     mut context: EguiContexts,
 //     mut undo: EventWriter<RequestUndo<MoveAct>>,
@@ -111,7 +111,7 @@
 //             });
 //         });
 // }
-// 
+//
 // fn spawn_move_reactor(mut commands: Commands) {
 //     commands.spawn(Reactor::schedule(|task| async move {
 //         loop {
@@ -136,7 +136,7 @@
 //         }
 //     }));
 // }
-// 
+//
 // fn return_start_and_end_pos() -> ActionSeed<usize, StartAndEndPos> {
 //     once::run(
 //         |In(key_index): In<usize>, m: Query<&Transform, With<MrShape>>| {
@@ -151,7 +151,7 @@
 //         },
 //     )
 // }
-// 
+//
 // fn move_action<const MILLIS: u64>() -> ActionSeed<StartAndEndPos, StartAndEndPos> {
 //     wait::output(
 //         |In((start, end)): In<StartAndEndPos>,
@@ -167,11 +167,11 @@
 //         },
 //     )
 // }
-// 
+//
 // fn push_move_track() -> ActionSeed<StartAndEndPos> {
 //     ActionSeed::define(|(start, end): StartAndEndPos| {
 //         static ID: AtomicUsize = AtomicUsize::new(0);
-// 
+//
 //         record::push().with(Track {
 //             act: MoveAct(
 //                 ID.fetch_add(1, Ordering::Relaxed),
@@ -188,7 +188,7 @@
 //     })
 //         .omit_output()
 // }
-// 
+//
 // //noinspection DuplicatedCode
 // fn undo() -> ActionSeed<StartAndEndPos> {
 //     ActionSeed::define(|(start, end): StartAndEndPos| {
@@ -198,7 +198,7 @@
 //             .then(makeup().with(Color::WHITE))
 //     })
 // }
-// 
+//
 // //noinspection DuplicatedCode
 // fn redo() -> ActionSeed<StartAndEndPos> {
 //     ActionSeed::define(|(start, end): StartAndEndPos| {
@@ -208,7 +208,7 @@
 //             .then(makeup().with(Color::WHITE))
 //     })
 // }
-// 
+//
 // fn makeup() -> ActionSeed<Color> {
 //     once::run(
 //         |In(color): In<Color>, mut sprite: Query<&mut Sprite, With<MrShape>>| {

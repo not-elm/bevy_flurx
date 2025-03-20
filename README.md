@@ -141,6 +141,10 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 | 0.6.0 ~    | 0.14.1 | 
 | 0.7.0 ~    | 0.15   | 
 
+## Credits
+
+Using [bevy_game_template](https://github.com/NiklasEi/bevy_game_template) to CI.
+
 ## License
 
 This crate is licensed under the MIT License or the Apache License 2.0.
