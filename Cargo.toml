@@ -54,7 +54,6 @@ bevy = { version = "0.16.0-rc.1" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.16" }
 futures = "0.3"
 criterion = { version = "0.5", features = ["plotters", "html_reports"] }
-bevy_egui = "0.33.0"
 
 [features]
 default = []
