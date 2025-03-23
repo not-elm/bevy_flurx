@@ -199,6 +199,7 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
     }
 }
 
+#[inline]
 fn entry_cancellation_handlers_if_need(
     world: &mut World,
     reactor_entity: Entity,
@@ -247,6 +248,7 @@ fn init_runner(
     }
 }
 
+#[inline]
 fn push_runner_into_registry<Label: ScheduleLabel>(
     world: &mut World,
     reactor_entity: Entity,
@@ -260,6 +262,7 @@ fn push_runner_into_registry<Label: ScheduleLabel>(
         .push(runner);
 }
 
+#[inline]
 fn observer_already_exists<Label: ScheduleLabel>(
     world: &mut World,
     reactor_entity: &Entity,
