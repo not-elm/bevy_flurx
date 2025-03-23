@@ -1,3 +1,10 @@
+## v0.11.0-rc.2
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.2)
+
+## Bug Fix
+
+- Fixed crash app when Reactor spawns inside another reactor
+
 ## v0.11.0-rc.1 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.1)
 
