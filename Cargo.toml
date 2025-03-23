@@ -23,7 +23,7 @@ harness = false
 [[example]]
 name = "side_effect"
 path = "examples/side_effect.rs"
-required-features = ["tokio", "effect"]
+required-features = ["tokio", "side-effect"]
 
 [[example]]
 name = "undo_redo"

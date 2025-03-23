@@ -33,4 +33,8 @@ impl CancellationHandlers {
     pub fn unregister(&mut self, id: &CancellationId) {
         self.0.remove(id);
     }
+    
+    pub(crate) fn extend(&mut self, mut other: Self) {
+        self.0.extend(other.0.drain());
+    }
 }
