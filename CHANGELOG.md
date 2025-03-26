@@ -1,3 +1,9 @@
+## Unreleased
+
+## Features
+
+- Added `wait::event::comes_and` and `wait::event::read_and` actions that wait for an event with a predicate.
+
 ## v0.11.0-rc.2
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.2)
 
