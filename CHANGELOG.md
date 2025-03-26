@@ -1,3 +1,21 @@
+## Unreleased
+
+## Features
+
+- Added `wait::event::comes_and` and `wait::event::read_and` actions that wait for an event with a predicate.
+
+## v0.11.0-rc.2
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.2)
+
+## Bug Fix
+
+- Fixed crash app when Reactor spawns inside another reactor
+
+## v0.11.0-rc.1 
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.1)
+
+Support for bevy 0.16.0-rc.1
+
 ## v0.10.0
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.10.0)

@@ -1,8 +1,8 @@
 //! [`once::res`] creates a task that only once run system related to [`Resource`].
 
-use bevy::prelude::{Commands, In, Resource};
 use crate::action::once;
 use crate::action::seed::ActionSeed;
+use bevy::prelude::{Commands, In, Resource};
 
 /// Once init a resource.
 ///

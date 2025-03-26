@@ -5,7 +5,7 @@ use crate::prelude::wait;
 use bevy::ecs::event::EventCursor;
 use bevy::prelude::{Event, Events, Local, ResMut};
 
-/// Waits until the specified event is sent
+/// Waits until the event is received.
 ///
 /// ## Examples
 ///
@@ -42,7 +42,7 @@ where
     )
 }
 
-/// Waits until the specified event is sent
+/// Waits until the event is received and the event matches the predicate.
 ///
 /// ## Examples
 ///
