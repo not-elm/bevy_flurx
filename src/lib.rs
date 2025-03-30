@@ -115,8 +115,8 @@ mod tests {
         #[cfg(feature = "record")]
         {
             use crate::prelude::{Record, RecordExtension};
-            app.add_record_events::<NumAct>();
-            app.add_record_events::<TestAct>();
+            app.add_record::<NumAct>();
+            app.add_record::<TestAct>();
             app.init_resource::<Record<TestAct>>();
         }
         

@@ -3,6 +3,11 @@
 ## Features
 
 - Added `wait::event::comes_and` and `wait::event::read_and` actions that wait for an event with a predicate.
+- It is now possible to request undo/redo from trigger.
+
+## Breaking Changes
+
+- Renamed `App::add_record_events` to `App::add_record`.
 
 ## v0.11.0-rc.2
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.2)
