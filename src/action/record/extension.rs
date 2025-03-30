@@ -4,7 +4,7 @@
 use crate::action::record;
 use crate::prelude::{ActionSeed, Omit, Reactor, Record, Then};
 use bevy::app::{App, PostUpdate, Update};
-use bevy::prelude::{on_event, Commands, Event, EventReader, IntoScheduleConfigs, Trigger};
+use bevy::prelude::{on_event, Commands, Event, EventReader, IntoSystemConfigs, Trigger};
 
 /// Represents a request `undo` operations.
 ///
