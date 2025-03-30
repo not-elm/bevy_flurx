@@ -3,6 +3,7 @@
 ## Features
 
 - Added `wait::event::comes_and` and `wait::event::read_and` actions that wait for an event with a predicate.
+- It is now possible to request undo/redo from trigger.
 
 ## v0.11.0-rc.2
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.2)
