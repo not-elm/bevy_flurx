@@ -2,14 +2,14 @@
 //! from outside [`Reactor`].
 
 use crate::action::record;
-use crate::prelude::{Omit, Reactor, Then};
+use crate::prelude::{ActionSeed, Omit, Reactor, Then};
 use bevy::app::{App, PostUpdate, Update};
-use bevy::prelude::{Commands, Event, EventReader};
+use bevy::prelude::{on_event, Commands, Event, EventReader, IntoScheduleConfigs, Trigger};
 
 /// Represents a request `undo` operations.
 ///
 /// If an undo or redo is already in progress, the request will be ignored.
-#[derive(Event, Eq, PartialEq, Debug)]
+#[derive(Event, Eq, PartialEq, Debug, Clone)]
 pub enum RequestUndo<Act> {
     /// [`record::undo::once`]
     Once,
@@ -22,6 +22,20 @@ pub enum RequestUndo<Act> {
 
     /// [`record::undo::all`]
     All,
+}
+
+impl<Act> RequestUndo<Act>
+    where
+        Act: Clone + PartialEq + Send + Sync + 'static,
+{
+    fn to_action(&self) -> ActionSeed{
+        match self {
+            RequestUndo::To(act) => record::undo::to().with(act.clone()).omit(),
+            RequestUndo::IndexTo(i) => record::undo::index_to::<Act>().with(*i).omit(),
+            RequestUndo::Once => record::undo::once::<Act>().omit(),
+            RequestUndo::All => record::undo::all::<Act>().omit(),
+        }
+    }
 }
 
 /// Represents a request `redo` operations.
@@ -42,6 +56,20 @@ pub enum RequestRedo<Act> {
     All,
 }
 
+impl<Act> RequestRedo<Act>
+where 
+    Act: Clone + PartialEq + Send + Sync + 'static,
+{
+    fn to_action(&self) -> ActionSeed{
+        match self {
+            RequestRedo::To(act) => record::redo::to().with(act.clone()).omit(),
+            RequestRedo::IndexTo(i) => record::redo::index_to::<Act>().with(*i).omit(),
+            RequestRedo::Once => record::redo::once::<Act>().omit(),
+            RequestRedo::All => record::redo::all::<Act>().omit(),
+        }
+    }
+}
+
 /// Allows undo and redo requests to be made using [`RequestUndo`] and [`RequestRedo`]
 /// from outside [`Reactor`].
 pub trait RecordExtension {
@@ -59,7 +87,12 @@ impl RecordExtension for App {
         self
             .add_event::<RequestUndo<Act>>()
             .add_event::<RequestRedo<Act>>()
-            .add_systems(PostUpdate, (request_undo::<Act>, request_redo::<Act>))
+            .add_systems(PostUpdate, (
+                request_undo::<Act>.run_if(on_event::<RequestUndo<Act>>),
+                request_redo::<Act>.run_if(on_event::<RequestRedo<Act>>),
+            ))
+            .add_observer(apply_undo::<Act>)
+            .add_observer(apply_redo::<Act>)
     }
 }
 
@@ -69,12 +102,7 @@ where
 {
     if let Some(actions) = er
         .read()
-        .map(|req| match req {
-            RequestUndo::To(act) => record::undo::to().with(act.clone()).omit(),
-            RequestUndo::IndexTo(i) => record::undo::index_to::<Act>().with(*i).omit(),
-            RequestUndo::Once => record::undo::once::<Act>().omit(),
-            RequestUndo::All => record::undo::all::<Act>().omit(),
-        })
+        .map(RequestUndo::<Act>::to_action)
         .reduce(|r1, r2| r1.then(r2))
     {
         commands.spawn(Reactor::schedule(|task| async move {
@@ -89,18 +117,39 @@ where
 {
     if let Some(actions) = er
         .read()
-        .map(|req| match req {
-            RequestRedo::To(act) => record::redo::to().with(act.clone()).omit(),
-            RequestRedo::IndexTo(i) => record::redo::index_to::<Act>().with(*i).omit(),
-            RequestRedo::Once => record::redo::once::<Act>().omit(),
-            RequestRedo::All => record::redo::all::<Act>().omit(),
-        })
+        .map(RequestRedo::<Act>::to_action)
         .reduce(|r1, r2| r1.then(r2))
     {
         commands.spawn(Reactor::schedule(|task| async move {
             task.will(Update, actions).await;
         }));
     }
+}
+
+fn apply_undo<Act>(
+    trigger: Trigger<RequestUndo<Act>>,
+    mut commands: Commands,
+)
+where
+    Act: Clone + Send + PartialEq + Sync + 'static,
+{
+    let action = trigger.to_action();
+    commands.spawn(Reactor::schedule(move |task| async move {
+        task.will(Update, action).await;
+    }));
+}
+
+fn apply_redo<Act>(
+    trigger: Trigger<RequestRedo<Act>>,
+    mut commands: Commands,
+)
+where
+    Act: Clone + Send + PartialEq + Sync + 'static,
+{
+    let action = trigger.to_action();
+    commands.spawn(Reactor::schedule(move |task| async move {
+        task.will(Update, action).await;
+    }));
 }
 
 //noinspection DuplicatedCode
@@ -310,5 +359,41 @@ mod tests {
         app.update();
         app.update();
         app.assert_resource_eq(Count(0));
+    }
+
+    #[test]
+    fn test_request_undo_from_trigger() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, push_undo_increment()).await.unwrap();
+            }));
+        });
+        app.update();
+        app.world_mut().trigger(RequestUndo::<TestAct>::Once);
+        app.update();
+        app.assert_resource_eq(Count(1));
+    }
+
+    #[test]
+    fn test_request_redo_from_trigger() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, {
+                    push_undo_increment()
+                        .then(push_undo_increment())
+                        .then(push_undo_increment())
+                })
+                    .await
+                    .unwrap();
+            }));
+        });
+        app.update();
+        app.world_mut().trigger(RequestUndo::<TestAct>::All);
+        app.update();
+        app.world_mut().trigger(RequestRedo::<TestAct>::Once);
+        app.update();
+        app.assert_resource_eq(Count(2));
     }
 }

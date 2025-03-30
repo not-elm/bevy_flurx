@@ -19,8 +19,8 @@ fn main() {
         .init_resource::<KeyCodes>()
         .add_systems(Update, (
             log_keycodes.run_if(resource_exists_and_changed::<KeyCodes>),
-            do_undo.run_if(input_just_pressed(KeyCode::KeyZ)),
-            do_redo.run_if(input_just_pressed(KeyCode::KeyX)),
+            request_undo.run_if(input_just_pressed(KeyCode::KeyZ)),
+            request_redo.run_if(input_just_pressed(KeyCode::KeyX)),
             push_num_keycodes,
         ))
         .run();
@@ -40,14 +40,14 @@ fn log_keycodes(
     info!("{:?}", key_codes);
 }
 
-fn do_undo(mut ew: EventWriter<RequestUndo<KeyCodeAct>>) {
+fn request_undo(mut commands: Commands) {
     info!("Undo");
-    ew.write(RequestUndo::Once);
+    commands.trigger(RequestUndo::<KeyCodeAct>::Once);
 }
 
-fn do_redo(mut ew: EventWriter<RequestRedo<KeyCodeAct>>) {
+fn request_redo(mut commands: Commands) {
     info!("Redo");
-    ew.write(RequestRedo::Once);
+    commands.trigger(RequestRedo::<KeyCodeAct>::Once);
 }
 
 fn push_num_keycodes(
