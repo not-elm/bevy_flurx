@@ -14,8 +14,7 @@ fn main() {
             DefaultPlugins,
             FlurxPlugin,
         ))
-        .add_record_events::<KeyCodeAct>()
-        .init_resource::<Record<KeyCodeAct>>()
+        .add_record::<KeyCodeAct>()
         .init_resource::<KeyCodes>()
         .add_systems(Update, (
             log_keycodes.run_if(resource_exists_and_changed::<KeyCodes>),

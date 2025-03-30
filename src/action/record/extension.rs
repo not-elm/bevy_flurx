@@ -2,7 +2,7 @@
 //! from outside [`Reactor`].
 
 use crate::action::record;
-use crate::prelude::{ActionSeed, Omit, Reactor, Then};
+use crate::prelude::{ActionSeed, Omit, Reactor, Record, Then};
 use bevy::app::{App, PostUpdate, Update};
 use bevy::prelude::{on_event, Commands, Event, EventReader, IntoScheduleConfigs, Trigger};
 
@@ -74,17 +74,18 @@ where
 /// from outside [`Reactor`].
 pub trait RecordExtension {
     /// Set up [`RequestUndo`] and [`RequestRedo`] and their associated systems.
-    fn add_record_events<Act>(&mut self) -> &mut Self
+    fn add_record<Act>(&mut self) -> &mut Self
     where
         Act: Clone + PartialEq + Send + Sync + 'static;
 }
 
 impl RecordExtension for App {
-    fn add_record_events<Act>(&mut self) -> &mut Self
+    fn add_record<Act>(&mut self) -> &mut Self
     where
         Act: Clone + PartialEq + Send + Sync + 'static,
     {
         self
+            .init_resource::<Record<Act>>()
             .add_event::<RequestUndo<Act>>()
             .add_event::<RequestRedo<Act>>()
             .add_systems(PostUpdate, (
