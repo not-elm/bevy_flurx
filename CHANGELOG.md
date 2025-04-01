@@ -2,6 +2,7 @@
 
 ## Features
 
+- Support for Bevy 0.16-rc.3
 - Added `wait::event::comes_and` and `wait::event::read_and` actions that wait for an event with a predicate.
 - It is now possible to request undo/redo from trigger.
 

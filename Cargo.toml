@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.11.0-rc.2"
+version = "0.11.0-rc.3"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development"]
@@ -35,7 +35,7 @@ name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
-bevy = { version = "0.16.0-rc.1", default-features = false, features = [
+bevy = { version = "0.16.0-rc.3", default-features = false, features = [
     "serialize",
     "std",
 ] }
