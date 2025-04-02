@@ -23,7 +23,6 @@ impl Plugin for RunnerPlugin {
         app
             .register_type::<ReactorEntity>()
             .register_type::<RunnerIs>()
-            .init_resource::<CancellationHandlersRegistry>()
             .add_plugins(ReserveRegisterRunnerPlugin)
             .add_systems(PreStartup, setup.run_if(not(resource_exists::<AppScheduleLabels>)));
     }
@@ -122,15 +121,11 @@ impl Runner for BoxedRunner {
 }
 
 #[repr(transparent)]
-#[derive(Default, Resource, Deref, DerefMut)]
-struct CancellationHandlersRegistry(HashMap<Entity, CancellationHandlers>);
-
-#[repr(transparent)]
-struct RunnersRegistry<L: Send + Sync>(HashMap<Entity, Vec<BoxedRunner>>, PhantomData<L>);
+struct RunnersRegistry<L: Send + Sync>(HashMap<Entity, (Vec<BoxedRunner>, CancellationHandlers)>, PhantomData<L>);
 
 impl<L: Send + Sync> Default for RunnersRegistry<L> {
     fn default() -> Self {
-        Self(HashMap::<Entity, Vec<BoxedRunner>>::default(), PhantomData)
+        Self(HashMap::default(), PhantomData)
     }
 }
 
@@ -154,8 +149,7 @@ where
     let label = label.intern();
     let (running_on_target, contains_label) = register_app_schedule_labels(world, label);
     add_runner_system_into_schedules::<Label>(world, label, contains_label);
-    entry_cancellation_handlers_if_need(world, reactor_entity);
-    let runner_is = init_runner(world, &mut runner, reactor_entity, running_on_target);
+    let runner_is = init_runner::<Label>(world, &mut runner, reactor_entity, running_on_target);
     push_runner_into_registry::<Label>(world, reactor_entity, runner);
     match runner_is {
         RunnerIs::Completed => {
@@ -199,17 +193,6 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
     }
 }
 
-#[inline]
-fn entry_cancellation_handlers_if_need(
-    world: &mut World,
-    reactor_entity: Entity,
-) {
-    world
-        .resource_mut::<CancellationHandlersRegistry>()
-        .entry(reactor_entity)
-        .or_default();
-}
-
 fn register_runner_system<L: ScheduleLabel>(
     world: &mut World,
     scheduels: &mut Schedules,
@@ -228,7 +211,7 @@ fn register_runner_system<L: ScheduleLabel>(
 
 /// If the current schedule is the same as the schedule on which the [`BoxedRunner`] is running,
 /// it will be executed immediately.
-fn init_runner(
+fn init_runner<Label: ScheduleLabel>(
     world: &mut World,
     runner: &mut BoxedRunner,
     reactor_entity: Entity,
@@ -238,9 +221,11 @@ fn init_runner(
         let mut handers = CancellationHandlers::default();
         let runner_is = runner.run(world, &mut handers);
         world
-            .resource_mut::<CancellationHandlersRegistry>()
+            .non_send_resource_mut::<RunnersRegistry<Label>>()
+            .0
             .entry(reactor_entity)
             .or_default()
+            .1
             .extend(handers);
         runner_is
     } else {
@@ -259,6 +244,7 @@ fn push_runner_into_registry<Label: ScheduleLabel>(
         .0
         .entry(reactor_entity)
         .or_default()
+        .0
         .push(runner);
 }
 
@@ -287,18 +273,13 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
             let Some(mut runner_registry) = world.remove_non_send_resource::<RunnersRegistry<Label>>() else {
                 return;
             };
-            let Some(mut cancellation_registry) = world.remove_resource::<CancellationHandlersRegistry>() else {
-                return;
-            };
-            runner_registry.0.remove(&entity);
-            let Some(cancellation_handlers) = cancellation_registry.remove(&entity) else {
+            let Some((_, cancellation_handlers)) = runner_registry.0.remove(&entity) else{
                 return;
             };
             for handler in cancellation_handlers.0.values() {
                 handler(world);
             }
             world.insert_non_send_resource(runner_registry);
-            world.insert_resource(cancellation_registry);
         });
     });
     observer.watch_entity(entity);
@@ -314,14 +295,7 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
     let Some(mut runners_registry) = world.remove_non_send_resource::<RunnersRegistry<L>>() else {
         return Ok(());
     };
-    let Some(mut cancellation_registry) = world.remove_resource::<CancellationHandlersRegistry>() else {
-        world.insert_non_send_resource(runners_registry);
-        return Ok(());
-    };
-    for (entity, runners) in runners_registry.0.iter_mut() {
-        let Some(cancellation_handlers) = cancellation_registry.get_mut(entity) else {
-            continue;
-        };
+    for (entity, (runners, cancellation_handlers)) in runners_registry.0.iter_mut() {
         let mut request_cancel = false;
         let mut request_step = false;
         runners.retain_mut(|runner| {
@@ -349,7 +323,6 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
         }
     }
     world.insert_non_send_resource(runners_registry);
-    world.insert_resource(cancellation_registry);
     Ok(())
 }
 
@@ -618,6 +591,21 @@ mod tests {
             }));
         });
         // should avoid error `resource does not exist: bevy_flurx::runner::app_schedule_labels::AppScheduleLabels`.
+        app.update();
+    }
+
+    #[test]
+    fn avoid_resource_does_not_exists_cancellation_handlers() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, once::run(|mut commands: Commands| {
+                    commands.spawn(Reactor::schedule(|task| async move {
+                        task.will(Update, once::no_op()).await;
+                    }));
+                })).await;
+            }));
+        });
         app.update();
     }
 }
