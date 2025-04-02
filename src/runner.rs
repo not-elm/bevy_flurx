@@ -5,8 +5,8 @@ use crate::runner::app_schedule_labels::AppScheduleLabels;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, ReservedRunner};
 use bevy::ecs::schedule::{InternedScheduleLabel, ScheduleLabel};
+use bevy::platform_support::collections::{HashMap, HashSet};
 use bevy::prelude::*;
-use bevy::utils::{HashMap, HashSet};
 pub use output::Output;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
@@ -182,6 +182,7 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
     contains_label: bool,
 ) {
     if !world.contains_non_send::<RunnersRegistry<Label>>() {
+        world.insert_non_send_resource(RunnersRegistry::<Label>::default());
         let mut schedules = world.remove_resource::<Schedules>().expect("Schedules was not found");
         if let Some(schedule) = schedules.get_mut(label) {
             schedule.add_systems(run_runners::<Label>);
@@ -189,7 +190,6 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
             register_runner_system::<Label>(world, &mut schedules, label, contains_label);
         }
         world.insert_resource(schedules);
-        world.insert_non_send_resource(RunnersRegistry::<Label>::default());
     }
 }
 
@@ -291,11 +291,15 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
     ));
 }
 
-fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
-    let Some(mut runners_registry) = world.remove_non_send_resource::<RunnersRegistry<L>>() else {
-        return;
+fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
+    let Some(mut runners_registry) = world
+        .get_non_send_resource_mut::<RunnersRegistry<L>>()
+        .map(|mut registry| std::mem::take(&mut registry.0))
+    else {
+        return Ok(());
     };
-    for (entity, (runners, cancellation_handlers)) in runners_registry.0.iter_mut() {
+
+    for (entity, (runners, cancellation_handlers)) in runners_registry.iter_mut() {
         let mut request_cancel = false;
         let mut request_step = false;
         runners.retain_mut(|runner| {
@@ -322,7 +326,11 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
             });
         }
     }
-    world.insert_non_send_resource(runners_registry);
+
+    world
+        .non_send_resource_mut::<RunnersRegistry<L>>().0
+        .extend(runners_registry);
+    Ok(())
 }
 
 pub(crate) mod macros {
@@ -379,16 +387,18 @@ pub(crate) mod macros {
 
 #[cfg(test)]
 mod tests {
-    use crate::action::{once, wait};
-    use crate::prelude::{ActionSeed, CancellationHandlers, Reactor};
+    use crate::action::{delay, once, wait};
+    use crate::prelude::{ActionSeed, CancellationHandlers, Reactor, Then};
     use crate::reactor::NativeReactor;
     use crate::runner::{ReactorEntity, Runner, RunnerIs};
     use crate::test_util::test;
     use crate::tests::test_app;
-    use bevy::app::{PostUpdate, Startup};
+    use bevy::app::{AppExit, PostUpdate, Startup};
+    use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Component, Entity, IntoSystemConfigs, Observer, Query, ResMut, Update, World};
+    use bevy::prelude::{Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World};
     use bevy::prelude::{Resource, With};
+    use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::bool::BoolExtension;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -489,7 +499,7 @@ mod tests {
         app.assert_resource_eq(Count(1));
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.single()).despawn();
+            commands.entity(reactor.single().unwrap()).despawn();
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -522,7 +532,7 @@ mod tests {
         app.update();
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.single()).despawn();
+            commands.entity(reactor.single().unwrap()).despawn();
         });
         app.update();
         app.assert_resource_eq(Count2(2));
@@ -606,5 +616,28 @@ mod tests {
             }));
         });
         app.update();
+    }
+
+    #[test]
+    fn runner_correctly_registered() {
+        let mut app = test_app();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, once::run(|mut commands: Commands| {
+                    commands.spawn(Reactor::schedule(|task| async move {
+                        task.will(Update, delay::frames().with(1)
+                            .then(once::event::app_exit_success())
+                        ).await;
+                    }));
+                })).await;
+            }));
+        });
+        let mut cursor = EventCursor::<AppExit>::default();
+
+        app.update();
+        app.assert_event_not_comes(&mut cursor);
+
+        app.update();
+        app.assert_event_comes(&mut cursor);
     }
 }
