@@ -5,8 +5,8 @@ use crate::runner::app_schedule_labels::AppScheduleLabels;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, ReservedRunner};
 use bevy::ecs::schedule::{InternedScheduleLabel, ScheduleLabel};
-use bevy::platform_support::collections::{HashMap, HashSet};
 use bevy::prelude::*;
+use bevy::utils::{HashMap, HashSet};
 pub use output::Output;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
@@ -291,12 +291,12 @@ fn observe_remove_reactor<Label: ScheduleLabel>(
     ));
 }
 
-fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
+fn run_runners<L: Send + Sync + 'static>(world: &mut World) {
     let Some(mut runners_registry) = world
         .get_non_send_resource_mut::<RunnersRegistry<L>>()
         .map(|mut registry| std::mem::take(&mut registry.0))
     else {
-        return Ok(());
+        return;
     };
 
     for (entity, (runners, cancellation_handlers)) in runners_registry.iter_mut() {
@@ -330,7 +330,6 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
     world
         .non_send_resource_mut::<RunnersRegistry<L>>().0
         .extend(runners_registry);
-    Ok(())
 }
 
 pub(crate) mod macros {
@@ -396,7 +395,7 @@ mod tests {
     use bevy::app::{AppExit, PostUpdate, Startup};
     use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World};
+    use bevy::prelude::{Commands, Component, Entity, IntoSystemConfigs, Observer, Query, ResMut, Update, World};
     use bevy::prelude::{Resource, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::bool::BoolExtension;
@@ -499,7 +498,7 @@ mod tests {
         app.assert_resource_eq(Count(1));
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.single().unwrap()).despawn();
+            commands.entity(reactor.single()).despawn();
         });
         app.update();
         app.assert_resource_eq(Count(1));
@@ -532,7 +531,7 @@ mod tests {
         app.update();
 
         let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.single().unwrap()).despawn();
+            commands.entity(reactor.single()).despawn();
         });
         app.update();
         app.assert_resource_eq(Count2(2));
