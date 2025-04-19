@@ -1,5 +1,5 @@
 use bevy::ecs::schedule::InternedScheduleLabel;
-use bevy::platform_support::collections::HashSet;
+use bevy::platform::collections::HashSet;
 use bevy::prelude::{Deref, DerefMut, Resource, Schedules};
 
 /// Manages the schedules registered in the main app.
