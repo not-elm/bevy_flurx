@@ -35,7 +35,7 @@ name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
-bevy = { version = "0.16.0-rc.3", default-features = false, features = [
+bevy = { version = "0.16.0-rc.5", default-features = false, features = [
     "serialize",
     "std",
 ] }
@@ -51,7 +51,7 @@ tokio = { version = "1", optional = true, features = ["sync", "time"] }
 async-compat = { version = "0.2", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.16.0-rc.1" }
+bevy = { version = "0.16.0-rc.5" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.16" }
 futures = "0.3"
 criterion = { version = "0.5", features = ["plotters", "html_reports"] }

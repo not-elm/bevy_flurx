@@ -5,7 +5,7 @@ use crate::runner::app_schedule_labels::AppScheduleLabels;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, ReservedRunner};
 use bevy::ecs::schedule::{InternedScheduleLabel, ScheduleLabel};
-use bevy::platform_support::collections::{HashMap, HashSet};
+use bevy::platform::collections::{HashMap, HashSet};
 use bevy::prelude::*;
 pub use output::Output;
 use serde::{Deserialize, Serialize};

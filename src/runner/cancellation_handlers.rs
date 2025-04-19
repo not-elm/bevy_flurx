@@ -1,4 +1,4 @@
-use bevy::platform_support::collections::HashMap;
+use bevy::platform::collections::HashMap;
 use bevy::prelude::{Component, Reflect, World};
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicU64, Ordering};
