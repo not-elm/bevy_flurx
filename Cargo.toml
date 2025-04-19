@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.11.0-rc.3"
+version = "0.11.0-rc.5"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development"]
