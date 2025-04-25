@@ -116,8 +116,6 @@ Provides the actions that perform simple audio playback and waiting using bevy's
 
 Provides `Record` to manage operation history.
 
-![undo_redo](examples/undo_redo.gif)
-
 ### side-effect
 
 [doc.rs](https://docs.rs/bevy_flurx/latest/bevy_flurx/action/effect/index.html)
@@ -135,12 +133,12 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
 ## Compatible Bevy versions
 
-| bevy_flurx | bevy   |
-|------------|--------|
-| 0.3.0 ~    | 0.13.0 |
-| 0.6.0 ~    | 0.14.1 | 
-| 0.7.0 ~    | 0.15   | 
-| 0.11 ~     | 0.16   |
+| bevy_flurx | bevy |
+|------------|------|
+| 0.11 ~     | 0.16 |
+| 0.7.0 ~    | 0.15 | 
+| 0.6.0 ~    | 0.14 | 
+| 0.3.0 ~    | 0.13 |
 
 ## Credits
 
