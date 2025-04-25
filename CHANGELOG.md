@@ -1,3 +1,11 @@
+## v0.11.0
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0)
+
+### Features
+
+- Support for Bevy's 0.16.0
+
+
 ## v0.11.0-rc.5
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.5)
 
