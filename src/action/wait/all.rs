@@ -25,7 +25,7 @@ use bevy::prelude::World;
 /// ```
 pub fn all<Actions>() -> ActionSeed<Actions>
 where
-    Actions: IntoIterator<Item=ActionSeed> + 'static,
+    Actions: IntoIterator<Item = ActionSeed> + 'static,
 {
     ActionSeed::new(|actions: Actions, output| AllRunner {
         runners: actions
@@ -42,7 +42,11 @@ struct AllRunner {
 }
 
 impl Runner for AllRunner {
-    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
+    fn run(
+        &mut self,
+        world: &mut World,
+        token: &mut CancellationHandlers,
+    ) -> crate::prelude::RunnerIs {
         let runners = std::mem::take(&mut self.runners);
         for mut runner in runners {
             match runner.run(world, token) {
@@ -231,7 +235,7 @@ mod tests {
                     once::run(|| [increment_count(), increment_count(), decrement_count()])
                         .pipe(wait::all())
                 })
-                    .await;
+                .await;
             }));
         });
         app.update();
@@ -251,9 +255,10 @@ mod tests {
                             increment_count()
                         ]
                     })
-                        .pipe(wait::all())
-                        .then(once::event::app_exit_success())
-                }).await;
+                    .pipe(wait::all())
+                    .then(once::event::app_exit_success())
+                })
+                .await;
             }));
         });
         let mut er = exit_reader();

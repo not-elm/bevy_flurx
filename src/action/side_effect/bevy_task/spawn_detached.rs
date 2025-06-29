@@ -6,8 +6,7 @@ use bevy::tasks::AsyncComputeTaskPool;
 use std::marker::PhantomData;
 use std::sync::{Arc, Mutex};
 
-
-/// Spawns a future onto the bevy thread pool, 
+/// Spawns a future onto the bevy thread pool,
 /// and then wait until its completed.
 ///
 /// Unlike [`side_effect::bevy_task::spawn`](crate::prelude::side_effect::bevy_task::spawn_detached),
@@ -45,13 +44,11 @@ where
     Out: Send + 'static,
     M: Send + 'static,
 {
-    ActionSeed::new(|input, output| {
-        BevyDetachedTaskRunner {
-            output,
-            arc_output: Arc::new(Mutex::new(None)),
-            args: Some((input, functor)),
-            _m: PhantomData::<M>,
-        }
+    ActionSeed::new(|input, output| BevyDetachedTaskRunner {
+        output,
+        arc_output: Arc::new(Mutex::new(None)),
+        args: Some((input, functor)),
+        _m: PhantomData::<M>,
     })
 }
 
@@ -106,11 +103,10 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    side_effect::bevy_task::spawn_detached(async move {
-                        Count(1 + 1)
-                    })
+                    side_effect::bevy_task::spawn_detached(async move { Count(1 + 1) })
                         .pipe(once::res::insert())
-                }).await;
+                })
+                .await;
             }));
         });
         app.update();

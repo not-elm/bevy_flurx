@@ -23,7 +23,6 @@ where
     }
 }
 
-
 /// This structure holds the function that will be called when an `undo` operation is requested on the track that holds it.
 #[repr(transparent)]
 pub struct Rollback(Box<dyn Fn() -> Action<(), Option<ActionSeed>> + Send + Sync>);
@@ -57,7 +56,9 @@ impl Rollback {
         F: Fn() -> A + Send + Sync + 'static,
         A: Into<Action<I, Option<RedoAction>>> + Send + Sync + 'static,
     {
-        Self(Box::new(move || { f().omit_input().map(|redo| redo.map(|r| r.0)).with(()) }))
+        Self(Box::new(move || {
+            f().omit_input().map(|redo| redo.map(|r| r.0)).with(())
+        }))
     }
 
     /// Create a [`Rollback`] with the function creates `undo action`.
@@ -79,7 +80,7 @@ impl Rollback {
         F: Fn() -> A + Send + Sync + 'static,
         A: Into<Action<I, O>> + Send + Sync + 'static,
     {
-        Self(Box::new(move || { f().omit_input().map(|_| None).with(()) }))
+        Self(Box::new(move || f().omit_input().map(|_| None).with(())))
     }
 
     /// Create a Restore with the function creates undo action.
@@ -103,7 +104,9 @@ impl Rollback {
         F: Fn() -> A + Send + Sync + 'static,
         A: Into<Action<I, RedoAction>> + Send + Sync + 'static,
     {
-        Self(Box::new(move || { f().omit_input().map(|redo| Some(redo.0)).with(()) }))
+        Self(Box::new(move || {
+            f().omit_input().map(|redo| Some(redo.0)).with(())
+        }))
     }
 
     /// Declare undo and redo separately.
@@ -136,10 +139,7 @@ impl Rollback {
     ///     Redo::NONE
     /// );
     /// ```
-    pub fn parts<
-        I, O, A, F,
-        RI, RO, RA, RF,
-    >(
+    pub fn parts<I, O, A, F, RI, RO, RA, RF>(
         undo: Undo<F, I, O, A>,
         redo: (Option<RF>, PhantomData<(RI, O, RO, RA)>),
     ) -> Self
@@ -159,9 +159,7 @@ impl Rollback {
             let redo = redo.clone();
             undo()
                 .into()
-                .map(move |o| {
-                    redo.as_ref().map(|redo| RedoAction::new((redo)(o)))
-                })
+                .map(move |o| redo.as_ref().map(|redo| RedoAction::new((redo)(o))))
         })
     }
 }
@@ -197,13 +195,13 @@ pub struct Redo<I>(PhantomData<I>);
 
 impl<I> Redo<I> {
     /// Does not generate `redo action`.
-    pub const NONE: (Option<fn(I) -> ActionSeed<I, ()>>, PhantomData<((), I, (), ActionSeed)>) = (None, PhantomData::<((), I, (), ActionSeed)>);
-
+    pub const NONE: (
+        Option<fn(I) -> ActionSeed<I, ()>>,
+        PhantomData<((), I, (), ActionSeed)>,
+    ) = (None, PhantomData::<((), I, (), ActionSeed)>);
 
     /// Check [`Restore::parts`](Rollback::parts).
     pub const fn make<F, RI, O, A>(f: F) -> (Option<F>, PhantomData<(RI, I, O, A)>) {
         (Some(f), PhantomData)
     }
 }
-
-

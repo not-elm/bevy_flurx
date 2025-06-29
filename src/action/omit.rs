@@ -110,7 +110,7 @@ where
             let r1 = seed.create_runner(input, Output::default());
             OmitRunner { output, r1 }
         })
-            .with(input)
+        .with(input)
     }
 }
 
@@ -171,7 +171,7 @@ mod tests {
                             count.set(num);
                         })),
                 )
-                    .await;
+                .await;
             }));
         });
 
@@ -193,7 +193,7 @@ mod tests {
                             count.set(3);
                         })),
                 )
-                    .await;
+                .await;
             }));
         });
 

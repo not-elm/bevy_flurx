@@ -1,8 +1,8 @@
 //! [`wait::state`] creates a task related to waiting to state update.
 
-use bevy::prelude::{In, Res, State, States};
 use crate::action::wait;
 use crate::prelude::ActionSeed;
+use bevy::prelude::{In, Res, State, States};
 
 /// Waits until the state becomes the specified.
 ///
@@ -28,12 +28,8 @@ pub fn becomes<S>() -> ActionSeed<S>
 where
     S: States + 'static,
 {
-    wait::until(move |In(expect): In<S>,
-                      state_now: Res<State<S>>| {
-        state_now.get() == &expect
-    })
+    wait::until(move |In(expect): In<S>, state_now: Res<State<S>>| state_now.get() == &expect)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -53,11 +49,11 @@ mod tests {
     #[test]
     fn wait_until_state_becomes_phase2() {
         let mut app = test_app();
-        app
-            .init_state::<TestState>()
+        app.init_state::<TestState>()
             .add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(First, wait::state::becomes().with(TestState::Phase2)).await;
+                    task.will(First, wait::state::becomes().with(TestState::Phase2))
+                        .await;
                     task.will(Update, once::non_send::init::<AppExit>()).await;
                 }));
             });

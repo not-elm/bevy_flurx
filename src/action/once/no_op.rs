@@ -1,15 +1,15 @@
 use crate::prelude::{ActionSeed, CancellationHandlers, Runner, RunnerIs};
-use bevy::prelude::World;
 use crate::runner::Output;
+use bevy::prelude::World;
 
 /// Creates a no-op action.
 ///
 /// This action can be useful for the null-object-pattern.
 ///
 /// This is also the [Default] action for [Action](crate::prelude::Action) and [`ActionSeed`].
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -28,9 +28,9 @@ pub fn no_op() -> ActionSeed {
 /// This action can be useful for the null-object-pattern.
 ///
 /// This is also the [Default] action for [Action](crate::prelude::Action) and [`ActionSeed`].
-/// 
+///
 /// ## Examples
-/// 
+///
 /// ```no_run
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
@@ -40,9 +40,9 @@ pub fn no_op() -> ActionSeed {
 /// });
 #[inline]
 pub fn no_op_with_generics<I, O>() -> ActionSeed<I, O>
-    where 
-        I: 'static,
-        O: Default + 'static,
+where
+    I: 'static,
+    O: Default + 'static,
 {
     ActionSeed::new(|_, output| NoOpRunner(output))
 }
@@ -55,7 +55,6 @@ impl<O: Default> Runner for NoOpRunner<O> {
         RunnerIs::Completed
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -72,9 +71,9 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    once::no_op_with_generics::<(), ()>()
-                        .then(once::event::app_exit_success())
-                }).await;
+                    once::no_op_with_generics::<(), ()>().then(once::event::app_exit_success())
+                })
+                .await;
             }));
         });
 

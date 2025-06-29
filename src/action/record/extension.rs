@@ -25,10 +25,10 @@ pub enum RequestUndo<Act> {
 }
 
 impl<Act> RequestUndo<Act>
-    where
-        Act: Clone + PartialEq + Send + Sync + 'static,
+where
+    Act: Clone + PartialEq + Send + Sync + 'static,
 {
-    fn to_action(&self) -> ActionSeed{
+    fn to_action(&self) -> ActionSeed {
         match self {
             RequestUndo::To(act) => record::undo::to().with(act.clone()).omit(),
             RequestUndo::IndexTo(i) => record::undo::index_to::<Act>().with(*i).omit(),
@@ -57,10 +57,10 @@ pub enum RequestRedo<Act> {
 }
 
 impl<Act> RequestRedo<Act>
-where 
+where
     Act: Clone + PartialEq + Send + Sync + 'static,
 {
-    fn to_action(&self) -> ActionSeed{
+    fn to_action(&self) -> ActionSeed {
         match self {
             RequestRedo::To(act) => record::redo::to().with(act.clone()).omit(),
             RequestRedo::IndexTo(i) => record::redo::index_to::<Act>().with(*i).omit(),
@@ -84,14 +84,16 @@ impl RecordExtension for App {
     where
         Act: Clone + PartialEq + Send + Sync + 'static,
     {
-        self
-            .init_resource::<Record<Act>>()
+        self.init_resource::<Record<Act>>()
             .add_event::<RequestUndo<Act>>()
             .add_event::<RequestRedo<Act>>()
-            .add_systems(PostUpdate, (
-                request_undo::<Act>.run_if(on_event::<RequestUndo<Act>>),
-                request_redo::<Act>.run_if(on_event::<RequestRedo<Act>>),
-            ))
+            .add_systems(
+                PostUpdate,
+                (
+                    request_undo::<Act>.run_if(on_event::<RequestUndo<Act>>),
+                    request_redo::<Act>.run_if(on_event::<RequestRedo<Act>>),
+                ),
+            )
             .add_observer(apply_undo::<Act>)
             .add_observer(apply_redo::<Act>)
     }
@@ -127,10 +129,7 @@ where
     }
 }
 
-fn apply_undo<Act>(
-    trigger: Trigger<RequestUndo<Act>>,
-    mut commands: Commands,
-)
+fn apply_undo<Act>(trigger: Trigger<RequestUndo<Act>>, mut commands: Commands)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -140,10 +139,7 @@ where
     }));
 }
 
-fn apply_redo<Act>(
-    trigger: Trigger<RequestRedo<Act>>,
-    mut commands: Commands,
-)
+fn apply_redo<Act>(trigger: Trigger<RequestRedo<Act>>, mut commands: Commands)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -194,8 +190,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -215,7 +211,7 @@ mod tests {
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
                 )
-                    .await;
+                .await;
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
@@ -237,8 +233,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -260,8 +256,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -289,8 +285,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
@@ -316,7 +312,7 @@ mod tests {
                     Update,
                     push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
                 )
-                    .await;
+                .await;
             }));
         });
         app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
@@ -337,20 +333,24 @@ mod tests {
     fn test_request_redo_all() {
         let mut app = test_app();
 
-        app.add_systems(Startup, (
-            |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(
-                        Update,
-                        push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
-                    )
+        app.add_systems(
+            Startup,
+            (
+                |mut commands: Commands| {
+                    commands.spawn(Reactor::schedule(|task| async move {
+                        task.will(
+                            Update,
+                            push_num_act(0).then(push_num_act(1)).then(push_num_act(2)),
+                        )
                         .await;
-                }));
-            },
-            |mut ew: EventWriter<RequestUndo<NumAct>>| {
-                ew.write(RequestUndo::All);
-            }
-        ).chain());
+                    }));
+                },
+                |mut ew: EventWriter<RequestUndo<NumAct>>| {
+                    ew.write(RequestUndo::All);
+                },
+            )
+                .chain(),
+        );
         app.update();
         app.world_mut()
             .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
@@ -386,8 +386,8 @@ mod tests {
                         .then(push_undo_increment())
                         .then(push_undo_increment())
                 })
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();

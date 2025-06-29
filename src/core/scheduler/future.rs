@@ -13,17 +13,10 @@ impl Future for ReactorsFuture<'_, '_, '_> {
 
     #[inline(always)]
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        if self
-            .reactor
-            .as_mut()
-            .poll(cx)
-            .is_ready()
-        {
+        if self.reactor.as_mut().poll(cx).is_ready() {
             *self.finished = true;
         }
 
         Poll::Ready(())
     }
 }
-
-

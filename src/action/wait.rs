@@ -97,7 +97,7 @@ where
 
 impl<Sys, O> Runner for WaitRunner<Sys, O>
 where
-    Sys: System<Out=Option<O>>,
+    Sys: System<Out = Option<O>>,
     SystemIn<'static, Sys>: Clone + 'static,
 {
     #[inline]
@@ -141,9 +141,10 @@ mod tests {
                         *count == 2
                     }),
                 )
-                    .await;
+                .await;
 
-                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
+                task.will(Update, once::non_send::insert().with(AppExit::Success))
+                    .await;
             }));
         });
 
@@ -165,9 +166,9 @@ mod tests {
                         *count += 1 + input.0;
                         *count == 4
                     })
-                        .with(1),
+                    .with(1),
                 )
-                    .await;
+                .await;
 
                 task.will(Update, once::non_send::insert().with(AppExit::Success))
                     .await;

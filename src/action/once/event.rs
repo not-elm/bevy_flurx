@@ -66,7 +66,6 @@ pub fn app_exit_success() -> Action<AppExit, ()> {
     send().with(AppExit::Success)
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::action::once;
@@ -80,7 +79,8 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, once::event::send().with(AppExit::Success)).await;
+                task.will(First, once::event::send().with(AppExit::Success))
+                    .await;
             }));
         });
 
@@ -93,7 +93,8 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, once::event::send_default::<AppExit>()).await;
+                task.will(First, once::event::send_default::<AppExit>())
+                    .await;
             }));
         });
 

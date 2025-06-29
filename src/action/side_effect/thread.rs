@@ -12,7 +12,6 @@ use crate::prelude::side_effect::Functor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
 
-
 /// Spawns a new os thread, and then wait for its output.
 ///
 /// The thread is started when [`Runner`] is executed for the first time.
@@ -45,13 +44,11 @@ where
     I: Send + 'static,
     O: Send + 'static,
 {
-    ActionSeed::new(|input, output: Output<O>| {
-        ThreadRunner {
-            arc_output: Arc::new(Mutex::new(None)),
-            args: Some(f.functor(input)),
-            output,
-            handle: None,
-        }
+    ActionSeed::new(|input, output: Output<O>| ThreadRunner {
+        arc_output: Arc::new(Mutex::new(None)),
+        args: Some(f.functor(input)),
+        output,
+        handle: None,
     })
 }
 
@@ -84,7 +81,6 @@ where
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::action::{once, side_effect};
@@ -100,13 +96,13 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    side_effect::thread::spawn(|_| {
-                        1 + 1
-                    })
-                        .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
+                    side_effect::thread::spawn(|_| 1 + 1).pipe(once::run(
+                        |In(num): In<usize>, mut count: ResMut<Count>| {
                             count.0 = num;
-                        }))
-                }).await;
+                        },
+                    ))
+                })
+                .await;
             }));
         });
         app.update();
@@ -121,13 +117,13 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    side_effect::thread::spawn(|| {
-                        1 + 1
-                    })
-                        .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
+                    side_effect::thread::spawn(|| 1 + 1).pipe(once::run(
+                        |In(num): In<usize>, mut count: ResMut<Count>| {
                             count.0 = num;
-                        }))
-                }).await;
+                        },
+                    ))
+                })
+                .await;
             }));
         });
         app.update();

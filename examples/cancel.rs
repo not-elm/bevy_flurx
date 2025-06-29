@@ -15,10 +15,7 @@ struct Cancel;
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            FlurxPlugin,
-        ))
+        .add_plugins((DefaultPlugins, FlurxPlugin))
         .add_systems(Startup, (setup_camera_and_box, spawn_reactor))
         .add_systems(Update, cancel)
         .run();

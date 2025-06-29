@@ -85,7 +85,10 @@ where
     O2: 'static,
 {
     #[inline]
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> ActionSeed<I1, O1>
+    fn through<I2>(
+        self,
+        action: impl Into<Action<I2, O2>> + Send + Sync + 'static,
+    ) -> ActionSeed<I1, O1>
     where
         I2: 'static,
     {
@@ -100,7 +103,10 @@ where
     O2: 'static,
 {
     #[inline]
-    fn through<I2>(self, action: impl Into<Action<I2, O2>> + Send + Sync + 'static) -> Action<I1, O1>
+    fn through<I2>(
+        self,
+        action: impl Into<Action<I2, O2>> + Send + Sync + 'static,
+    ) -> Action<I1, O1>
     where
         I2: 'static,
     {
@@ -121,10 +127,14 @@ where
     fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         match self.inner.run(world, token) {
             RunnerIs::Completed => {
-                self.output.set(self.value.take().expect("Failed to take the action runner's output value in `ThroughRunner`!"));
+                self.output.set(
+                    self.value.take().expect(
+                        "Failed to take the action runner's output value in `ThroughRunner`!",
+                    ),
+                );
                 RunnerIs::Completed
             }
-            other => other
+            other => other,
         }
     }
 }
@@ -156,7 +166,7 @@ mod tests {
                             commands.insert_resource(Count(num));
                         })),
                 )
-                    .await;
+                .await;
             }));
         });
         app.update();

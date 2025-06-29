@@ -24,10 +24,7 @@ pub fn just_pressed<T>() -> ActionSeed<T>
 where
     T: Copy + Eq + Hash + Send + Sync + 'static,
 {
-    wait::until(move |In(expect): In<T>,
-                      input: Res<ButtonInput<T>>| {
-        input.just_pressed(expect)
-    })
+    wait::until(move |In(expect): In<T>, input: Res<ButtonInput<T>>| input.just_pressed(expect))
 }
 
 /// Waits until keycode has been pressed.
@@ -47,10 +44,7 @@ pub fn pressed<T>() -> ActionSeed<T>
 where
     T: Copy + Eq + Hash + Send + Sync + 'static,
 {
-    wait::until(move |In(expect): In<T>,
-                      input: Res<ButtonInput<T>>| {
-        input.pressed(expect)
-    })
+    wait::until(move |In(expect): In<T>, input: Res<ButtonInput<T>>| input.pressed(expect))
 }
 
 /// Waits until any keycode in inputs has been pressed.
@@ -70,10 +64,7 @@ pub fn any_pressed<T>() -> ActionSeed<Vec<T>>
 where
     T: Copy + Eq + Hash + Send + Sync + 'static,
 {
-    wait::until(|In(items): In<Vec<T>>,
-                 input: Res<ButtonInput<T>>| {
-        input.any_pressed(items)
-    })
+    wait::until(|In(items): In<Vec<T>>, input: Res<ButtonInput<T>>| input.any_pressed(items))
 }
 
 /// Waits until all keycodes in inputs have been pressed.
@@ -93,10 +84,7 @@ pub fn all_pressed<T>() -> ActionSeed<Vec<T>>
 where
     T: Copy + Eq + Hash + Send + Sync + 'static,
 {
-    wait::until(|In(items): In<Vec<T>>,
-                 input: Res<ButtonInput<T>>| {
-        input.all_pressed(items)
-    })
+    wait::until(|In(items): In<Vec<T>>, input: Res<ButtonInput<T>>| input.all_pressed(items))
 }
 
 /// Waits keycode has just been released.
@@ -116,10 +104,7 @@ pub fn just_released<T>() -> ActionSeed<T>
 where
     T: Copy + Eq + Hash + Send + Sync + 'static,
 {
-    wait::until(move |In(expect): In<T>,
-                      input: Res<ButtonInput<T>>| {
-        input.just_released(expect)
-    })
+    wait::until(move |In(expect): In<T>, input: Res<ButtonInput<T>>| input.just_released(expect))
 }
 
 /// Waits any keycode in inputs have just been released.
@@ -139,10 +124,7 @@ pub fn any_just_released<T>() -> ActionSeed<Vec<T>>
 where
     T: Copy + Eq + Hash + Send + Sync + 'static,
 {
-    wait::until(|In(items): In<Vec<T>>,
-                 input: Res<ButtonInput<T>>| {
-        input.any_just_released(items)
-    })
+    wait::until(|In(items): In<Vec<T>>, input: Res<ButtonInput<T>>| input.any_just_released(items))
 }
 
 #[cfg(test)]
@@ -164,12 +146,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, wait::input::just_pressed().with(KeyCode::KeyA)
-                    .then(wait::input::pressed().with(KeyA))
-                    .then(once::run(|world: &mut World| {
-                        world.set_bool(true);
-                    })),
-                ).await;
+                task.will(
+                    First,
+                    wait::input::just_pressed()
+                        .with(KeyCode::KeyA)
+                        .then(wait::input::pressed().with(KeyA))
+                        .then(once::run(|world: &mut World| {
+                            world.set_bool(true);
+                        })),
+                )
+                .await;
             }));
         });
 
@@ -186,19 +172,27 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, sequence! {
-                    wait::input::any_pressed().with(vec![KeyA, KeyB]),
-                    once::run(|world: &mut World|{
-                        world.set_bool(true);
-                    })
-                }).await;
+                task.will(
+                    Update,
+                    sequence! {
+                        wait::input::any_pressed().with(vec![KeyA, KeyB]),
+                        once::run(|world: &mut World|{
+                            world.set_bool(true);
+                        })
+                    },
+                )
+                .await;
 
-                task.will(Update, sequence! {
-                    wait::input::any_pressed().with(vec![KeyC, KeyD]),
-                    once::run(|world: &mut World|{
-                        world.set_bool(true);
-                    })
-                }).await;
+                task.will(
+                    Update,
+                    sequence! {
+                        wait::input::any_pressed().with(vec![KeyC, KeyD]),
+                        once::run(|world: &mut World|{
+                            world.set_bool(true);
+                        })
+                    },
+                )
+                .await;
             }));
         });
 
@@ -225,12 +219,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, sequence! {
-                    wait::input::all_pressed().with(vec![KeyA, KeyB]),
-                    once::run(|world: &mut World|{
-                        world.set_bool(true);
-                    })
-                }).await;
+                task.will(
+                    First,
+                    sequence! {
+                        wait::input::all_pressed().with(vec![KeyA, KeyB]),
+                        once::run(|world: &mut World|{
+                            world.set_bool(true);
+                        })
+                    },
+                )
+                .await;
             }));
         });
 
@@ -251,12 +249,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, sequence! {
-                    wait::input::just_released().with(KeyA),
-                    once::run(|world: &mut World|{
-                        world.set_bool(true);
-                    })
-                }).await;
+                task.will(
+                    First,
+                    sequence! {
+                        wait::input::just_released().with(KeyA),
+                        once::run(|world: &mut World|{
+                            world.set_bool(true);
+                        })
+                    },
+                )
+                .await;
             }));
         });
 
@@ -277,12 +279,16 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(First, sequence! {
-                    wait::input::any_just_released().with(vec![KeyCode::KeyA, KeyCode::KeyB]),
-                    once::run(|world: &mut World|{
-                        world.set_bool(true);
-                    })
-                }).await;
+                task.will(
+                    First,
+                    sequence! {
+                        wait::input::any_just_released().with(vec![KeyCode::KeyA, KeyCode::KeyB]),
+                        once::run(|world: &mut World|{
+                            world.set_bool(true);
+                        })
+                    },
+                )
+                .await;
             }));
         });
 

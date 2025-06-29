@@ -143,20 +143,17 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 let action = || {
-                    non_send::insert().with(AppExit::Success)
+                    non_send::insert()
+                        .with(AppExit::Success)
                         .then(delay::frames().with(1))
                 };
-                task.will(First, action())
-                    .await;
+                task.will(First, action()).await;
                 debug!("First finished");
-                task.will(PreUpdate, action())
-                    .await;
+                task.will(PreUpdate, action()).await;
                 debug!("PreUpdate finished");
-                task.will(Update, action())
-                    .await;
+                task.will(Update, action()).await;
                 debug!("Update finished");
-                task.will(PostUpdate, action())
-                    .await;
+                task.will(PostUpdate, action()).await;
                 debug!("PostUpdate finished");
             }));
         });

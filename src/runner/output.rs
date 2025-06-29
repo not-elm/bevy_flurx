@@ -25,7 +25,10 @@ impl<O> Output<O> {
     /// If the output already exists, it is replaced.
     #[inline(always)]
     pub fn set(&self, o: O) {
-        self.0.write().expect("Failed to set the action runner output value").replace(o);
+        self.0
+            .write()
+            .expect("Failed to set the action runner output value")
+            .replace(o);
     }
 
     /// Takes the value out of the [`Output`].
@@ -46,4 +49,3 @@ impl<O> Output<O> {
         self.0.read().map(|o| o.is_none()).unwrap_or(true)
     }
 }
-

@@ -1,7 +1,7 @@
 //! Provides a mechanism for sequentially combining actions.
 //!
 //! [`Then`] trait is implemented on all actions and can be combined
-//! in method chains like `once::run(||{}).then(once::run(||{}))` 
+//! in method chains like `once::run(||{}).then(once::run(||{}))`
 //!
 //! It also provides the [`sequence!`](crate::sequence) macro. The behavior itself is the same as [`Then`].
 
@@ -39,7 +39,6 @@ pub trait Then<I1, O1, O2, ActionOrSeed> {
         I2: 'static;
 }
 
-
 impl<I1, O1, O2, ActionOrSeed, A> Then<I1, O1, O2, ActionOrSeed> for A
 where
     I1: 'static,
@@ -51,12 +50,10 @@ where
     where
         I2: 'static,
     {
-        self.remake(|r1, o1, output| {
-            SequenceRunner {
-                r1,
-                r2: action.into().create_runner(output),
-                o1,
-            }
+        self.remake(|r1, o1, output| SequenceRunner {
+            r1,
+            r2: action.into().create_runner(output),
+            o1,
         })
     }
 }
@@ -114,17 +111,20 @@ where
     O1: 'static,
 {
     #[inline]
-    fn run(&mut self, world: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs {
+    fn run(
+        &mut self,
+        world: &mut World,
+        cancellation_handlers: &mut CancellationHandlers,
+    ) -> RunnerIs {
         if self.o1.is_none() {
             match self.r1.run(world, cancellation_handlers) {
                 RunnerIs::Completed => {}
-                other => return other
+                other => return other,
             };
         }
         self.r2.run(world, cancellation_handlers)
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -148,15 +148,16 @@ mod tests {
     #[derive(Resource, Eq, PartialEq, Debug)]
     struct OutputUSize(usize);
 
-
     #[test]
     fn two() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|| {})
-                    .then(once::res::insert().with(Mark1)),
-                ).await;
+                task.will(
+                    Update,
+                    once::run(|| {}).then(once::res::insert().with(Mark1)),
+                )
+                .await;
             }));
         });
         app.update();
@@ -168,10 +169,13 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|| {})
-                    .then(once::res::insert().with(Mark1))
-                    .then(once::res::insert().with(Mark2)),
-                ).await;
+                task.will(
+                    Update,
+                    once::run(|| {})
+                        .then(once::res::insert().with(Mark1))
+                        .then(once::res::insert().with(Mark2)),
+                )
+                .await;
             }));
         });
         app.update();
@@ -185,13 +189,18 @@ mod tests {
 
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let output = task.will(Update, once::run(|| {})
-                    .then(once::res::insert().with(Mark1))
-                    .then(once::res::insert().with(Mark2))
-                    .then(once::run(|| { 1 + 1 })),
-                ).await;
-           
-                task.will(Update, once::res::insert().with(OutputUSize(output))).await;
+                let output = task
+                    .will(
+                        Update,
+                        once::run(|| {})
+                            .then(once::res::insert().with(Mark1))
+                            .then(once::res::insert().with(Mark2))
+                            .then(once::run(|| 1 + 1)),
+                    )
+                    .await;
+
+                task.will(Update, once::res::insert().with(OutputUSize(output)))
+                    .await;
             }));
         });
         app.update();
@@ -205,13 +214,19 @@ mod tests {
 
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let output = task.will(Update, sequence![
-                    once::run(|| {}),
-                    once::res::insert().with(Mark1),
-                    once::res::insert().with(Mark2),
-                    once::run(|| { 1 + 1 }),
-                ]).await;
-                task.will(Update, once::res::insert().with(OutputUSize(output))).await;
+                let output = task
+                    .will(
+                        Update,
+                        sequence![
+                            once::run(|| {}),
+                            once::res::insert().with(Mark1),
+                            once::res::insert().with(Mark2),
+                            once::run(|| { 1 + 1 }),
+                        ],
+                    )
+                    .await;
+                task.will(Update, once::res::insert().with(OutputUSize(output)))
+                    .await;
             }));
         });
         app.update();
@@ -225,13 +240,16 @@ mod tests {
 
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let output = task.will(Update, {
-                    once::run(|| {})
-                        .then(once::res::insert().with(Mark1))
-                        .then(once::res::insert().with(Mark2))
-                        .then(once::run(|| { 1 + 1 }))
-                }).await;
-                task.will(Update, once::res::insert().with(OutputUSize(output))).await;
+                let output = task
+                    .will(Update, {
+                        once::run(|| {})
+                            .then(once::res::insert().with(Mark1))
+                            .then(once::res::insert().with(Mark2))
+                            .then(once::run(|| 1 + 1))
+                    })
+                    .await;
+                task.will(Update, once::res::insert().with(OutputUSize(output)))
+                    .await;
             }));
         });
         app.update();
@@ -246,9 +264,8 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, test::cancel()
-                    .then(increment_count()),
-                ).await;
+                task.will(Update, test::cancel().then(increment_count()))
+                    .await;
             }));
         });
         app.update();

@@ -20,7 +20,11 @@ where
     Out: 'static,
 {
     #[inline]
-    pub(crate) fn new(label: Label, entity: Entity, action: Action<In, Out>) -> WorldSelector<Label, In, Out> {
+    pub(crate) fn new(
+        label: Label,
+        entity: Entity,
+        action: Action<In, Out>,
+    ) -> WorldSelector<Label, In, Out> {
         Self {
             action: Some((entity, action)),
             output: Output::default(),
@@ -49,8 +53,3 @@ where
         }
     }
 }
-
-
-
-
-

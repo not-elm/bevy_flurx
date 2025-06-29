@@ -73,7 +73,7 @@ where
             output,
         }
     })
-        .with((li, ri))
+    .with((li, ri))
 }
 
 struct EitherRunner<O1, O2> {
@@ -89,7 +89,11 @@ where
     O1: 'static,
     O2: 'static,
 {
-    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
+    fn run(
+        &mut self,
+        world: &mut World,
+        token: &mut CancellationHandlers,
+    ) -> crate::prelude::RunnerIs {
         match self.r1.run(world, token) {
             RunnerIs::Canceled => return RunnerIs::Canceled,
             RunnerIs::Running => {}
@@ -129,7 +133,7 @@ mod tests {
     fn wait_either() {
         let mut app = test_app();
         app.finish();
-        
+
         #[derive(Clone)]
         struct Count(usize);
         app.world_mut()
@@ -173,22 +177,21 @@ mod tests {
                     Update,
                     wait::either(
                         wait_all! {
-                                wait::until(|mut count:ResMut<Count>| {
-                                    count.0 += 1;
-                                    false
-                                }),
-                                wait::until(|| { false })
-                            },
+                            wait::until(|mut count:ResMut<Count>| {
+                                count.0 += 1;
+                                false
+                            }),
+                            wait::until(|| { false })
+                        },
                         wait::input::pressed().with(KeyCode::KeyA),
                     ),
                 )
-                    .await;
+                .await;
                 task.will(Update, wait::until(|| false)).await;
             }));
         });
 
-        app
-            .resource_mut::<ButtonInput<KeyCode>>()
+        app.resource_mut::<ButtonInput<KeyCode>>()
             .press(KeyCode::KeyA);
         for _ in 0..100 {
             app.update();

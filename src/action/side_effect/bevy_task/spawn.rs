@@ -36,14 +36,12 @@ where
     Out: Send + 'static,
     M: Send + 'static,
 {
-    ActionSeed::new(|input, output| {
-        BevyTaskRunner {
-            output,
-            #[cfg(not(target_arch = "wasm32"))]
-            task: bevy::tasks::AsyncComputeTaskPool::get().spawn(f.functor(input)),
-            #[cfg(target_arch = "wasm32")]
-            task: Box::pin(f.functor(input)),
-        }
+    ActionSeed::new(|input, output| BevyTaskRunner {
+        output,
+        #[cfg(not(target_arch = "wasm32"))]
+        task: bevy::tasks::AsyncComputeTaskPool::get().spawn(f.functor(input)),
+        #[cfg(target_arch = "wasm32")]
+        task: Box::pin(f.functor(input)),
     })
 }
 
@@ -51,7 +49,7 @@ struct BevyTaskRunner<Out> {
     #[cfg(not(target_arch = "wasm32"))]
     task: bevy::tasks::Task<Out>,
     #[cfg(target_arch = "wasm32")]
-    task: std::pin::Pin<Box<dyn std::future::Future<Output=Out>>>,
+    task: std::pin::Pin<Box<dyn std::future::Future<Output = Out>>>,
     output: Output<Out>,
 }
 
@@ -69,7 +67,6 @@ where
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -90,11 +87,10 @@ mod tests {
             app.add_systems(Startup, |mut commands: Commands| {
                 commands.spawn(Reactor::schedule(|task| async move {
                     task.will(Update, {
-                        side_effect::bevy_task::spawn(async move {
-                            Count(1 + 1)
-                        })
+                        side_effect::bevy_task::spawn(async move { Count(1 + 1) })
                             .pipe(once::res::insert())
-                    }).await;
+                    })
+                    .await;
                 }));
             });
             for _ in 0..10 {
@@ -123,7 +119,8 @@ mod test_tokio {
                     side_effect::bevy_task::spawn(async move {
                         tokio::time::sleep(std::time::Duration::new(1, 0)).await;
                     })
-                }).await;
+                })
+                .await;
             }));
         });
         app.update();

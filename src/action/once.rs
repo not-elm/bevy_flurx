@@ -6,18 +6,18 @@ use crate::runner::{CancellationHandlers, Output, Runner};
 pub use _no_op::{no_op, no_op_with_generics};
 use bevy::prelude::{IntoSystem, System, SystemIn, SystemInput, World};
 
-pub mod event;
-pub mod non_send;
-pub mod res;
-pub mod switch;
 #[path = "once/no_op.rs"]
 mod _no_op;
 #[cfg(feature = "audio")]
 #[cfg_attr(docsrs, doc(cfg(feature = "audio")))]
 pub mod audio;
+pub mod event;
+pub mod non_send;
+pub mod res;
 #[cfg(feature = "state")]
 #[cfg_attr(docsrs, doc(cfg(feature = "state")))]
 pub mod state;
+pub mod switch;
 
 /// Once run a system.
 ///

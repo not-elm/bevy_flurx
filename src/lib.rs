@@ -6,7 +6,6 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::type_complexity)]
 
-
 use crate::reactor::ReactorPlugin;
 use crate::runner::RunnerPlugin;
 use bevy::app::{App, Plugin};
@@ -47,10 +46,10 @@ mod reactor;
 mod selector;
 mod world_ptr;
 
+mod core;
 /// Define utilities for testing.
 #[cfg(test)]
 mod test_util;
-mod core;
 
 /// Provides the async systems.
 pub struct FlurxPlugin;
@@ -58,10 +57,7 @@ pub struct FlurxPlugin;
 impl Plugin for FlurxPlugin {
     #[inline]
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            ReactorPlugin,
-            RunnerPlugin,
-        ));
+        app.add_plugins((ReactorPlugin, RunnerPlugin));
     }
 }
 
@@ -119,7 +115,7 @@ mod tests {
             app.add_record::<TestAct>();
             app.init_resource::<Record<TestAct>>();
         }
-        
+
         app
     }
 

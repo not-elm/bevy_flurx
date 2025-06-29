@@ -38,9 +38,9 @@ impl<State> CoreTask<State> {
     /// });
     /// ```
     #[inline]
-    pub fn will<Out, Sel>(&self, selector: Sel) -> impl Future<Output=Out> + 'static
+    pub fn will<Out, Sel>(&self, selector: Sel) -> impl Future<Output = Out> + 'static
     where
-        Sel: Selector<State, Output=Out> + 'static,
+        Sel: Selector<State, Output = Out> + 'static,
         State: Copy + 'static,
     {
         TaskFuture::<State, Sel> {

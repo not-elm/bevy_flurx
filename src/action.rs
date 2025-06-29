@@ -28,23 +28,23 @@ use bevy::prelude::Reflect;
 pub use map::Map;
 pub use remake::Remake;
 
-pub mod once;
-pub mod wait;
-pub mod delay;
-pub mod switch;
-pub mod seed;
-pub mod through;
-pub mod pipe;
-pub mod inspect;
-pub mod sequence;
-pub mod omit;
 #[path = "action/tuple.rs"]
 mod _tuple;
+pub mod delay;
+pub mod inspect;
 mod map;
+pub mod omit;
+pub mod once;
+pub mod pipe;
 mod remake;
+pub mod seed;
+pub mod sequence;
 #[cfg(feature = "side-effect")]
 #[cfg_attr(docsrs, doc(cfg(feature = "side-effect")))]
 pub mod side_effect;
+pub mod switch;
+pub mod through;
+pub mod wait;
 
 #[cfg(feature = "record")]
 #[cfg_attr(docsrs, doc(cfg(feature = "record")))]
@@ -62,12 +62,12 @@ where
     O1: 'static,
 {
     /// Splits itself into an input value and an action seed.
-    /// 
+    ///
     /// ## Examples
-    /// 
+    ///
     /// ```no_run
     /// use bevy_flurx::prelude::*;
-    /// 
+    ///
     /// let action: Action<usize> = delay::frames().with(10);
     /// let (_input, _seed): (usize, ActionSeed<usize>) = action.split();
     /// ```
@@ -140,7 +140,6 @@ macro_rules! actions {
     );
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::action::{delay, once, wait};
@@ -153,33 +152,38 @@ mod tests {
 
     #[test]
     fn length_is_1() {
-        assert_eq!(actions![once::run(||{})].len(), 1);
-        assert_eq!(actions![once::run(||{}),].len(), 1);
+        assert_eq!(actions![once::run(|| {})].len(), 1);
+        assert_eq!(actions![once::run(|| {}),].len(), 1);
     }
 
     #[test]
     fn length_is_2() {
-        assert_eq!(actions![
-            once::run(||{}),
-            wait::until(||false)
-        ].len(), 2);
+        assert_eq!(actions![once::run(|| {}), wait::until(|| false)].len(), 2);
     }
 
     #[test]
     fn length_is_3() {
-        assert_eq!(actions![
-            once::run(||{}),
-            wait::until(||false),
-            delay::time().with(Duration::from_secs(1))
-        ].len(), 3);
+        assert_eq!(
+            actions![
+                once::run(|| {}),
+                wait::until(|| false),
+                delay::time().with(Duration::from_secs(1))
+            ]
+            .len(),
+            3
+        );
     }
 
     #[test]
     fn last_action_with_comma() {
-        assert_eq!(actions![
-            once::run(||{}),
-            wait::until(||false),
-            delay::time().with(Duration::from_secs(1)),
-        ].len(), 3);
+        assert_eq!(
+            actions![
+                once::run(|| {}),
+                wait::until(|| false),
+                delay::time().with(Duration::from_secs(1)),
+            ]
+            .len(),
+            3
+        );
     }
 }

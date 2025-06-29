@@ -45,20 +45,16 @@ where
     Out: Send + Sync + 'static,
     Functor: AsyncFunctor<I, Out, M> + Send + Sync + 'static,
 {
-    ActionSeed::new(|input: I, output: Output<Out>| {
-        TokioRunner {
-            arc_output: Arc::new(tokio::sync::Mutex::new(None)),
-            args: Some((input, f)),
-            output,
-            handle: None,
-            _m: PhantomData,
-        }
+    ActionSeed::new(|input: I, output: Output<Out>| TokioRunner {
+        arc_output: Arc::new(tokio::sync::Mutex::new(None)),
+        args: Some((input, f)),
+        output,
+        handle: None,
+        _m: PhantomData,
     })
 }
 
-struct TokioRunner<I, Out, Functor, M>
-
-{
+struct TokioRunner<I, Out, Functor, M> {
     args: Option<(I, Functor)>,
     arc_output: Arc<tokio::sync::Mutex<Option<Out>>>,
     output: Output<Out>,
@@ -77,11 +73,17 @@ where
     fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some((input, functor)) = self.args.take() {
             let arc_output = self.arc_output.clone();
-            self.handle.replace(pollster::block_on(async move {
-                tokio::spawn(async move {
-                    arc_output.lock().await.replace(functor.functor(input).await);
-                })
-            }.compat()));
+            self.handle.replace(pollster::block_on(
+                async move {
+                    tokio::spawn(async move {
+                        arc_output
+                            .lock()
+                            .await
+                            .replace(functor.functor(input).await);
+                    })
+                }
+                .compat(),
+            ));
         }
 
         if let Some(out) = self.arc_output.blocking_lock().take() {
@@ -100,7 +102,6 @@ impl<I, Out, Functor, M> Drop for TokioRunner<I, Out, Functor, M> {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -122,11 +123,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, side_effect::tokio::spawn(|_| async move { 1 + 1 })
-                    .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
-                        count.0 = num;
-                    })),
-                ).await;
+                task.will(
+                    Update,
+                    side_effect::tokio::spawn(|_| async move { 1 + 1 }).pipe(once::run(
+                        |In(num): In<usize>, mut count: ResMut<Count>| {
+                            count.0 = num;
+                        },
+                    )),
+                )
+                .await;
             }));
         });
         app.update();
@@ -140,11 +145,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, side_effect::tokio::spawn(async move { 1 + 1 })
-                    .pipe(once::run(|In(num): In<usize>, mut count: ResMut<Count>| {
-                        count.0 = num;
-                    })),
-                ).await;
+                task.will(
+                    Update,
+                    side_effect::tokio::spawn(async move { 1 + 1 }).pipe(once::run(
+                        |In(num): In<usize>, mut count: ResMut<Count>| {
+                            count.0 = num;
+                        },
+                    )),
+                )
+                .await;
             }));
         });
         app.update();
@@ -167,11 +176,12 @@ mod tests {
                             tokio::time::sleep(Duration::from_millis(100)).await;
                             TASK_FINISHED.store(true, Ordering::Relaxed);
                         })
-                            .then(once::event::app_exit_success()),
+                        .then(once::event::app_exit_success()),
                     )
-                        // keep running while the test is running
-                        .then(delay::time().with(Duration::from_secs(1000)))
-                }).await;
+                    // keep running while the test is running
+                    .then(delay::time().with(Duration::from_secs(1000)))
+                })
+                .await;
             }));
         });
         let mut er = exit_reader();
@@ -189,18 +199,20 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    wait::any().with(actions![
-                        once::run(|| {}),
-                        once::run(|| {}),
-                        side_effect::tokio::spawn(|_| async move {
-                            tokio::time::sleep(Duration::from_millis(100)).await;
-                            TASK_FINISHED.store(true, Ordering::Relaxed);
-                        })
+                    wait::any()
+                        .with(actions![
+                            once::run(|| {}),
+                            once::run(|| {}),
+                            side_effect::tokio::spawn(|_| async move {
+                                tokio::time::sleep(Duration::from_millis(100)).await;
+                                TASK_FINISHED.store(true, Ordering::Relaxed);
+                            })
                             .then(once::event::app_exit_success())
-                    ])
+                        ])
                         // keep running while the test is running
                         .then(delay::time().with(Duration::from_secs(1000)))
-                }).await;
+                })
+                .await;
             }));
         });
         let mut er = exit_reader();

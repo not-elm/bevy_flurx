@@ -163,7 +163,7 @@ where
                     self.redo_runner.take();
                     self.redo_output.take();
                 }
-                other => return other
+                other => return other,
             }
         }
     }
@@ -219,8 +219,8 @@ mod tests {
                         ),
                     }),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
                 task.will(Update, record::undo::once::<TestAct>())
                     .await
                     .unwrap();
@@ -229,7 +229,7 @@ mod tests {
                     .unwrap();
             }));
         });
-       
+
         app.update();
         app.assert_resource_eq(Count(0));
     }
@@ -404,8 +404,8 @@ mod tests {
                         )
                     })],
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
 
                 let t1 = task.run(Update, record::undo::once::<TestAct>()).await;
                 if task
@@ -442,8 +442,8 @@ mod tests {
                     .then(record::undo::once::<TestAct>())
                     .then(record::redo::once::<TestAct>())
             })
-                .await
-                .unwrap();
+            .await
+            .unwrap();
         });
         app.update();
         app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());
@@ -489,7 +489,7 @@ mod tests {
                             .then(record::undo::once::<TestAct>())
                             .then(delay::frames().with(1000))
                     })
-                        .await;
+                    .await;
                 }),
             ));
         });
@@ -498,7 +498,7 @@ mod tests {
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
                 commands.entity(reactor.single().unwrap()).despawn();
             })
-                .run_if(on_event::<AppExit>),
+            .run_if(on_event::<AppExit>),
         );
         app.update();
         app.send(RequestRedo::<TestAct>::Once);

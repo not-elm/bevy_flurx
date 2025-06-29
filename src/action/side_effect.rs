@@ -3,30 +3,30 @@
 
 use std::future::Future;
 
+pub mod bevy_task;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod thread;
 #[cfg(feature = "tokio")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
 pub mod tokio;
-#[cfg(not(target_arch = "wasm32"))]
-pub mod thread;
-pub mod bevy_task;
 
 /// This trait is implemented for functions that return future or future.
 pub trait AsyncFunctor<I, Out, M> {
     /// Returns a new future with input.
-    /// 
+    ///
     /// If you have added the `tokio` feature flag, future will be automatically compat.
-    fn functor(self, input: I) -> impl Future<Output=Out> + Send;
+    fn functor(self, input: I) -> impl Future<Output = Out> + Send;
 }
 
 impl<I, F, Fut> AsyncFunctor<I, <Fut as Future>::Output, ()> for F
-    where
-        I: Send + 'static,
-        F: FnOnce(I) -> Fut + Send + 'static,
-        Fut: Future + Send + 'static,
-        <Fut as Future>::Output: Send + 'static
+where
+    I: Send + 'static,
+    F: FnOnce(I) -> Fut + Send + 'static,
+    Fut: Future + Send + 'static,
+    <Fut as Future>::Output: Send + 'static,
 {
     #[inline]
-    fn functor(self, input: I) -> impl Future<Output=<Fut as Future>::Output> + Send {
+    fn functor(self, input: I) -> impl Future<Output = <Fut as Future>::Output> + Send {
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
@@ -40,13 +40,13 @@ impl<I, F, Fut> AsyncFunctor<I, <Fut as Future>::Output, ()> for F
 }
 
 impl<I, Fut> AsyncFunctor<I, <Fut as Future>::Output, bool> for Fut
-    where
-        I: Send + 'static,
-        Fut: Future + Send + 'static,
-        <Fut as Future>::Output: Send + 'static
+where
+    I: Send + 'static,
+    Fut: Future + Send + 'static,
+    <Fut as Future>::Output: Send + 'static,
 {
     #[inline]
-    fn functor(self, _: I) -> impl Future<Output=<Fut as Future>::Output> + Send {
+    fn functor(self, _: I) -> impl Future<Output = <Fut as Future>::Output> + Send {
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
@@ -60,7 +60,7 @@ impl<I, Fut> AsyncFunctor<I, <Fut as Future>::Output, bool> for Fut
 }
 
 /// This trait is used in the action argument and does not need to be implemented explicitly by the user
-pub trait Functor<I, O, M>{
+pub trait Functor<I, O, M> {
     /// Returns a new function input.
     fn functor(self, input: I) -> impl FnOnce() -> O + Send + 'static;
 }
@@ -72,9 +72,7 @@ where
 {
     #[inline]
     fn functor(self, input: I) -> impl FnOnce() -> O + Send + 'static {
-        move ||{
-            self(input)
-        }
+        move || self(input)
     }
 }
 
@@ -84,8 +82,6 @@ where
 {
     #[inline]
     fn functor(self, _input: ()) -> impl FnOnce() -> O + Send + 'static {
-        ||{
-            self()
-        }
+        || self()
     }
 }

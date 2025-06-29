@@ -10,9 +10,10 @@ pub struct ReserveRegisterRunnerPlugin;
 
 impl Plugin for ReserveRegisterRunnerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .add_event::<ReservedRunner>()
-            .add_systems(Last, register_runner_system.run_if(on_event::<ReservedRunner>));
+        app.add_event::<ReservedRunner>().add_systems(
+            Last,
+            register_runner_system.run_if(on_event::<ReservedRunner>),
+        );
     }
 }
 

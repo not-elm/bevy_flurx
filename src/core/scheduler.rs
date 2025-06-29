@@ -7,7 +7,7 @@ use core::pin::Pin;
 mod future;
 mod state_ptr;
 
-pub(crate) type CoreReactor<'state> = Pin<Box<dyn Future<Output=()> + Send + Sync + 'state>>;
+pub(crate) type CoreReactor<'state> = Pin<Box<dyn Future<Output = ()> + Send + Sync + 'state>>;
 
 pub struct CoreScheduler<State> {
     state: StatePtr<State>,
@@ -23,14 +23,14 @@ where
     pub fn schedule<F, Fut>(f: F) -> CoreScheduler<State>
     where
         F: FnOnce(CoreTask<State>) -> Fut + Send + Sync,
-        Fut: Future<Output=()> + Send + Sync + 'static,
+        Fut: Future<Output = ()> + Send + Sync + 'static,
     {
-         let mut state = StatePtr(Box::new(None));
+        let mut state = StatePtr(Box::new(None));
         Self {
             reactor: Box::pin(f(CoreTask {
-                state: state.state_ref()
+                state: state.state_ref(),
             })),
-             state,
+            state,
             finished: false,
         }
     }
@@ -39,10 +39,10 @@ where
     #[inline(always)]
     pub async fn run(&mut self, state: State) {
         self.state.0.replace(state);
-        ReactorsFuture{
+        ReactorsFuture {
             finished: &mut self.finished,
-            reactor: &mut self.reactor
-        }.await;
+            reactor: &mut self.reactor,
+        }
+        .await;
     }
 }
-

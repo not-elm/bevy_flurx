@@ -21,7 +21,7 @@ impl ReactorTask {
     ///
     /// The argument label indicates which scheduler it will be executed on.
     ///
-    /// For `action`, please see [`here`](crate::action). 
+    /// For `action`, please see [`here`](crate::action).
     ///
     /// ## Example
     ///
@@ -48,13 +48,14 @@ impl ReactorTask {
         &self,
         label: Label,
         action: impl Into<Action<In, Out>> + 'static,
-    ) -> impl Future<Output=Out>
+    ) -> impl Future<Output = Out>
     where
         Label: ScheduleLabel,
         In: 'static,
         Out: 'static,
     {
-        self.task.will(WorldSelector::new(label, self.entity, action.into()))
+        self.task
+            .will(WorldSelector::new(label, self.entity, action.into()))
     }
 
     /// Create a new initialized task.
@@ -84,7 +85,7 @@ impl ReactorTask {
         &self,
         label: Label,
         action: impl Into<Action<In, Out>> + 'static,
-    ) -> impl Future<Output=Out>
+    ) -> impl Future<Output = Out>
     where
         Label: ScheduleLabel,
         In: 'static,
@@ -111,9 +112,11 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 let event_task = task.run(First, wait::event::read::<AppExit>()).await;
-                task.will(Update, once::event::send().with(AppExit::Success)).await;
+                task.will(Update, once::event::send().with(AppExit::Success))
+                    .await;
                 event_task.await;
-                task.will(Update, once::non_send::insert().with(AppExit::Success)).await;
+                task.will(Update, once::non_send::insert().with(AppExit::Success))
+                    .await;
             }));
         });
 

@@ -62,11 +62,9 @@ where
     E: Event,
 {
     wait::until(
-       move  |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
+        move |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
             if er.is_none() {
-                let received = events
-                    .iter_current_update_events()
-                    .any(&predicate);
+                let received = events.iter_current_update_events().any(&predicate);
                 if received {
                     events.clear();
                     return true;
@@ -104,11 +102,11 @@ pub fn read<E>() -> ActionSeed<(), E>
 where
     E: Event + Clone,
 {
-    wait::event::read_and(|_|true)
+    wait::event::read_and(|_| true)
 }
 
 /// Waits until the event is received and the event matches the predicate.
-/// 
+///
 /// This is similar to [`wait::event::comes`], but it returns a cloned event.
 ///
 /// ## Examples
@@ -143,10 +141,8 @@ where
                     return Some(event);
                 }
             }
-            let er = er.get_or_insert_with(|| {
-                events.get_cursor_current()
-            });
-            if let Some(event) = er.read(&events).find(|e|predicate(e)).cloned() {
+            let er = er.get_or_insert_with(|| events.get_cursor_current());
+            if let Some(event) = er.read(&events).find(|e| predicate(e)).cloned() {
                 events.clear();
                 Some(event)
             } else {
@@ -176,7 +172,7 @@ mod tests {
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::comes::<TestEvent1>()),
                 )
-                    .await;
+                .await;
 
                 task.will(Update, {
                     wait::either(wait::event::comes::<TestEvent1>(), once::run(|| {})).pipe(
@@ -189,7 +185,7 @@ mod tests {
                         ),
                     )
                 })
-                    .await;
+                .await;
             }));
         });
 
@@ -210,7 +206,7 @@ mod tests {
                     once::event::send_default::<TestEvent1>()
                         .then(wait::event::read::<TestEvent1>()),
                 )
-                    .await;
+                .await;
 
                 task.will(Update, {
                     wait::either(wait::event::read::<TestEvent1>(), once::run(|| {})).pipe(
@@ -224,7 +220,7 @@ mod tests {
                         ),
                     )
                 })
-                    .await;
+                .await;
             }));
         });
 
@@ -235,41 +231,45 @@ mod tests {
         app.assert_event_comes(&mut er);
     }
 
-
     #[derive(Event, Clone, Debug, Eq, PartialEq, Resource)]
     struct PredicateEvent(bool);
 
     #[test]
-    fn wait_read_event_with_predicate(){
+    fn wait_read_event_with_predicate() {
         let mut app = test_app();
         app.add_event::<PredicateEvent>();
-        app.add_systems(Startup, |mut commands: Commands|{
-           commands.spawn(Reactor::schedule(|task|async move{
-               task.will(Update, wait::event::read_and::<PredicateEvent>(|e|e.0)
-                   .pipe(once::res::insert())
-               ).await;
-           }));
-        });
-        assert_event_predicate(&mut app);
-    }
-
-    #[test]
-    fn wait_comes_event_with_predicate(){
-        let mut app = test_app();
-        app.add_event::<PredicateEvent>();
-        app.add_systems(Startup, |mut commands: Commands|{
-            commands.spawn(Reactor::schedule(|task|async move{
-                task.will(Update, wait::event::comes_and::<PredicateEvent>(|e|e.0)
-                    .then(once::res::insert().with(PredicateEvent(true)))
-                ).await;
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    Update,
+                    wait::event::read_and::<PredicateEvent>(|e| e.0).pipe(once::res::insert()),
+                )
+                .await;
             }));
         });
         assert_event_predicate(&mut app);
     }
 
-    fn assert_event_predicate(app: &mut App){
+    #[test]
+    fn wait_comes_event_with_predicate() {
+        let mut app = test_app();
+        app.add_event::<PredicateEvent>();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(
+                    Update,
+                    wait::event::comes_and::<PredicateEvent>(|e| e.0)
+                        .then(once::res::insert().with(PredicateEvent(true))),
+                )
+                .await;
+            }));
+        });
+        assert_event_predicate(&mut app);
+    }
+
+    fn assert_event_predicate(app: &mut App) {
         app.update();
-        assert!(! app.world().contains_resource::<PredicateEvent>());
+        assert!(!app.world().contains_resource::<PredicateEvent>());
 
         app.send(PredicateEvent(false));
         app.update();

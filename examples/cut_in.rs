@@ -135,7 +135,7 @@ fn cut_in_ferris(
     mut tick: Local<f32>,
     time: Res<Time>,
 ) {
-    let Ok((mut t, StartPos(start))) = ferris.single_mut() else{
+    let Ok((mut t, StartPos(start))) = ferris.single_mut() else {
         return;
     };
     let end = Duration::from_millis(300).as_secs_f32();
@@ -155,5 +155,6 @@ fn move_left_down<const SPEED: u16>(
     time: Res<Time>,
 ) {
     let d = time.delta_secs() * SPEED as f32;
-    ferris.single_mut().unwrap().translation -= bg.single().unwrap().rotation * Vec3::new(d, 0., 0.);
+    ferris.single_mut().unwrap().translation -=
+        bg.single().unwrap().rotation * Vec3::new(d, 0., 0.);
 }

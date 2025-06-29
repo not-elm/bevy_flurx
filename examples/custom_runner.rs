@@ -9,11 +9,7 @@ use std::time::Duration;
 
 fn main() {
     App::new()
-        .add_plugins((
-            MinimalPlugins,
-            LogPlugin::default(),
-            FlurxPlugin,
-        ))
+        .add_plugins((MinimalPlugins, LogPlugin::default(), FlurxPlugin))
         .add_systems(Startup, spawn_reactor)
         .run();
 }
@@ -27,7 +23,8 @@ fn spawn_reactor(mut commands: Commands) {
                     message: "After 3 seconds, this message is displayed.",
                 }))
                 .then(once::event::app_exit_success())
-        }).await;
+        })
+        .await;
     }));
 }
 
@@ -46,8 +43,12 @@ struct DelayedLogRunner {
 }
 
 impl Runner for DelayedLogRunner {
-    fn run(&mut self, world: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs {
-        let cancellation_id = self.cancellation_id.get_or_insert_with(||{
+    fn run(
+        &mut self,
+        world: &mut World,
+        cancellation_handlers: &mut CancellationHandlers,
+    ) -> RunnerIs {
+        let cancellation_id = self.cancellation_id.get_or_insert_with(|| {
             // You can register a handler that will be invoked when the reactor is canceled.
             cancellation_handlers.register(|_world: &mut World| {
                 info!("CancellationLogRunner is canceled.");
@@ -62,13 +63,13 @@ impl Runner for DelayedLogRunner {
                 cancellation_handlers.unregister(cancellation_id);
                 RunnerIs::Completed
             }
-            other => other
+            other => other,
         }
     }
 }
 
 /// Finally, we create a function that returns an action.
-/// 
+///
 /// It is recommended that the action's input is passed by the [`ActionSeed::with`] instead of the argument of this function.
 /// By doing so, you can pass the input value with [`Pipe::pipe`].
 fn delayed_log() -> ActionSeed<DelayedLogInput, &'static str> {

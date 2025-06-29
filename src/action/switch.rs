@@ -3,35 +3,32 @@
 //! This is to solve the problem that systems created from `Reactors`
 //! cannot run except on the main thread.
 
-use std::marker::PhantomData;
 use bevy::prelude::{Local, Mut, Res, Resource, World};
+use std::marker::PhantomData;
 
 /// A Condition-satisfying system that returns true if the switch has been turned on.
 #[inline]
 pub fn switch_is_on<M>(switch: Option<Res<Switch<M>>>) -> bool
-    where M: Send + Sync + 'static
+where
+    M: Send + Sync + 'static,
 {
     switch.is_some_and(|s| s.is_on())
 }
 
-
 /// A Condition-satisfying system that returns true if the switch has been turned off.
 #[inline]
 pub fn switch_is_off<M>(switch: Option<Res<Switch<M>>>) -> bool
-    where M: Send + Sync + 'static
+where
+    M: Send + Sync + 'static,
 {
-    switch.is_some_and(|s| {
-        s.is_off()
-    })
+    switch.is_some_and(|s| s.is_off())
 }
 
-/// A Condition-satisfying system that returns true if the switch has just been turned on. 
+/// A Condition-satisfying system that returns true if the switch has just been turned on.
 #[inline]
-pub fn switch_just_turned_on<M>(
-    switch: Option<Res<Switch<M>>>,
-    mut is_on: Local<bool>,
-) -> bool
-    where M: Send + Sync + 'static
+pub fn switch_just_turned_on<M>(switch: Option<Res<Switch<M>>>, mut is_on: Local<bool>) -> bool
+where
+    M: Send + Sync + 'static,
 {
     if switch.is_some_and(|s| s.is_on()) {
         if *is_on {
@@ -46,13 +43,11 @@ pub fn switch_just_turned_on<M>(
     }
 }
 
-/// A Condition-satisfying system that returns true if the switch has just been turned off. 
+/// A Condition-satisfying system that returns true if the switch has just been turned off.
 #[inline]
-pub fn switch_just_turned_off<M>(
-    switch: Option<Res<Switch<M>>>,
-    mut is_off: Local<bool>,
-) -> bool
-    where M: Send + Sync + 'static
+pub fn switch_just_turned_off<M>(switch: Option<Res<Switch<M>>>, mut is_off: Local<bool>) -> bool
+where
+    M: Send + Sync + 'static,
 {
     if switch.is_some_and(|s| s.is_off()) {
         if *is_off {
@@ -91,7 +86,7 @@ pub fn switch_just_turned_off<M>(
 ///         commands.spawn(Reactor::schedule(|task| async move{
 ///             task.will(Update, once::switch::on::<HeavyTask>()).await;
 ///             task.will(Update, wait::switch::off::<HeavyTask>()).await;
-///         })); 
+///         }));
 ///     });
 /// ```
 #[derive(Debug, Eq, PartialEq)]
@@ -100,12 +95,11 @@ pub struct Switch<M> {
     _m: PhantomData<M>,
 }
 
-impl<M> Resource for Switch<M>
-    where M: Send + Sync + 'static
-{}
+impl<M> Resource for Switch<M> where M: Send + Sync + 'static {}
 
 impl<M> Switch<M>
-    where M: Send + Sync + 'static
+where
+    M: Send + Sync + 'static,
 {
     /// Create new Switch with initial status.
     #[inline(always)]
@@ -160,7 +154,8 @@ impl<M> Switch<M>
 }
 
 impl<M> Default for Switch<M>
-    where M: Send + Sync + 'static
+where
+    M: Send + Sync + 'static,
 {
     fn default() -> Self {
         Self::new(false)

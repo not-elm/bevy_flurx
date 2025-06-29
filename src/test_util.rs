@@ -28,9 +28,7 @@ pub mod test {
     use crate::prelude::{ActionSeed, CancellationHandlers, Runner};
 
     pub fn cancel() -> ActionSeed {
-        ActionSeed::new(|_, _| {
-            TestCancelRunner
-        })
+        ActionSeed::new(|_, _| TestCancelRunner)
     }
 
     struct TestCancelRunner;

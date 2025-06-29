@@ -29,7 +29,7 @@ use crate::runner::{BoxedRunner, CancellationHandlers, Output, Runner, RunnerIs}
 /// ```
 pub fn any<Actions>() -> ActionSeed<Actions, usize>
 where
-    Actions: IntoIterator<Item=ActionSeed> + 'static,
+    Actions: IntoIterator<Item = ActionSeed> + 'static,
 {
     ActionSeed::new(move |actions: Actions, output| {
         let runners = actions
@@ -61,7 +61,7 @@ impl Runner for AnyRunner {
                 RunnerIs::Canceled => {
                     return RunnerIs::Canceled;
                 }
-                RunnerIs::Running => continue
+                RunnerIs::Running => continue,
             }
         }
         if let Some(finished_index) = finished {

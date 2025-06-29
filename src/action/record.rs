@@ -8,21 +8,18 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 pub use track::*;
 
-pub mod undo;
-pub mod redo;
-pub mod extension;
-mod track;
 #[path = "record/push.rs"]
 mod _push;
-
+pub mod extension;
+pub mod redo;
+mod track;
+pub mod undo;
 
 /// Clear the [`Record`].
 ///
 /// The output will be [`UndoRedoInProgress`] if an `undo` or `redo` is in progress.
 pub fn all_clear<M: 'static>() -> ActionSeed<(), Result<(), UndoRedoInProgress>> {
-    once::run(|mut store: NonSendMut<Record<M>>| {
-        store.all_clear()
-    })
+    once::run(|mut store: NonSendMut<Record<M>>| store.all_clear())
 }
 
 /// Thrown when attempting to edit history while an `undo` or `redo` action is in progress.
@@ -80,13 +77,13 @@ where
 
     /// Returns the operations.
     #[inline]
-    pub fn acts(&self) -> impl ExactSizeIterator<Item=&Act> + DoubleEndedIterator {
+    pub fn acts(&self) -> impl ExactSizeIterator<Item = &Act> + DoubleEndedIterator {
         self.tracks.iter().map(|track| &track.act)
     }
 
     /// Returns the redo operations.
     #[inline]
-    pub fn redo_acts(&self) -> impl ExactSizeIterator<Item=&Act> + DoubleEndedIterator {
+    pub fn redo_acts(&self) -> impl ExactSizeIterator<Item = &Act> + DoubleEndedIterator {
         self.redo.iter().map(|(track, _)| &track.act)
     }
 
@@ -109,22 +106,13 @@ impl<M> Default for Record<M> {
     }
 }
 
-impl<Op> Resource for Record<Op>
-where
-    Op: Send + Sync + 'static,
-{}
+impl<Op> Resource for Record<Op> where Op: Send + Sync + 'static {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
-unsafe impl<Op> Send for Record<Op>
-where
-    Op: Send + Sync + 'static,
-{}
+unsafe impl<Op> Send for Record<Op> where Op: Send + Sync + 'static {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
-unsafe impl<Op> Sync for Record<Op>
-where
-    Op: Send + Sync + 'static,
-{}
+unsafe impl<Op> Sync for Record<Op> where Op: Send + Sync + 'static {}
 
 pub(crate) fn lock_record<Opr: Send + Sync + 'static>(world: &mut World) -> EditRecordResult {
     let mut record = world.get_resource_or_insert_with::<Record<Opr>>(Record::<Opr>::default);
@@ -142,7 +130,11 @@ pub(crate) fn unlock_record<Opr: Send + Sync + 'static>(world: &mut World) {
     record.progressing = false;
 }
 
-fn push_tracks<Act: Send + Sync + 'static>(track: impl Iterator<Item=Track<Act>>, world: &mut World, in_undo: bool) -> EditRecordResult {
+fn push_tracks<Act: Send + Sync + 'static>(
+    track: impl Iterator<Item = Track<Act>>,
+    world: &mut World,
+    in_undo: bool,
+) -> EditRecordResult {
     let mut record = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
     if in_undo && record.progressing {
         return Err(UndoRedoInProgress);
@@ -154,7 +146,11 @@ fn push_tracks<Act: Send + Sync + 'static>(track: impl Iterator<Item=Track<Act>>
     Ok(())
 }
 
-fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, in_undo: bool) -> EditRecordResult {
+fn push_track<Act: Send + Sync + 'static>(
+    track: Track<Act>,
+    world: &mut World,
+    in_undo: bool,
+) -> EditRecordResult {
     let mut record = world.get_resource_or_insert_with::<Record<Act>>(Record::<Act>::default);
     if in_undo && record.progressing {
         return Err(UndoRedoInProgress);
@@ -170,20 +166,23 @@ fn push_track<Act: Send + Sync + 'static>(track: Track<Act>, world: &mut World, 
 mod tests {
     use crate::action::record::track::Track;
     use crate::action::{record, wait, Action};
-    use crate::prelude::{ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo};
+    use crate::prelude::{
+        ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo,
+    };
     use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
     use bevy::app::{Startup, Update};
     use bevy::prelude::Commands;
     use bevy_test_helper::resource::DirectResourceControl;
 
     pub fn push_num_act(num: usize) -> ActionSeed {
-        record::push().with(Track {
-            act: NumAct(num),
-            rollback: Rollback::parts(
-                Undo::make(increment_count),
-                Redo::make(|_| decrement_count()),
-            ),
-        })
+        record::push()
+            .with(Track {
+                act: NumAct(num),
+                rollback: Rollback::parts(
+                    Undo::make(increment_count),
+                    Redo::make(|_| decrement_count()),
+                ),
+            })
             .omit()
     }
 
@@ -202,11 +201,12 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, push_undo_increment()
-                    .then(record::undo::once::<TestAct>()),
+                task.will(
+                    Update,
+                    push_undo_increment().then(record::undo::once::<TestAct>()),
                 )
-                    .await
-                    .unwrap();
+                .await
+                .unwrap();
             }));
         });
         app.update();
@@ -218,13 +218,17 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, record::push().with(Track {
-                    act: TestAct,
-                    rollback: Rollback::undo(|| wait::until(|| false)),
-                })
-                    .then(record::undo::once::<TestAct>()))
-                    .await
-                    .unwrap();
+                task.will(
+                    Update,
+                    record::push()
+                        .with(Track {
+                            act: TestAct,
+                            rollback: Rollback::undo(|| wait::until(|| false)),
+                        })
+                        .then(record::undo::once::<TestAct>()),
+                )
+                .await
+                .unwrap();
             }));
         });
         app.update();

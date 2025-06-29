@@ -1,9 +1,9 @@
 //! [`wait::switch`] creates a task related to waiting [`Switch`]
 
-use bevy::prelude::Res;
 use crate::action::switch::Switch;
 use crate::action::wait;
 use crate::prelude::ActionSeed;
+use bevy::prelude::Res;
 
 /// Waits until the switch turned on.
 ///
@@ -21,11 +21,10 @@ use crate::prelude::ActionSeed;
 /// ```
 #[inline]
 pub fn on<M>() -> ActionSeed
-    where M: Send + Sync + 'static
+where
+    M: Send + Sync + 'static,
 {
-    wait::until(|switch: Option<Res<Switch<M>>>| {
-        switch.is_some_and(|s| s.is_on())
-    })
+    wait::until(|switch: Option<Res<Switch<M>>>| switch.is_some_and(|s| s.is_on()))
 }
 
 /// Waits until the switch turned off.
@@ -47,9 +46,8 @@ pub fn on<M>() -> ActionSeed
 /// ```
 #[inline]
 pub fn off<M>() -> ActionSeed
-    where M: Send + Sync + 'static
+where
+    M: Send + Sync + 'static,
 {
-    wait::until(|switch: Option<Res<Switch<M>>>| {
-        switch.is_some_and(|s| s.is_off())
-    })
+    wait::until(|switch: Option<Res<Switch<M>>>| switch.is_some_and(|s| s.is_off()))
 }

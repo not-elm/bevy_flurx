@@ -1,3 +1,11 @@
+## v0.11.1
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.1)
+
+### Others
+
+- Excluded `assets` directory from publication.
+- Use rustfmt to format the code.
+
 ## v0.11.0
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0)
 

@@ -24,11 +24,11 @@ pub fn both<LI, LO, RI, RO>(
     lhs: impl Into<Action<LI, LO>> + 'static,
     rhs: impl Into<Action<RI, RO>> + 'static,
 ) -> Action<(LI, RI), (LO, RO)>
-    where
-        RI: Clone + 'static,
-        LI: Clone + 'static,
-        LO: Send + 'static,
-        RO: Send + 'static,
+where
+    RI: Clone + 'static,
+    LI: Clone + 'static,
+    LO: Send + 'static,
+    RO: Send + 'static,
 {
     let Action(i1, s1) = lhs.into();
     let Action(i2, s2) = rhs.into();
@@ -41,10 +41,10 @@ pub fn both<LI, LO, RI, RO>(
             r2: s2.with(input.1).create_runner(o2.clone()),
             o1,
             o2,
-            output
+            output,
         }
     })
-        .with((i1, i2))
+    .with((i1, i2))
 }
 
 struct BothRunner<O1, O2> {
@@ -52,13 +52,13 @@ struct BothRunner<O1, O2> {
     r2: BoxedRunner,
     o1: Output<O1>,
     o2: Output<O2>,
-    output: Output<(O1, O2)>
+    output: Output<(O1, O2)>,
 }
 
 impl<O1, O2> Runner for BothRunner<O1, O2>
-    where
-        O1: 'static,
-        O2: 'static
+where
+    O1: 'static,
+    O2: 'static,
 {
     fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         if self.o1.is_none() {
@@ -66,7 +66,7 @@ impl<O1, O2> Runner for BothRunner<O1, O2>
                 return RunnerIs::Canceled;
             }
         }
-        if self.o2.is_none() && self.r2.run(world, token).is_cancel(){
+        if self.o2.is_none() && self.r2.run(world, token).is_cancel() {
             return RunnerIs::Canceled;
         }
         output_combine!(&self.o1, &self.o2, self.output)

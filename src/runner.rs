@@ -11,20 +11,22 @@ pub use output::Output;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
-mod output;
-mod cancellation_handlers;
 mod app_schedule_labels;
+mod cancellation_handlers;
+mod output;
 mod reserve_register_runner;
 
 pub(crate) struct RunnerPlugin;
 
 impl Plugin for RunnerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .register_type::<ReactorEntity>()
+        app.register_type::<ReactorEntity>()
             .register_type::<RunnerIs>()
             .add_plugins(ReserveRegisterRunnerPlugin)
-            .add_systems(PreStartup, setup.run_if(not(resource_exists::<AppScheduleLabels>)));
+            .add_systems(
+                PreStartup,
+                setup.run_if(not(resource_exists::<AppScheduleLabels>)),
+            );
     }
 
     fn finish(&self, app: &mut App) {
@@ -38,14 +40,8 @@ impl Plugin for RunnerPlugin {
     }
 }
 
-fn setup(
-    mut commands: Commands,
-    schedules: Res<Schedules>,
-) {
-    let mut labels: HashSet<_> = schedules
-        .iter()
-        .map(|(_, s)| s.label())
-        .collect();
+fn setup(mut commands: Commands, schedules: Res<Schedules>) {
+    let mut labels: HashSet<_> = schedules.iter().map(|(_, s)| s.label()).collect();
     labels.insert(PreStartup.intern());
     commands.insert_resource(AppScheduleLabels(labels));
 }
@@ -86,7 +82,11 @@ pub trait Runner {
     ///
     /// If this runner finishes, it must return `true`.
     /// If it returns `true`, an entity attached this runner will be removed.
-    fn run(&mut self, world: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs;
+    fn run(
+        &mut self,
+        world: &mut World,
+        cancellation_handlers: &mut CancellationHandlers,
+    ) -> RunnerIs;
 }
 
 /// The boxed runner.
@@ -104,7 +104,11 @@ impl BoxedRunner {
 
 impl Runner for BoxedRunner {
     #[inline(always)]
-    fn run(&mut self, world: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs {
+    fn run(
+        &mut self,
+        world: &mut World,
+        cancellation_handlers: &mut CancellationHandlers,
+    ) -> RunnerIs {
         if let Some(mut runner) = self.0.take() {
             match runner.run(world, cancellation_handlers) {
                 RunnerIs::Completed => RunnerIs::Completed,
@@ -121,7 +125,10 @@ impl Runner for BoxedRunner {
 }
 
 #[repr(transparent)]
-struct RunnersRegistry<L: Send + Sync>(HashMap<Entity, (Vec<BoxedRunner>, CancellationHandlers)>, PhantomData<L>);
+struct RunnersRegistry<L: Send + Sync>(
+    HashMap<Entity, (Vec<BoxedRunner>, CancellationHandlers)>,
+    PhantomData<L>,
+);
 
 impl<L: Send + Sync> Default for RunnersRegistry<L> {
     fn default() -> Self {
@@ -141,8 +148,7 @@ pub(crate) fn initialize_runner<Label>(
     label: &Label,
     reactor_entity: Entity,
     mut runner: BoxedRunner,
-)
-where
+) where
     Label: ScheduleLabel,
 {
     observe_remove_reactor::<Label>(reactor_entity, world);
@@ -164,12 +170,10 @@ where
     }
 }
 
-fn register_app_schedule_labels(
-    world: &mut World,
-    label: InternedScheduleLabel,
-) -> (bool, bool) {
+fn register_app_schedule_labels(world: &mut World, label: InternedScheduleLabel) -> (bool, bool) {
     world.resource_scope(|world, mut schedule_labels: Mut<AppScheduleLabels>| {
-        let running_on_target = schedule_labels.current_running_on_target_schedule(label, world.resource::<Schedules>());
+        let running_on_target = schedule_labels
+            .current_running_on_target_schedule(label, world.resource::<Schedules>());
         let contains_label = schedule_labels.contains(&label);
         schedule_labels.insert(label);
         (running_on_target, contains_label)
@@ -183,7 +187,9 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
 ) {
     if !world.contains_non_send::<RunnersRegistry<Label>>() {
         world.insert_non_send_resource(RunnersRegistry::<Label>::default());
-        let mut schedules = world.remove_resource::<Schedules>().expect("Schedules was not found");
+        let mut schedules = world
+            .remove_resource::<Schedules>()
+            .expect("Schedules was not found");
         if let Some(schedule) = schedules.get_mut(label) {
             schedule.add_systems(run_runners::<Label>);
         } else {
@@ -237,8 +243,8 @@ fn init_runner<Label: ScheduleLabel>(
 fn push_runner_into_registry<Label: ScheduleLabel>(
     world: &mut World,
     reactor_entity: Entity,
-    runner: BoxedRunner
-){
+    runner: BoxedRunner,
+) {
     world
         .non_send_resource_mut::<RunnersRegistry<Label>>()
         .0
@@ -256,42 +262,41 @@ fn observer_already_exists<Label: ScheduleLabel>(
     world
         .query_filtered::<&ReactorEntity, With<ReactorScheduleLabel<Label>>>()
         .iter(world)
-        .any(|target| {
-            &target.0 == reactor_entity
-        })
+        .any(|target| &target.0 == reactor_entity)
 }
 
-fn observe_remove_reactor<Label: ScheduleLabel>(
-    entity: Entity,
-    world: &mut World,
-) {
+fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut World) {
     if observer_already_exists::<Label>(world, &entity) {
         return;
     }
-    let mut observer = Observer::new(move |_: Trigger<OnRemove, NativeReactor>, mut commands: Commands| {
-        commands.queue(move |world: &mut World| {
-            let Some(mut runner_registry) = world.remove_non_send_resource::<RunnersRegistry<Label>>() else {
-                return;
-            };
-            let Some((_, cancellation_handlers)) = runner_registry.0.remove(&entity) else{
-                return;
-            };
-            for handler in cancellation_handlers.0.values() {
-                handler(world);
-            }
-            world.insert_non_send_resource(runner_registry);
-        });
-    });
+    let mut observer = Observer::new(
+        move |_: Trigger<OnRemove, NativeReactor>, mut commands: Commands| {
+            commands.queue(move |world: &mut World| {
+                let Some(mut runner_registry) =
+                    world.remove_non_send_resource::<RunnersRegistry<Label>>()
+                else {
+                    return;
+                };
+                let Some((_, cancellation_handlers)) = runner_registry.0.remove(&entity) else {
+                    return;
+                };
+                for handler in cancellation_handlers.0.values() {
+                    handler(world);
+                }
+                world.insert_non_send_resource(runner_registry);
+            });
+        },
+    );
     observer.watch_entity(entity);
 
     world.spawn((
         ReactorScheduleLabel(PhantomData::<Label>),
         ReactorEntity(entity),
-        observer
+        observer,
     ));
 }
 
-fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
+fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result {
     let Some(mut runners_registry) = world
         .get_non_send_resource_mut::<RunnersRegistry<L>>()
         .map(|mut registry| std::mem::take(&mut registry.0))
@@ -321,14 +326,13 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result{
         if request_cancel {
             world.commands().entity(*entity).despawn();
         } else if request_step {
-            world.commands().trigger(StepReactor {
-                reactor: *entity,
-            });
+            world.commands().trigger(StepReactor { reactor: *entity });
         }
     }
 
     world
-        .non_send_resource_mut::<RunnersRegistry<L>>().0
+        .non_send_resource_mut::<RunnersRegistry<L>>()
+        .0
         .extend(runners_registry);
     Ok(())
 }
@@ -367,22 +371,22 @@ pub(crate) mod macros {
     macro_rules! impl_tuple_runner {
         ($impl_macro: ident) => {
             $impl_macro!(In1);
-            $impl_macro!(In1,In2);
-            $impl_macro!(In1,In2,In3);
-            $impl_macro!(In1,In2,In3,In4);
-            $impl_macro!(In1,In2,In3,In4,In5);
-            $impl_macro!(In1,In2,In3,In4,In5,In6);
-            $impl_macro!(In1,In2,In3,In4,In5,In6,In7);
-            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8);
-            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9);
-            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10);
-            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11);
-            $impl_macro!(In1,In2,In3,In4,In5,In6,In7,In8,In9,In10,In11,In12);
+            $impl_macro!(In1, In2);
+            $impl_macro!(In1, In2, In3);
+            $impl_macro!(In1, In2, In3, In4);
+            $impl_macro!(In1, In2, In3, In4, In5);
+            $impl_macro!(In1, In2, In3, In4, In5, In6);
+            $impl_macro!(In1, In2, In3, In4, In5, In6, In7);
+            $impl_macro!(In1, In2, In3, In4, In5, In6, In7, In8);
+            $impl_macro!(In1, In2, In3, In4, In5, In6, In7, In8, In9);
+            $impl_macro!(In1, In2, In3, In4, In5, In6, In7, In8, In9, In10);
+            $impl_macro!(In1, In2, In3, In4, In5, In6, In7, In8, In9, In10, In11);
+            $impl_macro!(In1, In2, In3, In4, In5, In6, In7, In8, In9, In10, In11, In12);
         };
     }
 
-    pub(crate) use output_combine;
     pub(crate) use impl_tuple_runner;
+    pub(crate) use output_combine;
 }
 
 #[cfg(test)]
@@ -396,7 +400,9 @@ mod tests {
     use bevy::app::{AppExit, PostUpdate, Startup};
     use bevy::ecs::event::EventCursor;
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World};
+    use bevy::prelude::{
+        Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World,
+    };
     use bevy::prelude::{Resource, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::bool::BoolExtension;
@@ -423,11 +429,7 @@ mod tests {
     }
 
     fn test_action(limit: usize) -> ActionSeed {
-        ActionSeed::new(move |_, _| {
-            TestCancelRunner {
-                limit
-            }
-        })
+        ActionSeed::new(move |_, _| TestCancelRunner { limit })
     }
 
     #[test]
@@ -440,15 +442,33 @@ mod tests {
         });
         app.update();
         app.assert_resource_eq(Count(1));
-        assert_eq!(app.world_mut().query::<&NativeReactor>().iter(app.world()).len(), 1);
+        assert_eq!(
+            app.world_mut()
+                .query::<&NativeReactor>()
+                .iter(app.world())
+                .len(),
+            1
+        );
 
         app.update();
         app.assert_resource_eq(Count(2));
-        assert_eq!(app.world_mut().query::<&NativeReactor>().iter(app.world()).len(), 1);
+        assert_eq!(
+            app.world_mut()
+                .query::<&NativeReactor>()
+                .iter(app.world())
+                .len(),
+            1
+        );
 
         app.update();
         app.assert_resource_eq(Count(3));
-        assert_eq!(app.world_mut().query::<&NativeReactor>().iter(app.world()).len(), 0);
+        assert_eq!(
+            app.world_mut()
+                .query::<&NativeReactor>()
+                .iter(app.world())
+                .len(),
+            0
+        );
     }
 
     #[test]
@@ -456,19 +476,29 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, wait::both(
-                    test::cancel(),
-                    wait::until(|mut count: ResMut<Count>| {
-                        count.increment();
-                        false
-                    }),
-                )).await;
+                task.will(
+                    Update,
+                    wait::both(
+                        test::cancel(),
+                        wait::until(|mut count: ResMut<Count>| {
+                            count.increment();
+                            false
+                        }),
+                    ),
+                )
+                .await;
             }));
         });
         app.update();
         for _ in 0..50 {
             app.update();
-            assert_eq!(app.world_mut().query::<&NativeReactor>().iter(app.world()).len(), 0);
+            assert_eq!(
+                app.world_mut()
+                    .query::<&NativeReactor>()
+                    .iter(app.world())
+                    .len(),
+                0
+            );
             app.assert_resource_eq(Count(0));
         }
     }
@@ -476,31 +506,41 @@ mod tests {
     #[test]
     fn cancel_with_multiple_reactors() {
         let mut app = test_app();
-        app.add_systems(Startup, (
-            |mut commands: Commands| {
-                commands.spawn(Reactor::schedule(|task| async move {
-                    task.will(Update, once::no_op()).await;
-                }));
-            },
-            |mut commands: Commands| {
-                commands.spawn((
-                    Cancellable,
-                    Reactor::schedule(|task| async move {
-                        task.will(Update, wait::until(|mut count: ResMut<Count>| {
-                            count.increment();
-                            false
-                        })).await;
-                    })
-                ));
-            }
-        ).chain());
+        app.add_systems(
+            Startup,
+            (
+                |mut commands: Commands| {
+                    commands.spawn(Reactor::schedule(|task| async move {
+                        task.will(Update, once::no_op()).await;
+                    }));
+                },
+                |mut commands: Commands| {
+                    commands.spawn((
+                        Cancellable,
+                        Reactor::schedule(|task| async move {
+                            task.will(
+                                Update,
+                                wait::until(|mut count: ResMut<Count>| {
+                                    count.increment();
+                                    false
+                                }),
+                            )
+                            .await;
+                        }),
+                    ));
+                },
+            )
+                .chain(),
+        );
 
         app.update();
         app.assert_resource_eq(Count(1));
 
-        let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.single().unwrap()).despawn();
-        });
+        let _ = app.world_mut().run_system_once(
+            |mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
+                commands.entity(reactor.single().unwrap()).despawn();
+            },
+        );
         app.update();
         app.assert_resource_eq(Count(1));
     }
@@ -516,24 +556,35 @@ mod tests {
             commands.spawn((
                 Cancellable,
                 Reactor::schedule(|task| async move {
-                    let count2_task = task.run(PostUpdate, wait::until(|mut count: ResMut<Count2>| {
-                        count.0 += 1;
-                        false
-                    })).await;
-                    task.will(Update, wait::until(|mut count: ResMut<Count>| {
-                        count.increment();
-                        false
-                    })).await;
+                    let count2_task = task
+                        .run(
+                            PostUpdate,
+                            wait::until(|mut count: ResMut<Count2>| {
+                                count.0 += 1;
+                                false
+                            }),
+                        )
+                        .await;
+                    task.will(
+                        Update,
+                        wait::until(|mut count: ResMut<Count>| {
+                            count.increment();
+                            false
+                        }),
+                    )
+                    .await;
                     count2_task.await;
-                })
+                }),
             ));
         });
         app.update();
         app.update();
 
-        let _ = app.world_mut().run_system_once(|mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
-            commands.entity(reactor.single().unwrap()).despawn();
-        });
+        let _ = app.world_mut().run_system_once(
+            |mut commands: Commands, reactor: Query<Entity, With<Cancellable>>| {
+                commands.entity(reactor.single().unwrap()).despawn();
+            },
+        );
         app.update();
         app.assert_resource_eq(Count2(2));
     }
@@ -557,11 +608,14 @@ mod tests {
         assert_eq!(num_observer, 1);
     }
 
-
     struct CancelRunner;
 
     impl Runner for CancelRunner {
-        fn run(&mut self, _: &mut World, cancellation_handlers: &mut CancellationHandlers) -> RunnerIs {
+        fn run(
+            &mut self,
+            _: &mut World,
+            cancellation_handlers: &mut CancellationHandlers,
+        ) -> RunnerIs {
             cancellation_handlers.register(|world| {
                 world.set_bool(true);
             });
@@ -592,11 +646,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Update, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|mut commands: Commands| {
-                    commands.spawn(Reactor::schedule(|task| async move {
-                        task.will(Update, once::no_op()).await;
-                    }));
-                })).await;
+                task.will(
+                    Update,
+                    once::run(|mut commands: Commands| {
+                        commands.spawn(Reactor::schedule(|task| async move {
+                            task.will(Update, once::no_op()).await;
+                        }));
+                    }),
+                )
+                .await;
             }));
         });
         // should avoid error `resource does not exist: bevy_flurx::runner::app_schedule_labels::AppScheduleLabels`.
@@ -608,11 +666,15 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|mut commands: Commands| {
-                    commands.spawn(Reactor::schedule(|task| async move {
-                        task.will(Update, once::no_op()).await;
-                    }));
-                })).await;
+                task.will(
+                    Update,
+                    once::run(|mut commands: Commands| {
+                        commands.spawn(Reactor::schedule(|task| async move {
+                            task.will(Update, once::no_op()).await;
+                        }));
+                    }),
+                )
+                .await;
             }));
         });
         app.update();
@@ -623,13 +685,21 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                task.will(Update, once::run(|mut commands: Commands| {
-                    commands.spawn(Reactor::schedule(|task| async move {
-                        task.will(Update, delay::frames().with(1)
-                            .then(once::event::app_exit_success())
-                        ).await;
-                    }));
-                })).await;
+                task.will(
+                    Update,
+                    once::run(|mut commands: Commands| {
+                        commands.spawn(Reactor::schedule(|task| async move {
+                            task.will(
+                                Update,
+                                delay::frames()
+                                    .with(1)
+                                    .then(once::event::app_exit_success()),
+                            )
+                            .await;
+                        }));
+                    }),
+                )
+                .await;
             }));
         });
         let mut cursor = EventCursor::<AppExit>::default();

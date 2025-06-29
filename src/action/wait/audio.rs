@@ -1,9 +1,9 @@
 //! [`wait::audio`] creates a task related to waiting to audio.
 
-use bevy::audio::{AudioSink, AudioSinkPlayback};
-use bevy::prelude::{Commands, Entity, In, Query};
 use crate::action::wait;
 use crate::prelude::seed::ActionSeed;
+use bevy::audio::{AudioSink, AudioSinkPlayback};
+use bevy::prelude::{Commands, Entity, In, Query};
 
 /// Waits until the audio associated with the passed [`Entity`] has finished playing.
 ///

@@ -1,12 +1,13 @@
 [package]
 name = "bevy_flurx"
-version = "0.11.0"
+version = "0.11.1"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development"]
 description = "Allows you to use coroutine in Bevy"
 keywords = ["game", "gamedev", "bevy", "async"]
 license = "MIT OR Apache-2.0"
+exclude = ["assets/"]
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
 
@@ -51,10 +52,10 @@ tokio = { version = "1", optional = true, features = ["sync", "time"] }
 async-compat = { version = "0.2", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.16.0" }
+bevy = { version = "0.16" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.16" }
 futures = "0.3"
-criterion = { version = "0.5", features = ["plotters", "html_reports"] }
+criterion = { version = "0.6", features = ["plotters", "html_reports"] }
 
 [features]
 default = []

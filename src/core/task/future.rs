@@ -5,9 +5,9 @@ use core::pin::Pin;
 use core::task::{Context, Poll};
 
 #[pin_project::pin_project]
-pub(in crate) struct TaskFuture<State: 'static, Selector> {
-    pub(in crate) selector: Selector,
-    pub(in crate) state: StateRef<State>,
+pub(crate) struct TaskFuture<State: 'static, Selector> {
+    pub(crate) selector: Selector,
+    pub(crate) state: StateRef<State>,
 }
 
 impl<State, Sel> Future for TaskFuture<State, Sel>
@@ -23,10 +23,7 @@ where
             cx.waker().wake_by_ref();
             return Poll::Pending;
         };
-        if let Some(output) = self
-            .as_mut()
-            .selector
-            .select(*state) {
+        if let Some(output) = self.as_mut().selector.select(*state) {
             Poll::Ready(output)
         } else {
             cx.waker().wake_by_ref();

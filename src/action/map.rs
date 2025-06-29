@@ -1,7 +1,7 @@
-use bevy::prelude::World;
 use crate::action::remake::Remake;
 use crate::prelude::CancellationHandlers;
 use crate::runner::{BoxedRunner, Output, Runner, RunnerIs};
+use bevy::prelude::World;
 
 /// Maps an `Action<I1, O1>` to `Action<I1, O2>` or `ActionSeed<I1, O1>` to `ActionSeed<I1, O2>` by
 /// applying function.
@@ -84,7 +84,10 @@ where
             RunnerIs::Canceled => RunnerIs::Canceled,
             RunnerIs::Running => RunnerIs::Running,
             RunnerIs::Completed => {
-                let o = self.o1.take().expect("The output value has not been set!!!");
+                let o = self
+                    .o1
+                    .take()
+                    .expect("The output value has not been set!!!");
                 let map_fn = self.map.take().expect("Failed to take the map function");
                 self.output.set(map_fn(o));
                 RunnerIs::Completed
@@ -96,7 +99,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::once;
-    use crate::prelude::{Reactor, Map, Pipe};
+    use crate::prelude::{Map, Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In};
@@ -125,7 +128,7 @@ mod tests {
                             assert_eq!(num, 5);
                         })),
                 )
-                    .await;
+                .await;
 
                 task.will(
                     Update,
@@ -135,7 +138,7 @@ mod tests {
                         },
                     )),
                 )
-                    .await;
+                .await;
             }));
         });
 

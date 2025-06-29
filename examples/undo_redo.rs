@@ -10,18 +10,18 @@ use bevy_flurx::prelude::*;
 
 fn main() {
     App::new()
-        .add_plugins((
-            DefaultPlugins,
-            FlurxPlugin,
-        ))
+        .add_plugins((DefaultPlugins, FlurxPlugin))
         .add_record::<KeyCodeAct>()
         .init_resource::<KeyCodes>()
-        .add_systems(Update, (
-            log_keycodes.run_if(resource_exists_and_changed::<KeyCodes>),
-            request_undo.run_if(input_just_pressed(KeyCode::KeyZ)),
-            request_redo.run_if(input_just_pressed(KeyCode::KeyX)),
-            push_num_keycodes,
-        ))
+        .add_systems(
+            Update,
+            (
+                log_keycodes.run_if(resource_exists_and_changed::<KeyCodes>),
+                request_undo.run_if(input_just_pressed(KeyCode::KeyZ)),
+                request_redo.run_if(input_just_pressed(KeyCode::KeyX)),
+                push_num_keycodes,
+            ),
+        )
         .run();
 }
 
@@ -33,9 +33,7 @@ struct KeyCodes(Vec<KeyCode>);
 #[derive(PartialEq, Clone)]
 struct KeyCodeAct;
 
-fn log_keycodes(
-    key_codes: Res<KeyCodes>,
-) {
+fn log_keycodes(key_codes: Res<KeyCodes>) {
     info!("{:?}", key_codes);
 }
 
@@ -76,26 +74,22 @@ fn push_num_keycodes(
     }
 
     key_codes.0.extend(all_pressed);
-    record.push(Track {
-        act: KeyCodeAct,
-        rollback: Rollback::parts(
-            Undo::make(move || once::run(undo).with(num_pressed)),
-            Redo::make(|keycodes: Vec<KeyCode>| once::run(redo).with(keycodes)),
-        ),
-    }).expect("Failed to push key codes");
+    record
+        .push(Track {
+            act: KeyCodeAct,
+            rollback: Rollback::parts(
+                Undo::make(move || once::run(undo).with(num_pressed)),
+                Redo::make(|keycodes: Vec<KeyCode>| once::run(redo).with(keycodes)),
+            ),
+        })
+        .expect("Failed to push key codes");
 }
 
-fn undo(
-    In(num_pressed): In<usize>,
-    mut key_codes: ResMut<KeyCodes>,
-) -> Vec<KeyCode> {
+fn undo(In(num_pressed): In<usize>, mut key_codes: ResMut<KeyCodes>) -> Vec<KeyCode> {
     let len = key_codes.0.len();
     key_codes.0.split_off(len - num_pressed)
 }
 
-fn redo(
-    In(keycodes): In<Vec<KeyCode>>,
-    mut key_codes: ResMut<KeyCodes>,
-) {
+fn redo(In(keycodes): In<Vec<KeyCode>>, mut key_codes: ResMut<KeyCodes>) {
     key_codes.0.extend(keycodes);
 }

@@ -79,7 +79,9 @@ where
     do_undo(|_: ()| |record: &mut Record<Act>| std::mem::take(&mut record.tracks))
 }
 
-fn do_undo<I, Act, F>(predicate: impl FnOnce(I) -> F + Send + Sync + 'static) -> ActionSeed<I, EditRecordResult>
+fn do_undo<I, Act, F>(
+    predicate: impl FnOnce(I) -> F + Send + Sync + 'static,
+) -> ActionSeed<I, EditRecordResult>
 where
     I: 'static,
     Act: Send + Sync + 'static,
@@ -146,7 +148,7 @@ where
 
             undo_runner.run(world, token);
             let Some(redo) = self.undo_output.take() else {
-               return RunnerIs::Running;
+                return RunnerIs::Running;
             };
             if let Some(redo) = redo {
                 let undo = self.track.take().unwrap();
@@ -174,7 +176,9 @@ mod tests {
     use crate::action::record::tests::push_undo_increment;
     use crate::action::record::EditRecordResult;
     use crate::action::{delay, record};
-    use crate::prelude::{once, ActionSeed, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track};
+    use crate::prelude::{
+        once, ActionSeed, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track,
+    };
     use crate::reactor::NativeReactor;
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};

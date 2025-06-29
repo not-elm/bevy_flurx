@@ -1,6 +1,6 @@
-use bevy::prelude::World;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{BoxedRunner, Output, Runner};
+use bevy::prelude::World;
 
 /// Convert to the output of action to tuple.
 pub fn tuple<I, O>(action: ActionSeed<I, O>) -> ActionSeed<I, (O,)>
@@ -26,7 +26,11 @@ struct TupleRunner<O> {
 }
 
 impl<O> Runner for TupleRunner<O> {
-    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> crate::prelude::RunnerIs {
+    fn run(
+        &mut self,
+        world: &mut World,
+        token: &mut CancellationHandlers,
+    ) -> crate::prelude::RunnerIs {
         self.runner.run(world, token);
         if let Some(o) = self.tmp.take() {
             self.output.set((o,));

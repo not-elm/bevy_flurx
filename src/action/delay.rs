@@ -27,7 +27,7 @@ pub fn time() -> ActionSeed<Duration> {
                 .get_or_insert_with(|| Timer::new(duration, TimerMode::Once))
                 .tick(time.delta())
                 .just_finished()
-        }
+        },
     )
 }
 
@@ -72,7 +72,7 @@ mod tests {
                         .with(1)
                         .then(once::event::app_exit_success()),
                 )
-                    .await;
+                .await;
             }));
         });
         let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
@@ -94,7 +94,7 @@ mod tests {
                         .with(2)
                         .then(once::non_send::init::<AppExit>()),
                 )
-                    .await;
+                .await;
             }));
         });
 

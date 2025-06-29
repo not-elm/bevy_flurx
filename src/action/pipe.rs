@@ -133,7 +133,7 @@ mod tests {
                         .through(once::run(|| {}))
                         .then(once::event::app_exit_success()),
                 )
-                    .await;
+                .await;
             }));
         });
         app.update();

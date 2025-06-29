@@ -5,9 +5,9 @@ use std::ptr;
 #[derive(Clone, Copy)]
 pub struct WorldPtr(*mut World);
 
- // SAFETY: The actual value is created only by the exclusive system and is not used at any other time.
+// SAFETY: The actual value is created only by the exclusive system and is not used at any other time.
 unsafe impl Send for WorldPtr {}
- // SAFETY: The actual value is created only by the exclusive system and is not used at any other time.
+// SAFETY: The actual value is created only by the exclusive system and is not used at any other time.
 unsafe impl Sync for WorldPtr {}
 
 impl WorldPtr {
@@ -20,12 +20,11 @@ impl WorldPtr {
     #[inline(always)]
     pub(crate) fn as_mut(&self) -> &mut World {
         // SAFETY:
-        // The world is guaranteed to be alive from the time this structure is created until the reactor is executed, 
+        // The world is guaranteed to be alive from the time this structure is created until the reactor is executed,
         // and the reactor and tasks run on the main thread, so it is probably safe.
         unsafe { &mut *self.0 }
     }
 }
-
 
 impl Default for WorldPtr {
     #[inline]
@@ -33,6 +32,3 @@ impl Default for WorldPtr {
         Self(ptr::null_mut())
     }
 }
-
-
-
