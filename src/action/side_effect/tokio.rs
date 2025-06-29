@@ -85,7 +85,7 @@ where
         }
 
         if let Ok(mut out) = self.arc_output.try_lock() {
-            if let Some(out) = out.take().take() {
+            if let Some(out) = out.take() {
                 self.output.set(out);
                 RunnerIs::Completed
             } else {
