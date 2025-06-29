@@ -4,16 +4,14 @@
 //!
 //! - [`side_effect::tokio::spawn`](crate::prelude::side_effect::tokio::spawn)
 
-use std::marker::PhantomData;
-use std::sync::Arc;
-
-use async_compat::CompatExt;
-use bevy::prelude::World;
-use tokio::task::JoinHandle;
-
 use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
+use bevy::prelude::World;
+use std::marker::PhantomData;
+use std::sync::Arc;
+use tokio::runtime::Runtime;
+use tokio::task::JoinHandle;
 
 /// Spawns a new tokio task, and then wait its output.
 ///
@@ -49,6 +47,7 @@ where
         arc_output: Arc::new(tokio::sync::Mutex::new(None)),
         args: Some((input, f)),
         output,
+        rt: Runtime::new().unwrap(),
         handle: None,
         _m: PhantomData,
     })
@@ -56,6 +55,7 @@ where
 
 struct TokioRunner<I, Out, Functor, M> {
     args: Option<(I, Functor)>,
+    rt: Runtime,
     arc_output: Arc<tokio::sync::Mutex<Option<Out>>>,
     output: Output<Out>,
     handle: Option<JoinHandle<()>>,
@@ -73,22 +73,24 @@ where
     fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
         if let Some((input, functor)) = self.args.take() {
             let arc_output = self.arc_output.clone();
-            self.handle.replace(pollster::block_on(
-                async move {
-                    tokio::spawn(async move {
-                        arc_output
-                            .lock()
-                            .await
-                            .replace(functor.functor(input).await);
-                    })
-                }
-                .compat(),
-            ));
+            self.handle.replace(self.rt.spawn(async move {
+                let _ = tokio::spawn(async move {
+                    arc_output
+                        .lock()
+                        .await
+                        .replace(functor.functor(input).await);
+                })
+                .await;
+            }));
         }
 
-        if let Some(out) = self.arc_output.blocking_lock().take() {
-            self.output.set(out);
-            RunnerIs::Completed
+        if let Ok(mut out) = self.arc_output.try_lock() {
+            if let Some(out) = out.take() {
+                self.output.set(out);
+                RunnerIs::Completed
+            } else {
+                RunnerIs::Running
+            }
         } else {
             RunnerIs::Running
         }
