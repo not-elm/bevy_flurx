@@ -96,7 +96,7 @@ fn spawn_reactor(mut commands: Commands) {
 
 ## Documents
 
-- [book](./docs/src/SUMMARY.md)
+- [book](https://not-elm.github.io/bevy_flurx/)
 
 ## Example
 
