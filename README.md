@@ -112,6 +112,7 @@ All examples are [`here`](./examples).
 | state       | state actions                                                                      | false   | 
 | tokio       | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
 | std         | enable features that depend on the standard library                                | false   |
+| serialize   | derives `ReflectSerialize` and `ReflectDeserialize` for some structs               | false   | 
 
 ### audio
 
