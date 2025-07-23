@@ -3,6 +3,7 @@
 
 ### Features
 - Support no_std
+- Added `serialize` feature flag to derive `Serialize` and `Deserialize` for some structs.
 ### Bug Fixes
 - Fixed a bug where `side_effect::tokio::spawn` was blocking execution.
 - Fixed a potential bug in the internal `RunnersRegistry` usage.

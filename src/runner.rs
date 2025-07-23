@@ -9,7 +9,7 @@ use bevy::platform::collections::{HashMap, HashSet};
 use bevy::prelude::*;
 use core::marker::PhantomData;
 pub use output::Output;
-use serde::{Deserialize, Serialize};
+use serde::*;
 
 mod app_schedule_labels;
 mod cancellation_handlers;
@@ -136,8 +136,10 @@ impl<L: Send + Sync> Default for RunnersRegistry<L> {
     }
 }
 
-#[derive(Component, Reflect, Serialize, Deserialize)]
-#[reflect(Component, Serialize, Deserialize)]
+#[derive(Component, Reflect)]
+#[reflect(Component)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
 struct ReactorEntity(Entity);
 
 #[derive(Component, Reflect, Eq, PartialEq, Hash)]

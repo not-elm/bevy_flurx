@@ -62,6 +62,7 @@ record = []
 side-effect = []
 state = ["bevy/bevy_state"]
 std = ["bevy/std"]
+serialize = ["bevy/serialize"]
 
 [lints.clippy]
 type_complexity = "allow"
