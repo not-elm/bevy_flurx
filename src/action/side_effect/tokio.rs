@@ -74,13 +74,10 @@ where
         if let Some((input, functor)) = self.args.take() {
             let arc_output = self.arc_output.clone();
             self.handle.replace(self.rt.spawn(async move {
-                let _ = tokio::spawn(async move {
-                    arc_output
-                        .lock()
-                        .await
-                        .replace(functor.functor(input).await);
-                })
-                .await;
+                arc_output
+                    .lock()
+                    .await
+                    .replace(functor.functor(input).await);
             }));
         }
 
