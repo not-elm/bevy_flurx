@@ -7,7 +7,6 @@
 > [!TIP]
 > Supports no_std
 
-
 This library provides functionality similar to coroutines, allowing you to write sequential processing for delays, user
 input, animations, and more.
 
@@ -94,6 +93,10 @@ fn spawn_reactor(mut commands: Commands) {
     }));
 }
 ```
+
+## Documents
+
+- [book](./docs/src/SUMMARY.md)
 
 ## Example
 

@@ -7,7 +7,7 @@ categories = ["asynchronous", "game-development", "no-std"]
 description = "Allows you to use coroutine in Bevy"
 keywords = ["game", "gamedev", "bevy", "async", "no_std"]
 license = "MIT OR Apache-2.0"
-exclude = ["assets/"]
+exclude = ["assets/", "docs/"]
 readme = "README.md"
 repository = "https://github.com/not-elm/bevy_flurx"
 

@@ -2,3 +2,4 @@
 /.vscode
 /.idea
 *Cargo.lock
+book/
