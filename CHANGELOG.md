@@ -1,4 +1,5 @@
-## v0.12.0(Unreleased)
+## v0.12.0
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.12.0)
 
 ### Features
 - Support no_std
