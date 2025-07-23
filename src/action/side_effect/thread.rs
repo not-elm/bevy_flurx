@@ -4,13 +4,12 @@
 //!
 //! - [`side_effect::thread::spawn`](crate::prelude::side_effect::thread::spawn)
 
-use std::sync::{Arc, Mutex};
-
-use bevy::prelude::World;
-
 use crate::prelude::side_effect::Functor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
+use alloc::sync::Arc;
+use bevy::platform::sync::Mutex;
+use bevy::prelude::*;
 
 /// Spawns a new os thread, and then wait for its output.
 ///
@@ -86,7 +85,8 @@ mod tests {
     use crate::action::{once, side_effect};
     use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
-    use bevy::prelude::{Commands, In, ResMut, Startup, Update};
+    use bevy::platform::thread;
+    use bevy::prelude::*;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -106,7 +106,7 @@ mod tests {
             }));
         });
         app.update();
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        thread::sleep(core::time::Duration::from_millis(10));
         app.update();
         app.assert_resource_eq(Count(2));
     }
@@ -127,7 +127,7 @@ mod tests {
             }));
         });
         app.update();
-        std::thread::sleep(std::time::Duration::from_millis(10));
+        thread::sleep(core::time::Duration::from_millis(10));
         app.update();
         app.assert_resource_eq(Count(2));
     }

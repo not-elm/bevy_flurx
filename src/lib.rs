@@ -5,6 +5,9 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::type_complexity)]
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
 
 use crate::reactor::ReactorPlugin;
 use crate::runner::RunnerPlugin;

@@ -11,7 +11,7 @@
 
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
-use std::time::Duration;
+use core::time::Duration;
 
 fn main() {
     App::new()
@@ -63,7 +63,7 @@ fn spawn_reactor(mut commands: Commands) {
         // delay module defines the actions that perform delay processing.
         task.will(
             Update,
-            delay::time().with(std::time::Duration::from_secs(1)),
+            delay::time().with(core::time::Duration::from_secs(1)),
         )
         .await;
 

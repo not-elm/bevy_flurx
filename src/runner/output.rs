@@ -1,4 +1,5 @@
-use std::sync::{Arc, RwLock};
+use alloc::sync::Arc;
+use bevy::platform::sync::RwLock;
 
 /// Represents the output of the task.
 /// See details [`Runner`](crate::prelude::Runner).

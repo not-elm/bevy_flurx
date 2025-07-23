@@ -6,8 +6,8 @@ use bevy::ecs::component::{ComponentHooks, HookContext, Mutable, StorageType};
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy::reflect::Reflect;
-use std::future::Future;
-use std::marker::PhantomData;
+use core::future::Future;
+use core::marker::PhantomData;
 
 /// This event triggers the execution of the [`Reactor`].
 ///

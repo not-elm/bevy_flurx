@@ -117,7 +117,7 @@ mod test_tokio {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
                     side_effect::bevy_task::spawn(async move {
-                        tokio::time::sleep(std::time::Duration::new(1, 0)).await;
+                        tokio::time::sleep(core::time::Duration::new(1, 0)).await;
                     })
                 })
                 .await;

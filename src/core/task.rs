@@ -1,6 +1,6 @@
 use crate::core::selector::Selector;
 use crate::core::task::future::TaskFuture;
-use std::future::Future;
+use core::future::Future;
 
 pub mod future;
 

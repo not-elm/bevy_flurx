@@ -1,7 +1,6 @@
 use bevy::platform::collections::HashMap;
 use bevy::prelude::{Component, Reflect, World};
-use std::fmt::Debug;
-use std::sync::atomic::{AtomicU64, Ordering};
+use core::sync::atomic::{AtomicU64, Ordering};
 
 /// The cancellation handler id assigned by [`CancellationHandlers`].
 ///

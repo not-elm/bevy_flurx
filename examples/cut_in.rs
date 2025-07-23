@@ -6,8 +6,8 @@
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_flurx::prelude::*;
+use core::time::Duration;
 use std::f32::consts::PI;
-use std::time::Duration;
 
 #[derive(Component)]
 struct CutInBackground;

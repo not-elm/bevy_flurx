@@ -2,16 +2,16 @@
 
 use crate::action::wait;
 use crate::prelude::ActionSeed;
-use bevy::prelude::{In, Local, Res, TimerMode};
+use bevy::prelude::*;
 use bevy::time::{Time, Timer};
-use std::time::Duration;
+use core::time::Duration;
 
 /// Delays by the specified amount of time.
 ///
 /// ## Examples
 ///
 /// ```no_run
-/// use std::time::Duration;
+/// use core::time::Duration;
 /// use bevy::prelude::{World, Update};
 /// use bevy_flurx::prelude::*;
 ///

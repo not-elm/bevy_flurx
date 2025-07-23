@@ -1,6 +1,7 @@
 use crate::core::scheduler::future::ReactorsFuture;
 use crate::core::scheduler::state_ptr::StatePtr;
 use crate::core::task::CoreTask;
+use bevy::prelude::*;
 use core::future::Future;
 use core::pin::Pin;
 

@@ -1,11 +1,10 @@
 //! [`wait::input`] creates a task related to waiting to keycode inputs.
 
-use std::hash::Hash;
-
 use crate::action::seed::ActionSeed;
 use crate::action::wait;
 use bevy::input::ButtonInput;
-use bevy::prelude::{In, Res};
+use bevy::prelude::*;
+use core::hash::Hash;
 
 /// Waits until item has just been pressed.
 ///
@@ -137,6 +136,7 @@ mod tests {
     use bevy::app::{First, Startup, Update};
     use bevy::input::ButtonInput;
     use bevy::prelude::KeyCode::{KeyA, KeyB, KeyC, KeyD};
+    use bevy::prelude::*;
     use bevy::prelude::{Commands, KeyCode, World};
     use bevy_test_helper::resource::bool::BoolExtension;
     use bevy_test_helper::resource::DirectResourceControl;

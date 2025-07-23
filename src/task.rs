@@ -6,8 +6,8 @@ use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::Entity;
+use core::future::Future;
 use futures_polling::FuturePollingExt;
-use std::future::Future;
 
 /// Create a task that runs the system until certain conditions are met.
 #[derive(Clone)]

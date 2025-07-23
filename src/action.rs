@@ -143,7 +143,7 @@ macro_rules! actions {
 #[cfg(test)]
 mod tests {
     use crate::action::{delay, once, wait};
-    use std::time::Duration;
+    use core::time::Duration;
 
     #[test]
     fn length_is_0() {

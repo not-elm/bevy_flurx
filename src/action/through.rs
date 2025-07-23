@@ -18,7 +18,7 @@ use bevy::prelude::World;
 /// # Examples
 ///
 /// ```no_run
-/// use std::time::Duration;
+/// use core::time::Duration;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
@@ -57,7 +57,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// # Examples
     ///
     /// ```no_run
-    /// use std::time::Duration;
+    /// use core::time::Duration;
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///

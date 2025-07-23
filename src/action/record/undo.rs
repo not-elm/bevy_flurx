@@ -7,7 +7,7 @@ use crate::action::record::Record;
 use crate::prelude::record::{lock_record, unlock_record};
 use crate::prelude::{ActionSeed, Output, Runner, Track};
 use crate::runner::{BoxedRunner, CancellationHandlers, CancellationId, RunnerIs};
-use bevy::prelude::World;
+use bevy::prelude::*;
 
 /// Pops the last pushed `undo` action, and then execute it.
 ///
@@ -76,7 +76,7 @@ pub fn all<Act>() -> ActionSeed<(), EditRecordResult>
 where
     Act: Send + Sync + 'static,
 {
-    do_undo(|_: ()| |record: &mut Record<Act>| std::mem::take(&mut record.tracks))
+    do_undo(|_: ()| |record: &mut Record<Act>| core::mem::take(&mut record.tracks))
 }
 
 fn do_undo<I, Act, F>(
@@ -176,9 +176,7 @@ mod tests {
     use crate::action::record::tests::push_undo_increment;
     use crate::action::record::EditRecordResult;
     use crate::action::{delay, record};
-    use crate::prelude::{
-        once, ActionSeed, Omit, Pipe, Reactor, Record, RequestUndo, Rollback, Then, Track,
-    };
+    use crate::prelude::*;
     use crate::reactor::NativeReactor;
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
