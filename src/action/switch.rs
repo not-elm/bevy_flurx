@@ -4,7 +4,7 @@
 //! cannot run except on the main thread.
 
 use bevy::prelude::{Local, Mut, Res, Resource, World};
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// A Condition-satisfying system that returns true if the switch has been turned on.
 #[inline]

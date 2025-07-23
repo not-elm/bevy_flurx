@@ -6,7 +6,7 @@ use crate::action::record::{unlock_record, EditRecordResult};
 use crate::prelude::record::lock_record;
 use crate::prelude::{ActionSeed, Output, Track};
 use crate::runner::{BoxedRunner, CancellationHandlers, CancellationId, Runner, RunnerIs};
-use bevy::prelude::World;
+use bevy::prelude::*;
 
 /// Pops the last pushed `redo` action and execute it.
 /// After the `redo` action is executed, then the `undo` action that created it
@@ -88,7 +88,7 @@ pub fn all<Act>() -> ActionSeed<(), EditRecordResult>
 where
     Act: Send + Sync + 'static,
 {
-    do_redo(|_: ()| |record: &mut Record<Act>| std::mem::take(&mut record.redo))
+    do_redo(|_: ()| |record: &mut Record<Act>| core::mem::take(&mut record.redo))
 }
 
 fn do_redo<In, Act, F>(
@@ -182,16 +182,14 @@ fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
 mod tests {
     use crate::action::record::track::{Redo, Undo};
     use crate::action::{delay, once, record};
-    use crate::prelude::{ActionSeed, Omit, Reactor, Record, RequestRedo, Rollback, Then, Track};
+    use crate::prelude::*;
     use crate::reactor::NativeReactor;
     use crate::sequence;
     use crate::test_util::SpawnReactor;
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{
-        on_event, Commands, Component, Entity, IntoScheduleConfigs, Query, ResMut, Resource, With,
-    };
+    use bevy::prelude::*;
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;

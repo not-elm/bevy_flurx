@@ -29,7 +29,7 @@ jobs:
         if: runner.os == 'linux'
       - name: Build & run tests
         run: |
-          cargo test
+          cargo test -F state,audio,tokio,record,side-effect
           cargo test --all-features
   all-doc-tests:
     runs-on: ubuntu-latest

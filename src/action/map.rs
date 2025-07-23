@@ -101,6 +101,7 @@ mod tests {
     use crate::action::once;
     use crate::prelude::{Map, Pipe, Reactor};
     use crate::tests::test_app;
+    use alloc::format;
     use bevy::app::{Startup, Update};
     use bevy::prelude::{Commands, In};
 

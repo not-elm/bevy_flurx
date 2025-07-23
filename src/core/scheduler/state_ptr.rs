@@ -1,3 +1,5 @@
+use bevy::prelude::*;
+
 #[repr(transparent)]
 #[derive(Default)]
 pub(crate) struct StatePtr<State>(pub(crate) Box<Option<State>>);

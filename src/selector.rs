@@ -4,7 +4,7 @@ use crate::runner::{initialize_runner, Output};
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::Entity;
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 pub(crate) struct WorldSelector<Label, In, Out> {
     action: Option<(Entity, Action<In, Out>)>,

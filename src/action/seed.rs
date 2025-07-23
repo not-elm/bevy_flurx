@@ -2,7 +2,7 @@
 
 use crate::action::Action;
 use crate::runner::{BoxedRunner, Output, Runner};
-use bevy::prelude::Reflect;
+use bevy::prelude::*;
 
 /// If [`In`](bevy::prelude::In) type of the struct implements this is `()`,
 /// its struct also implements Into<[`Action`]> automatically.

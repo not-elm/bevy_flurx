@@ -7,9 +7,9 @@ use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, Reserv
 use bevy::ecs::schedule::{InternedScheduleLabel, ScheduleLabel};
 use bevy::platform::collections::{HashMap, HashSet};
 use bevy::prelude::*;
+use core::marker::PhantomData;
 pub use output::Output;
 use serde::{Deserialize, Serialize};
-use std::marker::PhantomData;
 
 mod app_schedule_labels;
 mod cancellation_handlers;
@@ -304,7 +304,7 @@ fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut Worl
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result {
     let Some(mut runners_registry) = world
         .get_non_send_resource_mut::<RunnersRegistry<L>>()
-        .map(|mut registry| std::mem::take(&mut registry.0))
+        .map(|mut registry| core::mem::take(&mut registry.0))
     else {
         return Ok(());
     };

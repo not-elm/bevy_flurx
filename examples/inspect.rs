@@ -9,7 +9,7 @@ use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy::time::common_conditions::on_timer;
 use bevy_flurx::prelude::*;
-use std::time::Duration;
+use core::time::Duration;
 
 fn main() {
     App::new()

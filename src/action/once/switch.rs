@@ -56,7 +56,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::action::{delay, once};
-    use crate::prelude::{switch_just_turned_off, switch_just_turned_on};
+    use crate::prelude::*;
     use crate::reactor::Reactor;
     use crate::tests::test_app;
     use bevy::app::{PostUpdate, Startup};

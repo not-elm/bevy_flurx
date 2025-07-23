@@ -2,7 +2,7 @@ use crate::prelude::Reactor;
 use crate::task::ReactorTask;
 use bevy::app::{App, Startup};
 use bevy::prelude::Commands;
-use std::future::Future;
+use core::future::Future;
 
 #[allow(unused)]
 pub trait SpawnReactor {

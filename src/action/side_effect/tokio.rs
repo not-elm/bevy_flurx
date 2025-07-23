@@ -7,9 +7,9 @@
 use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
+use alloc::sync::Arc;
 use bevy::prelude::World;
-use std::marker::PhantomData;
-use std::sync::Arc;
+use core::marker::PhantomData;
 use tokio::runtime::Runtime;
 use tokio::task::JoinHandle;
 
@@ -104,18 +104,18 @@ impl<I, Out, Functor, M> Drop for TokioRunner<I, Out, Functor, M> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::atomic::{AtomicBool, Ordering};
-    use std::time::Duration;
-
     use crate::action::{delay, once, side_effect, wait};
     use crate::actions;
     use crate::prelude::{Pipe, Reactor, Then};
     use crate::tests::{exit_reader, test_app};
     use bevy::app::Startup;
+    use bevy::platform::thread;
     use bevy::prelude::{Commands, In, ResMut, Update};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
+    use core::sync::atomic::{AtomicBool, Ordering};
+    use core::time::Duration;
 
     #[test]
     fn tokio_task_with_input() {
@@ -134,7 +134,7 @@ mod tests {
             }));
         });
         app.update();
-        std::thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(10));
         app.update();
         app.assert_resource_eq(Count(2));
     }
@@ -156,7 +156,7 @@ mod tests {
             }));
         });
         app.update();
-        std::thread::sleep(Duration::from_millis(10));
+        thread::sleep(Duration::from_millis(10));
         app.update();
         app.assert_resource_eq(Count(2));
     }
@@ -185,7 +185,7 @@ mod tests {
         });
         let mut er = exit_reader();
         app.update();
-        std::thread::sleep(Duration::from_millis(200));
+        thread::sleep(Duration::from_millis(200));
         app.assert_event_not_comes(&mut er);
         assert!(!TASK_FINISHED.load(Ordering::Relaxed));
     }
@@ -216,7 +216,7 @@ mod tests {
         });
         let mut er = exit_reader();
         app.update();
-        std::thread::sleep(Duration::from_millis(200));
+        thread::sleep(Duration::from_millis(200));
         app.assert_event_not_comes(&mut er);
         assert!(!TASK_FINISHED.load(Ordering::Relaxed));
     }

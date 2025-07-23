@@ -1,9 +1,12 @@
-## Unreleased
+## v0.12.0(Unreleased)
 
+### Features
+- Support no_std
 ### Bug Fixes
-
 - Fixed a bug where `side_effect::tokio::spawn` was blocking execution.
 - Fixed a potential bug in the internal `RunnersRegistry` usage.
+### Improvements
+- Remove `serialize` and `std` feature flags from `bevy` dependency.
 
 ## v0.11.1
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.1)

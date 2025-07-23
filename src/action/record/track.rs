@@ -1,7 +1,8 @@
 use crate::action::{Action, Map};
 use crate::prelude::{ActionSeed, Omit, OmitInput};
 use crate::runner::{BoxedRunner, Output};
-use std::marker::PhantomData;
+use bevy::prelude::*;
+use core::marker::PhantomData;
 
 /// Represents the track of act.
 pub struct Track<Act> {

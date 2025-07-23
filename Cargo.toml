@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.11.2-dev"
+version = "0.12.0-dev"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development"]
@@ -61,6 +61,7 @@ tokio = ["dep:tokio", "dep:async-compat"]
 record = []
 side-effect = []
 state = ["bevy/bevy_state"]
+std = ["bevy/std"]
 
 [lints.clippy]
 type_complexity = "allow"

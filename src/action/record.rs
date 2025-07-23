@@ -3,9 +3,9 @@
 use crate::action::once;
 use crate::prelude::ActionSeed;
 pub use _push::push;
-use bevy::prelude::{NonSendMut, Resource, World};
-use std::error::Error;
-use std::fmt::{Display, Formatter};
+use bevy::prelude::*;
+use core::error::Error;
+use core::fmt::{Display, Formatter};
 pub use track::*;
 
 #[path = "record/push.rs"]
@@ -27,7 +27,7 @@ pub fn all_clear<M: 'static>() -> ActionSeed<(), Result<(), UndoRedoInProgress>>
 pub struct UndoRedoInProgress;
 
 impl Display for UndoRedoInProgress {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_str("failed edit history because the undo/redo actions are in progress")
     }
 }
@@ -166,9 +166,7 @@ fn push_track<Act: Send + Sync + 'static>(
 mod tests {
     use crate::action::record::track::Track;
     use crate::action::{record, wait, Action};
-    use crate::prelude::{
-        ActionSeed, EditRecordResult, Omit, Reactor, Record, Redo, Rollback, Then, Undo,
-    };
+    use crate::prelude::*;
     use crate::tests::{decrement_count, increment_count, test_app, NumAct, TestAct};
     use bevy::app::{Startup, Update};
     use bevy::prelude::Commands;

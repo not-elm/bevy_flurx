@@ -1,5 +1,5 @@
 use bevy::prelude::World;
-use std::ptr;
+use core::ptr;
 
 #[repr(transparent)]
 #[derive(Clone, Copy)]

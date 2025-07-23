@@ -7,7 +7,7 @@
 use bevy::log::LogPlugin;
 use bevy::prelude::*;
 use bevy_flurx::prelude::*;
-use std::time::Duration;
+use core::time::Duration;
 
 fn main() {
     App::new()

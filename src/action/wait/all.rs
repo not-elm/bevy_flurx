@@ -1,6 +1,6 @@
 use crate::prelude::{ActionSeed, Output, Runner};
 use crate::runner::{BoxedRunner, CancellationHandlers, RunnerIs};
-use bevy::prelude::World;
+use bevy::prelude::*;
 
 /// Wait until all the actions are completed.
 ///
@@ -10,7 +10,7 @@ use bevy::prelude::World;
 /// # Examples
 ///
 /// ```no_run
-/// use std::time::Duration;
+/// use core::time::Duration;
 /// use bevy::prelude::*;
 /// use bevy_flurx::actions;
 /// use bevy_flurx::prelude::*;
@@ -46,8 +46,8 @@ impl Runner for AllRunner {
         &mut self,
         world: &mut World,
         token: &mut CancellationHandlers,
-    ) -> crate::prelude::RunnerIs {
-        let runners = std::mem::take(&mut self.runners);
+    ) -> RunnerIs {
+        let runners = core::mem::take(&mut self.runners);
         for mut runner in runners {
             match runner.run(world, token) {
                 RunnerIs::Canceled => return RunnerIs::Canceled,
@@ -126,7 +126,7 @@ pub mod private {
     use crate::prelude::RunnerIs;
     use crate::runner::macros::impl_tuple_runner;
     use crate::runner::{BoxedRunner, Output, Runner};
-    use std::marker::PhantomData;
+    use core::marker::PhantomData;
 
     pub struct FlatBothRunner<I1, I2, O1, O2, O> {
         o1: Output<O1>,

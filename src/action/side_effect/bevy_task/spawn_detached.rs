@@ -1,10 +1,11 @@
 use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, Output, RunnerIs};
 use crate::runner::Runner;
-use bevy::prelude::World;
+use alloc::sync::Arc;
+use bevy::platform::sync::Mutex;
+use bevy::prelude::*;
 use bevy::tasks::AsyncComputeTaskPool;
-use std::marker::PhantomData;
-use std::sync::{Arc, Mutex};
+use core::marker::PhantomData;
 
 /// Spawns a future onto the bevy thread pool,
 /// and then wait until its completed.
@@ -92,10 +93,11 @@ mod tests {
     use crate::prelude::{Pipe, Reactor};
     use crate::tests::test_app;
     use bevy::app::Startup;
+    use bevy::platform::thread;
     use bevy::prelude::{Commands, Update};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
-    use std::time::Duration;
+    use core::time::Duration;
 
     #[test]
     fn test_simple_spawn_detached() {
@@ -110,7 +112,7 @@ mod tests {
             }));
         });
         app.update();
-        std::thread::sleep(Duration::from_millis(20));
+        thread::sleep(Duration::from_millis(20));
         app.update();
         app.assert_resource_eq(Count(2));
     }

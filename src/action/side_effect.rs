@@ -1,10 +1,10 @@
 //! Convert the operations with side effects such as asynchronous runtime or thread
 //! into the referential-transparent actions.
 
-use std::future::Future;
+use core::future::Future;
 
 pub mod bevy_task;
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(all(not(target_arch = "wasm32"), feature = "std"))]
 pub mod thread;
 #[cfg(feature = "tokio")]
 #[cfg_attr(docsrs, doc(cfg(feature = "tokio")))]
