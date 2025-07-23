@@ -4,9 +4,11 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
 
-This library provides functionality similar to coroutines, allowing you to write sequential processing for delays, user input, animations, and more.
+This library provides functionality similar to coroutines, allowing you to write sequential processing for delays, user
+input, animations, and more.
 
-[Reactor](https://docs.rs/bevy_flurx/latest/bevy_flurx/prelude/struct.Reactor.html) can be used incrementally, meaning there’s no need to rewrite existing applications to incorporate it.
+[Reactor](https://docs.rs/bevy_flurx/latest/bevy_flurx/prelude/struct.Reactor.html) can be used incrementally, meaning
+there’s no need to rewrite existing applications to incorporate it.
 
 ```rust
 //! Here are some basic [once], [wait], [delay], [then], [pipe] and [through] actions.
@@ -102,6 +104,7 @@ All examples are [`here`](./examples).
 | side-effect | thread/async side effects                                                          | false   |
 | state       | state actions                                                                      | false   | 
 | tokio       | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
+| std         | enable features that depend on the standard library                                | false   |
 
 ### audio
 
@@ -126,6 +129,10 @@ referential-transparent actions.
 ### tokio
 
 You will be able to write processes that depend on tokio's runtime in the reactor.
+
+### std
+
+Both `side-effect` and `std` flags must be enabled to use `side_effect::thread`.
 
 ## ChangeLog
 
