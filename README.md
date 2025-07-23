@@ -4,6 +4,10 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
 
+> [!TIP]
+> Supports no_std
+
+
 This library provides functionality similar to coroutines, allowing you to write sequential processing for delays, user
 input, animations, and more.
 
