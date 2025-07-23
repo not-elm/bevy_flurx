@@ -139,7 +139,7 @@ impl<L: Send + Sync> Default for RunnersRegistry<L> {
 #[derive(Component, Reflect)]
 #[reflect(Component)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serialize", reflect(Serialize, Deserialize))]
 struct ReactorEntity(Entity);
 
 #[derive(Component, Reflect, Eq, PartialEq, Hash)]
