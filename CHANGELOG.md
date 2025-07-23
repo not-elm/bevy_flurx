@@ -3,6 +3,7 @@
 ### Bug Fixes
 
 - Fixed a bug where `side_effect::tokio::spawn` was blocking execution.
+- Fixed a potential bug in the internal `RunnersRegistry` usage.
 
 ## v0.11.1
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.1)
