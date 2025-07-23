@@ -278,12 +278,17 @@ fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut Worl
                     return;
                 };
                 let Some((_, cancellation_handlers)) = runner_registry.0.remove(&entity) else {
+                    world.insert_non_send_resource(runner_registry);
                     return;
                 };
                 for handler in cancellation_handlers.0.values() {
                     handler(world);
                 }
-                world.insert_non_send_resource(runner_registry);
+                if let Some(mut r) = world.get_non_send_resource_mut::<RunnersRegistry<Label>>() {
+                    r.0.extend(runner_registry.0);
+                } else {
+                    world.insert_non_send_resource(runner_registry);
+                }
             });
         },
     );
