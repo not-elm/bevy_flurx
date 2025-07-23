@@ -42,11 +42,7 @@ struct AllRunner {
 }
 
 impl Runner for AllRunner {
-    fn run(
-        &mut self,
-        world: &mut World,
-        token: &mut CancellationHandlers,
-    ) -> RunnerIs {
+    fn run(&mut self, world: &mut World, token: &mut CancellationHandlers) -> RunnerIs {
         let runners = core::mem::take(&mut self.runners);
         for mut runner in runners {
             match runner.run(world, token) {
