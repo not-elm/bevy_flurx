@@ -421,7 +421,7 @@ mod tests {
         app.update();
         app.update();
         app.update();
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 
     #[test]
@@ -499,9 +499,9 @@ mod tests {
             .run_if(on_event::<AppExit>),
         );
         app.update();
-        app.send(RequestRedo::<TestAct>::Once);
+        app.write(RequestRedo::<TestAct>::Once);
         app.update();
-        app.send_default::<AppExit>();
+        app.write_default::<AppExit>();
         app.update();
         app.update();
         app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());

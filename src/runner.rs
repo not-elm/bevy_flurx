@@ -203,17 +203,17 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
 
 fn register_runner_system<L: ScheduleLabel>(
     world: &mut World,
-    scheduels: &mut Schedules,
+    schedules: &mut Schedules,
     label: InternedScheduleLabel,
     contains_label: bool,
 ) {
     if contains_label {
-        world.commands().send_event(ReservedRunner {
+        world.commands().write_message(ReservedRunner {
             label,
             system: || Box::new(IntoSystem::into_system(run_runners::<L>)),
         });
     } else {
-        scheduels.add_systems(label, run_runners::<L>);
+        schedules.add_systems(label, run_runners::<L>);
     }
 }
 
@@ -272,7 +272,7 @@ fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut Worl
         return;
     }
     let mut observer = Observer::new(
-        move |_: Trigger<OnRemove, NativeReactor>, mut commands: Commands| {
+        move |_: On<Remove, NativeReactor>, mut commands: Commands| {
             commands.queue(move |world: &mut World| {
                 let Some(mut runner_registry) =
                     world.remove_non_send_resource::<RunnersRegistry<Label>>()
@@ -405,7 +405,7 @@ mod tests {
     use crate::test_util::test;
     use crate::tests::test_app;
     use bevy::app::{AppExit, PostUpdate, Startup};
-    use bevy::ecs::event::EventCursor;
+    use bevy::ecs::message::MessageCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{
         Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World,
@@ -709,12 +709,12 @@ mod tests {
                 .await;
             }));
         });
-        let mut cursor = EventCursor::<AppExit>::default();
+        let mut cursor = MessageCursor::<AppExit>::default();
 
         app.update();
-        app.assert_event_not_comes(&mut cursor);
+        app.assert_message_not_comes(&mut cursor);
 
         app.update();
-        app.assert_event_comes(&mut cursor);
+        app.assert_message_comes(&mut cursor);
     }
 }

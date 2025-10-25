@@ -103,7 +103,7 @@ mod tests {
         app.update();
         app.update();
         let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 
     #[test]
@@ -129,10 +129,10 @@ mod tests {
 
         let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
         app.update();
-        app.assert_event_not_comes(&mut er);
+        app.assert_message_not_comes(&mut er);
 
         app.update();
         app.update();
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 }

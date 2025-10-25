@@ -3,7 +3,7 @@
 use crate::action::seed::ActionSeed;
 use crate::action::{once, Action};
 use bevy::app::AppExit;
-use bevy::prelude::{Event, EventWriter, In};
+use bevy::prelude::*;
 
 /// Once send an event.
 ///
@@ -20,9 +20,9 @@ use bevy::prelude::{Event, EventWriter, In};
 #[inline(always)]
 pub fn send<E>() -> ActionSeed<E, ()>
 where
-    E: Event,
+    E: Message,
 {
-    once::run(|In(event): In<E>, mut w: EventWriter<E>| {
+    once::run(|In(event): In<E>, mut w: MessageWriter<E>| {
         w.write(event);
     })
 }
@@ -42,9 +42,9 @@ where
 #[inline(always)]
 pub fn send_default<E>() -> ActionSeed
 where
-    E: Event + Default,
+    E: Message + Default,
 {
-    once::run(|mut w: EventWriter<E>| {
+    once::run(|mut w: MessageWriter<E>| {
         w.write(E::default());
     })
 }

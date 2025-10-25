@@ -69,7 +69,9 @@ where
         let Some(input) = self.input.take() else {
             return RunnerIs::Completed;
         };
-        let out = self.system.run(input, world);
+        let Ok(out) = self.system.run(input, world) else{
+            panic!("Failed to run the system in once::run!");
+        };
         self.system.apply_deferred(world);
         self.output.set(out);
         RunnerIs::Completed

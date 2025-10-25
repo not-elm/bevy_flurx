@@ -186,7 +186,7 @@ mod tests {
         let mut er = exit_reader();
         app.update();
         thread::sleep(Duration::from_millis(200));
-        app.assert_event_not_comes(&mut er);
+        app.assert_message_not_comes(&mut er);
         assert!(!TASK_FINISHED.load(Ordering::Relaxed));
     }
 
@@ -217,7 +217,7 @@ mod tests {
         let mut er = exit_reader();
         app.update();
         thread::sleep(Duration::from_millis(200));
-        app.assert_event_not_comes(&mut er);
+        app.assert_message_not_comes(&mut er);
         assert!(!TASK_FINISHED.load(Ordering::Relaxed));
     }
 }

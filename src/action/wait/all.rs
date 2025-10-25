@@ -260,11 +260,11 @@ mod tests {
         let mut er = exit_reader();
         app.update();
         app.assert_resource_eq(Count(2));
-        app.assert_event_not_comes(&mut er);
+        app.assert_message_not_comes(&mut er);
 
         app.update();
         app.assert_resource_eq(Count(2));
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 
     #[test]

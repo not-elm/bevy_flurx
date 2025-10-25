@@ -2,7 +2,8 @@ use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
 use bevy::app::{App, Plugin};
-use bevy::ecs::component::{ComponentHooks, HookContext, Mutable, StorageType};
+use bevy::ecs::component::{Mutable, StorageType};
+use bevy::ecs::lifecycle::{ComponentHook, HookContext};
 use bevy::ecs::world::DeferredWorld;
 use bevy::prelude::*;
 use bevy::reflect::Reflect;
@@ -18,10 +19,11 @@ use core::marker::PhantomData;
 pub struct StepAllReactors;
 
 /// This event triggers the execution of the [`Reactor`].
-#[derive(Event, Reflect, Debug, Eq, PartialEq, Copy, Clone, Hash)]
+#[derive(EntityEvent, Reflect, Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[reflect(Debug, PartialEq, Hash)]
 pub struct StepReactor {
     /// The entity of the reactor to be executed
+    #[event_target]
     pub reactor: Entity,
 }
 
@@ -31,8 +33,6 @@ impl Plugin for ReactorPlugin {
     fn build(&self, app: &mut App) {
         app.register_type::<StepAllReactors>()
             .register_type::<StepReactor>()
-            .add_event::<StepReactor>()
-            .add_event::<StepAllReactors>()
             .add_observer(trigger_step_reactor)
             .add_observer(trigger_step_all_reactors);
     }
@@ -95,8 +95,8 @@ where
     const STORAGE_TYPE: StorageType = StorageType::Table;
     type Mutability = Mutable;
 
-    fn register_component_hooks(hooks: &mut ComponentHooks) {
-        hooks.on_add(|mut world: DeferredWorld, context: HookContext| {
+    fn on_add() -> Option<ComponentHook> {
+        Some(|mut world: DeferredWorld, context: HookContext| {
             let entity = context.entity;
             let f = {
                 let mut entity_mut = world.entity_mut(entity);
@@ -112,7 +112,7 @@ where
                 .commands()
                 .entity(entity)
                 .insert(NativeReactor::schedule(entity, f));
-        });
+        })
     }
 }
 
@@ -153,24 +153,24 @@ impl Component for NativeReactor {
     const STORAGE_TYPE: StorageType = StorageType::Table;
     type Mutability = Mutable;
 
-    fn register_component_hooks(hooks: &mut ComponentHooks) {
-        hooks.on_add(|mut world: DeferredWorld, context: HookContext| {
+    fn on_add() -> Option<ComponentHook> {
+        Some(|mut world: DeferredWorld, context: HookContext| {
             let entity = context.entity;
             world.commands().queue(move |world: &mut World| {
                 step_reactor(entity, world);
             });
-        });
+        })
     }
 }
 
-fn trigger_step_reactor(trigger: Trigger<StepReactor>, mut commands: Commands) {
+fn trigger_step_reactor(trigger: On<StepReactor>, mut commands: Commands) {
     let reactor_entity = trigger.reactor;
     commands.queue(move |world: &mut World| {
         step_reactor(reactor_entity, world);
     });
 }
 
-fn trigger_step_all_reactors(_: Trigger<StepAllReactors>, mut commands: Commands) {
+fn trigger_step_all_reactors(_: On<StepAllReactors>, mut commands: Commands) {
     commands.queue(move |world: &mut World| {
         let world_ptr = WorldPtr::new(world);
         let mut finished_reactors = Vec::new();

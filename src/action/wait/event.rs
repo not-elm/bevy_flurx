@@ -2,8 +2,8 @@
 
 use crate::prelude::seed::ActionSeed;
 use crate::prelude::wait;
-use bevy::ecs::event::EventCursor;
-use bevy::prelude::{Event, Events, Local, ResMut};
+use bevy::ecs::message::MessageCursor;
+use bevy::prelude::*;
 
 /// Waits until the event is received.
 ///
@@ -20,12 +20,12 @@ use bevy::prelude::{Event, Events, Local, ResMut};
 /// ```
 pub fn comes<E>() -> ActionSeed
 where
-    E: Event,
+    E: Message,
 {
     wait::until(
-        |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
+        |mut er: Local<Option<MessageCursor<E>>>, mut events: ResMut<Messages<E>>| {
             if er.is_none() {
-                if 0 < events.iter_current_update_events().count() {
+                if 0 < events.iter_current_update_messages().count() {
                     events.clear();
                     return true;
                 }
@@ -59,12 +59,12 @@ where
 /// ```
 pub fn comes_and<E>(predicate: impl Fn(&E) -> bool + Send + Sync + 'static) -> ActionSeed
 where
-    E: Event,
+    E: Message,
 {
     wait::until(
-        move |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
+        move |mut er: Local<Option<MessageCursor<E>>>, mut events: ResMut<Messages<E>>| {
             if er.is_none() {
-                let received = events.iter_current_update_events().any(&predicate);
+                let received = events.iter_current_update_messages().any(&predicate);
                 if received {
                     events.clear();
                     return true;
@@ -100,7 +100,7 @@ where
 #[inline(always)]
 pub fn read<E>() -> ActionSeed<(), E>
 where
-    E: Event + Clone,
+    E: Message + Clone,
 {
     wait::event::read_and(|_| true)
 }
@@ -125,14 +125,14 @@ where
 #[inline(always)]
 pub fn read_and<E>(predicate: impl Fn(&E) -> bool + Send + Sync + 'static) -> ActionSeed<(), E>
 where
-    E: Event + Clone,
+    E: Message + Clone,
 {
     wait::output(
-        move |mut er: Local<Option<EventCursor<E>>>, mut events: ResMut<Events<E>>| {
+        move |mut er: Local<Option<MessageCursor<E>>>, mut events: ResMut<Messages<E>>| {
             if er.is_none() {
                 let event = {
                     events
-                        .iter_current_update_events()
+                        .iter_current_update_messages()
                         .find(|e| predicate(e))
                         .cloned()
                 };
@@ -158,8 +158,8 @@ mod tests {
     use crate::prelude::{Either, Pipe, Reactor, Then};
     use crate::tests::test_app;
     use bevy::app::{App, Startup, Update};
-    use bevy::prelude::{Commands, Event, EventWriter, Events, In, Resource};
-    use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
+    use bevy::prelude::{Commands, EventWriter, Events, In, Message, Resource};
+    use bevy_test_helper::event::*;
     use bevy_test_helper::resource::DirectResourceControl;
 
     #[test]
@@ -193,7 +193,7 @@ mod tests {
         app.update();
 
         let mut er = app.resource_mut::<Events<TestEvent2>>().get_cursor();
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 
     #[test]
@@ -228,21 +228,21 @@ mod tests {
         app.update();
 
         let mut er = app.resource_mut::<Events<TestEvent2>>().get_cursor();
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 
-    #[derive(Event, Clone, Debug, Eq, PartialEq, Resource)]
-    struct PredicateEvent(bool);
+    #[derive(Message, Clone, Debug, Eq, PartialEq, Resource)]
+    struct PredicateMessage(bool);
 
     #[test]
     fn wait_read_event_with_predicate() {
         let mut app = test_app();
-        app.add_event::<PredicateEvent>();
+        app.add_message::<PredicateMessage>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
-                    wait::event::read_and::<PredicateEvent>(|e| e.0).pipe(once::res::insert()),
+                    wait::event::read_and::<PredicateMessage>(|e| e.0).pipe(once::res::insert()),
                 )
                 .await;
             }));
@@ -253,13 +253,13 @@ mod tests {
     #[test]
     fn wait_comes_event_with_predicate() {
         let mut app = test_app();
-        app.add_event::<PredicateEvent>();
+        app.add_event::<PredicateMessage>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(
                     Update,
-                    wait::event::comes_and::<PredicateEvent>(|e| e.0)
-                        .then(once::res::insert().with(PredicateEvent(true))),
+                    wait::event::comes_and::<PredicateMessage>(|e| e.0)
+                        .then(once::res::insert().with(PredicateMessage(true))),
                 )
                 .await;
             }));
@@ -269,14 +269,14 @@ mod tests {
 
     fn assert_event_predicate(app: &mut App) {
         app.update();
-        assert!(!app.world().contains_resource::<PredicateEvent>());
+        assert!(!app.world().contains_resource::<PredicateMessage>());
 
-        app.send(PredicateEvent(false));
+        app.write(PredicateMessage(false));
         app.update();
-        assert!(!app.world().contains_resource::<PredicateEvent>());
+        assert!(!app.world().contains_resource::<PredicateMessage>());
 
-        app.send(PredicateEvent(true));
+        app.write(PredicateMessage(true));
         app.update();
-        app.assert_resource_eq(PredicateEvent(true));
+        app.assert_resource_eq(PredicateMessage(true));
     }
 }

@@ -360,10 +360,10 @@ mod tests {
         app.update();
         app.update();
         let mut er = exit_reader();
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
 
         app.update();
-        app.assert_event_not_comes(&mut er);
+        app.assert_message_not_comes(&mut er);
     }
 
     #[test]
@@ -429,9 +429,9 @@ mod tests {
         );
         app.update();
         app.update();
-        app.send(RequestUndo::<TestAct>::Once);
+        app.write(RequestUndo::<TestAct>::Once);
         app.update();
-        app.send_default::<AppExit>();
+        app.write_default::<AppExit>();
         app.update();
         app.update();
         app.assert_resource(false, |record: &Record<TestAct>| record.can_edit());

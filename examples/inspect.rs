@@ -15,7 +15,7 @@ fn main() {
     App::new()
         .add_plugins((MinimalPlugins, LogPlugin::default(), FlurxPlugin))
         .insert_resource(PlayerHp(100))
-        .add_event::<Damage>()
+        .add_message::<Damage>()
         .add_systems(Startup, spawn_reactor)
         .add_systems(Update, hit.run_if(on_timer(Duration::from_secs(1))))
         .run();
@@ -24,11 +24,16 @@ fn main() {
 #[derive(Resource)]
 struct PlayerHp(isize);
 
-#[derive(Event, Clone)]
+#[derive(Message, Clone)]
 struct Damage(usize);
 
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
+        let action = wait::output(||Some(1));
+        // Action -> Future<Output=i32>
+        let f = task.will(Update, action).await;
+
+
         task.will(Update, {
             wait::event::read::<Damage>()
                 .inspect(once::run(|In(damage): In<Damage>| {
@@ -46,6 +51,6 @@ fn spawn_reactor(mut commands: Commands) {
     }));
 }
 
-fn hit(mut ew: EventWriter<Damage>) {
+fn hit(mut ew: MessageWriter<Damage>) {
     ew.write(Damage(10));
 }

@@ -142,7 +142,7 @@ mod tests {
         app.update();
         app.update();
         let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
-        assert!(app.read_last_event(&mut er).is_some());
+        assert!(app.read_last_message(&mut er).is_some());
     }
 
     #[test]

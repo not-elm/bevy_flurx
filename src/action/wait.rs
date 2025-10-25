@@ -109,7 +109,7 @@ where
 
         let out = self.system.run(self.input.clone(), world);
         self.system.apply_deferred(world);
-        if let Some(o) = out {
+        if let Ok(Some(o)) = out {
             self.output.set(o);
             RunnerIs::Completed
         } else {
