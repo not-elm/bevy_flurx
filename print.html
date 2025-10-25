@@ -414,7 +414,10 @@ Reactor::schedule(|task| async move {
 </ul>
 <p>For more specific use cases, consider the specialized once actions like <code>once::event</code> or <code>once::res</code>.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="onceevent"><a class="header" href="#onceevent">once::event</a></h1>
-<p>The <code>once::event</code> module provides actions for sending Bevy events exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on event sending operations.</p>
+<blockquote>
+<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="actions/once/./message.html"><code>once::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
+</blockquote>
+<p>The <code>once::event</code> module provides actions for sending Bevy messages exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on message sending operations.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <h3 id="send"><a class="header" href="#send">send</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -430,13 +433,13 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::send().with(AppExit::Success)).await;
+    task.will(Update, once::message::write().with(AppExit::Success)).await;
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="send_default"><a class="header" href="#send_default">send_default</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>once::event::send_default&lt;E&gt;() -&gt; ActionSeed
+</span>once::message::write_default&lt;E&gt;() -&gt; ActionSeed
 <span class="boring">}</span></code></pre></pre>
 <p>Creates an action that sends a default-constructed event once. The event type must implement the <code>Default</code> trait.</p>
 <h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
@@ -447,13 +450,13 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::send_default::&lt;AppExit&gt;()).await;
+    task.will(Update, once::message::write_default::&lt;AppExit&gt;()).await;
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="app_exit_success"><a class="header" href="#app_exit_success">app_exit_success</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>once::event::app_exit_success() -&gt; Action&lt;AppExit, ()&gt;
+</span>once::message::app_exit_success() -&gt; Action&lt;AppExit, ()&gt;
 <span class="boring">}</span></code></pre></pre>
 <p>A convenience function that creates an action to send the <code>AppExit::Success</code> event once, which will exit the application successfully.</p>
 <h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
@@ -463,17 +466,20 @@ Reactor::schedule(|task| async move {
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::app_exit_success()).await;
+    task.will(Update, once::message::app_exit_success()).await;
 });
 <span class="boring">}</span></code></pre></pre>
 <h2 id="when-to-use-1"><a class="header" href="#when-to-use-1">When to Use</a></h2>
-<p>Use <code>once::event</code> actions when you need to:</p>
+<blockquote>
+<p><strong>Note</strong>: This module is deprecated. Use <code>once::message</code> instead.</p>
+</blockquote>
+<p>Use <code>once::message</code> actions when you need to:</p>
 <ul>
-<li>Send a specific event exactly once</li>
-<li>Send a default-constructed event exactly once</li>
+<li>Send a specific message exactly once</li>
+<li>Send a default-constructed message exactly once</li>
 <li>Exit the application with a success status</li>
 </ul>
-<p>For more complex event handling or when you need to access other system parameters, consider using the more general <code>once::run</code> action.</p>
+<p>For more complex message handling or when you need to access other system parameters, consider using the more general <code>once::run</code> action.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="onceres"><a class="header" href="#onceres">once::res</a></h1>
 <p>The <code>once::res</code> module provides actions for managing Bevy resources exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on resource operations.</p>
 <h2 id="functions-1"><a class="header" href="#functions-1">Functions</a></h2>
@@ -948,10 +954,13 @@ Reactor::schedule(|task| async move {
 </ul>
 <p>For simpler cases where you just need to wait for a condition without returning a value, consider using <code>wait::until</code> instead.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="waitevent"><a class="header" href="#waitevent">wait::event</a></h1>
-<p>The <code>wait::event</code> module provides actions for waiting to receive Bevy events. These actions are useful for creating tasks that respond to events in your game or application.</p>
+<blockquote>
+<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="actions/wait/./message.html"><code>wait::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
+</blockquote>
+<p>The <code>wait::event</code> module provides actions for waiting to receive Bevy messages. These actions are useful for creating tasks that respond to messages in your game or application.</p>
 <h2 id="functions-6"><a class="header" href="#functions-6">Functions</a></h2>
 <h3 id="comes"><a class="header" href="#comes">comes</a></h3>
-<pre><code>wait::event::comes&lt;E&gt;() -&gt; ActionSeed
+<pre><code>wait::message::comes&lt;E&gt;() -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received. The action completes when the event is received but does not return the event itself.</p>
 <h4 id="example-13"><a class="header" href="#example-13">Example</a></h4>
@@ -963,14 +972,14 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for an AppExit event
-    task.will(Update, wait::event::comes::&lt;AppExit&gt;()).await;
+    task.will(Update, wait::message::comes::&lt;AppExit&gt;()).await;
     
     // This code runs after an AppExit event is received
     println!("App is exiting!");
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="comes_and"><a class="header" href="#comes_and">comes_and</a></h3>
-<pre><code>wait::event::comes_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed
+<pre><code>wait::message::comes_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received and the event matches the given predicate. The action completes when a matching event is received but does not return the event itself.</p>
 <h4 id="example-14"><a class="header" href="#example-14">Example</a></h4>
@@ -982,7 +991,7 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for a successful AppExit event
-    task.will(Update, wait::event::comes_and::&lt;AppExit&gt;(|e| {
+    task.will(Update, wait::message::comes_and::&lt;AppExit&gt;(|e| {
         e.is_success()
     })).await;
     
@@ -991,7 +1000,7 @@ Reactor::schedule(|task| async move {
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="read"><a class="header" href="#read">read</a></h3>
-<pre><code>wait::event::read&lt;E&gt;() -&gt; ActionSeed&lt;(), E&gt;
+<pre><code>wait::message::read&lt;E&gt;() -&gt; ActionSeed&lt;(), E&gt;
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received and returns a clone of the event. This is similar to <code>comes</code>, but it returns the event itself.</p>
 <h4 id="example-15"><a class="header" href="#example-15">Example</a></h4>
@@ -1003,7 +1012,7 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for an AppExit event and get the event
-    let exit_event = task.will(Update, wait::event::read::&lt;AppExit&gt;()).await;
+    let exit_event = task.will(Update, wait::message::read::&lt;AppExit&gt;()).await;
     
     // This code runs after an AppExit event is received
     println!("App is exiting with status: {:?}", exit_event);
@@ -1012,7 +1021,7 @@ Reactor::schedule(|task| async move {
 <h3 id="read_and"><a class="header" href="#read_and">read_and</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>wait::event::read_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed&lt;(), E&gt;
+</span>wait::message::read_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed&lt;(), E&gt;
 <span class="boring">}</span></code></pre></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received, the event matches the given predicate, and returns a clone of the event. This is similar to <code>comes_and</code>, but it returns the event itself.</p>
 <h4 id="example-16"><a class="header" href="#example-16">Example</a></h4>
@@ -1024,7 +1033,7 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for a successful AppExit event and get the event
-    let exit_event = task.will(Update, wait::event::read_and::&lt;AppExit&gt;(|e| {
+    let exit_event = task.will(Update, wait::message::read_and::&lt;AppExit&gt;(|e| {
         e.is_success()
     })).await;
     
@@ -1033,14 +1042,17 @@ Reactor::schedule(|task| async move {
 });
 <span class="boring">}</span></code></pre></pre>
 <h2 id="when-to-use-9"><a class="header" href="#when-to-use-9">When to Use</a></h2>
-<p>Use <code>wait::event</code> actions when you need to:</p>
+<blockquote>
+<p><strong>Note</strong>: This module is deprecated. Use <code>wait::message</code> instead.</p>
+</blockquote>
+<p>Use <code>wait::message</code> actions when you need to:</p>
 <ul>
-<li>Wait for specific events to occur before continuing execution</li>
-<li>React to events in an asynchronous manner</li>
-<li>Filter events based on their content using predicates</li>
-<li>Retrieve event data for further processing</li>
+<li>Wait for specific messages to occur before continuing execution</li>
+<li>React to messages in an asynchronous manner</li>
+<li>Filter messages based on their content using predicates</li>
+<li>Retrieve message data for further processing</li>
 </ul>
-<p>For more complex event handling scenarios, consider combining <code>wait::event</code> with other wait actions like <code>wait::either</code> or <code>wait::any</code> to wait for multiple different event types.</p>
+<p>For more complex message handling scenarios, consider combining <code>wait::message</code> with other wait actions like <code>wait::either</code> or <code>wait::any</code> to wait for multiple different message types.</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="waitswitch"><a class="header" href="#waitswitch">wait::switch</a></h1>
 <p>The <code>wait::switch</code> module provides actions for waiting for <a href="actions/wait/../../actions/switch.html"><code>Switch</code></a> state changes. These actions are useful for coordinating between different parts of your application, allowing tasks to wait for specific switch state changes before continuing execution.</p>
 <h2 id="functions-7"><a class="header" href="#functions-7">Functions</a></h2>
@@ -1347,8 +1359,8 @@ struct Event2;
 Reactor::schedule(|task| async move {
     // Wait for both events and get their values
     let (event1, event2) = task.will(Update, wait_all![
-        wait::event::read::&lt;Event1&gt;(),
-        wait::event::read::&lt;Event2&gt;()
+        wait::message::read::&lt;Event1&gt;(),
+        wait::message::read::&lt;Event2&gt;()
     ]).await;
     
     // This code runs after both events are received
@@ -1386,7 +1398,7 @@ Reactor::schedule(|task| async move {
     // Wait until either the B key is pressed or an AppExit event is received
     let index = task.will(Update, wait::any().with(actions![
         wait::input::just_pressed().with(KeyCode::KeyB),
-        wait::event::comes::&lt;AppExit&gt;()
+        wait::message::comes::&lt;AppExit&gt;()
     ])).await;
     
     // Check which action completed
@@ -1426,7 +1438,7 @@ Reactor::schedule(|task| async move {
     // Wait for both the R key to be pressed and an AppExit event to be received
     let (_, exit_event) = task.will(Update, wait::both(
         wait::input::just_pressed().with(KeyCode::KeyR),
-        wait::event::read::&lt;AppExit&gt;()
+        wait::message::read::&lt;AppExit&gt;()
     )).await;
     
     // This code runs after both conditions are met
@@ -1477,7 +1489,7 @@ Reactor::schedule(|task| async move {
     // Wait until either a system returns false or an AppExit event is received
     let result = task.will(Update, wait::either(
         wait::until(|| false),
-        wait::event::read::&lt;AppExit&gt;()
+        wait::message::read::&lt;AppExit&gt;()
     )).await;
     
     match result {
@@ -1551,7 +1563,7 @@ fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Delay for 1 second, then send an event
         task.will(Update, delay::time().with(Duration::from_secs(1))
-            .then(once::event::app_exit_success())
+            .then(once::message::app_exit_success())
         ).await;
     }));
 }
@@ -1810,7 +1822,7 @@ fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Wait for a PlayerHit event and then process it
         task.will(Update, 
-            wait::event::read::&lt;PlayerHit&gt;()
+            wait::message::read::&lt;PlayerHit&gt;()
                 .pipe(once::run(|In(PlayerHit(entity)): In&lt;PlayerHit&gt;, mut players: Query&lt;&amp;mut Hp&gt;| {
                     players.get_mut(entity).unwrap().0 -= 10;
                     println!("Player hit! HP reduced to {}", players.get(entity).unwrap().0);
@@ -1860,7 +1872,7 @@ struct Damage(usize);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use through to insert a delay without affecting the data flow
-        task.will(Update, wait::event::read::&lt;Damage&gt;()
+        task.will(Update, wait::message::read::&lt;Damage&gt;()
             .pipe(through(delay::time().with(Duration::from_millis(500))))
             .pipe(once::run(|In(Damage(damage)): In&lt;Damage&gt;| {
                 println!("Player takes {damage} points of damage.");
@@ -1883,7 +1895,7 @@ struct Damage(usize);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use the through method for a more concise syntax
-        task.will(Update, wait::event::read::&lt;Damage&gt;()
+        task.will(Update, wait::message::read::&lt;Damage&gt;()
             .through(delay::time().with(Duration::from_millis(500)))
             .pipe(once::run(|In(Damage(damage)): In&lt;Damage&gt;| {
                 println!("Player takes {damage} points of damage.");
@@ -1964,7 +1976,7 @@ fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Create a complex action flow with through
         task.will(Update, 
-            wait::event::read::&lt;PlayerAction&gt;()
+            wait::message::read::&lt;PlayerAction&gt;()
                 .through(once::run(|In(action): In&lt;PlayerAction&gt;| {
                     println!("Received action: {} with value {}", action.action_type, action.value);
                 }))
@@ -2237,7 +2249,7 @@ struct Hp(u8);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use inspect to log damage without affecting the main flow
-        task.will(Update, wait::event::read::&lt;Damage&gt;()
+        task.will(Update, wait::message::read::&lt;Damage&gt;()
             .pipe(inspect(once::run(|In(Damage(damage)): In&lt;Damage&gt;| {
                 println!("Players take {damage} points of damage.");
             })))
@@ -2266,7 +2278,7 @@ struct Hp(u8);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use the inspect method for a more concise syntax
-        task.will(Update, wait::event::read::&lt;Damage&gt;()
+        task.will(Update, wait::message::read::&lt;Damage&gt;()
             .inspect(once::run(|In(Damage(damage)): In&lt;Damage&gt;| {
                 println!("Players take {damage} points of damage.");
             }))
@@ -2336,7 +2348,7 @@ struct Damage(u8);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Collect metrics while processing events
-        task.will(Update, wait::event::read::&lt;Damage&gt;()
+        task.will(Update, wait::message::read::&lt;Damage&gt;()
             .inspect(once::run(|In(Damage(damage)): In&lt;Damage&gt;, mut metrics: ResMut&lt;Metrics&gt;| {
                 metrics.damage_dealt += damage as u32;
                 println!("Total damage dealt: {}", metrics.damage_dealt);
@@ -2373,7 +2385,7 @@ enum ActionType {
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Perform conditional side effects based on input values
-        task.will(Update, wait::event::read::&lt;PlayerAction&gt;()
+        task.will(Update, wait::message::read::&lt;PlayerAction&gt;()
             .inspect(once::run(|In(action): In&lt;PlayerAction&gt;| {
                 match action.action_type {
                     ActionType::Attack =&gt; println!("Player attacks for {} damage!", action.value),

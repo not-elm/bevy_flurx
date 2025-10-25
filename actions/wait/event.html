@@ -176,10 +176,13 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="waitevent"><a class="header" href="#waitevent">wait::event</a></h1>
-<p>The <code>wait::event</code> module provides actions for waiting to receive Bevy events. These actions are useful for creating tasks that respond to events in your game or application.</p>
+<blockquote>
+<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="./message.html"><code>wait::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
+</blockquote>
+<p>The <code>wait::event</code> module provides actions for waiting to receive Bevy messages. These actions are useful for creating tasks that respond to messages in your game or application.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <h3 id="comes"><a class="header" href="#comes">comes</a></h3>
-<pre><code>wait::event::comes&lt;E&gt;() -&gt; ActionSeed
+<pre><code>wait::message::comes&lt;E&gt;() -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received. The action completes when the event is received but does not return the event itself.</p>
 <h4 id="example"><a class="header" href="#example">Example</a></h4>
@@ -191,14 +194,14 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for an AppExit event
-    task.will(Update, wait::event::comes::&lt;AppExit&gt;()).await;
+    task.will(Update, wait::message::comes::&lt;AppExit&gt;()).await;
     
     // This code runs after an AppExit event is received
     println!("App is exiting!");
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="comes_and"><a class="header" href="#comes_and">comes_and</a></h3>
-<pre><code>wait::event::comes_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed
+<pre><code>wait::message::comes_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received and the event matches the given predicate. The action completes when a matching event is received but does not return the event itself.</p>
 <h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
@@ -210,7 +213,7 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for a successful AppExit event
-    task.will(Update, wait::event::comes_and::&lt;AppExit&gt;(|e| {
+    task.will(Update, wait::message::comes_and::&lt;AppExit&gt;(|e| {
         e.is_success()
     })).await;
     
@@ -219,7 +222,7 @@ Reactor::schedule(|task| async move {
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="read"><a class="header" href="#read">read</a></h3>
-<pre><code>wait::event::read&lt;E&gt;() -&gt; ActionSeed&lt;(), E&gt;
+<pre><code>wait::message::read&lt;E&gt;() -&gt; ActionSeed&lt;(), E&gt;
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received and returns a clone of the event. This is similar to <code>comes</code>, but it returns the event itself.</p>
 <h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
@@ -231,7 +234,7 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for an AppExit event and get the event
-    let exit_event = task.will(Update, wait::event::read::&lt;AppExit&gt;()).await;
+    let exit_event = task.will(Update, wait::message::read::&lt;AppExit&gt;()).await;
     
     // This code runs after an AppExit event is received
     println!("App is exiting with status: {:?}", exit_event);
@@ -240,7 +243,7 @@ Reactor::schedule(|task| async move {
 <h3 id="read_and"><a class="header" href="#read_and">read_and</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>wait::event::read_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed&lt;(), E&gt;
+</span>wait::message::read_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed&lt;(), E&gt;
 <span class="boring">}</span></code></pre></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received, the event matches the given predicate, and returns a clone of the event. This is similar to <code>comes_and</code>, but it returns the event itself.</p>
 <h4 id="example-3"><a class="header" href="#example-3">Example</a></h4>
@@ -252,7 +255,7 @@ use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
     // Wait for a successful AppExit event and get the event
-    let exit_event = task.will(Update, wait::event::read_and::&lt;AppExit&gt;(|e| {
+    let exit_event = task.will(Update, wait::message::read_and::&lt;AppExit&gt;(|e| {
         e.is_success()
     })).await;
     
@@ -261,14 +264,17 @@ Reactor::schedule(|task| async move {
 });
 <span class="boring">}</span></code></pre></pre>
 <h2 id="when-to-use"><a class="header" href="#when-to-use">When to Use</a></h2>
-<p>Use <code>wait::event</code> actions when you need to:</p>
+<blockquote>
+<p><strong>Note</strong>: This module is deprecated. Use <code>wait::message</code> instead.</p>
+</blockquote>
+<p>Use <code>wait::message</code> actions when you need to:</p>
 <ul>
-<li>Wait for specific events to occur before continuing execution</li>
-<li>React to events in an asynchronous manner</li>
-<li>Filter events based on their content using predicates</li>
-<li>Retrieve event data for further processing</li>
+<li>Wait for specific messages to occur before continuing execution</li>
+<li>React to messages in an asynchronous manner</li>
+<li>Filter messages based on their content using predicates</li>
+<li>Retrieve message data for further processing</li>
 </ul>
-<p>For more complex event handling scenarios, consider combining <code>wait::event</code> with other wait actions like <code>wait::either</code> or <code>wait::any</code> to wait for multiple different event types.</p>
+<p>For more complex message handling scenarios, consider combining <code>wait::message</code> with other wait actions like <code>wait::either</code> or <code>wait::any</code> to wait for multiple different message types.</p>
 
                     </main>
 

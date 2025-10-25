@@ -176,7 +176,10 @@
                 <div id="content" class="content">
                     <main>
                         <h1 id="onceevent"><a class="header" href="#onceevent">once::event</a></h1>
-<p>The <code>once::event</code> module provides actions for sending Bevy events exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on event sending operations.</p>
+<blockquote>
+<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="./message.html"><code>once::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
+</blockquote>
+<p>The <code>once::event</code> module provides actions for sending Bevy messages exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on message sending operations.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <h3 id="send"><a class="header" href="#send">send</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -192,13 +195,13 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::send().with(AppExit::Success)).await;
+    task.will(Update, once::message::write().with(AppExit::Success)).await;
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="send_default"><a class="header" href="#send_default">send_default</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>once::event::send_default&lt;E&gt;() -&gt; ActionSeed
+</span>once::message::write_default&lt;E&gt;() -&gt; ActionSeed
 <span class="boring">}</span></code></pre></pre>
 <p>Creates an action that sends a default-constructed event once. The event type must implement the <code>Default</code> trait.</p>
 <h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
@@ -209,13 +212,13 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::send_default::&lt;AppExit&gt;()).await;
+    task.will(Update, once::message::write_default::&lt;AppExit&gt;()).await;
 });
 <span class="boring">}</span></code></pre></pre>
 <h3 id="app_exit_success"><a class="header" href="#app_exit_success">app_exit_success</a></h3>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>once::event::app_exit_success() -&gt; Action&lt;AppExit, ()&gt;
+</span>once::message::app_exit_success() -&gt; Action&lt;AppExit, ()&gt;
 <span class="boring">}</span></code></pre></pre>
 <p>A convenience function that creates an action to send the <code>AppExit::Success</code> event once, which will exit the application successfully.</p>
 <h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
@@ -225,17 +228,20 @@ Reactor::schedule(|task| async move {
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::app_exit_success()).await;
+    task.will(Update, once::message::app_exit_success()).await;
 });
 <span class="boring">}</span></code></pre></pre>
 <h2 id="when-to-use"><a class="header" href="#when-to-use">When to Use</a></h2>
-<p>Use <code>once::event</code> actions when you need to:</p>
+<blockquote>
+<p><strong>Note</strong>: This module is deprecated. Use <code>once::message</code> instead.</p>
+</blockquote>
+<p>Use <code>once::message</code> actions when you need to:</p>
 <ul>
-<li>Send a specific event exactly once</li>
-<li>Send a default-constructed event exactly once</li>
+<li>Send a specific message exactly once</li>
+<li>Send a default-constructed message exactly once</li>
 <li>Exit the application with a success status</li>
 </ul>
-<p>For more complex event handling or when you need to access other system parameters, consider using the more general <code>once::run</code> action.</p>
+<p>For more complex message handling or when you need to access other system parameters, consider using the more general <code>once::run</code> action.</p>
 
                     </main>
 

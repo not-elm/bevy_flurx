@@ -230,7 +230,7 @@ fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Delay for 1 second, then send an event
         task.will(Update, delay::time().with(Duration::from_secs(1))
-            .then(once::event::app_exit_success())
+            .then(once::message::app_exit_success())
         ).await;
     }));
 }

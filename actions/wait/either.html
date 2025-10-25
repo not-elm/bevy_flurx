@@ -209,7 +209,7 @@ Reactor::schedule(|task| async move {
     // Wait until either a system returns false or an AppExit event is received
     let result = task.will(Update, wait::either(
         wait::until(|| false),
-        wait::event::read::&lt;AppExit&gt;()
+        wait::message::read::&lt;AppExit&gt;()
     )).await;
     
     match result {
