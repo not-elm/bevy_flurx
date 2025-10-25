@@ -3,6 +3,16 @@
 
 ### Features
 - Support for Bevy 0.17.0
+- Added `once::message` module with `write()`, `write_default()`, and `app_exit_success()` actions
+- Added `wait::message` module with `comes()`, `comes_and()`, `read()`, and `read_and()` actions
+
+### Deprecations
+- Deprecated `once::event` module in favor of `once::message` (Event trait replaced with Message in Bevy 0.17)
+- Deprecated `wait::event` module in favor of `wait::message` (Event trait replaced with Message in Bevy 0.17)
+
+### Improvements
+- Updated all examples, documentation, and tests to use the new `message` API
+- Deprecated functions now delegate to their `message` equivalents for consistency
 
 ## v0.12.0
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.12.0)

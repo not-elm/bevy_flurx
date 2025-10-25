@@ -87,10 +87,10 @@ impl Runner for AllRunner {
 ///
 /// Reactor::schedule(|task| async move{
 ///     let (event1, event2, event3, event4) = task.will(Update, wait_all![
-///         wait::event::read::<Event1>(),
-///         wait::event::read::<Event2>(),
-///         wait::event::read::<Event3>(),
-///         wait::event::read::<Event4>(),
+///         wait::message::read::<Event1>(),
+///         wait::message::read::<Event2>(),
+///         wait::message::read::<Event3>(),
+///         wait::message::read::<Event4>(),
 ///     ]).await;
 ///     assert_eq!(event1, Event1);
 ///     assert_eq!(event2, Event2);
@@ -252,7 +252,7 @@ mod tests {
                         ]
                     })
                     .pipe(wait::all())
-                    .then(once::event::app_exit_success())
+                    .then(once::message::app_exit_success())
                 })
                 .await;
             }));
@@ -276,8 +276,8 @@ mod tests {
                     .will(
                         Update,
                         wait_all![
-                            wait::event::read::<TestEvent1>(),
-                            wait::event::read::<TestEvent2>(),
+                            wait::message::read::<TestEvent1>(),
+                            wait::message::read::<TestEvent2>(),
                             wait::until(|mut c: Local<usize>| {
                                 *c += 1;
                                 *c == 3
@@ -315,8 +315,8 @@ mod tests {
                 let (event1, ..) = task
                     .will(
                         Update,
-                        once::event::send_default::<TestEvent1>().then(wait_all![
-                            wait::event::read::<TestEvent1>(),
+                        once::message::write_default::<TestEvent1>().then(wait_all![
+                            wait::message::read::<TestEvent1>(),
                             once::run(|| {})
                         ]),
                     )

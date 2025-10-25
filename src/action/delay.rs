@@ -70,7 +70,7 @@ mod tests {
                     First,
                     delay::frames()
                         .with(1)
-                        .then(once::event::app_exit_success()),
+                        .then(once::message::app_exit_success()),
                 )
                 .await;
             }));

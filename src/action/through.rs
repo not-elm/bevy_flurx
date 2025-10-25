@@ -26,7 +26,7 @@ use bevy::prelude::World;
 /// struct Damage(usize);
 ///
 /// Reactor::schedule(|task|async move{
-///     task.will(Update, wait::event::read::<Damage>()
+///     task.will(Update, wait::message::read::<Damage>()
 ///         .pipe(through(delay::time().with(Duration::from_millis(500))))
 ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
 ///               println!("Player takes {damage} points of damage.");
@@ -65,7 +65,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// struct Damage(usize);
     ///
     /// Reactor::schedule(|task|async move{
-    ///     task.will(Update, wait::event::read::<Damage>()
+    ///     task.will(Update, wait::message::read::<Damage>()
     ///         .through(delay::time().with(Duration::from_millis(500)))
     ///         .pipe(once::run(|In(Damage(damage)): In<Damage>|{
     ///               println!("Player takes {damage} points of damage.");

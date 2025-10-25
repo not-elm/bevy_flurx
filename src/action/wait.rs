@@ -21,6 +21,7 @@ mod all;
 pub mod audio;
 pub mod event;
 pub mod input;
+pub mod message;
 #[cfg(feature = "state")]
 #[cfg_attr(docsrs, doc(cfg(feature = "state")))]
 pub mod state;
@@ -185,7 +186,7 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let event = task.will(PreUpdate, wait::event::read::<AppExit>()).await;
+                let event = task.will(PreUpdate, wait::message::read::<AppExit>()).await;
                 task.will(Update, once::non_send::insert().with(event))
                     .await;
             }));
@@ -206,8 +207,8 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let t1 = wait::event::read::<TestEvent1>();
-                let t2 = wait::event::read::<TestEvent2>();
+                let t1 = wait::message::read::<TestEvent1>();
+                let t2 = wait::message::read::<TestEvent2>();
 
                 let (event1, event2) = task.will(Update, wait::both(t1, t2)).await;
                 assert_eq!(event1, TestEvent1);

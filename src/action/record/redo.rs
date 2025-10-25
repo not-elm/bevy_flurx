@@ -411,7 +411,7 @@ mod tests {
                     .await
                     .is_err()
                 {
-                    task.will(Update, once::event::app_exit_success()).await;
+                    task.will(Update, once::message::app_exit_success()).await;
                 }
                 t1.await.unwrap();
             }));

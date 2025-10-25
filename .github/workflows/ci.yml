@@ -28,6 +28,9 @@ jobs:
         run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config
         if: runner.os == 'linux'
       - name: Build & run tests
+        env:
+          RUSTFLAGS: "-C debuginfo=0"
+          CARGO_BUILD_JOBS: "1"
         run: |
           cargo test -F state,audio,tokio,record,side-effect
       - name: Run tests with all features

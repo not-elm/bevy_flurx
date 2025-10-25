@@ -24,7 +24,7 @@ Reactor::schedule(|task| async move {
     // Wait until either the B key is pressed or an AppExit event is received
     let index = task.will(Update, wait::any().with(actions![
         wait::input::just_pressed().with(KeyCode::KeyB),
-        wait::event::comes::<AppExit>()
+        wait::message::comes::<AppExit>()
     ])).await;
     
     // Check which action completed

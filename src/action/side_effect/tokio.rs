@@ -175,7 +175,7 @@ mod tests {
                             tokio::time::sleep(Duration::from_millis(100)).await;
                             TASK_FINISHED.store(true, Ordering::Relaxed);
                         })
-                        .then(once::event::app_exit_success()),
+                        .then(once::message::app_exit_success()),
                     )
                     // keep running while the test is running
                     .then(delay::time().with(Duration::from_secs(1000)))
@@ -206,7 +206,7 @@ mod tests {
                                 tokio::time::sleep(Duration::from_millis(100)).await;
                                 TASK_FINISHED.store(true, Ordering::Relaxed);
                             })
-                            .then(once::event::app_exit_success())
+                            .then(once::message::app_exit_success())
                         ])
                         // keep running while the test is running
                         .then(delay::time().with(Duration::from_secs(1000)))

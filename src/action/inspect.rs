@@ -41,7 +41,7 @@
 //! struct Hp(u8);
 //!
 //! Reactor::schedule(|task| async move {
-//!     task.will(Update, wait::event::read::<Damage>()
+//!     task.will(Update, wait::message::read::<Damage>()
 //!         .pipe(inspect(once::run(|In(Damage(damage)): In<Damage>| {
 //!               println!("Players take {damage} points of damage.");
 //!         })))
@@ -66,7 +66,7 @@
 //! struct Hp(u8);
 //!
 //! Reactor::schedule(|task| async move {
-//!     task.will(Update, wait::event::read::<Damage>()
+//!     task.will(Update, wait::message::read::<Damage>()
 //!         .inspect(once::run(|In(Damage(damage)): In<Damage>| {
 //!               println!("Players take {damage} points of damage.");
 //!         }))
@@ -129,7 +129,7 @@ use crate::action::Map;
 /// struct Hp(u8);
 ///
 /// Reactor::schedule(|task| async move {
-///     task.will(Update, wait::event::read::<Damage>()
+///     task.will(Update, wait::message::read::<Damage>()
 ///         .pipe(inspect(once::run(|In(Damage(damage)): In<Damage>| {
 ///             println!("Players take {damage} points of damage.");
 ///         })))
@@ -184,7 +184,7 @@ where
 /// struct Hp(u8);
 ///
 /// Reactor::schedule(|task| async move {
-///     task.will(Update, wait::event::read::<Damage>()
+///     task.will(Update, wait::message::read::<Damage>()
 ///         .inspect(once::run(|In(Damage(damage)): In<Damage>| {
 ///             println!("Players take {damage} points of damage.");
 ///         }))

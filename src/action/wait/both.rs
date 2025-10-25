@@ -16,7 +16,7 @@ use bevy::prelude::World;
 /// Reactor::schedule(|task|async move{
 ///     task.will(Update, wait::both(
 ///         wait::input::just_pressed().with(KeyCode::KeyR),
-///         wait::event::read::<AppExit>()
+///         wait::message::read::<AppExit>()
 ///     )).await;
 /// });
 /// ```

@@ -30,7 +30,7 @@ struct Damage(usize);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         task.will(Update, {
-            wait::event::read::<Damage>()
+            wait::message::read::<Damage>()
                 .inspect(once::run(|In(damage): In<Damage>| {
                     info!("Hit damage: {}", damage.0);
                 }))
@@ -40,7 +40,7 @@ fn spawn_reactor(mut commands: Commands) {
                         info!("Player HP: {}", player_hp.0);
                     },
                 ))
-                .then(once::event::app_exit_success())
+                .then(once::message::app_exit_success())
         })
         .await;
     }));

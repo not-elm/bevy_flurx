@@ -12,6 +12,7 @@ mod _no_op;
 #[cfg_attr(docsrs, doc(cfg(feature = "audio")))]
 pub mod audio;
 pub mod event;
+pub mod message;
 pub mod non_send;
 pub mod res;
 #[cfg(feature = "state")]

@@ -56,7 +56,7 @@ fn spawn_reactor(mut commands: Commands) {
                 .then(once::switch::off::<MoveSlowly>())
                 .then(once::switch::on::<MoveFast>())
                 .then(delay::time().with(Duration::from_millis(300)))
-                .then(once::event::app_exit_success())
+                .then(once::message::app_exit_success())
         })
         .await;
     }));

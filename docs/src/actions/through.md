@@ -24,7 +24,7 @@ struct Damage(usize);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use through to insert a delay without affecting the data flow
-        task.will(Update, wait::event::read::<Damage>()
+        task.will(Update, wait::message::read::<Damage>()
             .pipe(through(delay::time().with(Duration::from_millis(500))))
             .pipe(once::run(|In(Damage(damage)): In<Damage>| {
                 println!("Player takes {damage} points of damage.");
@@ -49,7 +49,7 @@ struct Damage(usize);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use the through method for a more concise syntax
-        task.will(Update, wait::event::read::<Damage>()
+        task.will(Update, wait::message::read::<Damage>()
             .through(delay::time().with(Duration::from_millis(500)))
             .pipe(once::run(|In(Damage(damage)): In<Damage>| {
                 println!("Player takes {damage} points of damage.");
@@ -139,7 +139,7 @@ fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Create a complex action flow with through
         task.will(Update, 
-            wait::event::read::<PlayerAction>()
+            wait::message::read::<PlayerAction>()
                 .through(once::run(|In(action): In<PlayerAction>| {
                     println!("Received action: {} with value {}", action.action_type, action.value);
                 }))

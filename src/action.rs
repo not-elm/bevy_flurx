@@ -118,7 +118,7 @@ where
 /// let actions: [ActionSeed; 3] = actions![
 ///     once::run(||{}),
 ///     delay::frames().with(3),
-///     wait::event::comes::<AppExit>()
+///     wait::message::comes::<AppExit>()
 /// ];
 /// ```
 #[macro_export]

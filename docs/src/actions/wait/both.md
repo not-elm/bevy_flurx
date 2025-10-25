@@ -22,7 +22,7 @@ Reactor::schedule(|task| async move {
     // Wait for both the R key to be pressed and an AppExit event to be received
     let (_, exit_event) = task.will(Update, wait::both(
         wait::input::just_pressed().with(KeyCode::KeyR),
-        wait::event::read::<AppExit>()
+        wait::message::read::<AppExit>()
     )).await;
     
     // This code runs after both conditions are met

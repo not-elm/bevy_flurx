@@ -22,7 +22,7 @@ use bevy::prelude::*;
 ///     // The output value is the index of the completed action.
 ///     let index: usize = task.will(Update, wait::any().with(actions![
 ///         wait::input::just_pressed().with(KeyCode::KeyB),
-///         wait::event::comes::<AppExit>()
+///         wait::message::comes::<AppExit>()
 ///     ])).await;
 /// });
 /// ```
@@ -96,7 +96,7 @@ mod tests {
                     )
                     .await;
                 if index == 1 {
-                    task.will(Update, once::event::app_exit_success()).await;
+                    task.will(Update, once::message::app_exit_success()).await;
                 }
             }));
         });
@@ -122,7 +122,7 @@ mod tests {
                     )
                     .await;
                 if index == 0 {
-                    task.will(Update, once::event::app_exit_success()).await;
+                    task.will(Update, once::message::app_exit_success()).await;
                 }
             }));
         });

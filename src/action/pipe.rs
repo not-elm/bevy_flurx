@@ -24,7 +24,7 @@ pub trait Pipe<I1, O1, O2, A> {
     ///
     /// Reactor::schedule(|task| async move{
     ///     task.will(Update, {
-    ///         wait::event::read::<PlayerHit>()
+    ///         wait::message::read::<PlayerHit>()
     ///             .pipe(once::run(|In(PlayerHit(entity)): In<PlayerHit>, mut players: Query<&mut Hp>|{
     ///                 players.get_mut(entity).unwrap().0 -= 10;
     ///             }))
@@ -131,7 +131,7 @@ mod tests {
                         .map(|dummy| dummy)
                         .through(delay::frames().with(2))
                         .through(once::run(|| {}))
-                        .then(once::event::app_exit_success()),
+                        .then(once::message::app_exit_success()),
                 )
                 .await;
             }));
