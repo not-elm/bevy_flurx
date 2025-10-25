@@ -50,8 +50,7 @@ async-compat = { version = "0.2", optional = true }
 
 [dev-dependencies]
 bevy = { version = "0.17" }
-#bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.17" }
-bevy_test_helper = { path = "../bevy_test_helper" }
+bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.17" }
 futures = "0.3"
 criterion = { version = "0.7.0", features = ["plotters", "html_reports"] }
 
