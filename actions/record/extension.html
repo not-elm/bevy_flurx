@@ -255,8 +255,8 @@ fn update_ui_system(
 
 fn handle_input(
     keys: Res&lt;Input&lt;KeyCode&gt;&gt;,
-    mut undo_events: EventWriter&lt;RequestUndo&lt;MyOperation&gt;&gt;,
-    mut redo_events: EventWriter&lt;RequestRedo&lt;MyOperation&gt;&gt;,
+    mut undo_events: MessageWriter&lt;RequestUndo&lt;MyOperation&gt;&gt;,
+    mut redo_events: MessageWriter&lt;RequestRedo&lt;MyOperation&gt;&gt;,
 ) {
     // Handle Ctrl+Z for undo
     if keys.pressed(KeyCode::ControlLeft) &amp;&amp; keys.just_pressed(KeyCode::Z) {
