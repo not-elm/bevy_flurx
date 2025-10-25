@@ -76,13 +76,13 @@ impl Runner for AllRunner {
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::wait_all;
 ///
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event1;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event2;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event3;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event4;
 ///
 /// Reactor::schedule(|task| async move{

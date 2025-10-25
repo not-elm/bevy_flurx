@@ -4,12 +4,12 @@
 use crate::action::record;
 use crate::prelude::{ActionSeed, Omit, Reactor, Record, Then};
 use bevy::app::{App, PostUpdate, Update};
-use bevy::prelude::{on_event, Commands, Event, EventReader, IntoScheduleConfigs, Trigger};
+use bevy::prelude::*;
 
 /// Represents a request `undo` operations.
 ///
 /// If an undo or redo is already in progress, the request will be ignored.
-#[derive(Event, Eq, PartialEq, Debug, Clone)]
+#[derive(Event, Message, Eq, PartialEq, Debug, Clone)]
 pub enum RequestUndo<Act> {
     /// [`record::undo::once`]
     Once,
@@ -41,7 +41,7 @@ where
 /// Represents a request `redo` operations.
 ///
 /// If an undo or redo is already in progress, the request will be ignored.
-#[derive(Event, Eq, PartialEq, Debug)]
+#[derive(Event, Message, Eq, PartialEq, Debug)]
 pub enum RequestRedo<Act> {
     /// [`record::redo::once`]
     Once,
@@ -85,8 +85,8 @@ impl RecordExtension for App {
         Act: Clone + PartialEq + Send + Sync + 'static,
     {
         self.init_resource::<Record<Act>>()
-            .add_event::<RequestUndo<Act>>()
-            .add_event::<RequestRedo<Act>>()
+            .add_message::<RequestUndo<Act>>()
+            .add_message::<RequestRedo<Act>>()
             .add_systems(
                 PostUpdate,
                 (
@@ -99,7 +99,7 @@ impl RecordExtension for App {
     }
 }
 
-fn request_undo<Act>(mut commands: Commands, mut er: EventReader<RequestUndo<Act>>)
+fn request_undo<Act>(mut commands: Commands, mut er: MessageReader<RequestUndo<Act>>)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -129,7 +129,7 @@ where
     }
 }
 
-fn apply_undo<Act>(trigger: Trigger<RequestUndo<Act>>, mut commands: Commands)
+fn apply_undo<Act>(trigger: On<RequestUndo<Act>>, mut commands: Commands)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -154,7 +154,7 @@ where
 mod tests {
     use bevy::app::{Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, IntoScheduleConfigs};
+    use bevy::prelude::{Commands, EventWriter, IntoScheduleConfigs, MessageWriter};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -265,7 +265,7 @@ mod tests {
         });
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<TestAct>>| {
                 ew.write(RequestRedo::Once);
             })
             .expect("Failed to run system");
@@ -353,7 +353,7 @@ mod tests {
         );
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<NumAct>>| {
                 ew.write(RequestRedo::All);
             })
             .expect("Failed to run system");

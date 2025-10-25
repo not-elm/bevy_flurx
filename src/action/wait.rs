@@ -126,7 +126,7 @@ mod tests {
     use crate::tests::test_app;
     use bevy::app::{AppExit, PreUpdate, Startup};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, In, Local, Update};
+    use bevy::prelude::{Commands, In, Local, MessageWriter, Update};
     use bevy_test_helper::event::{TestEvent1, TestEvent2};
 
     #[test]
@@ -195,7 +195,7 @@ mod tests {
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<AppExit>| w.write(AppExit::Success))
+            .run_system_once(|mut w: MessageWriter<AppExit>| w.write(AppExit::Success))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());
@@ -220,13 +220,13 @@ mod tests {
         app.update();
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent1>| w.write(TestEvent1))
+            .run_system_once(|mut w: MessageWriter<TestEvent1>| w.write(TestEvent1))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent2>| w.write(TestEvent2))
+            .run_system_once(|mut w: MessageWriter<TestEvent2>| w.write(TestEvent2))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());

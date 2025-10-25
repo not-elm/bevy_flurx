@@ -15,7 +15,6 @@ pub struct CancellationId(u64);
 /// and the [`Reactor`](crate::prelude::Reactor) can be cancelled by despawning the entity to which it is attached.
 #[repr(transparent)]
 #[derive(Default, Component)]
-#[cfg_attr(feature = "serialize", derive(Reflect))]
 pub struct CancellationHandlers(pub(crate) HashMap<CancellationId, fn(&mut World)>);
 
 impl CancellationHandlers {

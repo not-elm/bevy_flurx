@@ -70,7 +70,7 @@ mod tests {
     use crate::prelude::ActionSeed;
     use crate::FlurxPlugin;
     use bevy::app::{App, AppExit};
-    use bevy::ecs::event::EventCursor;
+    use bevy::ecs::message::MessageCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
     use bevy::prelude::{Message, MessageReader, ResMut, Resource};
@@ -79,8 +79,8 @@ mod tests {
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::BevyTestHelperPlugin;
 
-    pub fn exit_reader() -> EventCursor<AppExit> {
-        EventCursor::<AppExit>::default()
+    pub fn exit_reader() -> MessageCursor<AppExit> {
+        MessageCursor::<AppExit>::default()
     }
 
     pub fn increment_count() -> ActionSeed {

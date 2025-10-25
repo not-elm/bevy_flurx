@@ -34,7 +34,7 @@
 //! use bevy::prelude::*;
 //! use bevy_flurx::prelude::*;
 //!
-//! #[derive(Event, Clone)]
+//! #[derive(Message, Clone)]
 //! struct Damage(u8);
 //!
 //! #[derive(Component)]
@@ -59,7 +59,7 @@
 //! use bevy::prelude::*;
 //! use bevy_flurx::prelude::*;
 //!
-//! #[derive(Event, Clone)]
+//! #[derive(Message, Clone)]
 //! struct Damage(u8);
 //!
 //! #[derive(Component)]
@@ -122,7 +122,7 @@ use crate::action::Map;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Event, Clone)]
+/// #[derive(Message, Clone)]
 /// struct Damage(u8);
 ///
 /// #[derive(Component)]
@@ -177,7 +177,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Event, Clone)]
+/// #[derive(Message, Clone)]
 /// struct Damage(u8);
 ///
 /// #[derive(Component)]

@@ -253,7 +253,7 @@ mod tests {
     #[test]
     fn wait_comes_event_with_predicate() {
         let mut app = test_app();
-        app.add_event::<PredicateMessage>();
+        app.add_message::<PredicateMessage>();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(

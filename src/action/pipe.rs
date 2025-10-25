@@ -19,7 +19,7 @@ pub trait Pipe<I1, O1, O2, A> {
     /// #[derive(Component)]
     /// struct Hp(u8);
     ///
-    /// #[derive(Event, Clone)]
+    /// #[derive(Message, Clone)]
     /// struct PlayerHit(Entity);
     ///
     /// Reactor::schedule(|task| async move{

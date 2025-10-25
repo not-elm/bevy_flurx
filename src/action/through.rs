@@ -22,7 +22,7 @@ use bevy::prelude::World;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
-/// #[derive(Event, Clone)]
+/// #[derive(Message, Clone)]
 /// struct Damage(usize);
 ///
 /// Reactor::schedule(|task|async move{
@@ -61,7 +61,7 @@ pub trait Through<I1, O1, O2, ActionOrSeed> {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// #[derive(Event, Clone)]
+    /// #[derive(Message, Clone)]
     /// struct Damage(usize);
     ///
     /// Reactor::schedule(|task|async move{
