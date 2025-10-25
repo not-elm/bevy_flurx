@@ -90,8 +90,8 @@ impl RecordExtension for App {
             .add_systems(
                 PostUpdate,
                 (
-                    request_undo::<Act>.run_if(on_event::<RequestUndo<Act>>),
-                    request_redo::<Act>.run_if(on_event::<RequestRedo<Act>>),
+                    request_undo::<Act>.run_if(on_message::<RequestUndo<Act>>),
+                    request_redo::<Act>.run_if(on_message::<RequestRedo<Act>>),
                 ),
             )
             .add_observer(apply_undo::<Act>)
@@ -114,7 +114,7 @@ where
     }
 }
 
-fn request_redo<Act>(mut commands: Commands, mut er: EventReader<RequestRedo<Act>>)
+fn request_redo<Act>(mut commands: Commands, mut er: MessageReader<RequestRedo<Act>>)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -139,7 +139,7 @@ where
     }));
 }
 
-fn apply_redo<Act>(trigger: Trigger<RequestRedo<Act>>, mut commands: Commands)
+fn apply_redo<Act>(trigger: On<RequestRedo<Act>>, mut commands: Commands)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
