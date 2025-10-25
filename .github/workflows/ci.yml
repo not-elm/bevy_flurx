@@ -31,6 +31,10 @@ jobs:
         run: |
           cargo test -F state,audio,tokio,record,side-effect
       - name: Run tests with all features
+        # デバッグシンボルを生成しないようにし、並列ジョブ数を 1 に制限する
+        env:
+          RUSTFLAGS: "-C debuginfo=0"
+          CARGO_BUILD_JOBS: "1"
         run: |
           cargo test --all-features
   all-doc-tests:
