@@ -21,6 +21,7 @@ mod all;
 pub mod audio;
 pub mod event;
 pub mod input;
+pub mod message;
 #[cfg(feature = "state")]
 #[cfg_attr(docsrs, doc(cfg(feature = "state")))]
 pub mod state;
