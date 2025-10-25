@@ -20,8 +20,7 @@ pub(crate) struct RunnerPlugin;
 
 impl Plugin for RunnerPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<ReactorEntity>()
-            .register_type::<RunnerIs>()
+        app.register_type::<RunnerIs>()
             .add_plugins(ReserveRegisterRunnerPlugin)
             .add_systems(
                 PreStartup,
@@ -136,12 +135,6 @@ impl<L: Send + Sync> Default for RunnersRegistry<L> {
     }
 }
 
-#[derive(Component, Reflect)]
-#[reflect(Component)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Deserialize))]
-#[cfg_attr(feature = "serialize", reflect(Serialize, Deserialize))]
-struct ReactorEntity(Entity);
-
 #[derive(Component, Reflect, Eq, PartialEq, Hash)]
 struct ReactorScheduleLabel<Label: ScheduleLabel>(PhantomData<Label>);
 
@@ -203,17 +196,17 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
 
 fn register_runner_system<L: ScheduleLabel>(
     world: &mut World,
-    scheduels: &mut Schedules,
+    schedules: &mut Schedules,
     label: InternedScheduleLabel,
     contains_label: bool,
 ) {
     if contains_label {
-        world.commands().send_event(ReservedRunner {
+        world.commands().write_message(ReservedRunner {
             label,
             system: || Box::new(IntoSystem::into_system(run_runners::<L>)),
         });
     } else {
-        scheduels.add_systems(label, run_runners::<L>);
+        schedules.add_systems(label, run_runners::<L>);
     }
 }
 
@@ -262,24 +255,25 @@ fn observer_already_exists<Label: ScheduleLabel>(
     reactor_entity: &Entity,
 ) -> bool {
     world
-        .query_filtered::<&ReactorEntity, With<ReactorScheduleLabel<Label>>>()
+        .query_filtered::<Entity, With<ReactorScheduleLabel<Label>>>()
         .iter(world)
-        .any(|target| &target.0 == reactor_entity)
+        .any(|target| &target == reactor_entity)
 }
 
-fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut World) {
-    if observer_already_exists::<Label>(world, &entity) {
+fn observe_remove_reactor<Label: ScheduleLabel>(reactor_entity: Entity, world: &mut World) {
+    if observer_already_exists::<Label>(world, &reactor_entity) {
         return;
     }
     let mut observer = Observer::new(
-        move |_: Trigger<OnRemove, NativeReactor>, mut commands: Commands| {
+        move |_: On<Remove, NativeReactor>, mut commands: Commands| {
             commands.queue(move |world: &mut World| {
                 let Some(mut runner_registry) =
                     world.remove_non_send_resource::<RunnersRegistry<Label>>()
                 else {
                     return;
                 };
-                let Some((_, cancellation_handlers)) = runner_registry.0.remove(&entity) else {
+                let Some((_, cancellation_handlers)) = runner_registry.0.remove(&reactor_entity)
+                else {
                     world.insert_non_send_resource(runner_registry);
                     return;
                 };
@@ -294,13 +288,11 @@ fn observe_remove_reactor<Label: ScheduleLabel>(entity: Entity, world: &mut Worl
             });
         },
     );
-    observer.watch_entity(entity);
-
-    world.spawn((
-        ReactorScheduleLabel(PhantomData::<Label>),
-        ReactorEntity(entity),
-        observer,
-    ));
+    observer.watch_entity(reactor_entity);
+    world
+        .entity_mut(reactor_entity)
+        .insert(ReactorScheduleLabel(PhantomData::<Label>));
+    world.spawn(observer);
 }
 
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result {
@@ -401,14 +393,14 @@ mod tests {
     use crate::action::{delay, once, wait};
     use crate::prelude::{ActionSeed, CancellationHandlers, Reactor, Then};
     use crate::reactor::NativeReactor;
-    use crate::runner::{ReactorEntity, Runner, RunnerIs};
+    use crate::runner::{ReactorScheduleLabel, Runner, RunnerIs};
     use crate::test_util::test;
     use crate::tests::test_app;
     use bevy::app::{AppExit, PostUpdate, Startup};
-    use bevy::ecs::event::EventCursor;
+    use bevy::ecs::message::MessageCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::prelude::{
-        Commands, Component, Entity, IntoScheduleConfigs, Observer, Query, ResMut, Update, World,
+        Commands, Component, Entity, IntoScheduleConfigs, Query, ResMut, Update, World,
     };
     use bevy::prelude::{Resource, With};
     use bevy_test_helper::event::DirectEvents;
@@ -601,7 +593,9 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
+                // Spawn an observer.
                 task.will(Update, once::no_op()).await;
+                // Avoid spawning another observer.
                 task.will(Update, wait::until(|| false)).await;
             }));
         });
@@ -609,7 +603,7 @@ mod tests {
         app.update();
         let num_observer = app
             .world_mut()
-            .query_filtered::<&Observer, With<ReactorEntity>>()
+            .query_filtered::<&NativeReactor, With<ReactorScheduleLabel<Update>>>()
             .iter(app.world_mut())
             .len();
         assert_eq!(num_observer, 1);
@@ -709,12 +703,12 @@ mod tests {
                 .await;
             }));
         });
-        let mut cursor = EventCursor::<AppExit>::default();
+        let mut cursor = MessageCursor::<AppExit>::default();
 
         app.update();
-        app.assert_event_not_comes(&mut cursor);
+        app.assert_message_not_comes(&mut cursor);
 
         app.update();
-        app.assert_event_comes(&mut cursor);
+        app.assert_message_comes(&mut cursor);
     }
 }

@@ -31,7 +31,7 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::run(|mut ew: EventWriter<AppExit>| {
+    task.will(Update, once::run(|mut ew: MessageWriter<AppExit>| {
         ew.write(AppExit::Success);
     })).await;
 });

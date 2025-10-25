@@ -25,11 +25,17 @@ jobs:
         with:
           toolchain: stable
       - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config
         if: runner.os == 'linux'
       - name: Build & run tests
         run: |
           cargo test -F state,audio,tokio,record,side-effect
+      - name: Run tests with all features
+        # デバッグシンボルを生成しないようにし、並列ジョブ数を 1 に制限する
+        env:
+          RUSTFLAGS: "-C debuginfo=0"
+          CARGO_BUILD_JOBS: "1"
+        run: |
           cargo test --all-features
   all-doc-tests:
     runs-on: ubuntu-latest
@@ -48,7 +54,7 @@ jobs:
         with:
           toolchain: stable
       - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config
       - name: Run doc tests with all features (this also compiles README examples)
         run: cargo test --doc --all-features
   lint:
@@ -69,7 +75,7 @@ jobs:
           toolchain: stable
           components: rustfmt, clippy
       - name: Install alsa and udev
-        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev
+        run: sudo apt-get update; sudo apt-get install --no-install-recommends libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev pkg-config
       - name: Run clippy
         run: cargo clippy --workspace --all-targets --all-features -- -Dwarnings
       - name: Check format

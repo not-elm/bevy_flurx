@@ -44,11 +44,8 @@ impl Rollback {
     /// use bevy::prelude::*;
     /// use bevy_flurx::prelude::*;
     ///
-    /// #[derive(Event)]
-    /// struct MyEvent;
-    ///
-    /// Rollback::new(|| once::run(|mut er: EventReader<MyEvent>|{
-    ///     er.is_empty().then_some(RedoAction(once::run(||{})))
+    /// Rollback::new(|| once::run(||{
+    ///     Some(RedoAction(once::run(||{})))
     /// }));
     /// ```
     pub fn new<I, A, F>(f: F) -> Self

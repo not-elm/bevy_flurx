@@ -76,13 +76,13 @@ impl Runner for AllRunner {
 /// use bevy_flurx::prelude::*;
 /// use bevy_flurx::wait_all;
 ///
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event1;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event2;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event3;
-/// #[derive(Default, Clone, Event, PartialEq, Debug)]
+/// #[derive(Default, Clone, Message, PartialEq, Debug)]
 /// struct Event4;
 ///
 /// Reactor::schedule(|task| async move{
@@ -217,7 +217,7 @@ mod tests {
     use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, Local};
+    use bevy::prelude::{Commands, Local, MessageWriter};
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -260,11 +260,11 @@ mod tests {
         let mut er = exit_reader();
         app.update();
         app.assert_resource_eq(Count(2));
-        app.assert_event_not_comes(&mut er);
+        app.assert_message_not_comes(&mut er);
 
         app.update();
         app.assert_resource_eq(Count(2));
-        app.assert_event_comes(&mut er);
+        app.assert_message_comes(&mut er);
     }
 
     #[test]
@@ -295,13 +295,13 @@ mod tests {
         app.update();
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent1>| w.write(TestEvent1))
+            .run_system_once(|mut w: MessageWriter<TestEvent1>| w.write(TestEvent1))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent2>| w.write(TestEvent2))
+            .run_system_once(|mut w: MessageWriter<TestEvent2>| w.write(TestEvent2))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());

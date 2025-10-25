@@ -147,7 +147,7 @@ where
         }
     }
 
-    pub(crate) fn setup(world: &mut World, turn_on: bool) -> Mut<Switch<M>> {
+    pub(crate) fn setup(world: &mut World, turn_on: bool) -> Mut<'_, Switch<M>> {
         world.insert_resource(Self::new(turn_on));
         world.resource_mut::<Switch<M>>()
     }

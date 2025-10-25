@@ -4,12 +4,12 @@
 use crate::action::record;
 use crate::prelude::{ActionSeed, Omit, Reactor, Record, Then};
 use bevy::app::{App, PostUpdate, Update};
-use bevy::prelude::{on_event, Commands, Event, EventReader, IntoScheduleConfigs, Trigger};
+use bevy::prelude::*;
 
 /// Represents a request `undo` operations.
 ///
 /// If an undo or redo is already in progress, the request will be ignored.
-#[derive(Event, Eq, PartialEq, Debug, Clone)]
+#[derive(Event, Message, Eq, PartialEq, Debug, Clone)]
 pub enum RequestUndo<Act> {
     /// [`record::undo::once`]
     Once,
@@ -41,7 +41,7 @@ where
 /// Represents a request `redo` operations.
 ///
 /// If an undo or redo is already in progress, the request will be ignored.
-#[derive(Event, Eq, PartialEq, Debug)]
+#[derive(Event, Message, Eq, PartialEq, Debug)]
 pub enum RequestRedo<Act> {
     /// [`record::redo::once`]
     Once,
@@ -85,13 +85,13 @@ impl RecordExtension for App {
         Act: Clone + PartialEq + Send + Sync + 'static,
     {
         self.init_resource::<Record<Act>>()
-            .add_event::<RequestUndo<Act>>()
-            .add_event::<RequestRedo<Act>>()
+            .add_message::<RequestUndo<Act>>()
+            .add_message::<RequestRedo<Act>>()
             .add_systems(
                 PostUpdate,
                 (
-                    request_undo::<Act>.run_if(on_event::<RequestUndo<Act>>),
-                    request_redo::<Act>.run_if(on_event::<RequestRedo<Act>>),
+                    request_undo::<Act>.run_if(on_message::<RequestUndo<Act>>),
+                    request_redo::<Act>.run_if(on_message::<RequestRedo<Act>>),
                 ),
             )
             .add_observer(apply_undo::<Act>)
@@ -99,7 +99,7 @@ impl RecordExtension for App {
     }
 }
 
-fn request_undo<Act>(mut commands: Commands, mut er: EventReader<RequestUndo<Act>>)
+fn request_undo<Act>(mut commands: Commands, mut er: MessageReader<RequestUndo<Act>>)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -114,7 +114,7 @@ where
     }
 }
 
-fn request_redo<Act>(mut commands: Commands, mut er: EventReader<RequestRedo<Act>>)
+fn request_redo<Act>(mut commands: Commands, mut er: MessageReader<RequestRedo<Act>>)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -129,7 +129,7 @@ where
     }
 }
 
-fn apply_undo<Act>(trigger: Trigger<RequestUndo<Act>>, mut commands: Commands)
+fn apply_undo<Act>(trigger: On<RequestUndo<Act>>, mut commands: Commands)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -139,7 +139,7 @@ where
     }));
 }
 
-fn apply_redo<Act>(trigger: Trigger<RequestRedo<Act>>, mut commands: Commands)
+fn apply_redo<Act>(trigger: On<RequestRedo<Act>>, mut commands: Commands)
 where
     Act: Clone + Send + PartialEq + Sync + 'static,
 {
@@ -152,16 +152,15 @@ where
 //noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
-    use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, IntoScheduleConfigs};
-    use bevy_test_helper::resource::count::Count;
-    use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::record::tests::push_undo_increment;
     use crate::prelude::record::tests::push_num_act;
     use crate::prelude::{Reactor, RequestRedo, RequestUndo, Then};
     use crate::tests::{test_app, NumAct, TestAct};
+    use bevy::app::{Startup, Update};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::*;
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     #[test]
     fn test_request_undo_once() {
@@ -171,7 +170,7 @@ mod tests {
                 task.will(Update, push_undo_increment()).await.unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::Once);
         });
         app.update();
@@ -194,7 +193,7 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::IndexTo(1));
         });
         app.update();
@@ -214,7 +213,7 @@ mod tests {
                 .await;
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<NumAct>>| {
             ew.write(RequestUndo::To(NumAct(1)));
         });
         app.update();
@@ -237,7 +236,7 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
@@ -260,12 +259,12 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<TestAct>>| {
                 ew.write(RequestRedo::Once);
             })
             .expect("Failed to run system");
@@ -289,12 +288,12 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<TestAct>>| {
                 ew.write(RequestRedo::IndexTo(1));
             })
             .expect("Failed to run system");
@@ -315,12 +314,12 @@ mod tests {
                 .await;
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<NumAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<NumAct>>| {
                 ew.write(RequestRedo::To(NumAct(1)));
             })
             .expect("Failed to run system");
@@ -345,7 +344,7 @@ mod tests {
                         .await;
                     }));
                 },
-                |mut ew: EventWriter<RequestUndo<NumAct>>| {
+                |mut ew: MessageWriter<RequestUndo<NumAct>>| {
                     ew.write(RequestUndo::All);
                 },
             )
@@ -353,7 +352,7 @@ mod tests {
         );
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<NumAct>>| {
                 ew.write(RequestRedo::All);
             })
             .expect("Failed to run system");

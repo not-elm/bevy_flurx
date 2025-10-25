@@ -70,17 +70,17 @@ mod tests {
     use crate::prelude::ActionSeed;
     use crate::FlurxPlugin;
     use bevy::app::{App, AppExit};
-    use bevy::ecs::event::EventCursor;
+    use bevy::ecs::message::MessageCursor;
     use bevy::ecs::system::RunSystemOnce;
     use bevy::input::InputPlugin;
-    use bevy::prelude::{Event, EventReader, ResMut, Resource};
+    use bevy::prelude::{Message, MessageReader, ResMut, Resource};
     use bevy::state::app::StatesPlugin;
     use bevy::MinimalPlugins;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::BevyTestHelperPlugin;
 
-    pub fn exit_reader() -> EventCursor<AppExit> {
-        EventCursor::<AppExit>::default()
+    pub fn exit_reader() -> MessageCursor<AppExit> {
+        MessageCursor::<AppExit>::default()
     }
 
     pub fn increment_count() -> ActionSeed {
@@ -126,9 +126,9 @@ mod tests {
     pub struct TestResource;
 
     #[allow(unused)]
-    pub fn came_event<E: Event>(app: &mut App) -> bool {
+    pub fn came_event<E: Message>(app: &mut App) -> bool {
         app.world_mut()
-            .run_system_once(|mut e: EventReader<E>| {
+            .run_system_once(|mut e: MessageReader<E>| {
                 let came = !e.is_empty();
                 e.clear();
                 came
