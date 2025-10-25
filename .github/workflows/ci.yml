@@ -30,6 +30,8 @@ jobs:
       - name: Build & run tests
         run: |
           cargo test -F state,audio,tokio,record,side-effect
+      - name: Run tests with all features
+        run: |
           cargo test --all-features
   all-doc-tests:
     runs-on: ubuntu-latest
