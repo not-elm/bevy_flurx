@@ -30,7 +30,7 @@ pub trait Then<I1, O1, O2, ActionOrSeed> {
     /// Reactor::schedule(|task| async move{
     ///     task.will(Update, {
     ///         wait::input::just_pressed().with(KeyCode::KeyR)
-    ///             .then(once::event::app_exit_success())
+    ///             .then(once::message::app_exit_success())
     ///     }).await;
     /// });
     /// ```

@@ -71,7 +71,7 @@ mod tests {
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
                 task.will(Update, {
-                    once::no_op_with_generics::<(), ()>().then(once::event::app_exit_success())
+                    once::no_op_with_generics::<(), ()>().then(once::message::app_exit_success())
                 })
                 .await;
             }));

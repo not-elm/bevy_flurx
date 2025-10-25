@@ -71,8 +71,8 @@ impl ReactorTask {
     /// app.add_plugins(FlurxPlugin);
     /// app.add_systems(Startup, |mut commands: Commands|{
     ///     commands.spawn(Reactor::schedule(|task|async move{
-    ///         let wait_event = task.run(Update, wait::event::comes::<AppExit>()).await;
-    ///         task.will(Update, once::event::send().with(AppExit::Success)).await;
+    ///         let wait_event = task.run(Update, wait::message::comes::<AppExit>()).await;
+    ///         task.will(Update, once::message::write().with(AppExit::Success)).await;
     ///         wait_event.await;
     ///     }));
     /// });
@@ -111,8 +111,8 @@ mod tests {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
-                let event_task = task.run(First, wait::event::read::<AppExit>()).await;
-                task.will(Update, once::event::send().with(AppExit::Success))
+                let event_task = task.run(First, wait::message::read::<AppExit>()).await;
+                task.will(Update, once::message::write().with(AppExit::Success))
                     .await;
                 event_task.await;
                 task.will(Update, once::non_send::insert().with(AppExit::Success))

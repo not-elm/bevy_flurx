@@ -14,7 +14,7 @@ use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, wait::event::comes::<AppExit>()).await;
+///     task.will(Update, wait::message::comes::<AppExit>()).await;
 /// });
 /// ```
 #[deprecated(
@@ -38,7 +38,7 @@ where
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, wait::event::comes_and::<AppExit>(|e: &AppExit|{
+///     task.will(Update, wait::message::comes_and::<AppExit>(|e: &AppExit|{
 ///         e.is_success()
 ///     })).await;
 /// });
@@ -56,7 +56,7 @@ where
 
 /// Waits until the event is received.
 ///
-/// This is similar to [`wait::event::comes`], but it returns a cloned event.
+/// This is similar to [`wait::message::comes`], but it returns a cloned event.
 ///
 /// ## Examples
 ///
@@ -66,7 +66,7 @@ where
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, wait::event::read::<AppExit>()).await;
+///     task.will(Update, wait::message::read::<AppExit>()).await;
 /// });
 /// ```
 #[deprecated(
@@ -83,7 +83,7 @@ where
 
 /// Waits until the event is received and the event matches the predicate.
 ///
-/// This is similar to [`wait::event::comes`], but it returns a cloned event.
+/// This is similar to [`wait::message::comes`], but it returns a cloned event.
 ///
 /// ## Examples
 ///
@@ -93,7 +93,7 @@ where
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, wait::event::read_and::<AppExit>(|e: &AppExit|{
+///     task.will(Update, wait::message::read_and::<AppExit>(|e: &AppExit|{
 ///         e.is_success()
 ///     })).await;
 /// });

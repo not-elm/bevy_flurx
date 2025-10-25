@@ -14,7 +14,7 @@ use bevy::prelude::Message;
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::send().with(AppExit::Success)).await;
+///     task.will(Update, once::message::write().with(AppExit::Success)).await;
 /// });
 /// ```
 #[deprecated(
@@ -38,7 +38,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::send_default::<AppExit>()).await;
+///     task.will(Update, once::message::write_default::<AppExit>()).await;
 /// });
 /// ```
 #[deprecated(
@@ -62,7 +62,7 @@ where
 /// use bevy::prelude::*;
 /// use bevy_flurx::prelude::*;
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::event::app_exit_success()).await;
+///     task.will(Update, once::message::app_exit_success()).await;
 /// });
 /// ```
 #[deprecated(

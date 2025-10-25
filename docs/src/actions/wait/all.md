@@ -56,8 +56,8 @@ struct Event2;
 Reactor::schedule(|task| async move {
     // Wait for both events and get their values
     let (event1, event2) = task.will(Update, wait_all![
-        wait::event::read::<Event1>(),
-        wait::event::read::<Event2>()
+        wait::message::read::<Event1>(),
+        wait::message::read::<Event2>()
     ]).await;
     
     // This code runs after both events are received

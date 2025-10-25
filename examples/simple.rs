@@ -84,6 +84,6 @@ fn spawn_reactor(mut commands: Commands) {
         assert_eq!(message, "count is 4");
 
         info!("Done!");
-        task.will(Update, once::event::app_exit_success()).await;
+        task.will(Update, once::message::app_exit_success()).await;
     }));
 }

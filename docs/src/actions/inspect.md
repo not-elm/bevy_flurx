@@ -26,7 +26,7 @@ struct Hp(u8);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use inspect to log damage without affecting the main flow
-        task.will(Update, wait::event::read::<Damage>()
+        task.will(Update, wait::message::read::<Damage>()
             .pipe(inspect(once::run(|In(Damage(damage)): In<Damage>| {
                 println!("Players take {damage} points of damage.");
             })))
@@ -57,7 +57,7 @@ struct Hp(u8);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Use the inspect method for a more concise syntax
-        task.will(Update, wait::event::read::<Damage>()
+        task.will(Update, wait::message::read::<Damage>()
             .inspect(once::run(|In(Damage(damage)): In<Damage>| {
                 println!("Players take {damage} points of damage.");
             }))
@@ -134,7 +134,7 @@ struct Damage(u8);
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Collect metrics while processing events
-        task.will(Update, wait::event::read::<Damage>()
+        task.will(Update, wait::message::read::<Damage>()
             .inspect(once::run(|In(Damage(damage)): In<Damage>, mut metrics: ResMut<Metrics>| {
                 metrics.damage_dealt += damage as u32;
                 println!("Total damage dealt: {}", metrics.damage_dealt);
@@ -173,7 +173,7 @@ enum ActionType {
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Perform conditional side effects based on input values
-        task.will(Update, wait::event::read::<PlayerAction>()
+        task.will(Update, wait::message::read::<PlayerAction>()
             .inspect(once::run(|In(action): In<PlayerAction>| {
                 match action.action_type {
                     ActionType::Attack => println!("Player attacks for {} damage!", action.value),

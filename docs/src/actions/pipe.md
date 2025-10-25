@@ -76,7 +76,7 @@ fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
         // Wait for a PlayerHit event and then process it
         task.will(Update, 
-            wait::event::read::<PlayerHit>()
+            wait::message::read::<PlayerHit>()
                 .pipe(once::run(|In(PlayerHit(entity)): In<PlayerHit>, mut players: Query<&mut Hp>| {
                     players.get_mut(entity).unwrap().0 -= 10;
                     println!("Player hit! HP reduced to {}", players.get(entity).unwrap().0);

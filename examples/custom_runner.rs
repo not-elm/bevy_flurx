@@ -22,7 +22,7 @@ fn spawn_reactor(mut commands: Commands) {
                     delay: Duration::from_secs(3),
                     message: "After 3 seconds, this message is displayed.",
                 }))
-                .then(once::event::app_exit_success())
+                .then(once::message::app_exit_success())
         })
         .await;
     }));

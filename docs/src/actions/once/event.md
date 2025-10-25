@@ -1,6 +1,8 @@
 # once::event
 
-The `once::event` module provides actions for sending Bevy events exactly once. These actions are specialized versions of `once::run` that focus specifically on event sending operations.
+> **⚠️ DEPRECATED**: This module is deprecated since Bevy 0.17. Please use [`once::message`](./message.md) instead. The `Event` trait has been replaced with `Message` in Bevy 0.17.
+
+The `once::event` module provides actions for sending Bevy messages exactly once. These actions are specialized versions of `once::run` that focus specifically on message sending operations.
 
 ## Functions
 
@@ -20,14 +22,14 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::send().with(AppExit::Success)).await;
+    task.will(Update, once::message::write().with(AppExit::Success)).await;
 });
 ```
 
 ### send_default
 
 ```rust
-once::event::send_default<E>() -> ActionSeed
+once::message::write_default<E>() -> ActionSeed
 ```
 
 Creates an action that sends a default-constructed event once. The event type must implement the `Default` trait.
@@ -40,14 +42,14 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::send_default::<AppExit>()).await;
+    task.will(Update, once::message::write_default::<AppExit>()).await;
 });
 ```
 
 ### app_exit_success
 
 ```rust
-once::event::app_exit_success() -> Action<AppExit, ()>
+once::message::app_exit_success() -> Action<AppExit, ()>
 ```
 
 A convenience function that creates an action to send the `AppExit::Success` event once, which will exit the application successfully.
@@ -59,15 +61,17 @@ use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 Reactor::schedule(|task| async move {
-    task.will(Update, once::event::app_exit_success()).await;
+    task.will(Update, once::message::app_exit_success()).await;
 });
 ```
 
 ## When to Use
 
-Use `once::event` actions when you need to:
-- Send a specific event exactly once
-- Send a default-constructed event exactly once
+> **Note**: This module is deprecated. Use `once::message` instead.
+
+Use `once::message` actions when you need to:
+- Send a specific message exactly once
+- Send a default-constructed message exactly once
 - Exit the application with a success status
 
-For more complex event handling or when you need to access other system parameters, consider using the more general `once::run` action.
+For more complex message handling or when you need to access other system parameters, consider using the more general `once::run` action.

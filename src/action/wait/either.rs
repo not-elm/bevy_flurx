@@ -41,7 +41,7 @@ impl<L, R> Either<L, R> {
 /// Reactor::schedule(|task| async move{
 ///     let either = task.will(Update, wait::either(
 ///         wait::until(||false),
-///         wait::event::read::<AppExit>()
+///         wait::message::read::<AppExit>()
 ///     )).await;
 ///     match either {
 ///         Either::Left(_) => {}
