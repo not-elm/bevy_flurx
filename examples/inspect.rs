@@ -29,10 +29,9 @@ struct Damage(usize);
 
 fn spawn_reactor(mut commands: Commands) {
     commands.spawn(Reactor::schedule(|task| async move {
-        let action = wait::output(||Some(1));
+        let action = wait::output(|| Some(1));
         // Action -> Future<Output=i32>
         let f = task.will(Update, action).await;
-
 
         task.will(Update, {
             wait::event::read::<Damage>()

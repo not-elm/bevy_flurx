@@ -20,8 +20,7 @@ pub(crate) struct RunnerPlugin;
 
 impl Plugin for RunnerPlugin {
     fn build(&self, app: &mut App) {
-        app
-            .register_type::<RunnerIs>()
+        app.register_type::<RunnerIs>()
             .add_plugins(ReserveRegisterRunnerPlugin)
             .add_systems(
                 PreStartup,
@@ -273,7 +272,8 @@ fn observe_remove_reactor<Label: ScheduleLabel>(reactor_entity: Entity, world: &
                 else {
                     return;
                 };
-                let Some((_, cancellation_handlers)) = runner_registry.0.remove(&reactor_entity) else {
+                let Some((_, cancellation_handlers)) = runner_registry.0.remove(&reactor_entity)
+                else {
                     world.insert_non_send_resource(runner_registry);
                     return;
                 };
@@ -289,7 +289,9 @@ fn observe_remove_reactor<Label: ScheduleLabel>(reactor_entity: Entity, world: &
         },
     );
     observer.watch_entity(reactor_entity);
-    world.entity_mut(reactor_entity).insert( ReactorScheduleLabel(PhantomData::<Label>));
+    world
+        .entity_mut(reactor_entity)
+        .insert(ReactorScheduleLabel(PhantomData::<Label>));
     world.spawn(observer);
 }
 
@@ -397,7 +399,9 @@ mod tests {
     use bevy::app::{AppExit, PostUpdate, Startup};
     use bevy::ecs::message::MessageCursor;
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, Component, Entity, IntoScheduleConfigs, Query, ResMut, Update, World};
+    use bevy::prelude::{
+        Commands, Component, Entity, IntoScheduleConfigs, Query, ResMut, Update, World,
+    };
     use bevy::prelude::{Resource, With};
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::bool::BoolExtension;
