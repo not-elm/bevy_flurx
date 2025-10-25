@@ -113,7 +113,7 @@ mod tests {
     use crate::test_util::test;
     use crate::tests::{increment_count, test_app};
     use bevy::app::{AppExit, Startup};
-    use bevy::prelude::{Commands, Events, Update};
+    use bevy::prelude::*;
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -141,7 +141,7 @@ mod tests {
         app.update();
         app.update();
         app.update();
-        let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
+        let mut er = app.resource_mut::<Messages<AppExit>>().get_cursor();
         assert!(app.read_last_message(&mut er).is_some());
     }
 

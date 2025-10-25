@@ -57,7 +57,7 @@ mod tests {
     use crate::prelude::{Reactor, Then};
     use crate::tests::test_app;
     use bevy::app::{AppExit, First, Startup};
-    use bevy::prelude::{Commands, Events};
+    use bevy::prelude::*;
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -75,7 +75,7 @@ mod tests {
                 .await;
             }));
         });
-        let mut er = app.resource_mut::<Events<AppExit>>().get_cursor();
+        let mut er = app.resource_mut::<Messages<AppExit>>().get_cursor();
         app.update();
         app.assert_message_not_comes(&mut er);
 

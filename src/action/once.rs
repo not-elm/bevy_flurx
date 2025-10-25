@@ -27,11 +27,11 @@ pub mod switch;
 ///
 /// ```no_run
 /// use bevy::app::AppExit;
-/// use bevy::prelude::{World, Update, EventWriter};
+/// use bevy::prelude::{World, Update, MessageWriter};
 /// use bevy_flurx::prelude::*;
 ///
 /// Reactor::schedule(|task| async move{
-///     task.will(Update, once::run(|mut ew: EventWriter<AppExit>|{
+///     task.will(Update, once::run(|mut ew: MessageWriter<AppExit>|{
 ///         ew.write(AppExit::Success);
 ///     })).await;
 /// });

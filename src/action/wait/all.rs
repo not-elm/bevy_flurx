@@ -217,7 +217,7 @@ mod tests {
     use crate::tests::{decrement_count, exit_reader, increment_count, test_app};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, Local};
+    use bevy::prelude::{Commands, Local, MessageWriter};
     use bevy_test_helper::event::{DirectEvents, TestEvent1, TestEvent2};
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -295,13 +295,13 @@ mod tests {
         app.update();
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent1>| w.write(TestEvent1))
+            .run_system_once(|mut w: MessageWriter<TestEvent1>| w.write(TestEvent1))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_none());
 
         app.world_mut()
-            .run_system_once(|mut w: EventWriter<TestEvent2>| w.write(TestEvent2))
+            .run_system_once(|mut w: MessageWriter<TestEvent2>| w.write(TestEvent2))
             .expect("Failed to run system");
         app.update();
         assert!(app.world().get_non_send_resource::<AppExit>().is_some());

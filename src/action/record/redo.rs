@@ -496,7 +496,7 @@ mod tests {
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
                 commands.entity(reactor.single().unwrap()).despawn();
             })
-            .run_if(on_event::<AppExit>),
+            .run_if(on_message::<AppExit>),
         );
         app.update();
         app.write(RequestRedo::<TestAct>::Once);

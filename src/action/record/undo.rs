@@ -182,9 +182,7 @@ mod tests {
     use crate::tests::{exit_reader, increment_count, test_app, TestAct};
     use bevy::app::{AppExit, Startup, Update};
     use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{
-        on_event, Commands, Component, Entity, EventWriter, In, IntoScheduleConfigs, Query, With,
-    };
+    use bevy::prelude::*;
     use bevy_test_helper::event::DirectEvents;
     use bevy_test_helper::resource::count::Count;
     use bevy_test_helper::resource::DirectResourceControl;
@@ -335,7 +333,7 @@ mod tests {
                 task.will(
                     Update,
                     record::undo::all::<TestAct>().pipe(once::run(
-                        |In(result): In<EditRecordResult>, mut ew: EventWriter<AppExit>| {
+                        |In(result): In<EditRecordResult>, mut ew: MessageWriter<AppExit>| {
                             if result.is_err() {
                                 ew.write_default();
                             }
@@ -346,7 +344,7 @@ mod tests {
                 task.will(
                     Update,
                     record::undo::all::<TestAct>().pipe(once::run(
-                        |In(result): In<EditRecordResult>, mut ew: EventWriter<AppExit>| {
+                        |In(result): In<EditRecordResult>, mut ew: MessageWriter<AppExit>| {
                             if result.is_err() {
                                 ew.write_default();
                             }
@@ -425,7 +423,7 @@ mod tests {
             (|mut commands: Commands, reactor: Query<Entity, With<R>>| {
                 commands.entity(reactor.single().unwrap()).despawn();
             })
-            .run_if(on_event::<AppExit>),
+            .run_if(on_message::<AppExit>),
         );
         app.update();
         app.update();

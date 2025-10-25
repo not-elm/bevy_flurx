@@ -152,16 +152,15 @@ where
 //noinspection DuplicatedCode
 #[cfg(test)]
 mod tests {
-    use bevy::app::{Startup, Update};
-    use bevy::ecs::system::RunSystemOnce;
-    use bevy::prelude::{Commands, EventWriter, IntoScheduleConfigs, MessageWriter};
-    use bevy_test_helper::resource::count::Count;
-    use bevy_test_helper::resource::DirectResourceControl;
-
     use crate::action::record::tests::push_undo_increment;
     use crate::prelude::record::tests::push_num_act;
     use crate::prelude::{Reactor, RequestRedo, RequestUndo, Then};
     use crate::tests::{test_app, NumAct, TestAct};
+    use bevy::app::{Startup, Update};
+    use bevy::ecs::system::RunSystemOnce;
+    use bevy::prelude::*;
+    use bevy_test_helper::resource::count::Count;
+    use bevy_test_helper::resource::DirectResourceControl;
 
     #[test]
     fn test_request_undo_once() {
@@ -171,7 +170,7 @@ mod tests {
                 task.will(Update, push_undo_increment()).await.unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::Once);
         });
         app.update();
@@ -194,7 +193,7 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::IndexTo(1));
         });
         app.update();
@@ -214,7 +213,7 @@ mod tests {
                 .await;
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<NumAct>>| {
             ew.write(RequestUndo::To(NumAct(1)));
         });
         app.update();
@@ -237,7 +236,7 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
@@ -260,7 +259,7 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
@@ -289,12 +288,12 @@ mod tests {
                 .unwrap();
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<TestAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<TestAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<TestAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<TestAct>>| {
                 ew.write(RequestRedo::IndexTo(1));
             })
             .expect("Failed to run system");
@@ -315,12 +314,12 @@ mod tests {
                 .await;
             }));
         });
-        app.add_systems(Startup, |mut ew: EventWriter<RequestUndo<NumAct>>| {
+        app.add_systems(Startup, |mut ew: MessageWriter<RequestUndo<NumAct>>| {
             ew.write(RequestUndo::All);
         });
         app.update();
         app.world_mut()
-            .run_system_once(|mut ew: EventWriter<RequestRedo<NumAct>>| {
+            .run_system_once(|mut ew: MessageWriter<RequestRedo<NumAct>>| {
                 ew.write(RequestRedo::To(NumAct(1)));
             })
             .expect("Failed to run system");
@@ -345,7 +344,7 @@ mod tests {
                         .await;
                     }));
                 },
-                |mut ew: EventWriter<RequestUndo<NumAct>>| {
+                |mut ew: MessageWriter<RequestUndo<NumAct>>| {
                     ew.write(RequestUndo::All);
                 },
             )

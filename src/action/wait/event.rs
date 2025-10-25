@@ -158,7 +158,7 @@ mod tests {
     use crate::prelude::{Either, Pipe, Reactor, Then};
     use crate::tests::test_app;
     use bevy::app::{App, Startup, Update};
-    use bevy::prelude::{Commands, EventWriter, Events, In, Message, Resource};
+    use bevy::prelude::*;
     use bevy_test_helper::event::*;
     use bevy_test_helper::resource::DirectResourceControl;
 
@@ -177,7 +177,7 @@ mod tests {
                 task.will(Update, {
                     wait::either(wait::event::comes::<TestEvent1>(), once::run(|| {})).pipe(
                         once::run(
-                            |In(either): In<Either<(), ()>>, mut ew: EventWriter<TestEvent2>| {
+                            |In(either): In<Either<(), ()>>, mut ew: MessageWriter<TestEvent2>| {
                                 if either.is_right() {
                                     ew.write_default();
                                 }
@@ -192,7 +192,7 @@ mod tests {
         app.update();
         app.update();
 
-        let mut er = app.resource_mut::<Events<TestEvent2>>().get_cursor();
+        let mut er = app.resource_mut::<Messages<TestEvent2>>().get_cursor();
         app.assert_message_comes(&mut er);
     }
 
@@ -212,7 +212,7 @@ mod tests {
                     wait::either(wait::event::read::<TestEvent1>(), once::run(|| {})).pipe(
                         once::run(
                             |In(either): In<Either<TestEvent1, ()>>,
-                             mut ew: EventWriter<TestEvent2>| {
+                             mut ew: MessageWriter<TestEvent2>| {
                                 if either.is_right() {
                                     ew.write_default();
                                 }
@@ -227,7 +227,7 @@ mod tests {
         app.update();
         app.update();
 
-        let mut er = app.resource_mut::<Events<TestEvent2>>().get_cursor();
+        let mut er = app.resource_mut::<Messages<TestEvent2>>().get_cursor();
         app.assert_message_comes(&mut er);
     }
 
