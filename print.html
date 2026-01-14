@@ -13,21 +13,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon.svg">
-        <link rel="shortcut icon" href="favicon.png">
-        <link rel="stylesheet" href="css/variables.css">
-        <link rel="stylesheet" href="css/general.css">
-        <link rel="stylesheet" href="css/chrome.css">
-        <link rel="stylesheet" href="css/print.css" media="print">
+        <link rel="icon" href="favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="favicon-8114d1fc.png">
+        <link rel="stylesheet" href="css/variables-8adf115d.css">
+        <link rel="stylesheet" href="css/general-2459343d.css">
+        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link rel="stylesheet" href="fonts/fonts.css">
+        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="highlight-css" href="highlight.css">
-        <link rel="stylesheet" id="tomorrow-night-css" href="tomorrow-night.css">
-        <link rel="stylesheet" id="ayu-highlight-css" href="ayu-highlight.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
 
@@ -37,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex.js";
+            window.path_to_searchindex_js = "searchindex-c75eec7f.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc.js"></script>
+        <script src="toc-4c8fe977.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -54,7 +53,7 @@
             </div>
         </div>
     </div>
-    <div id="body-container">
+    <div id="mdbook-body-container">
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
         <script>
             try {
@@ -83,12 +82,12 @@
             html.classList.add("js");
         </script>
 
-        <input type="checkbox" id="sidebar-toggle-anchor" class="hidden">
+        <input type="checkbox" id="mdbook-sidebar-toggle-anchor" class="hidden">
 
         <!-- Hide / unhide sidebar before it is displayed -->
         <script>
             let sidebar = null;
-            const sidebar_toggle = document.getElementById("sidebar-toggle-anchor");
+            const sidebar_toggle = document.getElementById("mdbook-sidebar-toggle-anchor");
             if (document.body.clientWidth >= 1080) {
                 try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
                 sidebar = sidebar || 'visible';
@@ -103,39 +102,39 @@
             }
         </script>
 
-        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+        <nav id="mdbook-sidebar" class="sidebar" aria-label="Table of contents">
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
                 <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
             </noscript>
-            <div id="sidebar-resize-handle" class="sidebar-resize-handle">
+            <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
             </div>
         </nav>
 
-        <div id="page-wrapper" class="page-wrapper">
+        <div id="mdbook-page-wrapper" class="page-wrapper">
 
             <div class="page">
-                <div id="menu-bar-hover-placeholder"></div>
-                <div id="menu-bar" class="menu-bar sticky">
+                <div id="mdbook-menu-bar-hover-placeholder"></div>
+                <div id="mdbook-menu-bar" class="menu-bar sticky">
                     <div class="left-buttons">
-                        <label id="sidebar-toggle" class="icon-button" for="sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
-                            <i class="fa fa-bars"></i>
+                        <label id="mdbook-sidebar-toggle" class="icon-button" for="mdbook-sidebar-toggle-anchor" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="mdbook-sidebar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M0 96C0 78.3 14.3 64 32 64H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32C14.3 128 0 113.7 0 96zM0 256c0-17.7 14.3-32 32-32H416c17.7 0 32 14.3 32 32s-14.3 32-32 32H32c-17.7 0-32-14.3-32-32zM448 416c0 17.7-14.3 32-32 32H32c-17.7 0-32-14.3-32-32s14.3-32 32-32H416c17.7 0 32 14.3 32 32z"/></svg></span>
                         </label>
-                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
-                            <i class="fa fa-paint-brush"></i>
+                        <button id="mdbook-theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="mdbook-theme-list">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M371.3 367.1c27.3-3.9 51.9-19.4 67.2-42.9L600.2 74.1c12.6-19.5 9.4-45.3-7.6-61.2S549.7-4.4 531.1 9.6L294.4 187.2c-24 18-38.2 46.1-38.4 76.1L371.3 367.1zm-19.6 25.4l-116-104.4C175.9 290.3 128 339.6 128 400c0 3.9 .2 7.8 .6 11.6c1.8 17.5-10.2 36.4-27.8 36.4H96c-17.7 0-32 14.3-32 32s14.3 32 32 32H240c61.9 0 112-50.1 112-112c0-2.5-.1-5-.2-7.5z"/></svg></span>
                         </button>
-                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
-                            <li role="none"><button role="menuitem" class="theme" id="default_theme">Auto</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="light">Light</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
-                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        <ul id="mdbook-theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-default_theme">Auto</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-light">Light</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="mdbook-theme-ayu">Ayu</button></li>
                         </ul>
-                        <button id="search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="searchbar">
-                            <i class="fa fa-search"></i>
+                        <button id="mdbook-search-toggle" class="icon-button" type="button" title="Search (`/`)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="/ s" aria-controls="mdbook-searchbar">
+                            <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352c79.5 0 144-64.5 144-144s-64.5-144-144-144S64 128.5 64 208s64.5 144 144 144z"/></svg></span>
                         </button>
                     </div>
 
@@ -143,38 +142,38 @@
 
                     <div class="right-buttons">
                         <a href="print.html" title="Print this book" aria-label="Print this book">
-                            <i id="print-button" class="fa fa-print"></i>
+                            <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
 
                     </div>
                 </div>
 
-                <div id="search-wrapper" class="hidden">
-                    <form id="searchbar-outer" class="searchbar-outer">
+                <div id="mdbook-search-wrapper" class="hidden">
+                    <form id="mdbook-searchbar-outer" class="searchbar-outer">
                         <div class="search-wrapper">
-                            <input type="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                            <input type="search" id="mdbook-searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="mdbook-searchresults-outer" aria-describedby="searchresults-header">
                             <div class="spinner-wrapper">
-                                <i class="fa fa-spinner fa-spin"></i>
+                                <span class=fa-svg id="fa-spin"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M304 48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zm0 416c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM48 304c26.5 0 48-21.5 48-48s-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48zm464-48c0-26.5-21.5-48-48-48s-48 21.5-48 48s21.5 48 48 48s48-21.5 48-48zM142.9 437c18.7-18.7 18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zm0-294.2c18.7-18.7 18.7-49.1 0-67.9S93.7 56.2 75 75s-18.7 49.1 0 67.9s49.1 18.7 67.9 0zM369.1 437c18.7 18.7 49.1 18.7 67.9 0s18.7-49.1 0-67.9s-49.1-18.7-67.9 0s-18.7 49.1 0 67.9z"/></svg></span>
                             </div>
                         </div>
                     </form>
-                    <div id="searchresults-outer" class="searchresults-outer hidden">
-                        <div id="searchresults-header" class="searchresults-header"></div>
-                        <ul id="searchresults">
+                    <div id="mdbook-searchresults-outer" class="searchresults-outer hidden">
+                        <div id="mdbook-searchresults-header" class="searchresults-header"></div>
+                        <ul id="mdbook-searchresults">
                         </ul>
                     </div>
                 </div>
 
                 <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
                 <script>
-                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
-                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
-                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                    document.getElementById('mdbook-sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('mdbook-sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#mdbook-sidebar a')).forEach(function(link) {
                         link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
                     });
                 </script>
 
-                <div id="content" class="content">
+                <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="bevy_flurx-overview"><a class="header" href="#bevy_flurx-overview">bevy_flurx Overview</a></h1>
 <blockquote>
@@ -183,7 +182,7 @@ This document is generated by AI. If you find any mistakes or unnatural parts, p
 </blockquote>
 <p>bevy_flurx is a library that provides functionality similar to coroutines for the Bevy game engine, allowing you to write sequential processing for delays, user input, animations, and more.</p>
 <h2 id="what-is-bevy_flurx"><a class="header" href="#what-is-bevy_flurx">What is bevy_flurx?</a></h2>
-<p>bevy_flurx allows you to write asynchronous code in a sequential manner, making it easier to implement complex behaviors that involve waiting for events, delays, or other conditions. The library is designed to be used incrementally, meaning there's no need to rewrite existing applications to incorporate it.</p>
+<p>bevy_flurx allows you to write asynchronous code in a sequential manner, making it easier to implement complex behaviors that involve waiting for events, delays, or other conditions. The library is designed to be used incrementally, meaning there’s no need to rewrite existing applications to incorporate it.</p>
 <p>The main component of bevy_flurx is the <code>Reactor</code>, which schedules and executes tasks. Each task can use various actions to perform operations or wait for conditions.</p>
 <h2 id="key-features"><a class="header" href="#key-features">Key Features</a></h2>
 <ul>
@@ -199,7 +198,7 @@ This document is generated by AI. If you find any mistakes or unnatural parts, p
 </li>
 </ul>
 <h2 id="basic-example"><a class="header" href="#basic-example">Basic Example</a></h2>
-<pre><pre class="playground"><code class="language-rust">use bevy::prelude::*;
+<pre class="playground"><code class="language-rust">use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 use core::time::Duration;
 
@@ -247,54 +246,61 @@ fn spawn_reactor(mut commands: Commands) {
         
         info!("Done!");
     }));
-}</code></pre></pre>
+}</code></pre>
 <h2 id="feature-flags"><a class="header" href="#feature-flags">Feature Flags</a></h2>
 <p>bevy_flurx provides several feature flags to enable additional functionality:</p>
-<div class="table-wrapper"><table><thead><tr><th>Flag Name</th><th>Description</th><th>Default</th></tr></thead><tbody>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag Name</th><th>Description</th><th>Default</th></tr>
+</thead>
+<tbody>
 <tr><td>audio</td><td>Audio actions</td><td>false</td></tr>
 <tr><td>record</td><td>Undo/redo actions and events</td><td>false</td></tr>
 <tr><td>side-effect</td><td>Thread/async side effects</td><td>false</td></tr>
 <tr><td>state</td><td>State actions</td><td>false</td></tr>
-<tr><td>tokio</td><td>Use tokio's runtime directly in the reactor</td><td>false</td></tr>
+<tr><td>tokio</td><td>Use tokio’s runtime directly in the reactor</td><td>false</td></tr>
 <tr><td>std</td><td>Enable features that depend on the standard library</td><td>false</td></tr>
-</tbody></table>
+</tbody>
+</table>
 </div>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
-<p>Check out the <a href="./actions/index.html">Actions</a> section to learn more about the different types of actions available in bevy_flurx.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="actions"><a class="header" href="#actions">Actions</a></h1>
+<p>Check out the <a href="#actions">Actions</a> section to learn more about the different types of actions available in bevy_flurx.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="actions"><a class="header" href="#actions">Actions</a></h1>
 <p>Actions are the core building blocks of bevy_flurx. They define how tasks behave and interact with the Bevy ECS. This section provides an overview of the different types of actions available in bevy_flurx.</p>
 <h2 id="action-types"><a class="header" href="#action-types">Action Types</a></h2>
 <p>bevy_flurx provides several types of actions for different use cases:</p>
 <h3 id="once"><a class="header" href="#once">once</a></h3>
 <p>The <code>once</code> module defines actions that run only once. These are useful for performing one-time operations, such as initializing resources, spawning entities, or sending events.</p>
-<p><a href="actions/./once/index.html">Learn more about once actions</a></p>
+<p><a href="#once-actions">Learn more about once actions</a></p>
 <h3 id="wait"><a class="header" href="#wait">wait</a></h3>
 <p>The <code>wait</code> module defines actions that continue to execute every frame according to specified conditions. These are useful for waiting for user input, events, or other conditions to be met.</p>
-<p><a href="actions/./wait/index.html">Learn more about wait actions</a></p>
+<p><a href="#wait-actions">Learn more about wait actions</a></p>
 <h3 id="delay"><a class="header" href="#delay">delay</a></h3>
 <p>The <code>delay</code> module defines actions that perform delay processing. These are useful for waiting for a specific amount of time or a specific number of frames.</p>
-<p><a href="actions/./delay.html">Learn more about delay actions</a></p>
+<p><a href="#delay-1">Learn more about delay actions</a></p>
 <h3 id="omit"><a class="header" href="#omit">omit</a></h3>
 <p>The <code>omit</code> module provides mechanisms to omit input and/or output types from an action. This is particularly useful for defining groups of actions by simplifying their type signatures.</p>
-<p><a href="actions/./omit.html">Learn more about omit actions</a></p>
+<p><a href="#omit-1">Learn more about omit actions</a></p>
 <h3 id="sequence"><a class="header" href="#sequence">sequence</a></h3>
 <p>The <code>sequence</code> module provides mechanisms for sequentially combining actions. This is particularly useful for creating complex action flows by chaining multiple actions together.</p>
-<p><a href="actions/./sequence.html">Learn more about sequence actions</a></p>
+<p><a href="#sequence-1">Learn more about sequence actions</a></p>
 <h3 id="pipe"><a class="header" href="#pipe">pipe</a></h3>
 <p>The <code>pipe</code> module provides a mechanism to pipe actions together, where the output of one action is used as the input for another action. This is particularly useful for creating data processing pipelines.</p>
-<p><a href="actions/./pipe.html">Learn more about pipe actions</a></p>
+<p><a href="#pipe-2">Learn more about pipe actions</a></p>
 <h3 id="through"><a class="header" href="#through">through</a></h3>
 <p>The <code>through</code> module provides a mechanism to execute an action while preserving the output of the previous action. This is particularly useful for inserting actions like delays into a pipeline without affecting the data flow.</p>
-<p><a href="actions/./through.html">Learn more about through actions</a></p>
+<p><a href="#through-3">Learn more about through actions</a></p>
 <h3 id="map"><a class="header" href="#map">map</a></h3>
 <p>The <code>map</code> module provides mechanisms to transform the output of an action using a mapping function. This is particularly useful for data transformation and type conversion between actions.</p>
-<p><a href="actions/./map.html">Learn more about map actions</a></p>
+<p><a href="#map-1">Learn more about map actions</a></p>
 <h3 id="inspect"><a class="header" href="#inspect">inspect</a></h3>
 <p>The <code>inspect</code> module provides mechanisms to clone and inspect input values via auxiliary actions without disrupting their primary flow. This is particularly useful for debugging, logging, or performing side-effects on input values.</p>
-<p><a href="actions/./inspect.html">Learn more about inspect actions</a></p>
+<p><a href="#inspect-1">Learn more about inspect actions</a></p>
 <h3 id="remake"><a class="header" href="#remake">remake</a></h3>
-<p>The <code>remake</code> module provides a mechanism to create a new action based on an existing action's <code>Runner</code> and <code>Output</code>. This is particularly useful for transforming actions while preserving their input type but changing their output type.</p>
-<p><a href="actions/./remake.html">Learn more about remake actions</a></p>
+<p>The <code>remake</code> module provides a mechanism to create a new action based on an existing action’s <code>Runner</code> and <code>Output</code>. This is particularly useful for transforming actions while preserving their input type but changing their output type.</p>
+<p><a href="#remake-1">Learn more about remake actions</a></p>
 <h2 id="action-chaining"><a class="header" href="#action-chaining">Action Chaining</a></h2>
 <p>bevy_flurx provides several ways to chain actions together:</p>
 <h3 id="then"><a class="header" href="#then">then</a></h3>
@@ -314,37 +320,38 @@ fn spawn_reactor(mut commands: Commands) {
 <h3 id="state"><a class="header" href="#state">state</a></h3>
 <p>The <code>state</code> feature provides actions for state management.</p>
 <h3 id="tokio"><a class="header" href="#tokio">tokio</a></h3>
-<p>The <code>tokio</code> feature allows you to use tokio's runtime directly in the reactor.</p>
+<p>The <code>tokio</code> feature allows you to use tokio’s runtime directly in the reactor.</p>
 <h2 id="next-steps-1"><a class="header" href="#next-steps-1">Next Steps</a></h2>
 <p>Explore the specific action types to learn more about their capabilities and how to use them:</p>
 <ul>
-<li><a href="actions/./once.html">once</a></li>
-<li><a href="actions/./wait.html">wait</a></li>
-<li><a href="actions/./delay.html">delay</a></li>
-<li><a href="actions/./omit.html">omit</a></li>
-<li><a href="actions/./sequence.html">sequence</a></li>
-<li><a href="actions/./pipe.html">pipe</a></li>
-<li><a href="actions/./through.html">through</a></li>
-<li><a href="actions/./map.html">map</a></li>
-<li><a href="actions/./inspect.html">inspect</a></li>
-<li><a href="actions/./remake.html">remake</a></li>
+<li><a href="actions/once.html">once</a></li>
+<li><a href="actions/wait.html">wait</a></li>
+<li><a href="#delay-1">delay</a></li>
+<li><a href="#omit-1">omit</a></li>
+<li><a href="#sequence-1">sequence</a></li>
+<li><a href="#pipe-2">pipe</a></li>
+<li><a href="#through-3">through</a></li>
+<li><a href="#map-1">map</a></li>
+<li><a href="#inspect-1">inspect</a></li>
+<li><a href="#remake-1">remake</a></li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="once-actions"><a class="header" href="#once-actions">Once Actions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="once-actions"><a class="header" href="#once-actions">Once Actions</a></h1>
 <p>Once actions are actions that run a system exactly once and then complete.
 They are useful for one-time operations like sending events, modifying resources, or performing state transitions.</p>
 <h2 id="available-once-actions"><a class="header" href="#available-once-actions">Available Once Actions</a></h2>
 <ul>
-<li><a href="actions/once/run.html">run</a> - Run a system once</li>
-<li><a href="actions/once/event.html">event</a> - Send an event once</li>
-<li><a href="actions/once/res.html">res</a> - Modify a resource once</li>
-<li><a href="actions/once/non_send.html">non_send</a> - Modify a non-send resource once</li>
-<li><a href="actions/once/switch.html">switch</a> - Switch between actions based on a condition</li>
-<li><a href="actions/once/state.html">state</a> - Transition to a new state once</li>
-<li><a href="actions/once/audio.html">audio</a> - Play audio once</li>
+<li><a href="#oncerun">run</a> - Run a system once</li>
+<li><a href="#onceevent">event</a> - Send an event once</li>
+<li><a href="#onceres">res</a> - Modify a resource once</li>
+<li><a href="#oncenon_send">non_send</a> - Modify a non-send resource once</li>
+<li><a href="#onceswitch">switch</a> - Switch between actions based on a condition</li>
+<li><a href="#oncestate">state</a> - Transition to a new state once</li>
+<li><a href="#onceaudio">audio</a> - Play audio once</li>
 </ul>
 <p>Each action is designed to be used with the <code>Reactor::schedule</code> or <code>task.will</code> methods to schedule a one-time operation.</p>
 <h2 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -355,12 +362,13 @@ Reactor::schedule(|task| async move {
         // Do something once
     })).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>The once actions are part of the core functionality of bevy_flurx, providing simple building blocks for more complex action sequences.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="oncerun"><a class="header" href="#oncerun">once::run</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="oncerun"><a class="header" href="#oncerun">once::run</a></h1>
 <p>The <code>once::run</code> action executes a system exactly once and then completes. This is the most basic and versatile once action, allowing you to run any Bevy system as a one-time operation.</p>
 <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -370,7 +378,7 @@ Reactor::schedule(|task| async move {
         // Your one-time logic here
     })).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="parameters"><a class="header" href="#parameters">Parameters</a></h2>
 <ul>
 <li><code>system</code>: Any valid Bevy system that can be converted using <code>IntoSystem</code></li>
@@ -378,7 +386,7 @@ Reactor::schedule(|task| async move {
 <h2 id="return-value"><a class="header" href="#return-value">Return Value</a></h2>
 <p>The action returns the value returned by the system.</p>
 <h2 id="example-sending-an-app-exit-event"><a class="header" href="#example-sending-an-app-exit-event">Example: Sending an App Exit Event</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -389,9 +397,9 @@ Reactor::schedule(|task| async move {
         ew.write(AppExit::Success);
     })).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="example-modifying-a-resource"><a class="header" href="#example-modifying-a-resource">Example: Modifying a Resource</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -404,7 +412,7 @@ Reactor::schedule(|task| async move {
         score.0 += 10;
     })).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use"><a class="header" href="#when-to-use">When to Use</a></h2>
 <p>Use <code>once::run</code> when you need to:</p>
 <ul>
@@ -413,20 +421,21 @@ Reactor::schedule(|task| async move {
 <li>Return a custom value from your action</li>
 </ul>
 <p>For more specific use cases, consider the specialized once actions like <code>once::event</code> or <code>once::res</code>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="onceevent"><a class="header" href="#onceevent">once::event</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="onceevent"><a class="header" href="#onceevent">once::event</a></h1>
 <blockquote>
-<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="actions/once/./message.html"><code>once::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
+<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="actions/once/message.html"><code>once::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
 </blockquote>
 <p>The <code>once::event</code> module provides actions for sending Bevy messages exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on message sending operations.</p>
 <h2 id="functions"><a class="header" href="#functions">Functions</a></h2>
 <h3 id="send"><a class="header" href="#send">send</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::event::send&lt;E&gt;() -&gt; ActionSeed&lt;E, ()&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that sends a specified event once. The event must be provided using the <code>.with()</code> method.</p>
 <h4 id="example"><a class="header" href="#example">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -435,15 +444,15 @@ use bevy_flurx::prelude::*;
 Reactor::schedule(|task| async move {
     task.will(Update, once::message::write().with(AppExit::Success)).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="send_default"><a class="header" href="#send_default">send_default</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::message::write_default&lt;E&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that sends a default-constructed event once. The event type must implement the <code>Default</code> trait.</p>
 <h4 id="example-1"><a class="header" href="#example-1">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -452,15 +461,15 @@ use bevy_flurx::prelude::*;
 Reactor::schedule(|task| async move {
     task.will(Update, once::message::write_default::&lt;AppExit&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="app_exit_success"><a class="header" href="#app_exit_success">app_exit_success</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::message::app_exit_success() -&gt; Action&lt;AppExit, ()&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>A convenience function that creates an action to send the <code>AppExit::Success</code> event once, which will exit the application successfully.</p>
 <h4 id="example-2"><a class="header" href="#example-2">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -468,7 +477,7 @@ use bevy_flurx::prelude::*;
 Reactor::schedule(|task| async move {
     task.will(Update, once::message::app_exit_success()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-1"><a class="header" href="#when-to-use-1">When to Use</a></h2>
 <blockquote>
 <p><strong>Note</strong>: This module is deprecated. Use <code>once::message</code> instead.</p>
@@ -480,17 +489,18 @@ Reactor::schedule(|task| async move {
 <li>Exit the application with a success status</li>
 </ul>
 <p>For more complex message handling or when you need to access other system parameters, consider using the more general <code>once::run</code> action.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="onceres"><a class="header" href="#onceres">once::res</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="onceres"><a class="header" href="#onceres">once::res</a></h1>
 <p>The <code>once::res</code> module provides actions for managing Bevy resources exactly once. These actions are specialized versions of <code>once::run</code> that focus specifically on resource operations.</p>
 <h2 id="functions-1"><a class="header" href="#functions-1">Functions</a></h2>
 <h3 id="init"><a class="header" href="#init">init</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::res::init&lt;R&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
-<p>Creates an action that initializes a resource using its <code>Default</code> implementation. The resource will only be initialized if it doesn't already exist.</p>
+<span class="boring">}</span></code></pre>
+<p>Creates an action that initializes a resource using its <code>Default</code> implementation. The resource will only be initialized if it doesn’t already exist.</p>
 <h4 id="example-3"><a class="header" href="#example-3">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -501,15 +511,15 @@ struct GameScore(u32);
 Reactor::schedule(|task| async move {
     task.will(Update, once::res::init::&lt;GameScore&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="insert"><a class="header" href="#insert">insert</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::res::insert&lt;R&gt;() -&gt; ActionSeed&lt;R&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that inserts a provided resource. If the resource already exists, it will be replaced.</p>
-<h4 id="example-4"><a class="header" href="#example-4">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-1"><a class="header" href="#example-1-1">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -520,15 +530,15 @@ struct GameScore(u32);
 Reactor::schedule(|task| async move {
     task.will(Update, once::res::insert().with(GameScore(100))).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="remove"><a class="header" href="#remove">remove</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::res::remove&lt;R&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that removes a resource if it exists.</p>
-<h4 id="example-5"><a class="header" href="#example-5">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-2-1"><a class="header" href="#example-2-1">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -539,26 +549,27 @@ struct TemporaryResource;
 Reactor::schedule(|task| async move {
     task.will(Update, once::res::remove::&lt;TemporaryResource&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-2"><a class="header" href="#when-to-use-2">When to Use</a></h2>
 <p>Use <code>once::res</code> actions when you need to:</p>
 <ul>
 <li>Initialize a resource with its default value</li>
 <li>Insert or replace a resource with a specific value</li>
-<li>Remove a resource that's no longer needed</li>
+<li>Remove a resource that’s no longer needed</li>
 </ul>
 <p>For more complex resource operations or when you need to access other system parameters, consider using the more general <code>once::run</code> action with <code>ResMut</code> or <code>Res</code> parameters.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="oncenon_send"><a class="header" href="#oncenon_send">once::non_send</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="oncenon_send"><a class="header" href="#oncenon_send">once::non_send</a></h1>
 <p>The <code>once::non_send</code> module provides actions for managing Bevy non-send resources exactly once. Non-send resources are resources that are not thread-safe and can only be accessed from the main thread.</p>
 <h2 id="functions-2"><a class="header" href="#functions-2">Functions</a></h2>
 <h3 id="init-1"><a class="header" href="#init-1">init</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::non_send::init&lt;R&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
-<p>Creates an action that initializes a non-send resource using its <code>Default</code> implementation. The resource will only be initialized if it doesn't already exist.</p>
-<h4 id="example-6"><a class="header" href="#example-6">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<span class="boring">}</span></code></pre>
+<p>Creates an action that initializes a non-send resource using its <code>Default</code> implementation. The resource will only be initialized if it doesn’t already exist.</p>
+<h4 id="example-4"><a class="header" href="#example-4">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -569,15 +580,15 @@ struct WindowHandle(/* some non-Send type */);
 Reactor::schedule(|task| async move {
     task.will(Update, once::non_send::init::&lt;WindowHandle&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="insert-1"><a class="header" href="#insert-1">insert</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::non_send::insert&lt;R&gt;() -&gt; ActionSeed&lt;R&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that inserts a provided non-send resource. If the resource already exists, it will be replaced.</p>
-<h4 id="example-7"><a class="header" href="#example-7">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-2"><a class="header" href="#example-1-2">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -588,15 +599,15 @@ Reactor::schedule(|task| async move {
     task.will(Update, once::non_send::insert().with(WindowHandle(/* ... */)))
         .await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="remove-1"><a class="header" href="#remove-1">remove</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::non_send::remove&lt;R&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that removes a non-send resource if it exists.</p>
-<h4 id="example-8"><a class="header" href="#example-8">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-2-2"><a class="header" href="#example-2-2">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -606,13 +617,13 @@ struct WindowHandle(/* some non-Send type */);
 Reactor::schedule(|task| async move {
     task.will(Update, once::non_send::remove::&lt;WindowHandle&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-3"><a class="header" href="#when-to-use-3">When to Use</a></h2>
 <p>Use <code>once::non_send</code> actions when you need to:</p>
 <ul>
 <li>Initialize a non-send resource with its default value</li>
 <li>Insert or replace a non-send resource with a specific value</li>
-<li>Remove a non-send resource that's no longer needed</li>
+<li>Remove a non-send resource that’s no longer needed</li>
 </ul>
 <p>Non-send resources are typically used for resources that contain types that cannot be sent between threads, such as:</p>
 <ul>
@@ -622,17 +633,18 @@ Reactor::schedule(|task| async move {
 <li>Other platform-specific resources</li>
 </ul>
 <p>For more complex non-send resource operations or when you need to access other system parameters, consider using the more general <code>once::run</code> action with <code>NonSendMut</code> or <code>NonSend</code> parameters.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="onceswitch"><a class="header" href="#onceswitch">once::switch</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="onceswitch"><a class="header" href="#onceswitch">once::switch</a></h1>
 <p>The <code>once::switch</code> module provides actions for controlling Bevy switches exactly once. Switches are a mechanism in bevy_flurx that represent two states (on and off) and can be used to coordinate between Reactors and regular Bevy systems.</p>
 <h2 id="functions-3"><a class="header" href="#functions-3">Functions</a></h2>
 <h3 id="on"><a class="header" href="#on">on</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::switch::on&lt;M&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
-<p>Creates an action that turns a switch on. If the switch doesn't exist, it will be created.</p>
-<h4 id="example-9"><a class="header" href="#example-9">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<span class="boring">}</span></code></pre>
+<p>Creates an action that turns a switch on. If the switch doesn’t exist, it will be created.</p>
+<h4 id="example-5"><a class="header" href="#example-5">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -644,13 +656,13 @@ Reactor::schedule(|task| async move {
     // Turn on the PlayerAnimation switch
     task.will(Update, once::switch::on::&lt;PlayerAnimation&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="off"><a class="header" href="#off">off</a></h3>
 <pre><code>once::switch::off&lt;M&gt;() -&gt; ActionSeed
 </code></pre>
-<p>Creates an action that turns a switch off. If the switch doesn't exist, it will be created in the off state.</p>
-<h4 id="example-10"><a class="header" href="#example-10">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<p>Creates an action that turns a switch off. If the switch doesn’t exist, it will be created in the off state.</p>
+<h4 id="example-1-3"><a class="header" href="#example-1-3">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -662,10 +674,10 @@ Reactor::schedule(|task| async move {
     // Turn off the PlayerAnimation switch
     task.will(Update, once::switch::off::&lt;PlayerAnimation&gt;()).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="using-switches-with-systems"><a class="header" href="#using-switches-with-systems">Using Switches with Systems</a></h2>
-<p>Switches are designed to be used with Bevy's <code>run_if</code> condition system to control when systems run:</p>
-<pre><pre class="playground"><code class="language-rust">use bevy::prelude::*;
+<p>Switches are designed to be used with Bevy’s <code>run_if</code> condition system to control when systems run:</p>
+<pre class="playground"><code class="language-rust">use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 struct HeavyTask;
@@ -688,7 +700,7 @@ fn main() {
                 // Continue after the heavy task is complete...
             }));
         });
-}</code></pre></pre>
+}</code></pre>
 <h2 id="available-conditions"><a class="header" href="#available-conditions">Available Conditions</a></h2>
 <p>The following conditions can be used with <code>run_if</code>:</p>
 <ul>
@@ -706,17 +718,18 @@ fn main() {
 <li>Create state machines with clear on/off states</li>
 </ul>
 <p>Switches are particularly useful for tasks that need to be performed on the main thread but need to be coordinated with asynchronous Reactor tasks.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="oncestate"><a class="header" href="#oncestate">once::state</a></h1>
-<p>The <code>once::state</code> module provides actions for managing Bevy state transitions exactly once. This module is designed to work with Bevy's <a href="https://docs.rs/bevy/latest/bevy/ecs/schedule/struct.States.html">States</a> system.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="oncestate"><a class="header" href="#oncestate">once::state</a></h1>
+<p>The <code>once::state</code> module provides actions for managing Bevy state transitions exactly once. This module is designed to work with Bevy’s <a href="https://docs.rs/bevy/latest/bevy/ecs/schedule/struct.States.html">States</a> system.</p>
 <h2 id="functions-4"><a class="header" href="#functions-4">Functions</a></h2>
 <h3 id="set"><a class="header" href="#set">set</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::state::set&lt;S&gt;() -&gt; ActionSeed&lt;S&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that sets the next state for a Bevy state machine. The state value must be provided using the <code>.with()</code> method.</p>
-<h4 id="example-11"><a class="header" href="#example-11">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-6"><a class="header" href="#example-6">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -736,9 +749,9 @@ Reactor::schedule(|task| async move {
     // Transition to the Playing state
     task.will(Update, once::state::set().with(GameState::Playing)).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="state-machines-in-bevy"><a class="header" href="#state-machines-in-bevy">State Machines in Bevy</a></h2>
-<p>Bevy's state system allows you to organize your game into distinct states, with systems that run only during specific states. The <code>once::state::set()</code> action provides a way to trigger state transitions from within a Reactor.</p>
+<p>Bevy’s state system allows you to organize your game into distinct states, with systems that run only during specific states. The <code>once::state::set()</code> action provides a way to trigger state transitions from within a Reactor.</p>
 <h2 id="when-to-use-5"><a class="header" href="#when-to-use-5">When to Use</a></h2>
 <p>Use <code>once::state</code> actions when you need to:</p>
 <ul>
@@ -747,17 +760,18 @@ Reactor::schedule(|task| async move {
 <li>Coordinate asynchronous operations with state-based systems</li>
 </ul>
 <p>For more complex state management or when you need to access other system parameters, consider using the more general <code>once::run</code> action with <code>ResMut&lt;NextState&lt;S&gt;&gt;</code> parameter.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="onceaudio"><a class="header" href="#onceaudio">once::audio</a></h1>
-<p>The <code>once::audio</code> module provides actions for playing audio in Bevy exactly once. This module is designed to work with Bevy's audio system.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="onceaudio"><a class="header" href="#onceaudio">once::audio</a></h1>
+<p>The <code>once::audio</code> module provides actions for playing audio in Bevy exactly once. This module is designed to work with Bevy’s audio system.</p>
 <h2 id="functions-5"><a class="header" href="#functions-5">Functions</a></h2>
 <h3 id="play"><a class="header" href="#play">play</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>once::audio::play&lt;Path&gt;() -&gt; ActionSeed&lt;Path, Entity&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that plays an audio file once. The path to the audio file must be provided using the <code>.with()</code> method. The action returns the Entity that the AudioBundle is attached to.</p>
-<h4 id="example-12"><a class="header" href="#example-12">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-7"><a class="header" href="#example-7">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -769,9 +783,9 @@ Reactor::schedule(|task| async move {
     // You can use the returned entity to control the audio later if needed
     println!("Audio playing on entity: {:?}", entity);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="audio-paths"><a class="header" href="#audio-paths">Audio Paths</a></h2>
-<p>The path provided to <code>once::audio::play()</code> is loaded using Bevy's AssetServer, so it should be relative to your project's asset directory. The following audio formats are supported by default in Bevy:</p>
+<p>The path provided to <code>once::audio::play()</code> is loaded using Bevy’s AssetServer, so it should be relative to your project’s asset directory. The following audio formats are supported by default in Bevy:</p>
 <ul>
 <li>.ogg (Vorbis)</li>
 <li>.mp3</li>
@@ -786,21 +800,22 @@ Reactor::schedule(|task| async move {
 <li>Create audio sequences as part of game flow</li>
 </ul>
 <p>For more complex audio control or when you need to access other system parameters, consider using the more general <code>once::run</code> action with the appropriate audio components.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="wait-actions"><a class="header" href="#wait-actions">Wait Actions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="wait-actions"><a class="header" href="#wait-actions">Wait Actions</a></h1>
 <p>Wait actions are tasks that continue to execute every frame according to specified conditions. They are useful for creating reactive behaviors that respond to events, input, state changes, or other conditions.</p>
 <h2 id="available-wait-actions"><a class="header" href="#available-wait-actions">Available Wait Actions</a></h2>
 <ul>
-<li><a href="actions/wait/until.html">until</a> - Wait until a condition is true</li>
-<li><a href="actions/wait/output.html">output</a> - Wait until a system returns Some value</li>
-<li><a href="actions/wait/event.html">event</a> - Wait for events</li>
-<li><a href="actions/wait/switch.html">switch</a> - Wait for switch state changes</li>
-<li><a href="actions/wait/state.html">state</a> - Wait for state transitions</li>
-<li><a href="actions/wait/audio.html">audio</a> - Wait for audio playback to finish</li>
-<li><a href="actions/wait/input.html">input</a> - Wait for input events</li>
-<li><a href="actions/wait/all.html">all</a> - Wait for all actions to complete</li>
-<li><a href="actions/wait/any.html">any</a> - Wait for any action to complete</li>
-<li><a href="actions/wait/both.html">both</a> - Wait for two actions to complete</li>
-<li><a href="actions/wait/either.html">either</a> - Wait for either of two actions to complete</li>
+<li><a href="#waituntil">until</a> - Wait until a condition is true</li>
+<li><a href="#waitoutput">output</a> - Wait until a system returns Some value</li>
+<li><a href="#waitevent">event</a> - Wait for events</li>
+<li><a href="#waitswitch">switch</a> - Wait for switch state changes</li>
+<li><a href="#waitstate">state</a> - Wait for state transitions</li>
+<li><a href="#waitaudio">audio</a> - Wait for audio playback to finish</li>
+<li><a href="#waitinput">input</a> - Wait for input events</li>
+<li><a href="#waitall">all</a> - Wait for all actions to complete</li>
+<li><a href="#waitany">any</a> - Wait for any action to complete</li>
+<li><a href="#waitboth">both</a> - Wait for two actions to complete</li>
+<li><a href="#waiteither">either</a> - Wait for either of two actions to complete</li>
 </ul>
 <p>Each action is designed to be used with the <code>Reactor::schedule</code> or <code>task.will</code> methods to create tasks that wait for specific conditions before continuing.</p>
 <h2 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h2>
@@ -819,10 +834,11 @@ Reactor::schedule(|task| async move {
 });
 </code></pre>
 <p>The wait actions are part of the core functionality of bevy_flurx, providing powerful tools for creating reactive and event-driven behaviors in your Bevy applications.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waituntil"><a class="header" href="#waituntil">wait::until</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waituntil"><a class="header" href="#waituntil">wait::until</a></h1>
 <p>The <code>wait::until</code> action continues to execute a system every frame until it returns <code>true</code>. This is one of the most basic and versatile wait actions, allowing you to wait for any condition to be met.</p>
 <h2 id="usage-1"><a class="header" href="#usage-1">Usage</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -833,7 +849,7 @@ Reactor::schedule(|task| async move {
         true // Replace with your actual condition
     })).await;
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="parameters-1"><a class="header" href="#parameters-1">Parameters</a></h2>
 <ul>
 <li><code>system</code>: Any valid Bevy system that returns a boolean value</li>
@@ -841,7 +857,7 @@ Reactor::schedule(|task| async move {
 <h2 id="return-value-1"><a class="header" href="#return-value-1">Return Value</a></h2>
 <p>The action returns <code>()</code> (unit) when the condition becomes true.</p>
 <h2 id="example-waiting-for-a-counter"><a class="header" href="#example-waiting-for-a-counter">Example: Waiting for a Counter</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -855,9 +871,9 @@ Reactor::schedule(|task| async move {
     // This code runs after the counter reaches 4
     println!("Counter reached 4!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="example-waiting-for-a-resource-value"><a class="header" href="#example-waiting-for-a-resource-value">Example: Waiting for a Resource Value</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -873,20 +889,21 @@ Reactor::schedule(|task| async move {
     // This code runs after the score reaches 100
     println!("Score reached 100!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-7"><a class="header" href="#when-to-use-7">When to Use</a></h2>
 <p>Use <code>wait::until</code> when you need to:</p>
 <ul>
 <li>Wait for a specific condition to be met</li>
 <li>Poll a value until it reaches a threshold</li>
 <li>Create a delay based on a custom condition</li>
-<li>Implement custom waiting logic that isn't covered by other wait actions</li>
+<li>Implement custom waiting logic that isn’t covered by other wait actions</li>
 </ul>
 <p>For more specific waiting scenarios, consider using the specialized wait actions like <code>wait::event</code> or <code>wait::input</code>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitoutput"><a class="header" href="#waitoutput">wait::output</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitoutput"><a class="header" href="#waitoutput">wait::output</a></h1>
 <p>The <code>wait::output</code> action continues to execute a system every frame until it returns <code>Option::Some</code>. The contents of <code>Some</code> will be the return value of the task. This action provides more flexibility than <code>wait::until</code> by allowing you to return a value when the waiting condition is met.</p>
 <h2 id="usage-2"><a class="header" href="#usage-2">Usage</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -899,7 +916,7 @@ Reactor::schedule(|task| async move {
     
     println!("Got result: {}", result);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="parameters-2"><a class="header" href="#parameters-2">Parameters</a></h2>
 <ul>
 <li><code>system</code>: Any valid Bevy system that returns an <code>Option&lt;T&gt;</code></li>
@@ -907,7 +924,7 @@ Reactor::schedule(|task| async move {
 <h2 id="return-value-2"><a class="header" href="#return-value-2">Return Value</a></h2>
 <p>The action returns the value inside the <code>Some</code> variant when the system returns <code>Some</code>.</p>
 <h2 id="example-waiting-for-a-counter-with-result"><a class="header" href="#example-waiting-for-a-counter-with-result">Example: Waiting for a Counter with Result</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -925,9 +942,9 @@ Reactor::schedule(|task| async move {
     // This code runs after the counter reaches 4
     println!("Counter reached: {}", count);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="example-finding-an-entity"><a class="header" href="#example-finding-an-entity">Example: Finding an Entity</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -943,7 +960,7 @@ Reactor::schedule(|task| async move {
     // This code runs after a Target entity is found
     println!("Found target entity: {:?}", entity);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-8"><a class="header" href="#when-to-use-8">When to Use</a></h2>
 <p>Use <code>wait::output</code> when you need to:</p>
 <ul>
@@ -953,9 +970,10 @@ Reactor::schedule(|task| async move {
 <li>Implement custom waiting logic that needs to return a value</li>
 </ul>
 <p>For simpler cases where you just need to wait for a condition without returning a value, consider using <code>wait::until</code> instead.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitevent"><a class="header" href="#waitevent">wait::event</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitevent"><a class="header" href="#waitevent">wait::event</a></h1>
 <blockquote>
-<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="actions/wait/./message.html"><code>wait::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
+<p><strong>⚠️ DEPRECATED</strong>: This module is deprecated since Bevy 0.17. Please use <a href="actions/wait/message.html"><code>wait::message</code></a> instead. The <code>Event</code> trait has been replaced with <code>Message</code> in Bevy 0.17.</p>
 </blockquote>
 <p>The <code>wait::event</code> module provides actions for waiting to receive Bevy messages. These actions are useful for creating tasks that respond to messages in your game or application.</p>
 <h2 id="functions-6"><a class="header" href="#functions-6">Functions</a></h2>
@@ -963,8 +981,8 @@ Reactor::schedule(|task| async move {
 <pre><code>wait::message::comes&lt;E&gt;() -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received. The action completes when the event is received but does not return the event itself.</p>
-<h4 id="example-13"><a class="header" href="#example-13">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-8"><a class="header" href="#example-8">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -977,13 +995,13 @@ Reactor::schedule(|task| async move {
     // This code runs after an AppExit event is received
     println!("App is exiting!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="comes_and"><a class="header" href="#comes_and">comes_and</a></h3>
 <pre><code>wait::message::comes_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received and the event matches the given predicate. The action completes when a matching event is received but does not return the event itself.</p>
-<h4 id="example-14"><a class="header" href="#example-14">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-4"><a class="header" href="#example-1-4">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -998,13 +1016,13 @@ Reactor::schedule(|task| async move {
     // This code runs after a successful AppExit event is received
     println!("App is exiting successfully!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="read"><a class="header" href="#read">read</a></h3>
 <pre><code>wait::message::read&lt;E&gt;() -&gt; ActionSeed&lt;(), E&gt;
 </code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received and returns a clone of the event. This is similar to <code>comes</code>, but it returns the event itself.</p>
-<h4 id="example-15"><a class="header" href="#example-15">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-2-3"><a class="header" href="#example-2-3">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -1017,15 +1035,15 @@ Reactor::schedule(|task| async move {
     // This code runs after an AppExit event is received
     println!("App is exiting with status: {:?}", exit_event);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="read_and"><a class="header" href="#read_and">read_and</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::message::read_and&lt;E&gt;(predicate: impl Fn(&amp;E) -&gt; bool + Send + Sync + 'static) -&gt; ActionSeed&lt;(), E&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until an event of type <code>E</code> is received, the event matches the given predicate, and returns a clone of the event. This is similar to <code>comes_and</code>, but it returns the event itself.</p>
-<h4 id="example-16"><a class="header" href="#example-16">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-3-1"><a class="header" href="#example-3-1">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::app::AppExit;
 use bevy::prelude::*;
@@ -1040,7 +1058,7 @@ Reactor::schedule(|task| async move {
     // This code runs after a successful AppExit event is received
     println!("App is exiting successfully with event: {:?}", exit_event);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-9"><a class="header" href="#when-to-use-9">When to Use</a></h2>
 <blockquote>
 <p><strong>Note</strong>: This module is deprecated. Use <code>wait::message</code> instead.</p>
@@ -1053,17 +1071,18 @@ Reactor::schedule(|task| async move {
 <li>Retrieve message data for further processing</li>
 </ul>
 <p>For more complex message handling scenarios, consider combining <code>wait::message</code> with other wait actions like <code>wait::either</code> or <code>wait::any</code> to wait for multiple different message types.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitswitch"><a class="header" href="#waitswitch">wait::switch</a></h1>
-<p>The <code>wait::switch</code> module provides actions for waiting for <a href="actions/wait/../../actions/switch.html"><code>Switch</code></a> state changes. These actions are useful for coordinating between different parts of your application, allowing tasks to wait for specific switch state changes before continuing execution.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitswitch"><a class="header" href="#waitswitch">wait::switch</a></h1>
+<p>The <code>wait::switch</code> module provides actions for waiting for <a href="#switch"><code>Switch</code></a> state changes. These actions are useful for coordinating between different parts of your application, allowing tasks to wait for specific switch state changes before continuing execution.</p>
 <h2 id="functions-7"><a class="header" href="#functions-7">Functions</a></h2>
 <h3 id="on-1"><a class="header" href="#on-1">on</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::switch::on&lt;M&gt;() -&gt; ActionSeed
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until a switch of type <code>M</code> is turned on. The action completes when the switch is detected as on.</p>
-<h4 id="example-17"><a class="header" href="#example-17">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-9"><a class="header" href="#example-9">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1078,13 +1097,13 @@ Reactor::schedule(|task| async move {
     // This code runs after the Animation switch is turned on
     println!("Animation switch is now on!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="off-1"><a class="header" href="#off-1">off</a></h3>
 <pre><code>wait::switch::off&lt;M&gt;() -&gt; ActionSeed
 </code></pre>
 <p>Creates an action that waits until a switch of type <code>M</code> is turned off. The action completes when the switch is detected as off.</p>
-<h4 id="example-18"><a class="header" href="#example-18">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-5"><a class="header" href="#example-1-5">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1102,7 +1121,7 @@ Reactor::schedule(|task| async move {
     // This code runs after the Animation switch is turned off
     println!("Animation switch is now off!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-10"><a class="header" href="#when-to-use-10">When to Use</a></h2>
 <p>Use <code>wait::switch</code> actions when you need to:</p>
 <ul>
@@ -1112,17 +1131,18 @@ Reactor::schedule(|task| async move {
 <li>Implement gameplay sequences that depend on switch states</li>
 </ul>
 <p>Switches are particularly useful for tasks that need to be performed on the main thread but need to be coordinated with asynchronous Reactor tasks.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitstate"><a class="header" href="#waitstate">wait::state</a></h1>
-<p>The <code>wait::state</code> module provides actions for waiting for Bevy state transitions. These actions are useful for coordinating tasks with Bevy's state system, allowing tasks to wait for specific state changes before continuing execution.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitstate"><a class="header" href="#waitstate">wait::state</a></h1>
+<p>The <code>wait::state</code> module provides actions for waiting for Bevy state transitions. These actions are useful for coordinating tasks with Bevy’s state system, allowing tasks to wait for specific state changes before continuing execution.</p>
 <h2 id="functions-8"><a class="header" href="#functions-8">Functions</a></h2>
 <h3 id="becomes"><a class="header" href="#becomes">becomes</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::state::becomes&lt;S&gt;() -&gt; ActionSeed&lt;S&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until the state becomes the specified value. The action completes when the state matches the expected value.</p>
-<h4 id="example-19"><a class="header" href="#example-19">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-10"><a class="header" href="#example-10">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1143,27 +1163,28 @@ Reactor::schedule(|task| async move {
     // This code runs after the game state becomes Playing
     println!("Game is now in Playing state!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-11"><a class="header" href="#when-to-use-11">When to Use</a></h2>
 <p>Use <code>wait::state</code> actions when you need to:</p>
 <ul>
-<li>Coordinate tasks with Bevy's state system</li>
+<li>Coordinate tasks with Bevy’s state system</li>
 <li>Wait for specific state transitions before continuing execution</li>
 <li>Create game flow sequences that depend on state changes</li>
 <li>Implement multi-stage processes that follow a state machine pattern</li>
 </ul>
 <p>State-based waiting is particularly useful for game flow control, menu navigation, and level transitions.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitaudio"><a class="header" href="#waitaudio">wait::audio</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitaudio"><a class="header" href="#waitaudio">wait::audio</a></h1>
 <p>The <code>wait::audio</code> module provides actions for waiting for audio playback to finish. These actions are useful for coordinating tasks with audio playback, allowing tasks to wait for audio to complete before continuing execution.</p>
 <h2 id="functions-9"><a class="header" href="#functions-9">Functions</a></h2>
 <h3 id="finished"><a class="header" href="#finished">finished</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::audio::finished() -&gt; ActionSeed&lt;Entity, ()&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until the audio associated with the passed <code>Entity</code> has finished playing. The action completes when the audio playback is complete.</p>
-<h4 id="example-20"><a class="header" href="#example-20">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-11"><a class="header" href="#example-11">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1178,7 +1199,7 @@ Reactor::schedule(|task| async move {
     // This code runs after the sound has finished playing
     println!("Sound effect has finished playing!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-12"><a class="header" href="#when-to-use-12">When to Use</a></h2>
 <p>Use <code>wait::audio</code> actions when you need to:</p>
 <ul>
@@ -1187,16 +1208,17 @@ Reactor::schedule(|task| async move {
 <li>Ensure an action only occurs after a sound has finished playing</li>
 <li>Implement audio-driven gameplay elements</li>
 </ul>
-<p>Audio waiting is particularly useful for creating polished audio experiences in games, such as ensuring dialog lines don't overlap, creating rhythmic sequences, or synchronizing gameplay events with audio cues.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitinput"><a class="header" href="#waitinput">wait::input</a></h1>
+<p>Audio waiting is particularly useful for creating polished audio experiences in games, such as ensuring dialog lines don’t overlap, creating rhythmic sequences, or synchronizing gameplay events with audio cues.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitinput"><a class="header" href="#waitinput">wait::input</a></h1>
 <p>The <code>wait::input</code> module provides actions for waiting for input events. These actions are useful for creating interactive tasks that respond to user input, allowing tasks to wait for specific input events before continuing execution.</p>
 <h2 id="functions-10"><a class="header" href="#functions-10">Functions</a></h2>
 <h3 id="just_pressed"><a class="header" href="#just_pressed">just_pressed</a></h3>
 <pre><code>wait::input::just_pressed&lt;T&gt;() -&gt; ActionSeed&lt;T&gt;
 </code></pre>
 <p>Creates an action that waits until a button has just been pressed. The action completes when the specified button is pressed.</p>
-<h4 id="example-21"><a class="header" href="#example-21">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-12"><a class="header" href="#example-12">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1208,13 +1230,13 @@ Reactor::schedule(|task| async move {
     // This code runs after the B key is pressed
     println!("B key was pressed!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="pressed"><a class="header" href="#pressed">pressed</a></h3>
 <pre><code>wait::input::pressed&lt;T&gt;() -&gt; ActionSeed&lt;T&gt;
 </code></pre>
 <p>Creates an action that waits until a button is being pressed. The action completes when the specified button is detected as pressed.</p>
-<h4 id="example-22"><a class="header" href="#example-22">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-6"><a class="header" href="#example-1-6">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1226,13 +1248,13 @@ Reactor::schedule(|task| async move {
     // This code runs while the B key is being pressed
     println!("B key is being pressed!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="any_pressed"><a class="header" href="#any_pressed">any_pressed</a></h3>
 <pre><code>wait::input::any_pressed&lt;T&gt;() -&gt; ActionSeed&lt;Vec&lt;T&gt;&gt;
 </code></pre>
 <p>Creates an action that waits until any button in a list is being pressed. The action completes when any of the specified buttons is detected as pressed.</p>
-<h4 id="example-23"><a class="header" href="#example-23">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-2-4"><a class="header" href="#example-2-4">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1244,13 +1266,13 @@ Reactor::schedule(|task| async move {
     // This code runs when either A or B is pressed
     println!("Either A or B key is being pressed!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="all_pressed"><a class="header" href="#all_pressed">all_pressed</a></h3>
 <pre><code>wait::input::all_pressed&lt;T&gt;() -&gt; ActionSeed&lt;Vec&lt;T&gt;&gt;
 </code></pre>
 <p>Creates an action that waits until all buttons in a list are being pressed. The action completes when all of the specified buttons are detected as pressed.</p>
-<h4 id="example-24"><a class="header" href="#example-24">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-3-2"><a class="header" href="#example-3-2">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1262,13 +1284,13 @@ Reactor::schedule(|task| async move {
     // This code runs when both A and B are pressed
     println!("Both A and B keys are being pressed!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="just_released"><a class="header" href="#just_released">just_released</a></h3>
 <pre><code>wait::input::just_released&lt;T&gt;() -&gt; ActionSeed&lt;T&gt;
 </code></pre>
 <p>Creates an action that waits until a button has just been released. The action completes when the specified button is released.</p>
-<h4 id="example-25"><a class="header" href="#example-25">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-4-1"><a class="header" href="#example-4-1">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1280,15 +1302,15 @@ Reactor::schedule(|task| async move {
     // This code runs after the B key is released
     println!("B key was released!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="any_just_released"><a class="header" href="#any_just_released">any_just_released</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::input::any_just_released&lt;T&gt;() -&gt; ActionSeed&lt;Vec&lt;T&gt;&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until any button in a list has just been released. The action completes when any of the specified buttons is released.</p>
-<h4 id="example-26"><a class="header" href="#example-26">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-5-1"><a class="header" href="#example-5-1">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1300,7 +1322,7 @@ Reactor::schedule(|task| async move {
     // This code runs when either A or B is released
     println!("Either A or B key was released!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-13"><a class="header" href="#when-to-use-13">When to Use</a></h2>
 <p>Use <code>wait::input</code> actions when you need to:</p>
 <ul>
@@ -1311,17 +1333,18 @@ Reactor::schedule(|task| async move {
 <li>Build context-sensitive controls that change based on game state</li>
 </ul>
 <p>Input waiting is particularly useful for creating responsive and interactive gameplay experiences that react to player input in sophisticated ways.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitall"><a class="header" href="#waitall">wait::all</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitall"><a class="header" href="#waitall">wait::all</a></h1>
 <p>The <code>wait::all</code> module provides actions for waiting for multiple actions to complete. These actions are useful for coordinating complex tasks that require multiple conditions to be met before continuing execution.</p>
 <h2 id="functions-11"><a class="header" href="#functions-11">Functions</a></h2>
 <h3 id="all"><a class="header" href="#all">all</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::all&lt;Actions&gt;() -&gt; ActionSeed&lt;Actions&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until all the specified actions are completed. The output value of this function is <code>()</code>.</p>
-<h4 id="example-27"><a class="header" href="#example-27">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-13"><a class="header" href="#example-13">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1339,13 +1362,13 @@ Reactor::schedule(|task| async move {
     // This code runs after all actions are completed
     println!("All actions completed!");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="wait_all-macro"><a class="header" href="#wait_all-macro">wait_all! (macro)</a></h3>
 <pre><code>wait_all![action1, action2, ...]
 </code></pre>
 <p>A macro that waits until all tasks are done. The return value type is a tuple, with its length equal to the number of passed tasks. This is similar to <code>wait::all()</code>, but it returns the outputs of each action.</p>
-<h4 id="example-28"><a class="header" href="#example-28">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-7"><a class="header" href="#example-1-7">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1366,7 +1389,7 @@ Reactor::schedule(|task| async move {
     // This code runs after both events are received
     println!("Received events: {:?}, {:?}", event1, event2);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-14"><a class="header" href="#when-to-use-14">When to Use</a></h2>
 <p>Use <code>wait::all</code> and <code>wait_all!</code> when you need to:</p>
 <ul>
@@ -1374,20 +1397,21 @@ Reactor::schedule(|task| async move {
 <li>Coordinate complex initialization sequences</li>
 <li>Gather results from multiple asynchronous operations</li>
 <li>Create synchronization points in your game flow</li>
-<li>Implement "AND" logic for multiple waiting conditions</li>
+<li>Implement “AND” logic for multiple waiting conditions</li>
 </ul>
-<p>For "OR" logic (waiting for any of multiple conditions), consider using <code>wait::any</code> instead.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitany"><a class="header" href="#waitany">wait::any</a></h1>
+<p>For “OR” logic (waiting for any of multiple conditions), consider using <code>wait::any</code> instead.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitany"><a class="header" href="#waitany">wait::any</a></h1>
 <p>The <code>wait::any</code> module provides actions for waiting for any of multiple actions to complete. These actions are useful for creating tasks that can proceed when any of several conditions are met, allowing for more flexible control flow.</p>
 <h2 id="functions-12"><a class="header" href="#functions-12">Functions</a></h2>
 <h3 id="any"><a class="header" href="#any">any</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::any&lt;Actions&gt;() -&gt; ActionSeed&lt;Actions, usize&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until the execution of one of the actions is completed. The output value is the index of the completed action.</p>
-<h4 id="example-29"><a class="header" href="#example-29">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-14"><a class="header" href="#example-14">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1408,7 +1432,7 @@ Reactor::schedule(|task| async move {
         _ =&gt; unreachable!(),
     }
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-15"><a class="header" href="#when-to-use-15">When to Use</a></h2>
 <p>Use <code>wait::any</code> when you need to:</p>
 <ul>
@@ -1416,20 +1440,21 @@ Reactor::schedule(|task| async move {
 <li>Create branching logic based on which condition occurs first</li>
 <li>Implement timeout patterns with alternative success paths</li>
 <li>Handle multiple possible user inputs or events</li>
-<li>Implement "OR" logic for multiple waiting conditions</li>
+<li>Implement “OR” logic for multiple waiting conditions</li>
 </ul>
-<p>For "AND" logic (waiting for all conditions to be met), consider using <code>wait::all</code> instead.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waitboth"><a class="header" href="#waitboth">wait::both</a></h1>
+<p>For “AND” logic (waiting for all conditions to be met), consider using <code>wait::all</code> instead.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waitboth"><a class="header" href="#waitboth">wait::both</a></h1>
 <p>The <code>wait::both</code> module provides an action for waiting for two specific actions to complete. This action is useful for coordinating tasks that require exactly two conditions to be met before continuing execution.</p>
 <h2 id="functions-13"><a class="header" href="#functions-13">Functions</a></h2>
 <h3 id="both"><a class="header" href="#both">both</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::both&lt;LI, LO, RI, RO&gt;(lhs: impl Into&lt;Action&lt;LI, LO&gt;&gt; + 'static, rhs: impl Into&lt;Action&lt;RI, RO&gt;&gt; + 'static) -&gt; Action&lt;(LI, RI), (LO, RO)&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until both tasks are done. The output value is a tuple containing the outputs from both actions.</p>
-<h4 id="example-30"><a class="header" href="#example-30">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-15"><a class="header" href="#example-15">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1444,7 +1469,7 @@ Reactor::schedule(|task| async move {
     // This code runs after both conditions are met
     println!("R key was pressed and AppExit event received: {:?}", exit_event);
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-16"><a class="header" href="#when-to-use-16">When to Use</a></h2>
 <p>Use <code>wait::both</code> when you need to:</p>
 <ul>
@@ -1452,20 +1477,21 @@ Reactor::schedule(|task| async move {
 <li>Collect the results from two different asynchronous operations</li>
 <li>Coordinate between two different parts of your game</li>
 <li>Create synchronization points that depend on two specific events or inputs</li>
-<li>Implement simple "AND" logic for exactly two waiting conditions</li>
+<li>Implement simple “AND” logic for exactly two waiting conditions</li>
 </ul>
 <p>For waiting on more than two conditions, consider using <code>wait::all</code> or the <code>wait_all!</code> macro instead.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="waiteither"><a class="header" href="#waiteither">wait::either</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="waiteither"><a class="header" href="#waiteither">wait::either</a></h1>
 <p>The <code>wait::either</code> module provides an action for waiting for either of two actions to complete. This action is useful for creating tasks that can proceed when either of two conditions is met, allowing for more flexible control flow.</p>
 <h2 id="types"><a class="header" href="#types">Types</a></h2>
 <h3 id="either"><a class="header" href="#either">Either</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>enum Either&lt;L, R&gt; {
     Left(L),
     Right(R),
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>This enum represents the result of <code>wait::either</code>. It contains either the result of the first action (<code>Left</code>) or the result of the second action (<code>Right</code>).</p>
 <h4 id="methods"><a class="header" href="#methods">Methods</a></h4>
 <ul>
@@ -1474,13 +1500,13 @@ Reactor::schedule(|task| async move {
 </ul>
 <h2 id="functions-14"><a class="header" href="#functions-14">Functions</a></h2>
 <h3 id="either-1"><a class="header" href="#either-1">either</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>wait::either&lt;LI, LO, RI, RO&gt;(lhs: impl Into&lt;Action&lt;LI, LO&gt;&gt; + 'static, rhs: impl Into&lt;Action&lt;RI, RO&gt;&gt; + 'static) -&gt; Action&lt;(LI, RI), Either&lt;LO, RO&gt;&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that waits until either of the two tasks is completed. The output value is an <code>Either&lt;LO, RO&gt;</code> enum that indicates which action completed and contains its output.</p>
-<h4 id="example-31"><a class="header" href="#example-31">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-16"><a class="header" href="#example-16">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1497,7 +1523,7 @@ Reactor::schedule(|task| async move {
         Either::Right(exit_event) =&gt; println!("AppExit event received: {:?}", exit_event),
     }
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-17"><a class="header" href="#when-to-use-17">When to Use</a></h2>
 <p>Use <code>wait::either</code> when you need to:</p>
 <ul>
@@ -1505,16 +1531,17 @@ Reactor::schedule(|task| async move {
 <li>Create branching logic based on which of two conditions occurs first</li>
 <li>Implement timeout patterns with a success path</li>
 <li>Handle two possible user inputs or events</li>
-<li>Implement simple "OR" logic for exactly two waiting conditions</li>
+<li>Implement simple “OR” logic for exactly two waiting conditions</li>
 </ul>
 <p>For waiting on more than two conditions, consider using <code>wait::any</code> instead. For waiting on both conditions, use <code>wait::both</code>.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="delay-1"><a class="header" href="#delay-1">delay</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="delay-1"><a class="header" href="#delay-1">delay</a></h1>
 <p>The <code>delay</code> module defines actions that perform delay processing. These are useful for waiting for a specific amount of time or a specific number of frames.</p>
 <h2 id="basic-usage-2"><a class="header" href="#basic-usage-2">Basic Usage</a></h2>
 <p>The <code>delay</code> module provides two main functions:</p>
 <h3 id="time"><a class="header" href="#time">time</a></h3>
 <p>The <code>time</code> function delays the execution for a specified amount of time.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1529,11 +1556,11 @@ fn spawn_reactor(mut commands: Commands) {
         task.will(Update, delay::time().with(Duration::from_millis(500))).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Under the hood, <code>delay::time()</code> uses a <code>Timer</code> with <code>TimerMode::Once</code> to track the elapsed time. The action completes when the timer finishes.</p>
 <h3 id="frames"><a class="header" href="#frames">frames</a></h3>
 <p>The <code>frames</code> function delays the execution for a specified number of frames.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1547,13 +1574,13 @@ fn spawn_reactor(mut commands: Commands) {
         task.will(Update, delay::frames().with(5)).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Under the hood, <code>delay::frames()</code> uses a <code>Local&lt;usize&gt;</code> to track the number of frames that have passed. The action completes when the specified number of frames have been processed.</p>
 <h2 id="combining-with-other-actions"><a class="header" href="#combining-with-other-actions">Combining with Other Actions</a></h2>
 <p>The <code>delay</code> actions can be combined with other actions using the <code>then</code>, <code>pipe</code>, and <code>through</code> methods.</p>
 <h3 id="then-1"><a class="header" href="#then-1">then</a></h3>
 <p>The <code>then</code> method allows you to execute an action after a delay.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1567,10 +1594,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="through-2"><a class="header" href="#through-2">through</a></h3>
 <p>The <code>through</code> method allows you to delay the output of a previous action.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1584,10 +1611,10 @@ fn spawn_reactor(mut commands: Commands) {
         }).through(delay::time().with(Duration::from_secs(1)))).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
 <h3 id="delayed-animation"><a class="header" href="#delayed-animation">Delayed Animation</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1620,9 +1647,9 @@ fn spawn_reactor(mut commands: Commands) {
         }
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="frame-based-animation"><a class="header" href="#frame-based-animation">Frame-Based Animation</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1654,8 +1681,9 @@ fn spawn_reactor(mut commands: Commands) {
         }
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="sequence-1"><a class="header" href="#sequence-1">sequence</a></h1>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="sequence-1"><a class="header" href="#sequence-1">sequence</a></h1>
 <p>The <code>sequence</code> module provides mechanisms for sequentially combining actions. This is particularly useful for creating complex action flows by chaining multiple actions together.</p>
 <h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
 <p>The <code>sequence</code> module provides two main ways to combine actions:</p>
@@ -1665,7 +1693,7 @@ fn spawn_reactor(mut commands: Commands) {
 </ol>
 <h3 id="using-the-then-method"><a class="header" href="#using-the-then-method">Using the <code>then</code> Method</a></h3>
 <p>Use the <code>then()</code> method to chain actions together:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1682,10 +1710,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "Hello, World!"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="using-the-sequence-macro"><a class="header" href="#using-the-sequence-macro">Using the <code>sequence!</code> Macro</a></h3>
 <p>Use the <code>sequence!</code> macro to combine actions with a more declarative syntax:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1705,7 +1733,7 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "Hello, World!"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
 <p>When actions are combined using <code>then</code> or the <code>sequence!</code> macro:</p>
 <ol>
@@ -1717,7 +1745,7 @@ fn spawn_reactor(mut commands: Commands) {
 <h2 id="practical-examples"><a class="header" href="#practical-examples">Practical Examples</a></h2>
 <h3 id="creating-a-multi-step-process"><a class="header" href="#creating-a-multi-step-process">Creating a Multi-step Process</a></h3>
 <p>The <code>sequence</code> module is particularly useful for creating multi-step processes:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1733,10 +1761,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="combining-different-types-of-actions"><a class="header" href="#combining-different-types-of-actions">Combining Different Types of Actions</a></h3>
 <p>The <code>sequence</code> module can be used to combine different types of actions:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1753,12 +1781,13 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="pipe-2"><a class="header" href="#pipe-2">pipe</a></h1>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="pipe-2"><a class="header" href="#pipe-2">pipe</a></h1>
 <p>The <code>pipe</code> module provides a mechanism to pipe actions together, where the output of one action is used as the input for another action. This is particularly useful for creating data processing pipelines.</p>
 <h2 id="basic-usage-4"><a class="header" href="#basic-usage-4">Basic Usage</a></h2>
 <p>The <code>pipe</code> module provides the <code>Pipe</code> trait, which adds the <code>pipe</code> method to all actions. This method allows you to connect the output of one action to the input of another.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1774,7 +1803,7 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "Hello, World!"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h2>
 <p>When actions are combined using the <code>pipe</code> method:</p>
 <ol>
@@ -1787,7 +1816,7 @@ fn spawn_reactor(mut commands: Commands) {
 <h2 id="practical-examples-1"><a class="header" href="#practical-examples-1">Practical Examples</a></h2>
 <h3 id="data-processing-pipeline"><a class="header" href="#data-processing-pipeline">Data Processing Pipeline</a></h3>
 <p>The <code>pipe</code> module is particularly useful for creating data processing pipelines:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1804,10 +1833,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "The result is: 10"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="event-handling"><a class="header" href="#event-handling">Event Handling</a></h3>
 <p>The <code>pipe</code> module can be used to process events:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1830,10 +1859,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="combining-with-other-action-types"><a class="header" href="#combining-with-other-action-types">Combining with Other Action Types</a></h3>
 <p>The <code>pipe</code> method can be combined with other action types for more complex behaviors:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1849,8 +1878,9 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="through-3"><a class="header" href="#through-3">through</a></h1>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="through-3"><a class="header" href="#through-3">through</a></h1>
 <p>The <code>through</code> module provides a mechanism to execute an action while preserving the output of the previous action. This is particularly useful for inserting actions like delays into a pipeline without affecting the data flow.</p>
 <h2 id="basic-usage-5"><a class="header" href="#basic-usage-5">Basic Usage</a></h2>
 <p>The <code>through</code> module provides two main ways to use the functionality:</p>
@@ -1860,7 +1890,7 @@ fn spawn_reactor(mut commands: Commands) {
 </ol>
 <h3 id="using-the-through-function"><a class="header" href="#using-the-through-function">Using the <code>through</code> Function</a></h3>
 <p>Use the <code>through()</code> function to create an action that preserves its input:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1880,10 +1910,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="using-the-through-trait"><a class="header" href="#using-the-through-trait">Using the <code>Through</code> Trait</a></h3>
 <p>Use the <code>.through()</code> method for a more concise syntax:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1903,7 +1933,7 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works-2"><a class="header" href="#how-it-works-2">How It Works</a></h2>
 <p>When using the <code>through</code> function or the <code>Through</code> trait:</p>
 <ol>
@@ -1915,7 +1945,7 @@ fn spawn_reactor(mut commands: Commands) {
 <h2 id="practical-examples-2"><a class="header" href="#practical-examples-2">Practical Examples</a></h2>
 <h3 id="adding-delays"><a class="header" href="#adding-delays">Adding Delays</a></h3>
 <p>The <code>through</code> module is particularly useful for adding delays without affecting the data flow:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1935,10 +1965,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "Processing... Completed!"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="logging-without-affecting-data-flow"><a class="header" href="#logging-without-affecting-data-flow">Logging Without Affecting Data Flow</a></h3>
 <p>The <code>through</code> module can be used for logging without affecting the data flow:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1957,10 +1987,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: 84"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="combining-with-other-action-types-1"><a class="header" href="#combining-with-other-action-types-1">Combining with Other Action Types</a></h3>
 <p>The <code>through</code> method can be combined with other action types for more complex behaviors:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -1988,8 +2018,9 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="omit-1"><a class="header" href="#omit-1">omit</a></h1>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="omit-1"><a class="header" href="#omit-1">omit</a></h1>
 <p>The <code>omit</code> module provides mechanisms to omit input and/or output types from an action. This is particularly useful for defining groups of actions by simplifying their type signatures.</p>
 <h2 id="basic-usage-6"><a class="header" href="#basic-usage-6">Basic Usage</a></h2>
 <p>The <code>omit</code> module provides three main traits:</p>
@@ -2000,7 +2031,7 @@ fn spawn_reactor(mut commands: Commands) {
 </ol>
 <h3 id="omitting-both-input-and-output"><a class="header" href="#omitting-both-input-and-output">Omitting Both Input and Output</a></h3>
 <p>Use the <code>omit()</code> method to omit both input and output types from an action:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2016,10 +2047,10 @@ fn action() -&gt; ActionSeed {
         .with(1) // ActionSeed&lt;usize, usize&gt;
         .omit() // ActionSeed&lt;(), ()&gt;
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="omitting-only-output"><a class="header" href="#omitting-only-output">Omitting Only Output</a></h3>
 <p>Use the <code>omit_output()</code> method to omit only the output type from an action:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2038,10 +2069,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="omitting-only-input"><a class="header" href="#omitting-only-input">Omitting Only Input</a></h3>
 <p>Use the <code>omit_input()</code> method to omit only the input type from an action:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2057,11 +2088,11 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: 5"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="practical-examples-3"><a class="header" href="#practical-examples-3">Practical Examples</a></h2>
 <h3 id="creating-reusable-action-groups"><a class="header" href="#creating-reusable-action-groups">Creating Reusable Action Groups</a></h3>
 <p>The <code>omit</code> module is particularly useful for creating reusable action groups with simplified type signatures:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2081,10 +2112,10 @@ fn spawn_reactor(mut commands: Commands) {
         task.will(Update, print_message()).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="chaining-actions-with-different-types"><a class="header" href="#chaining-actions-with-different-types">Chaining Actions with Different Types</a></h3>
 <p>The <code>omit</code> traits can be used to chain actions with different input/output types:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2099,8 +2130,9 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="map-1"><a class="header" href="#map-1">map</a></h1>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="map-1"><a class="header" href="#map-1">map</a></h1>
 <p>The <code>map</code> module provides mechanisms to transform the output of an action using a mapping function. This is particularly useful for data transformation and type conversion between actions.</p>
 <h2 id="basic-usage-7"><a class="header" href="#basic-usage-7">Basic Usage</a></h2>
 <p>The <code>map</code> module provides the <code>Map</code> trait, which adds two main methods to all actions:</p>
@@ -2110,7 +2142,7 @@ fn spawn_reactor(mut commands: Commands) {
 </ol>
 <h3 id="using-the-map-method"><a class="header" href="#using-the-map-method">Using the <code>map</code> Method</a></h3>
 <p>Use the <code>map()</code> method to transform the output of an action:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2126,10 +2158,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "10"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="using-the-overwrite-method"><a class="header" href="#using-the-overwrite-method">Using the <code>overwrite</code> Method</a></h3>
 <p>Use the <code>overwrite()</code> method to replace the output of an action with a specified value:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2145,7 +2177,7 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "Replaced output"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works-3"><a class="header" href="#how-it-works-3">How It Works</a></h2>
 <p>When using the <code>map</code> or <code>overwrite</code> methods:</p>
 <ol>
@@ -2157,7 +2189,7 @@ fn spawn_reactor(mut commands: Commands) {
 <h2 id="practical-examples-4"><a class="header" href="#practical-examples-4">Practical Examples</a></h2>
 <h3 id="type-conversion"><a class="header" href="#type-conversion">Type Conversion</a></h3>
 <p>The <code>map</code> module is particularly useful for converting between different types:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2173,10 +2205,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "The answer is: 42"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="data-transformation-in-pipelines"><a class="header" href="#data-transformation-in-pipelines">Data Transformation in Pipelines</a></h3>
 <p>The <code>map</code> module can be combined with <code>pipe</code> to create powerful data transformation pipelines:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2197,10 +2229,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("{}", result); // Prints "Result: 100"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="conditional-logic"><a class="header" href="#conditional-logic">Conditional Logic</a></h3>
 <p>The <code>map</code> method can be used to implement conditional logic:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2224,8 +2256,9 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Score: {}, Grade: {}", score, grade); // Prints "Score: 85, Grade: B"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="inspect-1"><a class="header" href="#inspect-1">inspect</a></h1>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="inspect-1"><a class="header" href="#inspect-1">inspect</a></h1>
 <p>The <code>inspect</code> module provides mechanisms to clone and inspect input values via auxiliary actions without disrupting their primary flow. This is particularly useful for debugging, logging, or performing side-effects on input values.</p>
 <h2 id="basic-usage-8"><a class="header" href="#basic-usage-8">Basic Usage</a></h2>
 <p>The <code>inspect</code> module provides two main ways to inspect input values:</p>
@@ -2235,7 +2268,7 @@ fn spawn_reactor(mut commands: Commands) {
 </ol>
 <h3 id="using-the-inspect-function"><a class="header" href="#using-the-inspect-function">Using the <code>inspect</code> Function</a></h3>
 <p>Use the <code>inspect()</code> function to create an action that processes a clone of the input:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2261,10 +2294,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="using-the-inspect-trait"><a class="header" href="#using-the-inspect-trait">Using the <code>Inspect</code> Trait</a></h3>
 <p>Use the <code>.inspect()</code> method to achieve the same result with a more concise syntax:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2290,7 +2323,7 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works-4"><a class="header" href="#how-it-works-4">How It Works</a></h2>
 <p>When using the <code>inspect</code> function or the <code>Inspect</code> trait:</p>
 <ol>
@@ -2303,7 +2336,7 @@ fn spawn_reactor(mut commands: Commands) {
 <h2 id="practical-examples-5"><a class="header" href="#practical-examples-5">Practical Examples</a></h2>
 <h3 id="debugging"><a class="header" href="#debugging">Debugging</a></h3>
 <p>The <code>inspect</code> module is particularly useful for debugging:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2329,10 +2362,10 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: 13"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="metrics-collection"><a class="header" href="#metrics-collection">Metrics Collection</a></h3>
 <p>The <code>inspect</code> module can be used for collecting metrics:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2361,10 +2394,10 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="conditional-side-effects"><a class="header" href="#conditional-side-effects">Conditional Side Effects</a></h3>
 <p>The <code>inspect</code> module can be used for conditional side effects:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2400,12 +2433,13 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="remake-1"><a class="header" href="#remake-1">remake</a></h1>
-<p>The <code>remake</code> module provides a mechanism to create a new action based on an existing action's <code>Runner</code> and <code>Output</code>. This is particularly useful for transforming actions while preserving their input type but changing their output type.</p>
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="remake-1"><a class="header" href="#remake-1">remake</a></h1>
+<p>The <code>remake</code> module provides a mechanism to create a new action based on an existing action’s <code>Runner</code> and <code>Output</code>. This is particularly useful for transforming actions while preserving their input type but changing their output type.</p>
 <h2 id="basic-usage-9"><a class="header" href="#basic-usage-9">Basic Usage</a></h2>
 <p>The <code>remake</code> module provides the <code>Remake</code> trait, which adds the <code>remake</code> method to all actions:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2457,11 +2491,11 @@ where
         result
     }
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works-5"><a class="header" href="#how-it-works-5">How It Works</a></h2>
 <p>When using the <code>remake</code> method:</p>
 <ol>
-<li>The original action's <code>Runner</code> and <code>Output</code> are captured</li>
+<li>The original action’s <code>Runner</code> and <code>Output</code> are captured</li>
 <li>A new <code>Runner</code> is created using the provided function, which receives:
 <ul>
 <li>The original <code>Runner</code></li>
@@ -2469,13 +2503,13 @@ where
 <li>A new <code>Output</code> for the transformed action</li>
 </ul>
 </li>
-<li>The new <code>Runner</code> can use the original runner's behavior while producing a different output type</li>
+<li>The new <code>Runner</code> can use the original runner’s behavior while producing a different output type</li>
 </ol>
 <p>This allows for advanced customization of action behavior while maintaining type safety.</p>
 <h2 id="practical-examples-6"><a class="header" href="#practical-examples-6">Practical Examples</a></h2>
 <h3 id="type-conversion-1"><a class="header" href="#type-conversion-1">Type Conversion</a></h3>
 <p>The <code>remake</code> module can be used for complex type conversions that require access to the original runner:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2522,10 +2556,10 @@ where
         result
     }
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="advanced-action-composition"><a class="header" href="#advanced-action-composition">Advanced Action Composition</a></h3>
 <p>The <code>remake</code> module can be used to create complex action compositions:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2578,22 +2612,23 @@ where
         result
     }
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-18"><a class="header" href="#when-to-use-18">When to Use</a></h2>
 <p>Use the <code>remake</code> module when you need to:</p>
 <ul>
-<li>Transform an action's output type in ways that can't be achieved with <code>map</code></li>
-<li>Access and modify the behavior of an action's runner</li>
+<li>Transform an action’s output type in ways that can’t be achieved with <code>map</code></li>
+<li>Access and modify the behavior of an action’s runner</li>
 <li>Create custom runners that build upon existing actions</li>
 <li>Implement advanced action composition patterns</li>
 </ul>
 <p>The <code>remake</code> module is particularly useful for library authors and advanced users who need fine-grained control over action behavior and transformation.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="switch"><a class="header" href="#switch">switch</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="switch"><a class="header" href="#switch">switch</a></h1>
 <p>The <code>switch</code> module provides a mechanism for coordinating between Reactors and regular Bevy systems through a binary state (on/off).</p>
 <h2 id="core-concepts"><a class="header" href="#core-concepts">Core Concepts</a></h2>
 <h3 id="switch-resource"><a class="header" href="#switch-resource">Switch Resource</a></h3>
 <p>The <code>Switch&lt;M&gt;</code> resource represents a binary state (on/off) that can be used to coordinate between different parts of your application. The generic type parameter <code>M</code> allows you to define different types of switches for different purposes.</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Define a marker type for our switch
 struct PlayerAnimation;
@@ -2606,16 +2641,16 @@ fn check_animation_state(switch: Res&lt;Switch&lt;PlayerAnimation&gt;&gt;) {
         println!("Player animation is stopped!");
     }
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="condition-systems"><a class="header" href="#condition-systems">Condition Systems</a></h3>
-<p>The switch module provides several condition systems that can be used with Bevy's <code>run_if</code> functionality to conditionally run systems based on switch states:</p>
+<p>The switch module provides several condition systems that can be used with Bevy’s <code>run_if</code> functionality to conditionally run systems based on switch states:</p>
 <ul>
 <li><code>switch_is_on&lt;M&gt;()</code> - Returns true if the switch is on</li>
 <li><code>switch_is_off&lt;M&gt;()</code> - Returns true if the switch is off</li>
 <li><code>switch_just_turned_on&lt;M&gt;()</code> - Returns true only the first time the switch is detected as on</li>
 <li><code>switch_just_turned_off&lt;M&gt;()</code> - Returns true only the first time the switch is detected as off</li>
 </ul>
-<pre><pre class="playground"><code class="language-rust">use bevy::prelude::*;
+<pre class="playground"><code class="language-rust">use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 struct HeavyTask;
@@ -2634,22 +2669,22 @@ fn main() {
         .add_systems(Update, (|| {
             println!("Heavy task just completed!");
         }).run_if(switch_just_turned_off::&lt;HeavyTask&gt;));
-}</code></pre></pre>
+}</code></pre>
 <h2 id="available-actions"><a class="header" href="#available-actions">Available Actions</a></h2>
 <p>The switch module provides actions in both the <code>once</code> and <code>wait</code> modules:</p>
 <h3 id="onceswitch-1"><a class="header" href="#onceswitch-1">once::switch</a></h3>
 <ul>
-<li><a href="actions/once/switch.html#on">once::switch::on</a> - Turn a switch on</li>
-<li><a href="actions/once/switch.html#off">once::switch::off</a> - Turn a switch off</li>
+<li><a href="#on">once::switch::on</a> - Turn a switch on</li>
+<li><a href="#off">once::switch::off</a> - Turn a switch off</li>
 </ul>
 <h3 id="waitswitch-1"><a class="header" href="#waitswitch-1">wait::switch</a></h3>
 <ul>
-<li><a href="actions/wait/switch.html#on">wait::switch::on</a> - Wait until a switch is turned on</li>
-<li><a href="actions/wait/switch.html#off">wait::switch::off</a> - Wait until a switch is turned off</li>
+<li><a href="#on-1">wait::switch::on</a> - Wait until a switch is turned on</li>
+<li><a href="#off-1">wait::switch::off</a> - Wait until a switch is turned off</li>
 </ul>
 <h2 id="examples-1"><a class="header" href="#examples-1">Examples</a></h2>
 <h3 id="coordinating-between-reactors-and-systems"><a class="header" href="#coordinating-between-reactors-and-systems">Coordinating Between Reactors and Systems</a></h3>
-<pre><pre class="playground"><code class="language-rust">use bevy::prelude::*;
+<pre class="playground"><code class="language-rust">use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 struct LoadingTask;
@@ -2679,9 +2714,9 @@ fn main() {
                 println!("Loading sequence complete!");
             }));
         });
-}</code></pre></pre>
+}</code></pre>
 <h3 id="creating-a-state-machine"><a class="header" href="#creating-a-state-machine">Creating a State Machine</a></h3>
-<pre><pre class="playground"><code class="language-rust">use bevy::prelude::*;
+<pre class="playground"><code class="language-rust">use bevy::prelude::*;
 use bevy_flurx::prelude::*;
 
 // Define switch types for different states
@@ -2744,7 +2779,7 @@ fn main() {
                 }));
             }
         });
-}</code></pre></pre>
+}</code></pre>
 <h2 id="when-to-use-19"><a class="header" href="#when-to-use-19">When to Use</a></h2>
 <p>Use the switch module when you need to:</p>
 <ul>
@@ -2755,18 +2790,19 @@ fn main() {
 <li>Implement gameplay sequences that depend on switch states</li>
 </ul>
 <p>Switches are particularly useful for tasks that need to be performed on the main thread but need to be coordinated with asynchronous Reactor tasks.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="record-actions"><a class="header" href="#record-actions">Record Actions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="record-actions"><a class="header" href="#record-actions">Record Actions</a></h1>
 <p>The <code>record</code> module provides actions for managing operation history with undo and redo capabilities. These actions allow you to track operations, roll them back (undo), and reapply them (redo).</p>
 <h2 id="available-record-actions"><a class="header" href="#available-record-actions">Available Record Actions</a></h2>
 <ul>
-<li><a href="actions/record/push.html">push</a> - Push an operation onto the record history</li>
-<li><a href="actions/record/undo.html">undo</a> - Undo operations from the record history</li>
-<li><a href="actions/record/redo.html">redo</a> - Redo previously undone operations</li>
-<li><a href="actions/record/extension.html">extension</a> - Extensions for using record actions with events and triggers</li>
-<li><a href="actions/record/all_clear.html">all_clear</a> - Clear all history of undo and redo operations</li>
+<li><a href="#recordpush">push</a> - Push an operation onto the record history</li>
+<li><a href="#recordundo">undo</a> - Undo operations from the record history</li>
+<li><a href="#recordredo">redo</a> - Redo previously undone operations</li>
+<li><a href="#recordextension">extension</a> - Extensions for using record actions with events and triggers</li>
+<li><a href="#recordall_clear">all_clear</a> - Clear all history of undo and redo operations</li>
 </ul>
 <h2 id="basic-usage-10"><a class="header" href="#basic-usage-10">Basic Usage</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2799,7 +2835,7 @@ fn spawn_reactor(mut commands: Commands) {
             .await.expect("Failed to redo operation");
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="core-concepts-1"><a class="header" href="#core-concepts-1">Core Concepts</a></h2>
 <h3 id="track"><a class="header" href="#track">Track</a></h3>
 <p>The <code>Track</code> struct represents an operation to be recorded, containing:</p>
@@ -2811,7 +2847,7 @@ fn spawn_reactor(mut commands: Commands) {
 <p>The <code>Rollback</code> struct holds the function called when an undo operation is requested. It can be created in several ways:</p>
 <ul>
 <li><code>new()</code>: Creates a rollback with a function that may optionally create a redo action</li>
-<li><code>undo()</code>: Creates a rollback that doesn't create a redo action</li>
+<li><code>undo()</code>: Creates a rollback that doesn’t create a redo action</li>
 <li><code>undo_redo()</code>: Creates a rollback that always creates a redo action</li>
 <li><code>parts()</code>: Declares undo and redo separately with <code>Undo</code> and <code>Redo</code> types</li>
 </ul>
@@ -2825,13 +2861,14 @@ fn spawn_reactor(mut commands: Commands) {
 <li>Create a history of operations that can be navigated</li>
 </ul>
 <p>The record module is particularly useful for applications like editors, games with rewind mechanics, or any application where users might want to undo their actions.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="recordpush"><a class="header" href="#recordpush">record::push</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="recordpush"><a class="header" href="#recordpush">record::push</a></h1>
 <p>The <code>record::push</code> function allows you to add operations to the record history for later undo and redo operations.</p>
 <h2 id="function-signature"><a class="header" href="#function-signature">Function Signature</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::push&lt;Act&gt;() -&gt; ActionSeed&lt;Track&lt;Act&gt;, EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that pushes a <code>Track</code> onto the <code>Record</code>. The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
 <h2 id="parameters-3"><a class="header" href="#parameters-3">Parameters</a></h2>
 <ul>
@@ -2839,8 +2876,8 @@ fn spawn_reactor(mut commands: Commands) {
 </ul>
 <h2 id="return-value-3"><a class="header" href="#return-value-3">Return Value</a></h2>
 <p>Returns an <code>ActionSeed&lt;Track&lt;Act&gt;, EditRecordResult&gt;</code> that, when executed, will push the provided <code>Track</code> onto the <code>Record</code>.</p>
-<h2 id="example-32"><a class="header" href="#example-32">Example</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h2 id="example-17"><a class="header" href="#example-17">Example</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2865,16 +2902,16 @@ fn spawn_reactor(mut commands: Commands) {
         ).await.expect("An error will be returned if undo or redo is operating.");
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="creating-a-track"><a class="header" href="#creating-a-track">Creating a Track</a></h2>
 <p>The <code>Track</code> struct is used to define an operation and its rollback behavior:</p>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>Track {
     act: YourActType,
     rollback: Rollback::undo_redo(|| /* your undo action */)
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="track-fields"><a class="header" href="#track-fields">Track Fields</a></h3>
 <ul>
 <li><code>act</code>: The operation being recorded. This can be any type that implements <code>Send + Sync + 'static</code>.</li>
@@ -2883,7 +2920,7 @@ fn spawn_reactor(mut commands: Commands) {
 <h3 id="rollback-methods"><a class="header" href="#rollback-methods">Rollback Methods</a></h3>
 <ul>
 <li><code>Rollback::new()</code>: Creates a rollback with a function that may optionally create a redo action.</li>
-<li><code>Rollback::undo()</code>: Creates a rollback that doesn't create a redo action.</li>
+<li><code>Rollback::undo()</code>: Creates a rollback that doesn’t create a redo action.</li>
 <li><code>Rollback::undo_redo()</code>: Creates a rollback that always creates a redo action.</li>
 <li><code>Rollback::parts()</code>: Declares undo and redo separately with <code>Undo</code> and <code>Redo</code> types.</li>
 </ul>
@@ -2897,17 +2934,18 @@ fn spawn_reactor(mut commands: Commands) {
 <li>Track user actions for later reversal</li>
 </ul>
 <p>This function is the foundation of the record system, as it allows you to define operations and their rollback behavior.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="recordundo"><a class="header" href="#recordundo">record::undo</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="recordundo"><a class="header" href="#recordundo">record::undo</a></h1>
 <p>The <code>record::undo</code> module provides actions for undoing operations that have been pushed onto the record history.</p>
 <h2 id="functions-15"><a class="header" href="#functions-15">Functions</a></h2>
 <h3 id="once-1"><a class="header" href="#once-1">once</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::undo::once&lt;Act&gt;() -&gt; ActionSeed&lt;(), EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops the last pushed undo action, and then executes it. The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-33"><a class="header" href="#example-33">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-18"><a class="header" href="#example-18">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2926,15 +2964,15 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="index_to"><a class="header" href="#index_to">index_to</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::undo::index_to&lt;Act&gt;() -&gt; ActionSeed&lt;usize, EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops undo actions up to the specified index. The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-34"><a class="header" href="#example-34">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-8"><a class="header" href="#example-1-8">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -2963,15 +3001,15 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="to"><a class="header" href="#to">to</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::undo::to&lt;Act&gt;() -&gt; ActionSeed&lt;Act, EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops undo actions until the specified operation is reached. The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-35"><a class="header" href="#example-35">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-2-5"><a class="header" href="#example-2-5">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3005,15 +3043,15 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="all-1"><a class="header" href="#all-1">all</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::undo::all&lt;Act&gt;() -&gt; ActionSeed&lt;(), EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops all the undo actions from the <code>Record</code>. The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-36"><a class="header" href="#example-36">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-3-3"><a class="header" href="#example-3-3">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3037,7 +3075,7 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
 <p>All undo functions return an <code>EditRecordResult</code>, which is a <code>Result&lt;(), UndoRedoInProgress&gt;</code>. If an undo or redo operation is already in progress, the function will return <code>Err(UndoRedoInProgress)</code>.</p>
 <h2 id="when-to-use-22"><a class="header" href="#when-to-use-22">When to Use</a></h2>
@@ -3048,18 +3086,19 @@ Reactor::schedule(|task| async move {
 <li>Undo all operations</li>
 </ul>
 <p>These actions are particularly useful for implementing undo functionality in applications like editors, games with rewind mechanics, or any application where users might want to undo their actions.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="recordredo"><a class="header" href="#recordredo">record::redo</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="recordredo"><a class="header" href="#recordredo">record::redo</a></h1>
 <p>The <code>record::redo</code> module provides actions for redoing operations that have been previously undone.</p>
 <h2 id="functions-16"><a class="header" href="#functions-16">Functions</a></h2>
 <h3 id="once-2"><a class="header" href="#once-2">once</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::redo::once&lt;Act&gt;() -&gt; ActionSeed&lt;(), EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops the last pushed redo action and executes it. After the redo action is executed, the undo action that created it is pushed into the <code>Record</code> again. If the redo stack in the <code>Record</code> is empty, nothing happens.</p>
 <p>The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-37"><a class="header" href="#example-37">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-19"><a class="header" href="#example-19">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3086,16 +3125,16 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="index_to-1"><a class="header" href="#index_to-1">index_to</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::redo::index_to&lt;Act&gt;() -&gt; ActionSeed&lt;usize, EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops and executes the redo actions up to the specified index. If the redo stack in the <code>Record</code> is empty, nothing happens.</p>
 <p>The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-38"><a class="header" href="#example-38">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-9"><a class="header" href="#example-1-9">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3129,16 +3168,16 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="to-1"><a class="header" href="#to-1">to</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::redo::to&lt;Act&gt;() -&gt; ActionSeed&lt;Act, EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops and executes the redo actions until the specified operation is reached. If the redo stack in the <code>Record</code> is empty, nothing happens.</p>
 <p>The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-39"><a class="header" href="#example-39">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-2-6"><a class="header" href="#example-2-6">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3177,16 +3216,16 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="all-2"><a class="header" href="#all-2">all</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::redo::all&lt;Act&gt;() -&gt; ActionSeed&lt;(), EditRecordResult&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Pops and executes all the redo actions from the <code>Record</code>. If the redo stack in the <code>Record</code> is empty, nothing happens.</p>
 <p>The output will be an <code>EditRecordResult</code>, which will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
-<h4 id="example-40"><a class="header" href="#example-40">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-3-4"><a class="header" href="#example-3-4">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3215,7 +3254,7 @@ Reactor::schedule(|task| async move {
         .await
         .expect("An error will be returned if undo or redo is operating.");
 });
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="error-handling-2"><a class="header" href="#error-handling-2">Error Handling</a></h2>
 <p>All redo functions return an <code>EditRecordResult</code>, which is a <code>Result&lt;(), UndoRedoInProgress&gt;</code>. If an undo or redo operation is already in progress, the function will return <code>Err(UndoRedoInProgress)</code>.</p>
 <h2 id="when-to-use-23"><a class="header" href="#when-to-use-23">When to Use</a></h2>
@@ -3226,13 +3265,14 @@ Reactor::schedule(|task| async move {
 <li>Redo all undone operations</li>
 </ul>
 <p>These actions are particularly useful for implementing redo functionality in applications like editors, games with rewind mechanics, or any application where users might want to redo their previously undone actions.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="recordall_clear"><a class="header" href="#recordall_clear">record::all_clear</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="recordall_clear"><a class="header" href="#recordall_clear">record::all_clear</a></h1>
 <p>The <code>record::all_clear</code> function clears all history of undo and redo operations from the <code>Record</code>.</p>
 <h2 id="function-signature-1"><a class="header" href="#function-signature-1">Function Signature</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>record::all_clear&lt;M: 'static&gt;() -&gt; ActionSeed&lt;(), Result&lt;(), UndoRedoInProgress&gt;&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Creates an action that clears all history of undo and redo operations from the <code>Record</code>. The output will be an error (<code>UndoRedoInProgress</code>) if an undo or redo operation is in progress.</p>
 <h2 id="parameters-4"><a class="header" href="#parameters-4">Parameters</a></h2>
 <ul>
@@ -3240,8 +3280,8 @@ Reactor::schedule(|task| async move {
 </ul>
 <h2 id="return-value-4"><a class="header" href="#return-value-4">Return Value</a></h2>
 <p>Returns an <code>ActionSeed&lt;(), Result&lt;(), UndoRedoInProgress&gt;&gt;</code> that, when executed, will clear all history of undo and redo operations from the <code>Record</code>.</p>
-<h2 id="example-41"><a class="header" href="#example-41">Example</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h2 id="example-20"><a class="header" href="#example-20">Example</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3267,7 +3307,7 @@ fn spawn_reactor(mut commands: Commands) {
             .expect("An error will be returned if undo or redo is operating.");
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="error-handling-3"><a class="header" href="#error-handling-3">Error Handling</a></h2>
 <p>The <code>all_clear</code> function returns a <code>Result&lt;(), UndoRedoInProgress&gt;</code>. If an undo or redo operation is in progress, the function will return <code>Err(UndoRedoInProgress)</code>.</p>
 <h2 id="when-to-use-24"><a class="header" href="#when-to-use-24">When to Use</a></h2>
@@ -3283,11 +3323,12 @@ fn spawn_reactor(mut commands: Commands) {
 <li>After a major operation that makes previous history irrelevant</li>
 <li>When you want to free up memory used by a large history</li>
 </ul>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="recordextension"><a class="header" href="#recordextension">record::extension</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="recordextension"><a class="header" href="#recordextension">record::extension</a></h1>
 <p>The <code>record::extension</code> module provides functionality for making undo and redo requests from outside the Reactor using events and triggers.</p>
 <h2 id="types-1"><a class="header" href="#types-1">Types</a></h2>
 <h3 id="requestundo"><a class="header" href="#requestundo">RequestUndo</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>enum RequestUndo&lt;Act&gt; {
     Once,
@@ -3295,7 +3336,7 @@ fn spawn_reactor(mut commands: Commands) {
     To(Act),
     All,
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Represents a request to undo operations. If an undo or redo is already in progress, the request will be ignored.</p>
 <ul>
 <li><code>Once</code>: Corresponds to <code>record::undo::once</code></li>
@@ -3304,7 +3345,7 @@ fn spawn_reactor(mut commands: Commands) {
 <li><code>All</code>: Corresponds to <code>record::undo::all</code></li>
 </ul>
 <h3 id="requestredo"><a class="header" href="#requestredo">RequestRedo</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>enum RequestRedo&lt;Act&gt; {
     Once,
@@ -3312,7 +3353,7 @@ fn spawn_reactor(mut commands: Commands) {
     To(Act),
     All,
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Represents a request to redo operations. If an undo or redo is already in progress, the request will be ignored.</p>
 <ul>
 <li><code>Once</code>: Corresponds to <code>record::redo::once</code></li>
@@ -3322,14 +3363,14 @@ fn spawn_reactor(mut commands: Commands) {
 </ul>
 <h2 id="traits"><a class="header" href="#traits">Traits</a></h2>
 <h3 id="recordextension-1"><a class="header" href="#recordextension-1">RecordExtension</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trait RecordExtension {
     fn add_record&lt;Act&gt;(&amp;mut self) -&gt; &amp;mut Self
     where
         Act: Clone + PartialEq + Send + Sync + 'static;
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Allows undo and redo requests to be made using <code>RequestUndo</code> and <code>RequestRedo</code> from outside the Reactor.</p>
 <h4 id="methods-1"><a class="header" href="#methods-1">Methods</a></h4>
 <ul>
@@ -3337,7 +3378,7 @@ fn spawn_reactor(mut commands: Commands) {
 </ul>
 <h2 id="examples-2"><a class="header" href="#examples-2">Examples</a></h2>
 <h3 id="using-events"><a class="header" href="#using-events">Using Events</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3376,9 +3417,9 @@ fn handle_input(
         redo_events.send(RequestRedo::Once);
     }
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="using-triggers"><a class="header" href="#using-triggers">Using Triggers</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3394,7 +3435,7 @@ fn handle_button_click(
         }
     }
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="how-it-works-6"><a class="header" href="#how-it-works-6">How It Works</a></h2>
 <p>When you call <code>app.add_record::&lt;Act&gt;()</code>, the following happens:</p>
 <ol>
@@ -3416,16 +3457,17 @@ fn handle_button_click(
 <li>Integrate undo/redo functionality with other systems in your application</li>
 </ul>
 <p>This module is particularly useful for applications with complex UI that need to provide undo/redo functionality through various means (buttons, keyboard shortcuts, etc.).</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="side-effect-actions"><a class="header" href="#side-effect-actions">Side Effect Actions</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="side-effect-actions"><a class="header" href="#side-effect-actions">Side Effect Actions</a></h1>
 <p>The <code>side_effect</code> module provides actions for handling operations with side effects such as asynchronous runtime or threads. These actions allow you to execute code outside the main Bevy ECS system while maintaining the Action-based flow.</p>
 <h2 id="available-side-effect-actions"><a class="header" href="#available-side-effect-actions">Available Side Effect Actions</a></h2>
 <ul>
-<li><a href="actions/side_effect/bevy_task.html">bevy_task</a> - Spawn tasks using Bevy's task system</li>
-<li><a href="actions/side_effect/thread.html">thread</a> - Spawn OS threads</li>
-<li><a href="actions/side_effect/tokio.html">tokio</a> - Spawn tasks using Tokio's runtime</li>
+<li><a href="#side_effectbevy_task">bevy_task</a> - Spawn tasks using Bevy’s task system</li>
+<li><a href="#side_effectthread">thread</a> - Spawn OS threads</li>
+<li><a href="#side_effecttokio">tokio</a> - Spawn tasks using Tokio’s runtime</li>
 </ul>
 <h2 id="basic-usage-11"><a class="header" href="#basic-usage-11">Basic Usage</a></h2>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3453,7 +3495,7 @@ fn spawn_reactor(mut commands: Commands) {
         ).await;
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="core-concepts-2"><a class="header" href="#core-concepts-2">Core Concepts</a></h2>
 <h3 id="asyncfunctor"><a class="header" href="#asyncfunctor">AsyncFunctor</a></h3>
 <p>The <code>AsyncFunctor</code> trait is implemented for functions that return futures. It allows you to:</p>
@@ -3476,15 +3518,16 @@ fn spawn_reactor(mut commands: Commands) {
 <li>Execute code that would otherwise block or slow down the main Bevy ECS system</li>
 </ul>
 <p>The side_effect module is particularly useful for applications that need to perform operations outside the main game loop, such as loading assets, making network requests, or performing complex calculations.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="side_effectbevy_task"><a class="header" href="#side_effectbevy_task">side_effect::bevy_task</a></h1>
-<p>The <code>side_effect::bevy_task</code> module provides actions for spawning tasks using Bevy's task system. These actions allow you to execute asynchronous code while maintaining the Action-based flow.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="side_effectbevy_task"><a class="header" href="#side_effectbevy_task">side_effect::bevy_task</a></h1>
+<p>The <code>side_effect::bevy_task</code> module provides actions for spawning tasks using Bevy’s task system. These actions allow you to execute asynchronous code while maintaining the Action-based flow.</p>
 <h2 id="functions-17"><a class="header" href="#functions-17">Functions</a></h2>
 <h3 id="spawn"><a class="header" href="#spawn">spawn</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>side_effect::bevy_task::spawn&lt;I, Out, Functor, M&gt;(f: Functor) -&gt; ActionSeed&lt;I, Out&gt;
-<span class="boring">}</span></code></pre></pre>
-<p>Spawns a future onto the Bevy thread pool and waits until it's completed. The task is started when the Runner is executed for the first time.</p>
+<span class="boring">}</span></code></pre>
+<p>Spawns a future onto the Bevy thread pool and waits until it’s completed. The task is started when the Runner is executed for the first time.</p>
 <h4 id="parameters-5"><a class="header" href="#parameters-5">Parameters</a></h4>
 <ul>
 <li><code>f</code>: A function that returns a future, or a future itself. This can be either:
@@ -3496,8 +3539,8 @@ fn spawn_reactor(mut commands: Commands) {
 </ul>
 <h4 id="return-value-5"><a class="header" href="#return-value-5">Return Value</a></h4>
 <p>Returns an <code>ActionSeed&lt;I, Out&gt;</code> that, when executed, will spawn the future onto the Bevy thread pool and wait for it to complete.</p>
-<h4 id="example-42"><a class="header" href="#example-42">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-21"><a class="header" href="#example-21">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3522,14 +3565,14 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: 10"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h3 id="spawn_detached"><a class="header" href="#spawn_detached">spawn_detached</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>side_effect::bevy_task::spawn_detached&lt;I, Out, Functor, M&gt;(functor: Functor) -&gt; ActionSeed&lt;I, Out&gt;
-<span class="boring">}</span></code></pre></pre>
-<p>Spawns a future onto the Bevy thread pool and waits until it's completed. Unlike <code>spawn</code>, the spawned task is detached and continues to run in the background, even if the Reactor is canceled.</p>
-<h4 id="parameters-6"><a class="header" href="#parameters-6">Parameters</a></h4>
+<span class="boring">}</span></code></pre>
+<p>Spawns a future onto the Bevy thread pool and waits until it’s completed. Unlike <code>spawn</code>, the spawned task is detached and continues to run in the background, even if the Reactor is canceled.</p>
+<h4 id="parameters-1-1"><a class="header" href="#parameters-1-1">Parameters</a></h4>
 <ul>
 <li><code>functor</code>: A function that returns a future, or a future itself. This can be either:
 <ul>
@@ -3538,10 +3581,10 @@ fn spawn_reactor(mut commands: Commands) {
 </ul>
 </li>
 </ul>
-<h4 id="return-value-6"><a class="header" href="#return-value-6">Return Value</a></h4>
+<h4 id="return-value-1-1"><a class="header" href="#return-value-1-1">Return Value</a></h4>
 <p>Returns an <code>ActionSeed&lt;I, Out&gt;</code> that, when executed, will spawn the future onto the Bevy thread pool as a detached task and wait for it to complete.</p>
-<h4 id="example-43"><a class="header" href="#example-43">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-1-10"><a class="header" href="#example-1-10">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3566,25 +3609,26 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: 10"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-27"><a class="header" href="#when-to-use-27">When to Use</a></h2>
 <p>Use <code>side_effect::bevy_task</code> actions when you need to:</p>
 <ul>
 <li>Execute asynchronous code that would block the main thread</li>
-<li>Perform operations that can benefit from Bevy's task system</li>
+<li>Perform operations that can benefit from Bevy’s task system</li>
 <li>Execute code that should continue even if the Reactor is canceled (using <code>spawn_detached</code>)</li>
 </ul>
-<p>The <code>bevy_task</code> module is particularly useful for operations that need to be executed asynchronously but don't require the full power of Tokio's runtime.</p>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="side_effectthread"><a class="header" href="#side_effectthread">side_effect::thread</a></h1>
+<p>The <code>bevy_task</code> module is particularly useful for operations that need to be executed asynchronously but don’t require the full power of Tokio’s runtime.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="side_effectthread"><a class="header" href="#side_effectthread">side_effect::thread</a></h1>
 <p>The <code>side_effect::thread</code> module provides actions for spawning OS threads. These actions allow you to execute CPU-intensive code without blocking the main thread while maintaining the Action-based flow.</p>
 <h2 id="functions-18"><a class="header" href="#functions-18">Functions</a></h2>
 <h3 id="spawn-1"><a class="header" href="#spawn-1">spawn</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>side_effect::thread::spawn&lt;I, O, M&gt;(f: impl Functor&lt;I, O, M&gt; + Send + Sync + 'static) -&gt; ActionSeed&lt;I, O&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Spawns a new OS thread and waits for its output. The thread is started when the Runner is executed for the first time. Note that the thread created from this function will continue to run even if the Reactor is canceled.</p>
-<h4 id="parameters-7"><a class="header" href="#parameters-7">Parameters</a></h4>
+<h4 id="parameters-6"><a class="header" href="#parameters-6">Parameters</a></h4>
 <ul>
 <li><code>f</code>: A function to be executed on a separate thread. This can be either:
 <ul>
@@ -3593,10 +3637,10 @@ fn spawn_reactor(mut commands: Commands) {
 </ul>
 </li>
 </ul>
-<h4 id="return-value-7"><a class="header" href="#return-value-7">Return Value</a></h4>
+<h4 id="return-value-6"><a class="header" href="#return-value-6">Return Value</a></h4>
 <p>Returns an <code>ActionSeed&lt;I, O&gt;</code> that, when executed, will spawn a new OS thread to execute the function and wait for it to complete.</p>
-<h4 id="example-44"><a class="header" href="#example-44">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-22"><a class="header" href="#example-22">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3625,7 +3669,7 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: Hello from thread!"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="when-to-use-28"><a class="header" href="#when-to-use-28">When to Use</a></h2>
 <p>Use <code>side_effect::thread</code> actions when you need to:</p>
 <ul>
@@ -3639,16 +3683,17 @@ fn spawn_reactor(mut commands: Commands) {
 <pre><code class="language-toml">[dependencies]
 bevy_flurx = { version = "0.1", features = ["side-effect", "std"] }
 </code></pre>
-<div style="break-before: page; page-break-before: always;"></div><h1 id="side_effecttokio"><a class="header" href="#side_effecttokio">side_effect::tokio</a></h1>
-<p>The <code>side_effect::tokio</code> module provides actions for spawning tasks using Tokio's runtime. These actions allow you to execute asynchronous code with Tokio while maintaining the Action-based flow.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="side_effecttokio"><a class="header" href="#side_effecttokio">side_effect::tokio</a></h1>
+<p>The <code>side_effect::tokio</code> module provides actions for spawning tasks using Tokio’s runtime. These actions allow you to execute asynchronous code with Tokio while maintaining the Action-based flow.</p>
 <h2 id="functions-19"><a class="header" href="#functions-19">Functions</a></h2>
 <h3 id="spawn-2"><a class="header" href="#spawn-2">spawn</a></h3>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>side_effect::tokio::spawn&lt;I, Out, Functor, M&gt;(f: Functor) -&gt; ActionSeed&lt;I, Out&gt;
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <p>Spawns a new Tokio task and waits for its output. The task is started when the Runner is executed for the first time.</p>
-<h4 id="parameters-8"><a class="header" href="#parameters-8">Parameters</a></h4>
+<h4 id="parameters-7"><a class="header" href="#parameters-7">Parameters</a></h4>
 <ul>
 <li><code>f</code>: A function that returns a future, or a future itself. This can be either:
 <ul>
@@ -3657,10 +3702,10 @@ bevy_flurx = { version = "0.1", features = ["side-effect", "std"] }
 </ul>
 </li>
 </ul>
-<h4 id="return-value-8"><a class="header" href="#return-value-8">Return Value</a></h4>
+<h4 id="return-value-7"><a class="header" href="#return-value-7">Return Value</a></h4>
 <p>Returns an <code>ActionSeed&lt;I, Out&gt;</code> that, when executed, will spawn a new Tokio task to execute the future and wait for it to complete.</p>
-<h4 id="example-45"><a class="header" href="#example-45">Example</a></h4>
-<pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+<h4 id="example-23"><a class="header" href="#example-23">Example</a></h4>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use bevy::prelude::*;
 use bevy_flurx::prelude::*;
@@ -3691,14 +3736,14 @@ fn spawn_reactor(mut commands: Commands) {
         println!("Result: {}", result); // Prints "Result: 10"
     }));
 }
-<span class="boring">}</span></code></pre></pre>
+<span class="boring">}</span></code></pre>
 <h2 id="cancellation-behavior"><a class="header" href="#cancellation-behavior">Cancellation Behavior</a></h2>
 <p>Unlike <code>bevy_task::spawn_detached</code> and <code>thread::spawn</code>, Tokio tasks spawned with <code>tokio::spawn</code> are aborted when the Runner is dropped. This means that if the Reactor is canceled, the Tokio task will also be canceled.</p>
 <h2 id="when-to-use-29"><a class="header" href="#when-to-use-29">When to Use</a></h2>
 <p>Use <code>side_effect::tokio</code> actions when you need to:</p>
 <ul>
 <li>Perform I/O-bound operations like network requests or file operations</li>
-<li>Execute asynchronous code that benefits from Tokio's runtime features</li>
+<li>Execute asynchronous code that benefits from Tokio’s runtime features</li>
 <li>Integrate with other libraries that use Tokio</li>
 </ul>
 <p>The <code>tokio</code> module is particularly useful for operations that are I/O-bound rather than CPU-bound. For CPU-bound operations, consider using the <code>thread</code> module instead.</p>
@@ -3725,6 +3770,11 @@ bevy_flurx = { version = "0.1", features = ["tokio"] }
 
         </div>
 
+        <template id=fa-eye><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M288 32c-80.8 0-145.5 36.8-192.6 80.6C48.6 156 17.3 208 2.5 243.7c-3.3 7.9-3.3 16.7 0 24.6C17.3 304 48.6 356 95.4 399.4C142.5 443.2 207.2 480 288 480s145.5-36.8 192.6-80.6c46.8-43.5 78.1-95.4 93-131.1c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C433.5 68.8 368.8 32 288 32zM432 256c0 79.5-64.5 144-144 144s-144-64.5-144-144s64.5-144 144-144s144 64.5 144 144zM288 192c0 35.3-28.7 64-64 64c-11.5 0-22.3-3-31.6-8.4c-.2 2.8-.4 5.5-.4 8.4c0 53 43 96 96 96s96-43 96-96s-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6z"/></svg></span></template>
+        <template id=fa-eye-slash><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M38.8 5.1C28.4-3.1 13.3-1.2 5.1 9.2S-1.2 34.7 9.2 42.9l592 464c10.4 8.2 25.5 6.3 33.7-4.1s6.3-25.5-4.1-33.7L525.6 386.7c39.6-40.6 66.4-86.1 79.9-118.4c3.3-7.9 3.3-16.7 0-24.6c-14.9-35.7-46.2-87.7-93-131.1C465.5 68.8 400.8 32 320 32c-68.2 0-125 26.3-169.3 60.8L38.8 5.1zM223.1 149.5C248.6 126.2 282.7 112 320 112c79.5 0 144 64.5 144 144c0 24.9-6.3 48.3-17.4 68.7L408 294.5c5.2-11.8 8-24.8 8-38.5c0-53-43-96-96-96c-2.8 0-5.6 .1-8.4 .4c5.3 9.3 8.4 20.1 8.4 31.6c0 10.2-2.4 19.8-6.6 28.3l-90.3-70.8zm223.1 298L373 389.9c-16.4 6.5-34.3 10.1-53 10.1c-79.5 0-144-64.5-144-144c0-6.9 .5-13.6 1.4-20.2L83.1 161.5C60.3 191.2 44 220.8 34.5 243.7c-3.3 7.9-3.3 16.7 0 24.6c14.9 35.7 46.2 87.7 93 131.1C174.5 443.2 239.2 480 320 480c47.8 0 89.9-12.9 126.2-32.5z"/></svg></span></template>
+        <template id=fa-copy><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M502.6 70.63l-61.25-61.25C435.4 3.371 427.2 0 418.7 0H255.1c-35.35 0-64 28.66-64 64l.0195 256C192 355.4 220.7 384 256 384h192c35.2 0 64-28.8 64-64V93.25C512 84.77 508.6 76.63 502.6 70.63zM464 320c0 8.836-7.164 16-16 16H255.1c-8.838 0-16-7.164-16-16L239.1 64.13c0-8.836 7.164-16 16-16h128L384 96c0 17.67 14.33 32 32 32h47.1V320zM272 448c0 8.836-7.164 16-16 16H63.1c-8.838 0-16-7.164-16-16L47.98 192.1c0-8.836 7.164-16 16-16H160V128H63.99c-35.35 0-64 28.65-64 64l.0098 256C.002 483.3 28.66 512 64 512h192c35.2 0 64-28.8 64-64v-32h-47.1L272 448z"/></svg></span></template>
+        <template id=fa-play><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80V432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z"/></svg></span></template>
+        <template id=fa-clock-rotate-left><span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M75 75L41 41C25.9 25.9 0 36.6 0 57.9V168c0 13.3 10.7 24 24 24H134.1c21.4 0 32.1-25.9 17-41l-30.8-30.8C155 85.5 203 64 256 64c106 0 192 86 192 192s-86 192-192 192c-40.8 0-78.6-12.7-109.7-34.4c-14.5-10.1-34.4-6.6-44.6 7.9s-6.6 34.4 7.9 44.6C151.2 495 201.7 512 256 512c141.4 0 256-114.6 256-256S397.4 0 256 0C185.3 0 121.3 28.7 75 75zm181 53c-13.3 0-24 10.7-24 24V256c0 6.4 2.5 12.5 7 17l72 72c9.4 9.4 24.6 9.4 33.9 0s9.4-24.6 0-33.9l-65-65V152c0-13.3-10.7-24-24-24z"/></svg></span></template>
 
 
 
@@ -3733,13 +3783,13 @@ bevy_flurx = { version = "0.1", features = ["tokio"] }
         </script>
 
 
-        <script src="elasticlunr.min.js"></script>
-        <script src="mark.min.js"></script>
-        <script src="searcher.js"></script>
+        <script src="elasticlunr-ef4e11c1.min.js"></script>
+        <script src="mark-09e88c2c.min.js"></script>
+        <script src="searcher-c2a407aa.js"></script>
 
-        <script src="clipboard.min.js"></script>
-        <script src="highlight.js"></script>
-        <script src="book.js"></script>
+        <script src="clipboard-1626706a.min.js"></script>
+        <script src="highlight-abc7f01d.js"></script>
+        <script src="book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
 
