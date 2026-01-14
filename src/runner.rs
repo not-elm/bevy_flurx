@@ -1,6 +1,6 @@
 //! `Runner` defines what does the actual processing of the action.
 
-use crate::reactor::{NativeReactor, StepReactor};
+use crate::reactor::{queue_reactor_despawn, NativeReactor, StepReactor};
 use crate::runner::app_schedule_labels::AppScheduleLabels;
 pub use crate::runner::cancellation_handlers::{CancellationHandlers, CancellationId};
 use crate::runner::reserve_register_runner::{ReserveRegisterRunnerPlugin, ReservedRunner};
@@ -154,12 +154,12 @@ pub(crate) fn initialize_runner<Label>(
     push_runner_into_registry::<Label>(world, reactor_entity, runner);
     match runner_is {
         RunnerIs::Completed => {
-            world.trigger(StepReactor {
+            world.commands().trigger(StepReactor {
                 reactor: reactor_entity,
             });
         }
         RunnerIs::Canceled => {
-            world.commands().entity(reactor_entity).despawn();
+            queue_reactor_despawn(world, reactor_entity);
         }
         _ => {}
     }
@@ -323,7 +323,7 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result {
             }
         });
         if request_cancel {
-            world.commands().entity(*entity).despawn();
+            queue_reactor_despawn(world, *entity);
         } else if request_step {
             world.commands().trigger(StepReactor { reactor: *entity });
         }

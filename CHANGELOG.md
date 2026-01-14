@@ -1,3 +1,8 @@
+## v0.14.0(Unreleased)
+
+### Improvements
+- Migrated to Bevy 0.18
+
 ## v0.13.0
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.13.0)
 
