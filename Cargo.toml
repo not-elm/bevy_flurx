@@ -49,7 +49,7 @@ tokio = { version = "1", optional = true, features = ["sync", "time", "rt-multi-
 async-compat = { version = "0.2", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.18", features = ["debug"] }
+bevy = { version = "0.18" }
 bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.18" }
 futures = "0.3"
 criterion = { version = "0.8", features = ["plotters", "html_reports"] }

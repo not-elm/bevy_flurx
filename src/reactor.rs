@@ -1,7 +1,7 @@
 use crate::core::scheduler::CoreScheduler;
 use crate::task::ReactorTask;
 use crate::world_ptr::WorldPtr;
-use bevy::app::{App, Plugin};
+use bevy::app::{App, Last, Plugin};
 use bevy::ecs::component::{Mutable, StorageType};
 use bevy::ecs::lifecycle::{ComponentHook, HookContext};
 use bevy::ecs::world::DeferredWorld;
@@ -34,7 +34,8 @@ impl Plugin for ReactorPlugin {
         app.register_type::<StepAllReactors>()
             .register_type::<StepReactor>()
             .add_observer(trigger_step_reactor)
-            .add_observer(trigger_step_all_reactors);
+            .add_observer(trigger_step_all_reactors)
+            .add_systems(Last, despawn_pending_reactors);
     }
 }
 
@@ -120,6 +121,19 @@ pub(crate) struct NativeReactor {
     pub(crate) scheduler: CoreScheduler<WorldPtr>,
 }
 
+#[derive(Component)]
+pub(crate) struct PendingReactorDespawn;
+
+#[inline]
+pub(crate) fn queue_reactor_despawn(world: &mut World, entity: Entity) {
+    if world.get_entity(entity).is_ok() {
+        world
+            .commands()
+            .entity(entity)
+            .insert(PendingReactorDespawn);
+    }
+}
+
 impl NativeReactor {
     fn schedule<F>(
         entity: Entity,
@@ -183,7 +197,7 @@ fn trigger_step_all_reactors(_: On<StepAllReactors>, mut commands: Commands) {
             }
         }
         for entity in finished_reactors {
-            world.commands().entity(entity).despawn();
+            queue_reactor_despawn(world, entity);
         }
     });
 }
@@ -196,8 +210,17 @@ fn step_reactor(reactor_entity: Entity, world: &mut World) {
         .get_mut(world, reactor_entity)
     {
         if reactor.step(world_ptr) {
-            world.commands().entity(reactor_entity).despawn();
+            queue_reactor_despawn(world, reactor_entity);
         }
+    }
+}
+
+fn despawn_pending_reactors(
+    mut commands: Commands,
+    pending: Query<Entity, With<PendingReactorDespawn>>,
+) {
+    for entity in pending.iter() {
+        commands.entity(entity).despawn();
     }
 }
 
