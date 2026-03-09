@@ -204,9 +204,8 @@ mod tests {
         use core::cell::Cell;
         let non_sync = Cell::new(42u32);
         // Cell<u32> is Send but !Sync — this must compile
-        let _seed: ActionSeed<(), u32> = side_effect::tokio::spawn(move |_| async move {
-            non_sync.get()
-        });
+        let _seed: ActionSeed<(), u32> =
+            side_effect::tokio::spawn(move |_| async move { non_sync.get() });
     }
 
     #[test]
