@@ -1,4 +1,4 @@
-## v0.14.1(Unreleased)
+## v0.14.1
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.14.1)
 
