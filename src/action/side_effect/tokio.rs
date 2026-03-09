@@ -8,6 +8,7 @@ use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
 use alloc::sync::Arc;
+use bevy::platform::sync::Mutex;
 use bevy::prelude::World;
 use core::marker::PhantomData;
 use tokio::runtime::Runtime;
@@ -41,15 +42,22 @@ where
     I: Send + Sync + 'static,
     M: Send + Sync + 'static,
     Out: Send + Sync + 'static,
-    Functor: AsyncFunctor<I, Out, M> + Send + Sync + 'static,
+    Functor: AsyncFunctor<I, Out, M> + Send + 'static,
 {
-    ActionSeed::new(|input: I, output: Output<Out>| TokioRunner {
-        arc_output: Arc::new(tokio::sync::Mutex::new(None)),
-        args: Some((input, f)),
-        output,
-        rt: Runtime::new().unwrap(),
-        handle: None,
-        _m: PhantomData,
+    let f = Mutex::new(Some(f));
+    ActionSeed::new(move |input: I, output: Output<Out>| {
+        let f = f
+            .into_inner()
+            .expect("mutex was never locked")
+            .expect("closure is FnOnce; value is always Some");
+        TokioRunner {
+            arc_output: Arc::new(tokio::sync::Mutex::new(None)),
+            args: Some((input, f)),
+            output,
+            rt: Runtime::new().unwrap(),
+            handle: None,
+            _m: PhantomData,
+        }
     })
 }
 
@@ -188,6 +196,17 @@ mod tests {
         thread::sleep(Duration::from_millis(200));
         app.assert_message_not_comes(&mut er);
         assert!(!TASK_FINISHED.load(Ordering::Relaxed));
+    }
+
+    #[test]
+    fn accepts_non_sync_functor() {
+        use crate::prelude::ActionSeed;
+        use core::cell::Cell;
+        let non_sync = Cell::new(42u32);
+        // Cell<u32> is Send but !Sync — this must compile
+        let _seed: ActionSeed<(), u32> = side_effect::tokio::spawn(move |_| async move {
+            non_sync.get()
+        });
     }
 
     #[test]
