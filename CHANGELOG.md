@@ -1,38 +1,59 @@
+## v0.14.1(Unreleased)
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.14.1)
+
+### Improvements
+
+- Removed `Sync` bound from `AsyncFunctor` in `side_effect::tokio::spawn`, allowing `Send`-only closures
+
 ## v0.14.0
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.14.0)
 
 ### Improvements
+
 - Migrated to Bevy 0.18
 
 ## v0.13.0
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.13.0)
 
 ### Features
+
 - Support for Bevy 0.17.0
 - Added `once::message` module with `write()`, `write_default()`, and `app_exit_success()` actions
 - Added `wait::message` module with `comes()`, `comes_and()`, `read()`, and `read_and()` actions
 
 ### Deprecations
+
 - Deprecated `once::event` module in favor of `once::message` (Event trait replaced with Message in Bevy 0.17)
 - Deprecated `wait::event` module in favor of `wait::message` (Event trait replaced with Message in Bevy 0.17)
 
 ### Improvements
+
 - Updated all examples, documentation, and tests to use the new `message` API
 - Deprecated functions now delegate to their `message` equivalents for consistency
 
 ## v0.12.0
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.12.0)
 
 ### Features
+
 - Support no_std
 - Added `serialize` feature flag to derive `Serialize` and `Deserialize` for some structs.
+
 ### Bug Fixes
+
 - Fixed a bug where `side_effect::tokio::spawn` was blocking execution.
 - Fixed a potential bug in the internal `RunnersRegistry` usage.
+
 ### Improvements
+
 - Remove `serialize` and `std` feature flags from `bevy` dependency.
 
 ## v0.11.1
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.1)
 
 ### Others
@@ -41,19 +62,21 @@
 - Use rustfmt to format the code.
 
 ## v0.11.0
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0)
 
 ### Features
 
 - Support for Bevy's 0.16.0
 
-
 ## v0.11.0-rc.5
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.5)
 
 Support for Bevy's 0.16-rc.5
 
 ## v0.11.0-rc.3
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.3)
 
 ## Features
@@ -67,13 +90,15 @@ Support for Bevy's 0.16-rc.5
 - Renamed `App::add_record_events` to `App::add_record`.
 
 ## v0.11.0-rc.2
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.2)
 
 ## Bug Fix
 
 - Fixed crash app when Reactor spawns inside another reactor
 
-## v0.11.0-rc.1 
+## v0.11.0-rc.1
+
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.11.0-rc.1)
 
 Support for bevy 0.16.0-rc.1
@@ -115,7 +140,7 @@ Support for bevy 0.16.0-rc.1
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.9.0)
 
 - Added the `inspect` module, providing utilities for auxiliary side-effect handling (e.g., logging or debugging) with the `inspect` function and `Inspect` trait.
-- Added `Action::split` method to split an action into an input value and a seed. 
+- Added `Action::split` method to split an action into an input value and a seed.
 - Changed access modifier for `ActionSeed::create_runner` and `Action::create_runner` to pub.
 
 ## v0.8.3
@@ -173,7 +198,7 @@ This version has reduced the binary size.
 
 ## v0.5.0
 
-Fixed a bug where the execution run condition switch_just_* was not working correctly
+Fixed a bug where the execution run condition switch*just*\* was not working correctly
 
 - [v0.5.0](https://github.com/not-elm/bevy_flurx/pull/44)
 
