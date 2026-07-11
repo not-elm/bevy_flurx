@@ -328,9 +328,11 @@ mod tests {
                 // transition that tears itself down when it finishes.
                 task.will(
                     Update,
-                    once::run(|mut cmd: Commands, reactor: Query<Entity, With<NativeReactor>>| {
-                        cmd.entity(reactor.single().unwrap()).despawn();
-                    }),
+                    once::run(
+                        |mut cmd: Commands, reactor: Query<Entity, With<NativeReactor>>| {
+                            cmd.entity(reactor.single().unwrap()).despawn();
+                        },
+                    ),
                 )
                 .await;
             }));
