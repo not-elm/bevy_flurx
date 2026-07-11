@@ -1,3 +1,11 @@
+## v0.14.2
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.14.2)
+
+### Bug Fixes
+
+- Fixed a use-after-free that occurred when an action within a reactor despawned its own entity or caused its archetype to move.
+
 ## v0.14.1
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.14.1)
