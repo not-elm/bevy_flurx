@@ -118,7 +118,9 @@ where
 }
 
 pub(crate) struct NativeReactor {
-    pub(crate) scheduler: CoreScheduler<WorldPtr>,
+    /// `Option` so `step_reactor` can move it onto the stack before polling (see
+    /// there for why a component borrow can't be held across a poll).
+    pub(crate) scheduler: Option<CoreScheduler<WorldPtr>>,
 }
 
 #[derive(Component)]
@@ -145,21 +147,25 @@ impl NativeReactor {
         let scheduler = CoreScheduler::schedule(move |task| async move {
             f(ReactorTask { task, entity }).await;
         });
-        Self { scheduler }
+        Self {
+            scheduler: Some(scheduler),
+        }
     }
 
+    /// Poll a scheduler the caller owns on the stack (see [`step_reactor`] for
+    /// why it can't be borrowed from the world).
     #[inline(always)]
-    pub(crate) fn step(&mut self, world: WorldPtr) -> bool {
+    fn run(scheduler: &mut CoreScheduler<WorldPtr>, world: WorldPtr) -> bool {
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
         {
             use async_compat::CompatExt;
-            pollster::block_on(self.scheduler.run(world).compat());
+            pollster::block_on(scheduler.run(world).compat());
         }
         #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
         {
-            pollster::block_on(self.scheduler.run(world));
+            pollster::block_on(scheduler.run(world));
         }
-        self.scheduler.finished
+        scheduler.finished
     }
 }
 
@@ -186,33 +192,47 @@ fn trigger_step_reactor(trigger: On<StepReactor>, mut commands: Commands) {
 
 fn trigger_step_all_reactors(_: On<StepAllReactors>, mut commands: Commands) {
     commands.queue(move |world: &mut World| {
-        let world_ptr = WorldPtr::new(world);
-        let mut finished_reactors = Vec::new();
-        for (entity, mut reactor) in world
-            .query::<(Entity, &mut NativeReactor)>()
-            .iter_mut(world)
-        {
-            if reactor.step(world_ptr) {
-                finished_reactors.push(entity);
-            }
-        }
-        for entity in finished_reactors {
-            queue_reactor_despawn(world, entity);
+        // Collect entities first, then step each via `step_reactor`. Holding an
+        // `iter_mut` borrow across the poll has the same use-after-free as the
+        // single-reactor path.
+        let entities: Vec<Entity> = world
+            .query_filtered::<Entity, With<NativeReactor>>()
+            .iter(world)
+            .collect();
+        for entity in entities {
+            step_reactor(entity, world);
         }
     });
 }
 
+/// Advance one reactor by one step.
+///
+/// The scheduler is moved onto the stack for the poll, not borrowed from the
+/// component: polling can despawn `reactor_entity` (or move its archetype) and
+/// free the `NativeReactor`, so a borrow held across it was a use-after-free.
 #[inline]
 fn step_reactor(reactor_entity: Entity, world: &mut World) {
+    let Some(mut scheduler) = world
+        .query::<&mut NativeReactor>()
+        .get_mut(world, reactor_entity)
+        .ok()
+        .and_then(|mut reactor| reactor.scheduler.take())
+    else {
+        // No reactor, or a re-entrant step found the scheduler already taken
+        // (it's being polled higher up the stack). Nothing to do.
+        return;
+    };
     let world_ptr = WorldPtr::new(world);
-    if let Ok(mut reactor) = world
+    if NativeReactor::run(&mut scheduler, world_ptr) {
+        queue_reactor_despawn(world, reactor_entity);
+    } else if let Ok(mut reactor) = world
         .query::<&mut NativeReactor>()
         .get_mut(world, reactor_entity)
     {
-        if reactor.step(world_ptr) {
-            queue_reactor_despawn(world, reactor_entity);
-        }
+        // Entity survived the step: put the scheduler back for the next one.
+        reactor.scheduler = Some(scheduler);
     }
+    // Otherwise the entity was despawned during the step; `scheduler` drops here.
 }
 
 fn despawn_pending_reactors(
@@ -285,6 +305,40 @@ mod tests {
             .single(app.world())
             .is_ok());
         app.update();
+        assert!(app
+            .world_mut()
+            .query::<&NativeReactor>()
+            .single(app.world())
+            .is_err());
+    }
+
+    /// Regression: a reactor whose last step despawns its own entity. The step
+    /// used to hold a `&mut NativeReactor` while polling, so the self-despawn
+    /// freed the component mid-poll and the resume wrote into freed memory (a
+    /// use-after-free that AddressSanitizer/Miri catch). Must complete cleanly.
+    #[test]
+    fn reactor_despawning_its_own_entity_mid_step() {
+        let mut app = test_app();
+        app.init_resource::<Count>();
+        app.add_systems(Startup, |mut commands: Commands| {
+            commands.spawn(Reactor::schedule(|task| async move {
+                task.will(Update, once::run(|mut count: ResMut<Count>| count.0 += 1))
+                    .await;
+                // Last step despawns the reactor's own entity, like a screen
+                // transition that tears itself down when it finishes.
+                task.will(
+                    Update,
+                    once::run(|mut cmd: Commands, reactor: Query<Entity, With<NativeReactor>>| {
+                        cmd.entity(reactor.single().unwrap()).despawn();
+                    }),
+                )
+                .await;
+            }));
+        });
+        for _ in 0..10 {
+            app.update();
+        }
+        app.assert_resource_eq(Count(1));
         assert!(app
             .world_mut()
             .query::<&NativeReactor>()
