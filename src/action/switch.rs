@@ -89,13 +89,11 @@ where
 ///         }));
 ///     });
 /// ```
-#[derive(Debug, Eq, PartialEq)]
-pub struct Switch<M> {
+#[derive(Debug, Eq, PartialEq, Resource)]
+pub struct Switch<M: Send + Sync + 'static> {
     is_on: bool,
     _m: PhantomData<M>,
 }
-
-impl<M> Resource for Switch<M> where M: Send + Sync + 'static {}
 
 impl<M> Switch<M>
 where

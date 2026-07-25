@@ -121,8 +121,8 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send::<AppExit>().is_none());
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send::<AppExit>().is_some());
     }
 }

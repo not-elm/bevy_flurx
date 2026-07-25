@@ -181,7 +181,7 @@ fn add_runner_system_into_schedules<Label: ScheduleLabel>(
     contains_label: bool,
 ) {
     if !world.contains_non_send::<RunnersRegistry<Label>>() {
-        world.insert_non_send_resource(RunnersRegistry::<Label>::default());
+        world.insert_non_send(RunnersRegistry::<Label>::default());
         let mut schedules = world
             .remove_resource::<Schedules>()
             .expect("Schedules was not found");
@@ -222,7 +222,7 @@ fn init_runner<Label: ScheduleLabel>(
         let mut handers = CancellationHandlers::default();
         let runner_is = runner.run(world, &mut handers);
         world
-            .non_send_resource_mut::<RunnersRegistry<Label>>()
+            .non_send_mut::<RunnersRegistry<Label>>()
             .0
             .entry(reactor_entity)
             .or_default()
@@ -241,7 +241,7 @@ fn push_runner_into_registry<Label: ScheduleLabel>(
     runner: BoxedRunner,
 ) {
     world
-        .non_send_resource_mut::<RunnersRegistry<Label>>()
+        .non_send_mut::<RunnersRegistry<Label>>()
         .0
         .entry(reactor_entity)
         .or_default()
@@ -267,23 +267,22 @@ fn observe_remove_reactor<Label: ScheduleLabel>(reactor_entity: Entity, world: &
     let mut observer = Observer::new(
         move |_: On<Remove, NativeReactor>, mut commands: Commands| {
             commands.queue(move |world: &mut World| {
-                let Some(mut runner_registry) =
-                    world.remove_non_send_resource::<RunnersRegistry<Label>>()
+                let Some(mut runner_registry) = world.remove_non_send::<RunnersRegistry<Label>>()
                 else {
                     return;
                 };
                 let Some((_, cancellation_handlers)) = runner_registry.0.remove(&reactor_entity)
                 else {
-                    world.insert_non_send_resource(runner_registry);
+                    world.insert_non_send(runner_registry);
                     return;
                 };
                 for handler in cancellation_handlers.0.values() {
                     handler(world);
                 }
-                if let Some(mut r) = world.get_non_send_resource_mut::<RunnersRegistry<Label>>() {
+                if let Some(mut r) = world.get_non_send_mut::<RunnersRegistry<Label>>() {
                     r.0.extend(runner_registry.0);
                 } else {
-                    world.insert_non_send_resource(runner_registry);
+                    world.insert_non_send(runner_registry);
                 }
             });
         },
@@ -297,7 +296,7 @@ fn observe_remove_reactor<Label: ScheduleLabel>(reactor_entity: Entity, world: &
 
 fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result {
     let Some(mut runners_registry) = world
-        .get_non_send_resource_mut::<RunnersRegistry<L>>()
+        .get_non_send_mut::<RunnersRegistry<L>>()
         .map(|mut registry| core::mem::take(&mut registry.0))
     else {
         return Ok(());
@@ -330,7 +329,7 @@ fn run_runners<L: Send + Sync + 'static>(world: &mut World) -> Result {
     }
 
     world
-        .non_send_resource_mut::<RunnersRegistry<L>>()
+        .non_send_mut::<RunnersRegistry<L>>()
         .0
         .extend(runners_registry);
     Ok(())

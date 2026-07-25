@@ -158,9 +158,9 @@ mod tests {
             .expect("Failed to run system");
 
         app.update();
-        assert!(app.world().get_non_send_resource::<Count>().is_none());
+        assert!(app.world().get_non_send::<Count>().is_none());
         app.update();
-        assert_eq!(app.world().non_send_resource::<Count>().0, 1);
+        assert_eq!(app.world().non_send::<Count>().0, 1);
     }
 
     #[test]

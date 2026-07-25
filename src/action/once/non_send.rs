@@ -25,7 +25,7 @@ where
     R: Default + 'static,
 {
     once::run(|world: &mut World| {
-        world.init_non_send_resource::<R>();
+        world.init_non_send::<R>();
     })
 }
 
@@ -49,7 +49,7 @@ where
     R: 'static,
 {
     once::run(|In(resource): In<R>, world: &mut World| {
-        world.insert_non_send_resource(resource);
+        world.insert_non_send(resource);
     })
 }
 
@@ -73,7 +73,7 @@ where
     R: 'static,
 {
     once::run(|world: &mut World| {
-        world.remove_non_send_resource::<R>();
+        world.remove_non_send::<R>();
     })
 }
 
@@ -88,7 +88,7 @@ mod tests {
     use bevy::prelude::Commands;
 
     #[test]
-    fn init_non_send_resource() {
+    fn init_non_send() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
@@ -97,14 +97,11 @@ mod tests {
         });
 
         app.update();
-        assert!(app
-            .world()
-            .get_non_send_resource::<TestResource>()
-            .is_some());
+        assert!(app.world().get_non_send::<TestResource>().is_some());
     }
 
     #[test]
-    fn insert_non_send_resource() {
+    fn insert_non_send() {
         let mut app = test_app();
         app.add_systems(Startup, |mut commands: Commands| {
             commands.spawn(Reactor::schedule(|task| async move {
@@ -114,14 +111,11 @@ mod tests {
         });
 
         app.update();
-        assert!(app
-            .world()
-            .get_non_send_resource::<TestResource>()
-            .is_some());
+        assert!(app.world().get_non_send::<TestResource>().is_some());
     }
 
     #[test]
-    fn remove_non_send_resource() {
+    fn remove_non_send() {
         let mut app = test_app();
         app.init_resource::<TestResource>()
             .add_systems(Startup, |mut commands: Commands| {
@@ -131,10 +125,7 @@ mod tests {
             });
 
         app.update();
-        assert!(app
-            .world()
-            .get_non_send_resource::<TestResource>()
-            .is_none());
+        assert!(app.world().get_non_send::<TestResource>().is_none());
     }
 
     #[test]
@@ -159,33 +150,18 @@ mod tests {
         });
 
         app.update();
-        assert!(app
-            .world_mut()
-            .remove_non_send_resource::<AppExit>()
-            .is_some());
+        assert!(app.world_mut().remove_non_send::<AppExit>().is_some());
 
         app.update();
-        assert!(app
-            .world_mut()
-            .remove_non_send_resource::<AppExit>()
-            .is_some());
+        assert!(app.world_mut().remove_non_send::<AppExit>().is_some());
 
         app.update();
-        assert!(app
-            .world_mut()
-            .remove_non_send_resource::<AppExit>()
-            .is_some());
+        assert!(app.world_mut().remove_non_send::<AppExit>().is_some());
 
         app.update();
-        assert!(app
-            .world_mut()
-            .remove_non_send_resource::<AppExit>()
-            .is_some());
+        assert!(app.world_mut().remove_non_send::<AppExit>().is_some());
 
         app.update();
-        assert!(app
-            .world_mut()
-            .remove_non_send_resource::<AppExit>()
-            .is_none());
+        assert!(app.world_mut().remove_non_send::<AppExit>().is_none());
     }
 }

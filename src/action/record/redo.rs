@@ -133,7 +133,7 @@ where
                 self.output.set(Err(e));
                 return RunnerIs::Completed;
             }
-            world.insert_non_send_resource(TracksStore::<Act>(Vec::new()));
+            world.insert_non_send(TracksStore::<Act>(Vec::new()));
             self.cancellation_id.replace(token.register(cleanup::<Act>));
             self.tracks =
                 (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
@@ -144,10 +144,7 @@ where
                 if let Some((track, redo)) = self.tracks.pop() {
                     let runner = redo.with(()).create_runner(self.redo_output.clone());
                     self.redo_runner.replace(runner);
-                    world
-                        .non_send_resource_mut::<TracksStore<Act>>()
-                        .0
-                        .push(track);
+                    world.non_send_mut::<TracksStore<Act>>().0.push(track);
                 } else {
                     self.output.set(Ok(()));
                     if let Some(id) = self.cancellation_id.as_ref() {
@@ -170,7 +167,7 @@ where
 }
 
 fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
-    if let Some(store) = world.remove_non_send_resource::<TracksStore<Act>>() {
+    if let Some(store) = world.remove_non_send::<TracksStore<Act>>() {
         let _ = push_tracks(store.0.into_iter(), world, false);
     }
 

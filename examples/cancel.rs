@@ -37,7 +37,7 @@ fn setup_camera_and_box(
     ));
     commands.spawn((
         PointLight {
-            shadows_enabled: true,
+            shadow_maps_enabled: true,
             intensity: 10_000_000.,
             range: 100.0,
             ..default()

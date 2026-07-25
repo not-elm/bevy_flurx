@@ -1,3 +1,20 @@
+## v0.15.0
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.15.0)
+
+### Improvements
+
+- Migrated to Bevy 0.19
+
+### Breaking Changes
+
+- `Record<Act>` and `Switch<M>` now require `Act: Send + Sync + 'static` / `M: Send + Sync + 'static` on the struct itself (Bevy 0.19's `Resource` trait requires `Component`)
+- `record::all_clear` now requires `M: Send + Sync + 'static`
+
+### Bug Fixes
+
+- `record::all_clear` now accesses `Record` as a normal resource; previously it requested it as a non-send resource, which was never populated and caused a panic when the action ran
+
 ## v0.14.2
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.14.2)
