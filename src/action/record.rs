@@ -18,8 +18,13 @@ pub mod undo;
 /// Clear the [`Record`].
 ///
 /// The output will be [`UndoRedoInProgress`] if an `undo` or `redo` is in progress.
-pub fn all_clear<M: 'static>() -> ActionSeed<(), Result<(), UndoRedoInProgress>> {
-    once::run(|mut store: NonSendMut<Record<M>>| store.all_clear())
+pub fn all_clear<M: Send + Sync + 'static>() -> ActionSeed<(), Result<(), UndoRedoInProgress>> {
+    once::run(|store: Option<ResMut<Record<M>>>| {
+        let Some(mut store) = store else {
+            return Ok(());
+        };
+        store.all_clear()
+    })
 }
 
 /// Thrown when attempting to edit history while an `undo` or `redo` action is in progress.
@@ -41,7 +46,8 @@ pub type EditRecordResult = Result<(), UndoRedoInProgress>;
 ///
 /// This struct has one marker type.
 /// This allows you can define different the histories for each type of `Act`.
-pub struct Record<Act> {
+#[derive(Resource)]
+pub struct Record<Act: Send + Sync + 'static> {
     pub(crate) tracks: Vec<Track<Act>>,
     pub(crate) redo: Vec<(Track<Act>, ActionSeed)>,
     pub(crate) progressing: bool,
@@ -49,7 +55,7 @@ pub struct Record<Act> {
 
 impl<Act> Record<Act>
 where
-    Act: 'static,
+    Act: Send + Sync + 'static,
 {
     /// Clear all history of `undo` and `redo`.
     pub fn all_clear(&mut self) -> Result<(), UndoRedoInProgress> {
@@ -96,7 +102,7 @@ where
     }
 }
 
-impl<M> Default for Record<M> {
+impl<M: Send + Sync + 'static> Default for Record<M> {
     fn default() -> Self {
         Self {
             tracks: Vec::new(),
@@ -105,8 +111,6 @@ impl<M> Default for Record<M> {
         }
     }
 }
-
-impl<Op> Resource for Record<Op> where Op: Send + Sync + 'static {}
 
 /// # Safety: `Track::create_runner` must be called only on the main thread.
 unsafe impl<Op> Send for Record<Op> where Op: Send + Sync + 'static {}

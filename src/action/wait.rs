@@ -150,9 +150,9 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send::<AppExit>().is_none());
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send::<AppExit>().is_some());
     }
 
     #[test]
@@ -176,9 +176,9 @@ mod tests {
             }));
         });
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send::<AppExit>().is_none());
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send::<AppExit>().is_some());
     }
 
     #[test]
@@ -193,13 +193,13 @@ mod tests {
         });
 
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send::<AppExit>().is_none());
 
         app.world_mut()
             .run_system_once(|mut w: MessageWriter<AppExit>| w.write(AppExit::Success))
             .expect("Failed to run system");
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send::<AppExit>().is_some());
     }
 
     #[test]
@@ -224,12 +224,12 @@ mod tests {
             .run_system_once(|mut w: MessageWriter<TestEvent1>| w.write(TestEvent1))
             .expect("Failed to run system");
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_none());
+        assert!(app.world().get_non_send::<AppExit>().is_none());
 
         app.world_mut()
             .run_system_once(|mut w: MessageWriter<TestEvent2>| w.write(TestEvent2))
             .expect("Failed to run system");
         app.update();
-        assert!(app.world().get_non_send_resource::<AppExit>().is_some());
+        assert!(app.world().get_non_send::<AppExit>().is_some());
     }
 }

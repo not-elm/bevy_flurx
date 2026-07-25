@@ -122,7 +122,7 @@ where
                 self.output.set(Err(progressing));
                 return RunnerIs::Completed;
             }
-            world.insert_non_send_resource(RedoStore::<Act>(Vec::new()));
+            world.insert_non_send(RedoStore::<Act>(Vec::new()));
             self.cancellation_id.replace(token.register(cleanup::<Act>));
             self.tracks =
                 (self.predicate)(&mut world.get_resource_or_insert_with(Record::<Act>::default));
@@ -152,10 +152,7 @@ where
             };
             if let Some(redo) = redo {
                 let undo = self.track.take().unwrap();
-                world
-                    .non_send_resource_mut::<RedoStore<Act>>()
-                    .0
-                    .push((undo, redo));
+                world.non_send_mut::<RedoStore<Act>>().0.push((undo, redo));
             }
             self.undo_output.take();
             self.undo_runner.take();
@@ -164,7 +161,7 @@ where
 }
 
 fn cleanup<Act: Send + Sync + 'static>(world: &mut World) {
-    if let Some(store) = world.remove_non_send_resource::<RedoStore<Act>>() {
+    if let Some(store) = world.remove_non_send::<RedoStore<Act>>() {
         world.resource_mut::<Record<Act>>().redo.extend(store.0);
     }
 

@@ -3,10 +3,7 @@
 //! This is to solve the problem that systems created from `Reactors`
 //! cannot run except on the main thread.
 
-use bevy::{
-    ecs::component::Component,
-    prelude::{Local, Mut, Res, Resource, World},
-};
+use bevy::prelude::{Local, Mut, Res, Resource, World};
 use core::marker::PhantomData;
 
 /// A Condition-satisfying system that returns true if the switch has been turned on.
@@ -92,13 +89,11 @@ where
 ///         }));
 ///     });
 /// ```
-#[derive(Debug, Eq, PartialEq, Component)]
-pub struct Switch<M> {
+#[derive(Debug, Eq, PartialEq, Resource)]
+pub struct Switch<M: Send + Sync + 'static> {
     is_on: bool,
     _m: PhantomData<M>,
 }
-
-impl<M> Resource for Switch<M> where M: Send + Sync + 'static {}
 
 impl<M> Switch<M>
 where
