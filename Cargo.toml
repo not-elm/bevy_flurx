@@ -1,6 +1,6 @@
 [package]
 name = "bevy_flurx"
-version = "0.14.2"
+version = "0.15.0"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
 categories = ["asynchronous", "game-development", "no-std"]
@@ -36,12 +36,12 @@ name = "switch_just_change"
 path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
-bevy = { version = "0.18", default-features = false }
+bevy = { version = "0.19", default-features = false }
 futures-polling = "0.1"
 futures-lite = "2"
-pollster = "0.4"
+pollster = "1"
 pin-project = "1"
-itertools = "0.14"
+itertools = "0.15"
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", optional = true, features = [
   "sync",
@@ -53,8 +53,8 @@ tokio = { version = "1", optional = true, features = [
 async-compat = { version = "0.2", optional = true }
 
 [dev-dependencies]
-bevy = { version = "0.18" }
-bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.18" }
+bevy = { version = "0.19" }
+bevy_test_helper = { git = "https://github.com/not-elm/bevy_test_helper", branch = "v0.19" }
 futures = "0.3"
 criterion = { version = "0.8", features = ["plotters", "html_reports"] }
 
