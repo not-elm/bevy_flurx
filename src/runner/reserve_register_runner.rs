@@ -1,8 +1,8 @@
 use bevy::app::{App, Last, Plugin};
 use bevy::ecs::schedule::InternedScheduleLabel;
 use bevy::ecs::system::ScheduleSystem;
+use bevy::platform::collections::HashSet;
 use bevy::prelude::*;
-use itertools::Itertools;
 
 /// When the schedule to be registered is the same as the schedule currently being executed by the [`BoxedRunner`](crate::prelude::BoxedRunner),
 /// it cannot be registered normally, so it is temporarily stored and registered with [`Last`].
@@ -27,7 +27,10 @@ fn register_runner_system(
     mut events: MessageReader<ReservedRunner>,
     mut schedules: ResMut<Schedules>,
 ) {
-    for event in events.read().unique_by(|e| e.label) {
-        schedules.add_systems(event.label, (event.system)());
+    let mut registered = HashSet::new();
+    for event in events.read() {
+        if registered.insert(event.label) {
+            schedules.add_systems(event.label, (event.system)());
+        }
     }
 }

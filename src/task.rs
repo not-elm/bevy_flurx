@@ -6,8 +6,9 @@ use crate::selector::WorldSelector;
 use crate::world_ptr::WorldPtr;
 use bevy::ecs::schedule::ScheduleLabel;
 use bevy::prelude::Entity;
-use core::future::Future;
-use futures_polling::FuturePollingExt;
+use core::future::{poll_fn, Future};
+use core::pin::Pin;
+use core::task::Poll;
 
 /// Create a task that runs the system until certain conditions are met.
 #[derive(Clone)]
@@ -91,9 +92,16 @@ impl ReactorTask {
         In: 'static,
         Out: 'static,
     {
-        let mut future = self.will(label, action).polling();
-        let _ = future.poll_once().await;
-        future
+        let mut future = self.will(label, action);
+        // Poll once so the runner is registered now, keeping the output if it is
+        // already available.
+        let first = poll_fn(|cx| Poll::Ready(Pin::new(&mut future).poll(cx))).await;
+        async move {
+            match first {
+                Poll::Ready(out) => out,
+                Poll::Pending => future.await,
+            }
+        }
     }
 }
 

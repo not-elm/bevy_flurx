@@ -3,7 +3,7 @@ name = "bevy_flurx"
 version = "0.15.0"
 edition = "2021"
 authors = ["notelm <elmprograminfo@gmail.com>"]
-categories = ["asynchronous", "game-development"]
+categories = ["asynchronous", "game-development", "no-std"]
 description = "Allows you to use coroutine in Bevy"
 keywords = ["game", "gamedev", "bevy", "async", "no_std"]
 license = "MIT OR Apache-2.0"
@@ -37,12 +37,8 @@ path = "examples/bug_check/switch_just_change.rs"
 
 [dependencies]
 bevy = { version = "0.19", default-features = false }
-futures-polling = "0.1"
-futures-lite = "2"
-pollster = "1"
 pin-project = "1"
-itertools = "0.15"
-serde = { version = "1", features = ["derive"] }
+serde = { version = "1", default-features = false, features = ["derive"] }
 tokio = { version = "1", optional = true, features = [
   "sync",
   "time",
@@ -59,13 +55,13 @@ futures = "0.3"
 criterion = { version = "0.8", features = ["plotters", "html_reports"] }
 
 [features]
-default = []
-audio = ["bevy/bevy_audio", "bevy/bevy_asset"]
-tokio = ["dep:tokio", "dep:async-compat"]
+default = ["std"]
+audio = ["std", "bevy/bevy_audio", "bevy/bevy_asset"]
+tokio = ["std", "dep:tokio", "dep:async-compat"]
 record = []
-side-effect = []
+side-effect = ["std"]
 state = ["bevy/bevy_state"]
-std = ["bevy/std"]
+std = ["bevy/std", "serde/std"]
 serialize = ["bevy/serialize"]
 
 [lints.clippy]

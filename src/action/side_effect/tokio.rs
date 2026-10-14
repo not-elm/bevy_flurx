@@ -7,7 +7,7 @@
 use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, RunnerIs};
 use crate::runner::{Output, Runner};
-use alloc::sync::Arc;
+use bevy::platform::sync::Arc;
 use bevy::platform::sync::Mutex;
 use bevy::prelude::World;
 use core::marker::PhantomData;

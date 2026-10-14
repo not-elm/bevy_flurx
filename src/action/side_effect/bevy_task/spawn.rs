@@ -49,7 +49,7 @@ struct BevyTaskRunner<Out> {
     #[cfg(not(target_arch = "wasm32"))]
     task: bevy::tasks::Task<Out>,
     #[cfg(target_arch = "wasm32")]
-    task: std::pin::Pin<Box<dyn std::future::Future<Output = Out>>>,
+    task: core::pin::Pin<Box<dyn core::future::Future<Output = Out>>>,
     output: Output<Out>,
 }
 
@@ -57,9 +57,8 @@ impl<Out> Runner for BevyTaskRunner<Out>
 where
     Out: Send + 'static,
 {
-    #[allow(clippy::async_yields_async)]
     fn run(&mut self, _: &mut World, _: &mut CancellationHandlers) -> RunnerIs {
-        if let Some(out) = pollster::block_on(futures_lite::future::poll_once(&mut self.task)) {
+        if let Some(out) = bevy::tasks::futures::check_ready(&mut self.task) {
             self.output.set(out);
             RunnerIs::Completed
         } else {

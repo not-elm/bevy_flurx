@@ -1,4 +1,4 @@
-use alloc::sync::Arc;
+use bevy::platform::sync::Arc;
 use bevy::platform::sync::RwLock;
 
 /// Represents the output of the task.
