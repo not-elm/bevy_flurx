@@ -147,6 +147,7 @@ Please see [here](https://github.com/not-elm/bevy_flurx/blob/main/CHANGELOG.md).
 
 | bevy_flurx | bevy |
 |------------|------|
+| 0.16.0 ~   | 0.20 |
 | 0.15.0 ~   | 0.19 |
 | 0.14.0 ~   | 0.18 |
 | 0.13.0 ~   | 0.17 |

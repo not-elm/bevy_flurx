@@ -265,7 +265,7 @@ fn observe_remove_reactor<Label: ScheduleLabel>(reactor_entity: Entity, world: &
         return;
     }
     let mut observer = Observer::new(
-        move |_: On<Remove, NativeReactor>, mut commands: Commands| {
+        move |_: On<Remove<NativeReactor>>, mut commands: Commands| {
             commands.queue(move |world: &mut World| {
                 let Some(mut runner_registry) = world.remove_non_send::<RunnersRegistry<Label>>()
                 else {
