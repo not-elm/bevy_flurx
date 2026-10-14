@@ -112,7 +112,7 @@ All examples are [`here`](./examples).
 | state       | state actions                                                                      | false   | 
 | tokio       | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
 | std         | enable features that depend on the standard library                                | true    |
-| serialize   | derives `ReflectSerialize` and `ReflectDeserialize` for some structs               | false   | 
+| serialize   | enables Bevy's `serialize` feature                                                 | false   | 
 
 ### audio
 
@@ -143,10 +143,12 @@ You will be able to write processes that depend on tokio's runtime in the reacto
 Enabled by default. To use this crate in `no_std` environments, disable default features:
 
 ```toml
-bevy_flurx = { version = "0.15", default-features = false }
+bevy_flurx = { version = "0.16", default-features = false }
 ```
 
 The `audio`, `side-effect` and `tokio` flags depend on the standard library, so enabling any of them also enables `std`.
+With Bevy 0.20.0, the `serialize` flag also needs the standard library because of an upstream dependency issue
+([bevy#26108](https://github.com/bevyengine/bevy/pull/26108), fix scheduled for Bevy 0.20.1).
 See [`examples/no_std`](./examples/no_std) for a minimal `no_std` example.
 
 ## ChangeLog
