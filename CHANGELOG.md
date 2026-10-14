@@ -1,3 +1,11 @@
+## v0.16.0
+
+[Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.16.0)
+
+### Improvements
+
+- Migrated to Bevy 0.20 (requires Rust 1.97.1 or newer)
+
 ## v0.15.0
 
 [Release note](https://github.com/not-elm/bevy_flurx/releases/tag/v0.15.0)
