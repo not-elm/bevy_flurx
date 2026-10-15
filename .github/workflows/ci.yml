@@ -1,7 +1,11 @@
 name: CI
 
 on:
+  # タグ push 時は release.yml から workflow_call で実行されるため、ここではブランチのみ対象にする
   push:
+    branches:
+      - "**"
+  workflow_call:
 
 jobs:
   test:
