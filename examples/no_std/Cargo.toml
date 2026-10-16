@@ -1,0 +1,17 @@
+[package]
+name = "no_std_example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Keep this crate out of any parent workspace so that its features are never unified with
+# `bevy_flurx`'s own dev-dependencies, which enable `std`.
+[workspace]
+
+[dependencies]
+bevy = { version = "0.20", default-features = false }
+bevy_flurx = { path = "../..", default-features = false }
+
+[features]
+# Needed on targets without native atomics, such as `thumbv6m-none-eabi`.
+critical-section = ["bevy/critical-section"]

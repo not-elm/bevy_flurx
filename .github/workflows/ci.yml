@@ -86,5 +86,33 @@ jobs:
         run: cargo clippy --workspace --all-targets --all-features -- -Dwarnings
       - name: Check format
         run: cargo fmt --all -- --check
+  no-std:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ubuntu-latest-cargo-no-std-${{ hashFiles('**/Cargo.toml') }}
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          targets: x86_64-unknown-none, thumbv6m-none-eabi
+      - name: Check no_std
+        run: |
+          cargo check --lib --no-default-features --target x86_64-unknown-none
+          cargo check --lib --no-default-features --features record,state --target x86_64-unknown-none
+      - name: Check no_std on a target without native atomics
+        run: cargo check --lib --no-default-features --features record,state,bevy/critical-section --target thumbv6m-none-eabi
+      - name: Run the no_std example
+        working-directory: examples/no_std
+        run: |
+          cargo test
+          cargo check --target x86_64-unknown-none
 
 

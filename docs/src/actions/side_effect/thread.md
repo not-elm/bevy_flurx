@@ -65,9 +65,9 @@ The `thread` module is particularly useful for operations that are CPU-bound rat
 
 ## Feature Requirements
 
-The `thread` module requires both the `side-effect` and `std` feature flags to be enabled. It is not available on WebAssembly targets.
+The `thread` module requires the `side-effect` feature flag, which also enables `std`. It is not available on WebAssembly targets.
 
 ```toml
 [dependencies]
-bevy_flurx = { version = "0.1", features = ["side-effect", "std"] }
+bevy_flurx = { version = "0.1", features = ["side-effect"] }
 ```

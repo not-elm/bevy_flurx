@@ -1,7 +1,7 @@
 use crate::action::side_effect::AsyncFunctor;
 use crate::prelude::{ActionSeed, CancellationHandlers, Output, RunnerIs};
 use crate::runner::Runner;
-use alloc::sync::Arc;
+use bevy::platform::sync::Arc;
 use bevy::platform::sync::Mutex;
 use bevy::prelude::*;
 use bevy::tasks::AsyncComputeTaskPool;

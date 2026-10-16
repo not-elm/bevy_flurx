@@ -1,4 +1,5 @@
 /target
+/examples/no_std/target
 /.vscode
 /.idea
 *Cargo.lock

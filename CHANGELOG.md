@@ -5,6 +5,8 @@
 ### Improvements
 
 - Migrated to Bevy 0.20 (requires Rust 1.97.1 or newer)
+- Added `no_std` support: `std` is now a default feature; disable default features to build without the standard library
+  - With Bevy 0.20.0, the `serialize` feature still requires the standard library ([bevy#26108](https://github.com/bevyengine/bevy/pull/26108), fix scheduled for Bevy 0.20.1)
 
 ## v0.15.0
 

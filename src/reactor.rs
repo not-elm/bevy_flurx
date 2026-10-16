@@ -154,17 +154,23 @@ impl NativeReactor {
 
     /// Poll a scheduler the caller owns on the stack (see [`step_reactor`] for
     /// why it can't be borrowed from the world).
+    ///
+    /// `CoreScheduler::run` always completes on its first poll (`ReactorsFuture`
+    /// returns `Poll::Ready` unconditionally), so a single poll with a no-op waker
+    /// is equivalent to blocking on it, without needing `std` to park a thread.
     #[inline(always)]
     fn run(scheduler: &mut CoreScheduler<WorldPtr>, world: WorldPtr) -> bool {
         #[cfg(all(not(target_arch = "wasm32"), feature = "tokio"))]
-        {
+        let polled = {
             use async_compat::CompatExt;
-            pollster::block_on(scheduler.run(world).compat());
-        }
+            bevy::tasks::futures::now_or_never(scheduler.run(world).compat())
+        };
         #[cfg(any(target_arch = "wasm32", not(feature = "tokio")))]
-        {
-            pollster::block_on(scheduler.run(world));
-        }
+        let polled = bevy::tasks::futures::now_or_never(scheduler.run(world));
+        debug_assert!(
+            polled.is_some(),
+            "CoreScheduler::run must complete in a single poll"
+        );
         scheduler.finished
     }
 }

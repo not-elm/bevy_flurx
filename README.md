@@ -4,6 +4,9 @@
 [![MIT/Apache 2.0](https://img.shields.io/badge/license-MIT%2FApache-blue.svg)](https://github.com/not-elm/bevy_flurx#license)
 [![Crates.io](https://img.shields.io/crates/d/bevy_flurx.svg)](https://crates.io/crates/bevy_flurx)
 
+> [!TIP]
+> Supports no_std (disable the default `std` feature)
+
 This library provides functionality similar to coroutines, allowing you to write sequential processing for delays, user
 input, animations, and more.
 
@@ -108,8 +111,8 @@ All examples are [`here`](./examples).
 | side-effect | thread/async side effects                                                          | false   |
 | state       | state actions                                                                      | false   | 
 | tokio       | allows to use write asynchronous functions depend on tokio directly in the reactor | false   | 
-| std         | enable features that depend on the standard library                                | false   |
-| serialize   | derives `ReflectSerialize` and `ReflectDeserialize` for some structs               | false   | 
+| std         | enable features that depend on the standard library                                | true    |
+| serialize   | enables Bevy's `serialize` feature                                                 | false   | 
 
 ### audio
 
@@ -137,7 +140,16 @@ You will be able to write processes that depend on tokio's runtime in the reacto
 
 ### std
 
-Both `side-effect` and `std` flags must be enabled to use `side_effect::thread`.
+Enabled by default. To use this crate in `no_std` environments, disable default features:
+
+```toml
+bevy_flurx = { version = "0.16", default-features = false }
+```
+
+The `audio`, `side-effect` and `tokio` flags depend on the standard library, so enabling any of them also enables `std`.
+With Bevy 0.20.0, the `serialize` flag also needs the standard library because of an upstream dependency issue
+([bevy#26108](https://github.com/bevyengine/bevy/pull/26108), fix scheduled for Bevy 0.20.1).
+See [`examples/no_std`](./examples/no_std) for a minimal `no_std` example.
 
 ## ChangeLog
 
